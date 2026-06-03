@@ -24,12 +24,13 @@ apt-get install -y --no-install-recommends \
 
 install -d -m 0755 "${OBOS_SHARE_DIR}/apps/openbridgeserver"
 install -d -m 0755 "${OBOS_LIB_DIR}"
-install -d -m 0755 /etc/obos /etc/obos/apps
+install -d -m 0755 /etc/docker /etc/obos /etc/obos/apps
 install -d -m 0750 /srv/obos /srv/obos/apps /srv/obos/backups /srv/obos/state
 
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/compose.yaml" "${OBOS_APP_SOURCE}/compose.yaml"
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/mosquitto.conf" "${OBOS_APP_SOURCE}/mosquitto.conf"
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/obos-app.yaml" "${OBOS_APP_SOURCE}/obos-app.yaml"
+install -m 0644 "${REPO_ROOT}/packaging/docker/daemon.json" /etc/docker/daemon.json
 install -m 0644 "${REPO_ROOT}/packaging/nftables/obos.nft" /etc/nftables.conf
 install -m 0644 "${REPO_ROOT}/packaging/sysctl/99-obos-hardening.conf" /etc/sysctl.d/99-obos-hardening.conf
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/first-boot.sh" "${OBOS_LIB_DIR}/first-boot.sh"
@@ -44,6 +45,7 @@ install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-openbridgeserver.service" /
 "${OBOS_LIB_DIR}/apply-host-hardening.sh"
 
 systemctl daemon-reload
+systemctl restart docker.service
 systemctl enable docker.service
 systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
