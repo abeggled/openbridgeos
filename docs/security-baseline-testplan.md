@@ -12,6 +12,7 @@ intended host security posture:
 - minimal network exposure
 - nftables default-drop firewall
 - SSH disabled by default
+- MQTT closed externally by default
 - Docker daemon hardening defaults
 - sysctl hardening baseline
 - Open Bridge Server health
@@ -93,8 +94,11 @@ Expected inbound policy:
 - established/related accepted
 - ICMP and IPv6 ICMP accepted
 - DHCP client renewals accepted
-- TCP `8080` accepted
-- TCP `22`, `1883`, and `9001` not accepted externally
+- TCP `8080` accepted for the development baseline
+- TCP `22`, `1883`, and `9001` not accepted externally by default
+
+MQTT may be exposed in a future explicit opt-in mode. That mode must have its
+own audit expectations and must not change the default baseline.
 
 ### Ports
 
@@ -104,7 +108,7 @@ From another host on the same network:
 nmap -Pn -p 22,80,443,1883,9001,8080 <obos-ip>
 ```
 
-Expected:
+Expected default baseline:
 
 - `8080/tcp` open
 - `22/tcp` closed or filtered
@@ -171,13 +175,14 @@ Expected:
 The baseline passes when:
 
 - `sudo /usr/lib/obos/security-baseline.sh` exits `0`
-- manual port scan matches the expected exposure
+- manual port scan matches the expected default exposure
 - Open Bridge Server health endpoint passes
 - backup file permissions are restrictive
 
 ## Known Follow-Up Tests
 
 - TLS/certificate baseline once HTTP hardening is designed
+- explicit MQTT LAN exposure opt-in test
 - full disk encryption feasibility
 - Docker user namespace remapping compatibility
 - update rollback and recovery drill
