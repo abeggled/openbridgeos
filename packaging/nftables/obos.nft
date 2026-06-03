@@ -13,6 +13,10 @@ table inet obos_filter {
     ip protocol icmp accept
     ip6 nexthdr ipv6-icmp accept
 
+    # DHCP client renewals for appliances using dynamic network configuration.
+    udp sport 67 udp dport 68 accept
+    udp sport 547 udp dport 546 accept
+
     # Open Bridge Server UI/API. MQTT remains localhost-only by Compose default.
     tcp dport 8080 accept
   }
