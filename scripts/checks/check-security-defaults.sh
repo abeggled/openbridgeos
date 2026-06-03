@@ -20,3 +20,15 @@ grep -q 'OBS_JWT_SECRET=$(secret)' scripts/bootstrap/first-boot.sh \
 
 grep -q 'OBS_MQTT_PASSWORD=$(secret)' scripts/bootstrap/first-boot.sh \
   || fail "MQTT password is not generated on first boot"
+
+grep -q 'policy drop' packaging/nftables/obos.nft \
+  || fail "nftables input policy is not default-drop"
+
+grep -q 'tcp dport 8080 accept' packaging/nftables/obos.nft \
+  || fail "Open Bridge Server HTTP port is not allowed"
+
+! grep -q 'tcp dport 22 accept' packaging/nftables/obos.nft \
+  || fail "SSH is open in the default firewall"
+
+grep -q 'DISABLE_SSH="${OBOS_DISABLE_SSH:-1}"' scripts/hardening/apply-host-hardening.sh \
+  || fail "SSH disablement is not the default hardening behavior"
