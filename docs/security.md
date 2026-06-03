@@ -9,12 +9,12 @@ device, persist data predictably, and make risky actions visible.
 ## Baseline Principles
 
 - No default production secrets.
-- First boot must generate per-device secrets.
+- First boot must generate per-appliance-instance secrets.
 - Default passwords must be changed or disabled during onboarding.
 - Services should bind only to required interfaces.
 - SSH is disabled by default and must be enabled deliberately.
 - App data and secrets must be backed up intentionally.
-- TLS trust must be device-specific, verifiable, and replaceable.
+- TLS trust must be appliance-instance-specific, verifiable, and replaceable.
 - Logs should be useful without leaking credentials.
 - Updates should be verifiable and reversible where practical.
 
@@ -31,8 +31,8 @@ On first boot, obos should:
 - mark first boot as complete
 
 Before public release, first boot or first onboarding should also generate
-per-device TLS trust material. See
-[0004: Use a Per-Device Local CA for TLS Trust Onboarding](decisions/0004-local-ca-trust-onboarding.md).
+per-appliance-instance TLS trust material. See
+[0004: Use a Per-Appliance-Instance Local CA for TLS Trust Onboarding](decisions/0004-local-ca-trust-onboarding.md).
 
 Target permissions:
 
@@ -72,12 +72,12 @@ reverse proxy entrypoint. See
 
 ## TLS Trust Onboarding
 
-Open Bridge OS should use a per-device local CA for LAN/default TLS. Trust must
-be explicit and verifiable through an out-of-band path such as local console,
-attached display, or a future boot-accessible trust summary.
+Open Bridge OS should use a local CA per appliance instance for LAN/default TLS.
+Trust must be explicit and verifiable through an out-of-band path such as local
+console, attached display, or a future boot-accessible trust summary.
 
 The web onboarding page may display trust fingerprints, but the web page alone
-is not sufficient proof before the client trusts the device.
+is not sufficient proof before the client trusts the appliance instance.
 
 Administrators with their own DNS name or PKI should be able to replace the
 local certificate path later.
