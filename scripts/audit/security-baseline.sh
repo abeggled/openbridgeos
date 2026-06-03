@@ -28,7 +28,11 @@ check_file_mode() {
 }
 
 check_command() {
-  command -v "$1" >/dev/null 2>&1 && pass "$1 installed" || fail "$1 missing"
+  if command -v "$1" >/dev/null 2>&1; then
+    pass "$1 installed"
+  else
+    fail "$1 missing"
+  fi
 }
 
 check_systemd_active() {
