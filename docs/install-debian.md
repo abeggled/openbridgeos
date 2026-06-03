@@ -23,7 +23,8 @@ sudo reboot
 ```
 
 Provisioning installs Docker, Compose, nftables, Open Bridge OS app files,
-first boot logic, host hardening, `obosctl`, and systemd units.
+first boot logic, host hardening, `obosctl`, security baseline audit tooling,
+and systemd units.
 
 The first boot service intentionally generates secrets on the target device,
 not during image creation.
@@ -65,6 +66,22 @@ MQTT is bound to localhost by default:
 127.0.0.1:1883
 127.0.0.1:9001
 ```
+
+## Security Baseline Audit
+
+After reboot, run:
+
+```sh
+sudo /usr/lib/obos/security-baseline.sh
+```
+
+Expected result:
+
+```text
+security baseline: PASS
+```
+
+See [security-baseline-testplan.md](security-baseline-testplan.md).
 
 ## Administration
 
