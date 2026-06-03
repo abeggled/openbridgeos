@@ -34,6 +34,7 @@
 - Trigger backups and downloads.
 - Configure hostname, timezone, and network basics.
 - Surface hardening status and security baseline results.
+- Provide explicit opt-in controls for LAN MQTT exposure.
 
 ## Milestone 4: Hardened Release
 
@@ -41,6 +42,7 @@
 - Firewall defaults.
 - SSH policy.
 - TLS reverse proxy for Open Bridge Server and obos UI.
+- Explicit MQTT external access opt-in workflow.
 - Signed release artifacts and checksums.
 - Update rollback notes.
 - Security hardening checklist in CI.
