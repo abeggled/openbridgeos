@@ -1,0 +1,16 @@
+[Unit]
+Description=Open Bridge Server managed by Open Bridge OS
+Requires=docker.service
+After=docker.service obos-first-boot.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/obos/apps/openbridgeserver
+EnvironmentFile=/etc/obos/apps/openbridgeserver.env
+ExecStart=/usr/bin/docker compose --env-file /etc/obos/apps/openbridgeserver.env up -d
+ExecStop=/usr/bin/docker compose --env-file /etc/obos/apps/openbridgeserver.env down
+RemainAfterExit=yes
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
