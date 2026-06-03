@@ -23,6 +23,7 @@
 - Verify boot from SD and USB.
 - Validate Docker and Open Bridge Server startup.
 - Validate host hardening on Raspberry Pi networking.
+- Explore boot-accessible TLS trust summary for headless onboarding.
 - Document expected hardware and power requirements.
 
 ## Milestone 3: Appliance Web UI
@@ -34,6 +35,7 @@
 - Trigger backups and downloads.
 - Configure hostname, timezone, and network basics.
 - Surface hardening status and security baseline results.
+- Surface TLS trust fingerprints and root CA export workflow.
 - Provide explicit opt-in controls for LAN MQTT exposure.
 
 ## Milestone 4: Hardened Release
@@ -42,6 +44,8 @@
 - Firewall defaults.
 - SSH policy.
 - TLS reverse proxy for Open Bridge Server and obos UI.
+- Per-device local CA generation and trust onboarding.
+- Certificate replacement/rotation workflow.
 - Explicit MQTT external access opt-in workflow.
 - Signed release artifacts and checksums.
 - Update rollback notes.
