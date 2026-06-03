@@ -60,6 +60,16 @@ first. The default hardening policy disables SSH when present.
 See [docs/install-debian.md](docs/install-debian.md) and
 [docs/image-build.md](docs/image-build.md).
 
+## Security Baseline
+
+After provisioning and reboot, validate the appliance with:
+
+```sh
+sudo /usr/lib/obos/security-baseline.sh
+```
+
+See [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).
+
 ## Administration
 
 The first appliance administration interface is `obosctl`:
@@ -84,6 +94,7 @@ docs/
   hardening.md             Host firewall, SSH, and sysctl hardening
   install-debian.md        First Debian development install path
   image-build.md           Bootable image plan
+  security-baseline-testplan.md  First VM security validation plan
   security.md              Security model and hardening principles
   roadmap.md               MVP phases
 packaging/
@@ -91,6 +102,7 @@ packaging/
   sysctl/                  Host kernel/network hardening
   systemd/                 Host services and timers
 scripts/
+  audit/                   Target-system audit scripts
   bootstrap/               First boot and host provisioning scripts
   checks/                  CI validation helpers
   hardening/               Host hardening helpers
