@@ -29,15 +29,28 @@ obos manages the appliance layer:
 
 Version 0.1 is planned as:
 
-- Debian minimal base system
-- Docker Engine with the Compose plugin
+- Debian 13 Trixie minimal base system
+- Docker Engine with Compose v2 from Debian packages
 - Open Bridge Server and Mosquitto as the primary managed app
 - persistent application data below `/srv/obos`
 - a small local `obos-agent` service
 - a web UI for appliance administration
 
-See [docs/architecture.md](docs/architecture.md) and
-[docs/security.md](docs/security.md).
+See [docs/architecture.md](docs/architecture.md),
+[docs/security.md](docs/security.md), and
+[docs/decisions/0001-target-debian-trixie.md](docs/decisions/0001-target-debian-trixie.md).
+
+## Development Install
+
+The first development path targets a fresh Debian 13 host:
+
+```sh
+sudo scripts/bootstrap/provision-debian.sh
+sudo reboot
+```
+
+See [docs/install-debian.md](docs/install-debian.md) and
+[docs/image-build.md](docs/image-build.md).
 
 ## Repository Layout
 
@@ -46,12 +59,16 @@ apps/
   openbridgeserver/        Managed Open Bridge Server app definition
 docs/
   architecture.md          System shape and design decisions
+  decisions/               Architecture decision records
+  install-debian.md        First Debian development install path
+  image-build.md           Bootable image plan
   security.md              Security model and hardening principles
   roadmap.md               MVP phases
 packaging/
   systemd/                 Host services and timers
 scripts/
   bootstrap/               First boot and host provisioning scripts
+  checks/                  CI validation helpers
 ```
 
 ## Security
