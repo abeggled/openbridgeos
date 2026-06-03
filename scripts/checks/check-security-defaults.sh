@@ -44,5 +44,6 @@ grep -q 'udp sport 547 udp dport 546 accept' packaging/nftables/obos.nft \
 ! grep -q 'tcp dport 22 accept' packaging/nftables/obos.nft \
   || fail "SSH is open in the default firewall"
 
-grep -q 'DISABLE_SSH="${OBOS_DISABLE_SSH:-1}"' scripts/hardening/apply-host-hardening.sh \
+# shellcheck disable=SC2016
+grep -Fq 'DISABLE_SSH="${OBOS_DISABLE_SSH:-1}"' scripts/hardening/apply-host-hardening.sh \
   || fail "SSH disablement is not the default hardening behavior"
