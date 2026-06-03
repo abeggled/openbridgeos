@@ -1,4 +1,4 @@
-# 0004: Use a Per-Device Local CA for TLS Trust Onboarding
+# 0004: Use a Per-Appliance-Instance Local CA for TLS Trust Onboarding
 
 ## Status
 
@@ -15,17 +15,20 @@ user experience and cannot easily cover future services or certificate renewal.
 A public certificate path is valuable, but it must remain optional because it
 requires DNS/domain ownership or an internet-reachable challenge path.
 
-The appliance also needs a way for users to distinguish their real local device
-from a LAN attacker during first contact.
+Each obos installation, whether running on a Raspberry Pi, mini PC, server, or
+VM, is an appliance instance. The appliance also needs a way for users to
+distinguish their real local appliance instance from a LAN attacker during first
+contact.
 
 ## Decision
 
-Open Bridge OS should generate a per-device local certificate authority during
-first boot or first onboarding, then use it to issue local service certificates.
+Open Bridge OS should generate a local certificate authority per appliance
+instance during first boot or first onboarding, then use it to issue local
+service certificates.
 
 Default release direction:
 
-- generate a per-device local CA on the appliance
+- generate a unique local CA for each appliance instance
 - store CA private key material under `/etc/obos/tls` with restrictive
   permissions
 - issue a leaf certificate for the active appliance hostname and local names
@@ -57,15 +60,16 @@ generation. This is useful but not required for the first Debian VM baseline.
 
 ## Root CA Installation
 
-Administrators may install the per-device root CA into their client devices if
-they want warning-free browser access.
+Administrators may install the appliance instance's root CA into their client
+devices if they want warning-free browser access.
 
 The UI and documentation must be clear that:
 
-- the root CA is unique to one appliance
+- the root CA is unique to one appliance instance
 - it should not be reused across installations
 - exporting it is sensitive
-- installing it makes the client trust certificates issued by that appliance CA
+- installing it makes the client trust certificates issued by that appliance
+  instance's CA
 - replacing or rotating it will require clients to trust the new CA
 
 ## Public CA Option
@@ -106,7 +110,7 @@ DNS/domain operations before the appliance is useful.
 ### Shared Open Bridge OS root CA
 
 Rejected. A shared root CA would be a high-impact compromise target and would
-violate the per-device trust model.
+violate the per-appliance-instance trust model.
 
 ## Open Questions
 
