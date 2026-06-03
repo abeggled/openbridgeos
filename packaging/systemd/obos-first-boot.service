@@ -1,0 +1,13 @@
+[Unit]
+Description=Open Bridge OS first boot provisioning
+ConditionPathExists=!/srv/obos/state/first-boot.done
+After=local-fs.target
+Before=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/obos/first-boot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
