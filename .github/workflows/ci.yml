@@ -26,7 +26,7 @@ jobs:
           shellcheck scripts/bootstrap/*.sh scripts/checks/*.sh
 
       - name: Security defaults
-        run: scripts/checks/check-security-defaults.sh
+        run: sh scripts/checks/check-security-defaults.sh
 
       - name: Compose config
-        run: scripts/checks/validate-compose.sh
+        run: sh scripts/checks/validate-compose.sh
