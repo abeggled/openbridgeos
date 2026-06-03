@@ -5,6 +5,7 @@ FAILED=0
 APP_NAME="openbridgeserver"
 ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
+TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
 
 pass() {
@@ -73,9 +74,20 @@ check_grep() {
   fi
 }
 
+check_certificate() {
+  cert="$1"
+  label="$2"
+  if openssl x509 -in "${cert}" -noout >/dev/null 2>&1; then
+    pass "${label} certificate parseable"
+  else
+    fail "${label} certificate not parseable"
+  fi
+}
+
 check_command docker
 check_command nft
 check_command obosctl
+check_command openssl
 
 check_file_mode /etc/obos 750
 check_file_mode "${ENV_FILE}" 600
@@ -122,6 +134,16 @@ if docker info --format '{{.LoggingDriver}}' 2>/dev/null | grep -q '^local$'; th
   pass 'Docker local log driver enabled'
 else
   fail 'Docker local log driver missing'
+fi
+
+if [ -d "${TLS_DIR}" ]; then
+  check_file_mode "${TLS_DIR}" 700
+  check_file_mode "${TLS_DIR}/obos-local-ca.key" 600
+  check_file_mode "${TLS_DIR}/obos.local.key" 600
+  check_certificate "${TLS_DIR}/obos-local-ca.crt" 'local CA'
+  check_certificate "${TLS_DIR}/obos.local.crt" 'leaf'
+else
+  pass 'TLS material not generated for development baseline'
 fi
 
 if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null; then
