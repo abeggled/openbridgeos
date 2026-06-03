@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+set -eu
+
+OBOS_ETC_DIR="${OBOS_ETC_DIR:-/etc/obos}"
+OBOS_APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/openbridgeserver}"
+OBOS_STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
+ENV_FILE="${OBOS_ETC_DIR}/apps/openbridgeserver.env"
+FIRST_BOOT_MARKER="${OBOS_STATE_DIR}/first-boot.done"
+
+secret() {
+  if command -v openssl >/dev/null 2>&1; then
+    openssl rand -base64 48 | tr -d '\n'
+  else
+    dd if=/dev/urandom bs=48 count=1 2>/dev/null | base64 | tr -d '\n'
+  fi
+}
+
+if [ -f "${FIRST_BOOT_MARKER}" ]; then
+  exit 0
+fi
+
+install -d -m 0750 "${OBOS_ETC_DIR}" "${OBOS_ETC_DIR}/apps" "${OBOS_STATE_DIR}"
+install -d -m 0750 "${OBOS_APP_DIR}" "${OBOS_APP_DIR}/data" "${OBOS_APP_DIR}/mqtt"
+install -d -m 0770 "${OBOS_APP_DIR}/mqtt/passwd" "${OBOS_APP_DIR}/mqtt/data" "${OBOS_APP_DIR}/mqtt/log"
+
+if [ ! -f "${ENV_FILE}" ]; then
+  umask 077
+  cat > "${ENV_FILE}" <<EOF
+OBS_IMAGE_TAG=latest
+OBS_HTTP_HOST_PORT=8080
+OBS_MQTT_HOST_PORT=127.0.0.1:1883
+OBS_MQTT_WS_HOST_PORT=127.0.0.1:9001
+OBS_MQTT_USERNAME=obs
+OBS_MQTT_PASSWORD=$(secret)
+OBS_JWT_SECRET=$(secret)
+OBS_LOG_LEVEL=INFO
+EOF
+fi
+
+chmod 0600 "${ENV_FILE}"
+touch "${FIRST_BOOT_MARKER}"
