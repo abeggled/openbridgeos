@@ -31,13 +31,17 @@ The default nftables policy is intentionally small:
 - keep forwarding allowed so Docker networking is not broken accidentally
 - keep outbound traffic allowed
 
-MQTT is not opened in the firewall because the Compose defaults bind MQTT to
-localhost only:
+MQTT is not opened in the default firewall because the Compose defaults bind
+MQTT to localhost only:
 
 ```text
 127.0.0.1:1883
 127.0.0.1:9001
 ```
+
+LAN MQTT exposure must be an explicit opt-in workflow. Enabling it should update
+both the Compose environment and firewall policy, and should remain visible to
+the security baseline audit.
 
 Before public release, direct TCP `8080` exposure should move behind a TLS
 reverse proxy entrypoint on TCP `443`.
@@ -96,6 +100,7 @@ validated under those constraints.
 The current hardening layer is host-focused. It does not yet implement:
 
 - TLS reverse proxy for Open Bridge Server
+- MQTT opt-in management command or UI
 - image signing
 - rollback for failed updates
 - full disk encryption
