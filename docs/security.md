@@ -12,7 +12,7 @@ device, persist data predictably, and make risky actions visible.
 - First boot must generate per-device secrets.
 - Default passwords must be changed or disabled during onboarding.
 - Services should bind only to required interfaces.
-- SSH should be disabled by default or require explicit enablement.
+- SSH is disabled by default and must be enabled deliberately.
 - App data and secrets must be backed up intentionally.
 - Logs should be useful without leaking credentials.
 - Updates should be verifiable and reversible where practical.
@@ -39,17 +39,38 @@ Target permissions:
 
 ## Network Exposure
 
-Default external exposure should be minimal.
-
-Initial allowed services:
+Default external exposure is minimal:
 
 - Open Bridge Server HTTP UI/API on `8080/tcp`
+- no external SSH
+- no external MQTT
 - obos administration UI once implemented
 
-MQTT ports should be explicit configuration choices:
+The host firewall uses nftables with inbound default-drop. It allows loopback,
+established traffic, ICMP/IPv6 ICMP, and TCP `8080`.
 
-- `1883/tcp` MQTT
-- `9001/tcp` MQTT over WebSocket
+MQTT remains bound to localhost by default:
+
+```text
+127.0.0.1:1883
+127.0.0.1:9001
+```
+
+## Host Hardening
+
+Provisioning applies:
+
+- nftables firewall rules from `packaging/nftables/obos.nft`
+- sysctl baseline from `packaging/sysctl/99-obos-hardening.conf`
+- SSH service disablement when `ssh.service` exists
+
+Manual remote development installs can preserve SSH temporarily with:
+
+```sh
+sudo OBOS_DISABLE_SSH=0 scripts/bootstrap/provision-debian.sh
+```
+
+See [hardening.md](hardening.md).
 
 ## Container Runtime
 
@@ -82,10 +103,9 @@ Backup export should warn when secrets are included.
 
 ## Open Questions
 
-- Should SSH be disabled entirely on the default image, or enabled only during
-  first setup with a generated password?
 - Should the first public release use plain HTTP on trusted LAN only, or ship
   with local TLS via a generated certificate?
-- Should MQTT be LAN-exposed by default, or internal-only until enabled?
 - Should obos use full disk encryption on x86_64 installations, and what is
   the equivalent story for Raspberry Pi unattended boot?
+- Should Docker be replaced or constrained further once the first appliance
+  image has been validated?
