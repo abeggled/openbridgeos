@@ -26,7 +26,7 @@ The default nftables policy is intentionally small:
 - allow established and related traffic
 - allow ICMP and IPv6 ICMP
 - allow DHCPv4 and DHCPv6 client renewals
-- allow TCP `8080` for Open Bridge Server UI/API
+- allow TCP `8080` for Open Bridge Server UI/API during the development baseline
 - drop other inbound traffic
 - keep forwarding allowed so Docker networking is not broken accidentally
 - keep outbound traffic allowed
@@ -38,6 +38,9 @@ localhost only:
 127.0.0.1:1883
 127.0.0.1:9001
 ```
+
+Before public release, direct TCP `8080` exposure should move behind a TLS
+reverse proxy entrypoint on TCP `443`.
 
 ## SSH Policy
 
@@ -92,7 +95,7 @@ validated under those constraints.
 
 The current hardening layer is host-focused. It does not yet implement:
 
-- TLS for Open Bridge Server
+- TLS reverse proxy for Open Bridge Server
 - image signing
 - rollback for failed updates
 - full disk encryption
