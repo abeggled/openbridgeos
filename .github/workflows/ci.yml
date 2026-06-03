@@ -25,6 +25,9 @@ jobs:
         run: |
           shellcheck scripts/obosctl scripts/bootstrap/*.sh scripts/checks/*.sh scripts/hardening/*.sh
 
+      - name: Docker daemon JSON syntax
+        run: python -m json.tool packaging/docker/daemon.json >/dev/null
+
       - name: nftables syntax
         run: sudo nft -c -f packaging/nftables/obos.nft
 
