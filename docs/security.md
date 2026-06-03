@@ -14,6 +14,7 @@ device, persist data predictably, and make risky actions visible.
 - Services should bind only to required interfaces.
 - SSH is disabled by default and must be enabled deliberately.
 - App data and secrets must be backed up intentionally.
+- TLS trust must be device-specific, verifiable, and replaceable.
 - Logs should be useful without leaking credentials.
 - Updates should be verifiable and reversible where practical.
 
@@ -29,11 +30,16 @@ On first boot, obos should:
 - write app environment files with restrictive permissions
 - mark first boot as complete
 
+Before public release, first boot or first onboarding should also generate
+per-device TLS trust material. See
+[0004: Use a Per-Device Local CA for TLS Trust Onboarding](decisions/0004-local-ca-trust-onboarding.md).
+
 Target permissions:
 
 ```text
 /etc/obos/                  root:root 0750
 /etc/obos/apps/*.env        root:root 0600
+/etc/obos/tls/              root:root 0700
 /srv/obos/                  root:root 0750
 ```
 
@@ -63,6 +69,18 @@ installation requires it. See
 Before public release, direct TCP `8080` exposure should be replaced by a TLS
 reverse proxy entrypoint. See
 [0002: Use a Local Reverse Proxy for TLS Before Public Release](decisions/0002-tls-reverse-proxy-direction.md).
+
+## TLS Trust Onboarding
+
+Open Bridge OS should use a per-device local CA for LAN/default TLS. Trust must
+be explicit and verifiable through an out-of-band path such as local console,
+attached display, or a future boot-accessible trust summary.
+
+The web onboarding page may display trust fingerprints, but the web page alone
+is not sufficient proof before the client trusts the device.
+
+Administrators with their own DNS name or PKI should be able to replace the
+local certificate path later.
 
 ## Host Hardening
 
@@ -110,6 +128,7 @@ Backups should include:
 - Open Bridge Server data
 - Mosquitto persistent data
 - obos app environment files
+- TLS trust material when restoring the same appliance identity
 - obos appliance metadata needed for restore
 
 Backups should not include:
@@ -118,7 +137,7 @@ Backups should not include:
 - package caches
 - logs by default, unless selected
 
-Backup export should warn when secrets are included.
+Backup export should warn when secrets and TLS private key material are included.
 
 ## Open Questions
 
@@ -126,4 +145,4 @@ Backup export should warn when secrets are included.
   the equivalent story for Raspberry Pi unattended boot?
 - Should Docker be replaced or constrained further once the first appliance
   image has been validated?
-- What is the exact onboarding UX for trusting the first local TLS certificate?
+- What is the exact UI flow for local CA trust installation on phones/tablets?
