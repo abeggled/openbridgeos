@@ -15,10 +15,12 @@ grep -q 'OBS_MQTT_HOST_PORT=127.0.0.1:1883' scripts/bootstrap/first-boot.sh \
 grep -q 'OBS_MQTT_WS_HOST_PORT=127.0.0.1:9001' scripts/bootstrap/first-boot.sh \
   || fail "MQTT websocket listener is not localhost by default"
 
-grep -q 'OBS_JWT_SECRET=$(secret)' scripts/bootstrap/first-boot.sh \
+# shellcheck disable=SC2016
+grep -Fq 'OBS_JWT_SECRET=$(secret)' scripts/bootstrap/first-boot.sh \
   || fail "OBS JWT secret is not generated on first boot"
 
-grep -q 'OBS_MQTT_PASSWORD=$(secret)' scripts/bootstrap/first-boot.sh \
+# shellcheck disable=SC2016
+grep -Fq 'OBS_MQTT_PASSWORD=$(secret)' scripts/bootstrap/first-boot.sh \
   || fail "MQTT password is not generated on first boot"
 
 grep -q '"no-new-privileges": true' packaging/docker/daemon.json \
