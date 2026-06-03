@@ -23,7 +23,7 @@ sudo reboot
 ```
 
 Provisioning installs Docker, Compose, Open Bridge OS app files, first boot
-logic, and systemd units.
+logic, `obosctl`, and systemd units.
 
 The first boot service intentionally generates secrets on the target device,
 not during image creation.
@@ -36,6 +36,7 @@ After reboot:
 systemctl status obos-first-boot.service
 systemctl status obos-openbridgeserver.service
 systemctl status docker.service
+obosctl status
 ```
 
 Open Bridge Server should be reachable at:
@@ -50,6 +51,21 @@ MQTT is bound to localhost by default:
 127.0.0.1:1883
 127.0.0.1:9001
 ```
+
+## Administration
+
+The first local administration interface is `obosctl`:
+
+```sh
+obosctl status
+obosctl health
+obosctl logs
+sudo obosctl backup
+sudo obosctl update
+sudo obosctl restart
+```
+
+See [admin-cli.md](admin-cli.md).
 
 ## Persistent Paths
 
@@ -66,6 +82,7 @@ MQTT is bound to localhost by default:
 - `OBS_JWT_SECRET` is generated on first boot.
 - `OBS_MQTT_PASSWORD` is generated on first boot.
 - MQTT is not exposed to the LAN by default.
+- Backups contain secrets and are written with mode `0600`.
 - SSH policy is not finalized yet and must be decided before public images.
 - This development path does not yet configure a firewall.
 
@@ -73,5 +90,5 @@ MQTT is bound to localhost by default:
 
 - No ISO or Raspberry Pi image builder yet.
 - No obos web administration UI yet.
-- No automated backup command yet.
 - No rollback path for failed app updates yet.
+- No firewall profile yet.
