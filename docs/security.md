@@ -41,7 +41,7 @@ Target permissions:
 
 Default external exposure is minimal:
 
-- Open Bridge Server HTTP UI/API on `8080/tcp`
+- Open Bridge Server HTTP UI/API on `8080/tcp` for the development baseline
 - no external SSH
 - no external MQTT
 - obos administration UI once implemented
@@ -55,6 +55,10 @@ MQTT remains bound to localhost by default:
 127.0.0.1:1883
 127.0.0.1:9001
 ```
+
+Before public release, direct TCP `8080` exposure should be replaced by a TLS
+reverse proxy entrypoint. See
+[0002: Use a Local Reverse Proxy for TLS Before Public Release](decisions/0002-tls-reverse-proxy-direction.md).
 
 ## Host Hardening
 
@@ -114,9 +118,8 @@ Backup export should warn when secrets are included.
 
 ## Open Questions
 
-- Should the first public release use plain HTTP on trusted LAN only, or ship
-  with local TLS via a generated certificate?
 - Should obos use full disk encryption on x86_64 installations, and what is
   the equivalent story for Raspberry Pi unattended boot?
 - Should Docker be replaced or constrained further once the first appliance
   image has been validated?
+- What is the exact onboarding UX for trusting the first local TLS certificate?
