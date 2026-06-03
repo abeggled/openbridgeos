@@ -22,11 +22,24 @@ sudo scripts/bootstrap/provision-debian.sh
 sudo reboot
 ```
 
-Provisioning installs Docker, Compose, Open Bridge OS app files, first boot
-logic, `obosctl`, and systemd units.
+Provisioning installs Docker, Compose, nftables, Open Bridge OS app files,
+first boot logic, host hardening, `obosctl`, and systemd units.
 
 The first boot service intentionally generates secrets on the target device,
 not during image creation.
+
+## Remote Development Warning
+
+Provisioning disables `ssh.service` by default if it exists. This is the desired
+image behavior, but it can interrupt manual remote development installs.
+
+For a temporary remote test install, preserve SSH with:
+
+```sh
+sudo OBOS_DISABLE_SSH=0 scripts/bootstrap/provision-debian.sh
+```
+
+The default firewall still does not open TCP 22.
 
 ## Expected Services
 
@@ -36,6 +49,7 @@ After reboot:
 systemctl status obos-first-boot.service
 systemctl status obos-openbridgeserver.service
 systemctl status docker.service
+systemctl status nftables.service
 obosctl status
 ```
 
@@ -71,6 +85,8 @@ See [admin-cli.md](admin-cli.md).
 
 ```text
 /etc/obos/apps/openbridgeserver.env
+/etc/nftables.conf
+/etc/sysctl.d/99-obos-hardening.conf
 /srv/obos/apps/openbridgeserver/data
 /srv/obos/apps/openbridgeserver/mqtt
 /srv/obos/backups
@@ -82,13 +98,13 @@ See [admin-cli.md](admin-cli.md).
 - `OBS_JWT_SECRET` is generated on first boot.
 - `OBS_MQTT_PASSWORD` is generated on first boot.
 - MQTT is not exposed to the LAN by default.
+- nftables drops inbound traffic except Open Bridge Server on TCP `8080`.
+- SSH is disabled by default when present.
 - Backups contain secrets and are written with mode `0600`.
-- SSH policy is not finalized yet and must be decided before public images.
-- This development path does not yet configure a firewall.
 
 ## Known Gaps
 
 - No ISO or Raspberry Pi image builder yet.
 - No obos web administration UI yet.
 - No rollback path for failed app updates yet.
-- No firewall profile yet.
+- No TLS/default certificate story yet.
