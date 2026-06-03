@@ -33,8 +33,9 @@ The initial release direction is:
 - bind Open Bridge Server to localhost only
 - expose HTTPS on TCP `443`
 - redirect or close plain HTTP on TCP `80`
-- generate a per-device local certificate during first boot or onboarding
-- show the certificate fingerprint during onboarding
+- use the per-device local CA trust model from
+  [0004: Use a Per-Device Local CA for TLS Trust Onboarding](0004-local-ca-trust-onboarding.md)
+- show certificate trust material during onboarding
 - document how administrators can replace the certificate with their own
 - keep MQTT external exposure disabled by default, with explicit opt-in support
 
@@ -56,7 +57,5 @@ paths.
 
 - Should the first public image expose TCP `80` only for redirect/onboarding,
   or keep it closed entirely?
-- Should obos generate a local CA or only a leaf certificate?
-- How should users verify and trust the certificate on phones/tablets?
 - Should certificate replacement be an `obosctl` command, a web UI workflow, or
   both?
