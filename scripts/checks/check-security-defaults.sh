@@ -21,6 +21,12 @@ grep -q 'OBS_JWT_SECRET=$(secret)' scripts/bootstrap/first-boot.sh \
 grep -q 'OBS_MQTT_PASSWORD=$(secret)' scripts/bootstrap/first-boot.sh \
   || fail "MQTT password is not generated on first boot"
 
+grep -q '"no-new-privileges": true' packaging/docker/daemon.json \
+  || fail "Docker no-new-privileges default is not enabled"
+
+grep -q '"log-driver": "local"' packaging/docker/daemon.json \
+  || fail "Docker local log driver is not configured"
+
 grep -q 'policy drop' packaging/nftables/obos.nft \
   || fail "nftables input policy is not default-drop"
 
