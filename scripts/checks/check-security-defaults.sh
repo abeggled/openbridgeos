@@ -6,7 +6,8 @@ fail() {
   exit 1
 }
 
-! grep -R "changeme\|password123\|secret123" apps scripts packaging docs README.md SECURITY.md >/dev/null 2>&1 \
+! grep -R --exclude=check-security-defaults.sh "changeme\|password123\|secret123" \
+  apps scripts packaging docs README.md SECURITY.md >/dev/null 2>&1 \
   || fail "default placeholder secret found"
 
 grep -q 'OBS_MQTT_HOST_PORT=127.0.0.1:1883' scripts/bootstrap/first-boot.sh \
