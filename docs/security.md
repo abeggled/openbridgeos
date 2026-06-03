@@ -47,7 +47,7 @@ Default external exposure is minimal:
 - obos administration UI once implemented
 
 The host firewall uses nftables with inbound default-drop. It allows loopback,
-established traffic, ICMP/IPv6 ICMP, and TCP `8080`.
+established traffic, ICMP/IPv6 ICMP, DHCP renewals, and TCP `8080`.
 
 MQTT remains bound to localhost by default:
 
@@ -71,6 +71,17 @@ sudo OBOS_DISABLE_SSH=0 scripts/bootstrap/provision-debian.sh
 ```
 
 See [hardening.md](hardening.md).
+
+## Security Baseline Audit
+
+Provisioned systems should pass:
+
+```sh
+sudo /usr/lib/obos/security-baseline.sh
+```
+
+The manual validation plan is documented in
+[security-baseline-testplan.md](security-baseline-testplan.md).
 
 ## Container Runtime
 
