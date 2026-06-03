@@ -51,4 +51,4 @@ systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
 
 # Do not run first boot during image creation. Secrets must be generated on the
-target device, not in the build environment.
+# target device, not in the build environment.
