@@ -1,0 +1,141 @@
+#!/usr/bin/env sh
+set -u
+
+FAILED=0
+APP_NAME="openbridgeserver"
+ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
+APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
+HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
+
+pass() {
+  printf 'PASS %s\n' "$1"
+}
+
+fail() {
+  printf 'FAIL %s\n' "$1"
+  FAILED=1
+}
+
+check_file_mode() {
+  path="$1"
+  expected="$2"
+  actual="$(stat -c '%a' "${path}" 2>/dev/null || true)"
+  if [ "${actual}" = "${expected}" ]; then
+    pass "${path} mode ${expected}"
+  else
+    fail "${path} mode expected ${expected}, got ${actual:-missing}"
+  fi
+}
+
+check_command() {
+  command -v "$1" >/dev/null 2>&1 && pass "$1 installed" || fail "$1 missing"
+}
+
+check_systemd_active() {
+  service="$1"
+  if systemctl is-active --quiet "${service}"; then
+    pass "${service} active"
+  else
+    fail "${service} not active"
+  fi
+}
+
+check_systemd_enabled() {
+  service="$1"
+  if systemctl is-enabled --quiet "${service}"; then
+    pass "${service} enabled"
+  else
+    fail "${service} not enabled"
+  fi
+}
+
+check_systemd_not_active() {
+  service="$1"
+  if systemctl list-unit-files "${service}" >/dev/null 2>&1 && systemctl is-active --quiet "${service}"; then
+    fail "${service} active"
+  else
+    pass "${service} not active"
+  fi
+}
+
+check_grep() {
+  pattern="$1"
+  file="$2"
+  label="$3"
+  if grep -q "${pattern}" "${file}" 2>/dev/null; then
+    pass "${label}"
+  else
+    fail "${label}"
+  fi
+}
+
+check_command docker
+check_command nft
+check_command obosctl
+
+check_file_mode /etc/obos 750
+check_file_mode "${ENV_FILE}" 600
+check_file_mode /srv/obos 750
+
+check_systemd_active docker.service
+check_systemd_enabled docker.service
+check_systemd_active nftables.service
+check_systemd_enabled nftables.service
+check_systemd_enabled obos-first-boot.service
+check_systemd_enabled obos-openbridgeserver.service
+check_systemd_not_active ssh.service
+
+if nft list ruleset 2>/dev/null | grep -q 'policy drop'; then
+  pass 'nftables input default-drop present'
+else
+  fail 'nftables input default-drop missing'
+fi
+
+if nft list ruleset 2>/dev/null | grep -q 'tcp dport 8080 accept'; then
+  pass 'nftables allows Open Bridge Server HTTP'
+else
+  fail 'nftables missing Open Bridge Server HTTP allow rule'
+fi
+
+if nft list ruleset 2>/dev/null | grep -q 'tcp dport 22 accept'; then
+  fail 'nftables exposes SSH'
+else
+  pass 'nftables does not expose SSH'
+fi
+
+check_grep 'OBS_MQTT_HOST_PORT=127.0.0.1:1883' "${ENV_FILE}" 'MQTT plain localhost-only'
+check_grep 'OBS_MQTT_WS_HOST_PORT=127.0.0.1:9001' "${ENV_FILE}" 'MQTT websocket localhost-only'
+check_grep '^OBS_JWT_SECRET=.' "${ENV_FILE}" 'OBS JWT secret exists'
+check_grep '^OBS_MQTT_PASSWORD=.' "${ENV_FILE}" 'OBS MQTT password exists'
+
+if docker info --format '{{json .SecurityOptions}}' 2>/dev/null | grep -q 'name=no-new-privileges'; then
+  pass 'Docker no-new-privileges enabled'
+else
+  fail 'Docker no-new-privileges missing'
+fi
+
+if docker info --format '{{.LoggingDriver}}' 2>/dev/null | grep -q '^local$'; then
+  pass 'Docker local log driver enabled'
+else
+  fail 'Docker local log driver missing'
+fi
+
+if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null; then
+  pass 'Open Bridge Server health endpoint reachable'
+else
+  fail 'Open Bridge Server health endpoint unreachable'
+fi
+
+if [ -d "${APP_DIR}/data" ]; then
+  pass 'Open Bridge Server data directory exists'
+else
+  fail 'Open Bridge Server data directory missing'
+fi
+
+if [ "${FAILED}" -eq 0 ]; then
+  echo 'security baseline: PASS'
+else
+  echo 'security baseline: FAIL'
+fi
+
+exit "${FAILED}"
