@@ -23,6 +23,7 @@ obos manages the appliance layer:
 - system updates
 - health checks and logs
 - backup and restore orchestration
+- host hardening
 - image builds for Raspberry Pi and x86_64
 
 ## Initial Architecture
@@ -31,13 +32,17 @@ Version 0.1 is planned as:
 
 - Debian 13 Trixie minimal base system
 - Docker Engine with Compose v2 from Debian packages
+- nftables default-drop host firewall
+- sysctl hardening baseline
+- SSH disabled by default when present
 - Open Bridge Server and Mosquitto as the primary managed app
 - persistent application data below `/srv/obos`
 - a small local `obos-agent` service
 - a web UI for appliance administration
 
 See [docs/architecture.md](docs/architecture.md),
-[docs/security.md](docs/security.md), and
+[docs/security.md](docs/security.md),
+[docs/hardening.md](docs/hardening.md), and
 [docs/decisions/0001-target-debian-trixie.md](docs/decisions/0001-target-debian-trixie.md).
 
 ## Development Install
@@ -48,6 +53,9 @@ The first development path targets a fresh Debian 13 host:
 sudo scripts/bootstrap/provision-debian.sh
 sudo reboot
 ```
+
+For remote development installs over SSH, read [docs/install-debian.md](docs/install-debian.md)
+first. The default hardening policy disables SSH when present.
 
 See [docs/install-debian.md](docs/install-debian.md) and
 [docs/image-build.md](docs/image-build.md).
@@ -73,15 +81,19 @@ docs/
   admin-cli.md             Local appliance administration commands
   architecture.md          System shape and design decisions
   decisions/               Architecture decision records
+  hardening.md             Host firewall, SSH, and sysctl hardening
   install-debian.md        First Debian development install path
   image-build.md           Bootable image plan
   security.md              Security model and hardening principles
   roadmap.md               MVP phases
 packaging/
+  nftables/                Host firewall rules
+  sysctl/                  Host kernel/network hardening
   systemd/                 Host services and timers
 scripts/
   bootstrap/               First boot and host provisioning scripts
   checks/                  CI validation helpers
+  hardening/               Host hardening helpers
 ```
 
 ## Security
