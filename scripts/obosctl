@@ -1,0 +1,142 @@
+#!/usr/bin/env sh
+set -eu
+
+APP_NAME="openbridgeserver"
+APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
+ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
+BACKUP_DIR="${OBOS_BACKUP_DIR:-/srv/obos/backups}"
+SERVICE_NAME="obos-openbridgeserver.service"
+HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
+
+usage() {
+  cat <<'EOF'
+Usage: obosctl <command>
+
+Commands:
+  status      Show systemd, container, and health status
+  start       Start Open Bridge Server
+  stop        Stop Open Bridge Server
+  restart     Restart Open Bridge Server
+  update      Pull container images, restart, and verify health
+  logs        Follow Open Bridge Server stack logs
+  backup      Create a timestamped appliance backup
+  health      Check Open Bridge Server health endpoint
+EOF
+}
+
+require_root() {
+  if [ "$(id -u)" -ne 0 ]; then
+    echo "obosctl $1 must run as root" >&2
+    exit 1
+  fi
+}
+
+require_files() {
+  [ -d "${APP_DIR}" ] || {
+    echo "missing app directory: ${APP_DIR}" >&2
+    exit 1
+  }
+  [ -f "${ENV_FILE}" ] || {
+    echo "missing environment file: ${ENV_FILE}" >&2
+    exit 1
+  }
+}
+
+compose() {
+  require_files
+  docker compose --env-file "${ENV_FILE}" --project-directory "${APP_DIR}" -f "${APP_DIR}/compose.yaml" "$@"
+}
+
+health() {
+  if command -v curl >/dev/null 2>&1; then
+    curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null
+  else
+    wget -q -T 5 -O /dev/null "${HEALTH_URL}"
+  fi
+}
+
+status() {
+  systemctl --no-pager --lines=0 status "${SERVICE_NAME}" || true
+  echo
+  compose ps || true
+  echo
+  if health; then
+    echo "health: ok"
+  else
+    echo "health: failed"
+    return 1
+  fi
+}
+
+backup() {
+  require_root backup
+  require_files
+  install -d -m 0750 "${BACKUP_DIR}"
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  target="${BACKUP_DIR}/obos-${APP_NAME}-${stamp}.tar.gz"
+
+  tar -czf "${target}" \
+    -C / etc/obos/apps/${APP_NAME}.env \
+    -C "${APP_DIR}" data mqtt obos-app.yaml compose.yaml mosquitto.conf
+
+  chmod 0600 "${target}"
+  echo "backup: ${target}"
+}
+
+update_app() {
+  require_root update
+  require_files
+  backup
+  compose pull
+  systemctl restart "${SERVICE_NAME}"
+
+  tries=30
+  while [ "${tries}" -gt 0 ]; do
+    if health; then
+      echo "update: health check passed"
+      return 0
+    fi
+    tries=$((tries - 1))
+    sleep 2
+  done
+
+  echo "update: health check failed after restart" >&2
+  return 1
+}
+
+case "${1:-}" in
+  status)
+    status
+    ;;
+  start)
+    require_root start
+    systemctl start "${SERVICE_NAME}"
+    ;;
+  stop)
+    require_root stop
+    systemctl stop "${SERVICE_NAME}"
+    ;;
+  restart)
+    require_root restart
+    systemctl restart "${SERVICE_NAME}"
+    ;;
+  update)
+    update_app
+    ;;
+  logs)
+    compose logs -f --tail=200
+    ;;
+  backup)
+    backup
+    ;;
+  health)
+    health
+    ;;
+  -h|--help|help|"")
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
