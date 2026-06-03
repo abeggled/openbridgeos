@@ -19,11 +19,14 @@ jobs:
       - name: Install checks
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends shellcheck
+          sudo apt-get install -y --no-install-recommends nftables shellcheck
 
       - name: Shell syntax
         run: |
-          shellcheck scripts/obosctl scripts/bootstrap/*.sh scripts/checks/*.sh
+          shellcheck scripts/obosctl scripts/bootstrap/*.sh scripts/checks/*.sh scripts/hardening/*.sh
+
+      - name: nftables syntax
+        run: sudo nft -c -f packaging/nftables/obos.nft
 
       - name: Security defaults
         run: sh scripts/checks/check-security-defaults.sh
