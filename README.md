@@ -70,6 +70,18 @@ sudo /usr/lib/obos/security-baseline.sh
 
 See [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).
 
+## TLS Trust
+
+The planned release TLS model uses a local CA per appliance instance. The first
+helper scripts can already generate trust material and print fingerprints:
+
+```sh
+sudo /usr/lib/obos/generate-tls-material.sh
+sudo /usr/lib/obos/print-trust-info.sh
+```
+
+See [docs/tls-trust.md](docs/tls-trust.md).
+
 ## Administration
 
 The first appliance administration interface is `obosctl`:
@@ -96,6 +108,7 @@ docs/
   image-build.md           Bootable image plan
   security-baseline-testplan.md  First VM security validation plan
   security.md              Security model and hardening principles
+  tls-trust.md             Local CA trust material notes
   roadmap.md               MVP phases
 packaging/
   nftables/                Host firewall rules
@@ -106,6 +119,7 @@ scripts/
   bootstrap/               First boot and host provisioning scripts
   checks/                  CI validation helpers
   hardening/               Host hardening helpers
+  tls/                     TLS trust helper scripts
 ```
 
 ## Security
