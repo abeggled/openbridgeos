@@ -24,6 +24,7 @@ The default nftables policy is intentionally small:
 - allow loopback
 - allow established and related traffic
 - allow ICMP and IPv6 ICMP
+- allow DHCPv4 and DHCPv6 client renewals
 - allow TCP `8080` for Open Bridge Server UI/API
 - drop other inbound traffic
 - keep forwarding allowed so Docker networking is not broken accidentally
