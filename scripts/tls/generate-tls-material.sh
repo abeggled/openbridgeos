@@ -9,6 +9,7 @@ LEAF_KEY="${TLS_DIR}/obos.local.key"
 LEAF_CERT="${TLS_DIR}/obos.local.crt"
 LEAF_CSR="${TLS_DIR}/obos.local.csr"
 LEAF_EXT="${TLS_DIR}/obos.local.ext"
+IP_LIST="${TLS_DIR}/obos.local.ips"
 DAYS_CA="${OBOS_TLS_CA_DAYS:-3650}"
 DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-397}"
 
@@ -27,6 +28,9 @@ if [ ! -f "${CA_KEY}" ] || [ ! -f "${CA_CERT}" ]; then
     -sha256 \
     -days "${DAYS_CA}" \
     -subj "/CN=Open Bridge OS Local CA ${HOSTNAME_VALUE}" \
+    -addext "basicConstraints=critical,CA:TRUE,pathlen:0" \
+    -addext "keyUsage=critical,keyCertSign,cRLSign" \
+    -addext "subjectKeyIdentifier=hash" \
     -out "${CA_CERT}"
   chmod 0644 "${CA_CERT}"
 fi
@@ -34,11 +38,13 @@ fi
 openssl genrsa -out "${LEAF_KEY}" 4096
 chmod 0600 "${LEAF_KEY}"
 openssl req -new -key "${LEAF_KEY}" -subj "/CN=${HOSTNAME_VALUE}" -out "${LEAF_CSR}"
+: > "${IP_LIST}"
+hostname -I 2>/dev/null | tr ' ' '\n' > "${IP_LIST}" || true
 
 {
   echo "authorityKeyIdentifier=keyid,issuer"
-  echo "basicConstraints=CA:FALSE"
-  echo "keyUsage=digitalSignature,keyEncipherment"
+  echo "basicConstraints=critical,CA:FALSE"
+  echo "keyUsage=critical,digitalSignature,keyEncipherment"
   echo "extendedKeyUsage=serverAuth"
   echo "subjectAltName=@alt_names"
   echo ""
@@ -47,11 +53,11 @@ openssl req -new -key "${LEAF_KEY}" -subj "/CN=${HOSTNAME_VALUE}" -out "${LEAF_C
   echo "DNS.2=${HOSTNAME_VALUE}"
   echo "DNS.3=${HOSTNAME_VALUE}.local"
   index=1
-  hostname -I 2>/dev/null | tr ' ' '\n' | while IFS= read -r ip; do
+  while IFS= read -r ip; do
     [ -n "${ip}" ] || continue
     echo "IP.${index}=${ip}"
     index=$((index + 1))
-  done
+  done < "${IP_LIST}"
 } > "${LEAF_EXT}"
 
 openssl x509 -req \
@@ -65,6 +71,6 @@ openssl x509 -req \
   -extfile "${LEAF_EXT}"
 
 chmod 0644 "${LEAF_CERT}"
-rm -f "${LEAF_CSR}"
+rm -f "${LEAF_CSR}" "${IP_LIST}"
 
 printf 'TLS material written to %s\n' "${TLS_DIR}"
