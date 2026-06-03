@@ -38,6 +38,8 @@ install -m 0755 "${REPO_ROOT}/scripts/bootstrap/install-openbridgeserver-app.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/apply-host-hardening.sh" "${OBOS_LIB_DIR}/apply-host-hardening.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/enable-ssh.sh" "${OBOS_LIB_DIR}/enable-ssh.sh"
 install -m 0755 "${REPO_ROOT}/scripts/audit/security-baseline.sh" "${OBOS_LIB_DIR}/security-baseline.sh"
+install -m 0755 "${REPO_ROOT}/scripts/tls/generate-tls-material.sh" "${OBOS_LIB_DIR}/generate-tls-material.sh"
+install -m 0755 "${REPO_ROOT}/scripts/tls/print-trust-info.sh" "${OBOS_LIB_DIR}/print-trust-info.sh"
 install -m 0755 "${REPO_ROOT}/scripts/obosctl" /usr/bin/obosctl
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-first-boot.service" /etc/systemd/system/obos-first-boot.service
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-openbridgeserver.service" /etc/systemd/system/obos-openbridgeserver.service
@@ -51,5 +53,5 @@ systemctl enable docker.service
 systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
 
-# Do not run first boot during image creation. Secrets must be generated on the
-# target device, not in the build environment.
+# Do not run first boot during image creation. Secrets and TLS material must be
+# generated on the target appliance instance, not in the build environment.
