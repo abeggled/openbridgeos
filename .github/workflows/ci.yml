@@ -23,7 +23,7 @@ jobs:
 
       - name: Shell syntax
         run: |
-          shellcheck scripts/bootstrap/*.sh scripts/checks/*.sh
+          shellcheck scripts/obosctl scripts/bootstrap/*.sh scripts/checks/*.sh
 
       - name: Security defaults
         run: sh scripts/checks/check-security-defaults.sh
