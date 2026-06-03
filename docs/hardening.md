@@ -9,6 +9,7 @@ Provisioning installs and applies:
 
 - nftables host firewall
 - sysctl hardening baseline
+- Docker daemon hardening defaults
 - SSH disabled by default when `ssh.service` exists
 
 The hardening entry point is:
@@ -75,6 +76,18 @@ weaknesses:
 - enable IPv4 reverse path filtering
 - enable TCP SYN cookies
 
+## Docker Daemon Baseline
+
+The Docker daemon config uses conservative operational hardening:
+
+- `no-new-privileges` as a daemon default
+- `live-restore` so containers are less coupled to daemon restarts
+- local log driver with bounded log size and file count
+
+The first baseline intentionally avoids user namespace remapping and broad
+inter-container communication changes until the OBS/Mosquitto stack has been
+validated under those constraints.
+
 ## Design Boundaries
 
 The current hardening layer is host-focused. It does not yet implement:
@@ -83,4 +96,4 @@ The current hardening layer is host-focused. It does not yet implement:
 - image signing
 - rollback for failed updates
 - full disk encryption
-- Docker daemon hardening beyond package defaults
+- advanced Docker isolation such as user namespace remapping
