@@ -6,7 +6,7 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-REPO_ROOT="${1:-$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)}"
+REPO_ROOT="${1:-$(cd -- "$(dirname -- "$0")/../.." && pwd)}"
 OBOS_SHARE_DIR="/usr/share/obos"
 OBOS_LIB_DIR="/usr/lib/obos"
 OBOS_APP_SOURCE="${OBOS_SHARE_DIR}/apps/openbridgeserver"
@@ -51,4 +51,4 @@ systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
 
 # Do not run first boot during image creation. Secrets must be generated on the
-# target device, not in the build environment.
+target device, not in the build environment.
