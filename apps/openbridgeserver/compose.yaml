@@ -1,0 +1,83 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    user: root
+    command: >
+      sh -c "
+      mkdir -p /mosquitto/passwd &&
+      rm -f /mosquitto/passwd/passwd &&
+      mosquitto_passwd -c -b /mosquitto/passwd/passwd $$MQTT_SVC_USER $$MQTT_SVC_PASS &&
+      chown -R mosquitto:mosquitto /mosquitto/passwd &&
+      chmod 750 /mosquitto/passwd &&
+      chmod 640 /mosquitto/passwd/passwd &&
+      exec mosquitto -c /mosquitto/config/mosquitto.conf
+      "
+    environment:
+      MQTT_SVC_USER: ${OBS_MQTT_USERNAME:-obs}
+      MQTT_SVC_PASS: ${OBS_MQTT_PASSWORD:?OBS_MQTT_PASSWORD must be set}
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mqtt/passwd:/mosquitto/passwd
+      - ./mqtt/data:/mosquitto/data
+      - ./mqtt/log:/mosquitto/log
+    ports:
+      - "${OBS_MQTT_HOST_PORT:-127.0.0.1:1883}:1883"
+      - "${OBS_MQTT_WS_HOST_PORT:-127.0.0.1:9001}:9001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mosquitto_sub",
+          "-t",
+          "$$SYS/#",
+          "-C",
+          "1",
+          "-i",
+          "healthcheck",
+          "-u",
+          "${OBS_MQTT_USERNAME:-obs}",
+          "-P",
+          "${OBS_MQTT_PASSWORD:?OBS_MQTT_PASSWORD must be set}",
+          "-W",
+          "3"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  obs:
+    image: ghcr.io/abeggled/openbridgeserver:${OBS_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    pid: "service:mosquitto"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    volumes:
+      - ./data:/data
+      - ./mqtt/passwd:/mosquitto/passwd
+    ports:
+      - "${OBS_HTTP_HOST_PORT:-8080}:8080"
+    environment:
+      OBS_MQTT__HOST: mosquitto
+      OBS_MQTT__PORT: "1883"
+      OBS_MQTT__USERNAME: ${OBS_MQTT_USERNAME:-obs}
+      OBS_MQTT__PASSWORD: ${OBS_MQTT_PASSWORD:?OBS_MQTT_PASSWORD must be set}
+      OBS_MOSQUITTO__PASSWD_FILE: /mosquitto/passwd/passwd
+      OBS_MOSQUITTO__SERVICE_USERNAME: ${OBS_MQTT_USERNAME:-obs}
+      OBS_MOSQUITTO__SERVICE_PASSWORD: ${OBS_MQTT_PASSWORD:?OBS_MQTT_PASSWORD must be set}
+      OBS_MOSQUITTO__RELOAD_PID: "1"
+      OBS_SECURITY__JWT_SECRET: ${OBS_JWT_SECRET:?OBS_JWT_SECRET must be set}
+      OBS_SERVER__LOG_LEVEL: ${OBS_LOG_LEVEL:-INFO}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/system/health')"
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
