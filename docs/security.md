@@ -32,7 +32,8 @@ On first boot, obos should:
 
 Before public release, first boot or first onboarding should also generate
 per-appliance-instance TLS trust material. See
-[0004: Use a Per-Appliance-Instance Local CA for TLS Trust Onboarding](decisions/0004-local-ca-trust-onboarding.md).
+[0004: Use a Per-Appliance-Instance Local CA for TLS Trust Onboarding](decisions/0004-local-ca-trust-onboarding.md)
+and [tls-trust.md](tls-trust.md).
 
 Target permissions:
 
