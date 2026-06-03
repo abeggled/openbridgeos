@@ -1,0 +1,27 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet obos_filter {
+  chain input {
+    type filter hook input priority filter; policy drop;
+
+    iif "lo" accept
+    ct state established,related accept
+    ct state invalid drop
+
+    ip protocol icmp accept
+    ip6 nexthdr ipv6-icmp accept
+
+    # Open Bridge Server UI/API. MQTT remains localhost-only by Compose default.
+    tcp dport 8080 accept
+  }
+
+  chain forward {
+    type filter hook forward priority filter; policy accept;
+  }
+
+  chain output {
+    type filter hook output priority filter; policy accept;
+  }
+}
