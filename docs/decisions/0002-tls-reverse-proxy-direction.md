@@ -36,7 +36,7 @@ The initial release direction is:
 - generate a per-device local certificate during first boot or onboarding
 - show the certificate fingerprint during onboarding
 - document how administrators can replace the certificate with their own
-- keep MQTT external exposure disabled by default
+- keep MQTT external exposure disabled by default, with explicit opt-in support
 
 The reverse proxy implementation should be decided after the first Debian VM
 baseline has passed. Caddy, nginx, and a small purpose-built proxy are candidate
@@ -50,6 +50,7 @@ paths.
 - The security baseline audit must grow TLS checks before public images.
 - First boot needs certificate material generation and secure storage.
 - The obos UI and Open Bridge Server can later share one TLS entrypoint.
+- MQTT remains a separate opt-in exposure decision.
 
 ## Open Questions
 
