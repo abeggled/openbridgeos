@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate project files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install checks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends shellcheck
+
+      - name: Shell syntax
+        run: |
+          shellcheck scripts/bootstrap/*.sh scripts/checks/*.sh
+
+      - name: Security defaults
+        run: scripts/checks/check-security-defaults.sh
+
+      - name: Compose config
+        run: scripts/checks/validate-compose.sh
