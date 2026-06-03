@@ -15,12 +15,14 @@
 - Generate first boot secrets.
 - Start Open Bridge Server automatically.
 - Verify health endpoint after boot.
+- Run the security baseline audit and document deviations.
 
 ## Milestone 2: Raspberry Pi 4+ Image
 
 - Build ARM64 image.
 - Verify boot from SD and USB.
 - Validate Docker and Open Bridge Server startup.
+- Validate host hardening on Raspberry Pi networking.
 - Document expected hardware and power requirements.
 
 ## Milestone 3: Appliance Web UI
@@ -31,12 +33,14 @@
 - Show logs.
 - Trigger backups and downloads.
 - Configure hostname, timezone, and network basics.
+- Surface hardening status and security baseline results.
 
 ## Milestone 4: Hardened Release
 
 - First boot onboarding flow.
 - Firewall defaults.
 - SSH policy.
+- TLS reverse proxy for Open Bridge Server and obos UI.
 - Signed release artifacts and checksums.
 - Update rollback notes.
 - Security hardening checklist in CI.
