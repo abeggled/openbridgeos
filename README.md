@@ -52,12 +52,25 @@ sudo reboot
 See [docs/install-debian.md](docs/install-debian.md) and
 [docs/image-build.md](docs/image-build.md).
 
+## Administration
+
+The first appliance administration interface is `obosctl`:
+
+```sh
+obosctl status
+sudo obosctl backup
+sudo obosctl update
+```
+
+See [docs/admin-cli.md](docs/admin-cli.md).
+
 ## Repository Layout
 
 ```text
 apps/
   openbridgeserver/        Managed Open Bridge Server app definition
 docs/
+  admin-cli.md             Local appliance administration commands
   architecture.md          System shape and design decisions
   decisions/               Architecture decision records
   install-debian.md        First Debian development install path
