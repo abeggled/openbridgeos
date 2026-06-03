@@ -43,7 +43,7 @@ Default external exposure is minimal:
 
 - Open Bridge Server HTTP UI/API on `8080/tcp` for the development baseline
 - no external SSH
-- no external MQTT
+- MQTT external access disabled by default
 - obos administration UI once implemented
 
 The host firewall uses nftables with inbound default-drop. It allows loopback,
@@ -55,6 +55,10 @@ MQTT remains bound to localhost by default:
 127.0.0.1:1883
 127.0.0.1:9001
 ```
+
+Administrators must be able to enable LAN MQTT access explicitly when their
+installation requires it. See
+[0003: MQTT External Access Is Explicit Opt-In](decisions/0003-mqtt-external-access-opt-in.md).
 
 Before public release, direct TCP `8080` exposure should be replaced by a TLS
 reverse proxy entrypoint. See
