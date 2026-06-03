@@ -1,0 +1,40 @@
+id: openbridgeserver
+name: Open Bridge Server
+description: Multiprotocol building automation server for KNX, Modbus, MQTT, 1-Wire, Home Assistant, ioBroker, SNMP, scheduler, and logic automation.
+runtime: docker-compose
+compose_file: compose.yaml
+default_url: http://{host}:8080
+health:
+  type: http
+  url: http://127.0.0.1:8080/api/v1/system/health
+ports:
+  - name: http
+    port: 8080
+    protocol: tcp
+    exposure: lan
+    required: true
+  - name: mqtt
+    port: 1883
+    protocol: tcp
+    exposure: localhost
+    required: false
+  - name: mqtt-ws
+    port: 9001
+    protocol: tcp
+    exposure: localhost
+    required: false
+data:
+  - path: data
+    description: Open Bridge Server SQLite database, configuration, history, and app data
+  - path: mqtt
+    description: Mosquitto password file, persistence, and logs
+secrets:
+  - OBS_JWT_SECRET
+  - OBS_MQTT_PASSWORD
+update:
+  strategy: compose-pull-restart
+backup:
+  includes:
+    - data
+    - mqtt
+    - /etc/obos/apps/openbridgeserver.env
