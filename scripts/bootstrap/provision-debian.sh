@@ -31,6 +31,7 @@ install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/mosquitto.conf" "${OBOS_APP_
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/obos-app.yaml" "${OBOS_APP_SOURCE}/obos-app.yaml"
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/first-boot.sh" "${OBOS_LIB_DIR}/first-boot.sh"
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/install-openbridgeserver-app.sh" "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh"
+install -m 0755 "${REPO_ROOT}/scripts/obosctl" /usr/bin/obosctl
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-first-boot.service" /etc/systemd/system/obos-first-boot.service
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-openbridgeserver.service" /etc/systemd/system/obos-openbridgeserver.service
 
