@@ -33,12 +33,20 @@ base_image_sha256=${BASE_IMAGE_SHA256}
 provision_script=scripts/bootstrap/provision-debian.sh
 first_boot_service=obos-first-boot.service
 repo_revision=test-revision
+repo_dirty=false
 ssh_default=disabled
 first_boot_pending=true
 contains_secrets=false
 EOF
 
 OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-qcow2-manifest.sh "${MANIFEST_FILE}" >/dev/null
+
+DIRTY_MANIFEST="${TMP_DIR}/obos-amd64-vm-test-dirty.qcow2.manifest"
+sed 's/^repo_dirty=false$/repo_dirty=true/' "${MANIFEST_FILE}" > "${DIRTY_MANIFEST}"
+if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-qcow2-manifest.sh "${DIRTY_MANIFEST}" >/dev/null 2>&1; then
+  echo "qcow2 manifest fixture failed: dirty release manifest was accepted" >&2
+  exit 1
+fi
 
 printf '0000000000000000000000000000000000000000000000000000000000000000  %s\n' "${IMAGE_FILE}" > "${CHECKSUM_FILE}"
 if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-qcow2-manifest.sh "${MANIFEST_FILE}" >/dev/null 2>&1; then

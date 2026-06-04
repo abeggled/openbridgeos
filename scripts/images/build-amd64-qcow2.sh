@@ -29,6 +29,24 @@ repo_revision() {
   fi
 }
 
+repo_dirty() {
+  if command -v git >/dev/null 2>&1 && git -C "${REPO_ROOT}" rev-parse HEAD >/dev/null 2>&1; then
+    status="$(git -C "${REPO_ROOT}" status --porcelain)"
+    if [ -n "${status}" ]; then
+      echo true
+    else
+      echo false
+    fi
+  else
+    echo unknown
+  fi
+}
+
+require_clean_release_repo() {
+  dirty="$(repo_dirty)"
+  [ "${dirty}" = "false" ] || fail "release builds require a clean git tree, got repo_dirty=${dirty}"
+}
+
 verify_release_build_inputs() {
   case "${RELEASE_BUILD}" in
     0|1) ;;
@@ -37,6 +55,10 @@ verify_release_build_inputs() {
 
   if [ "${RELEASE_BUILD}" = "1" ] && [ -z "${BASE_IMAGE_SHA256}" ]; then
     fail "release builds require OBOS_QCOW2_BASE_IMAGE_SHA256"
+  fi
+
+  if [ "${RELEASE_BUILD}" = "1" ]; then
+    require_clean_release_repo
   fi
 }
 
@@ -82,6 +104,7 @@ base_image_sha256=${base_sha256}
 provision_script=${OBOS_PROVISION_SCRIPT}
 first_boot_service=${OBOS_FIRST_BOOT_SERVICE}
 repo_revision=${revision}
+repo_dirty=$(repo_dirty)
 ssh_default=${OBOS_IMAGE_DEFAULT_SSH}
 first_boot_pending=true
 contains_secrets=false

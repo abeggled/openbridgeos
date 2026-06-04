@@ -104,6 +104,14 @@ case "${release_build}" in
   *) fail "release_build must be 0 or 1, got ${release_build}" ;;
 esac
 
+repo_dirty="$(manifest_value repo_dirty "${MANIFEST_FILE}")"
+case "${repo_dirty}" in
+  true|false|unknown) ;;
+  *) fail "repo_dirty must be true, false, or unknown, got ${repo_dirty}" ;;
+esac
+[ "${release_build}" != "1" ] || [ "${repo_dirty}" = "false" ] \
+  || fail "release builds must record repo_dirty=false"
+
 image_path="$(manifest_value image "${MANIFEST_FILE}")"
 checksum_file="$(manifest_value checksum_file "${MANIFEST_FILE}")"
 image_sha256="$(manifest_value image_sha256 "${MANIFEST_FILE}")"

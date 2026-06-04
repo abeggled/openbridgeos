@@ -178,6 +178,7 @@ The qcow2 manifest uses format `obos-qcow2-build-v1` and records:
 - base image path, source URL, and SHA-256 hash
 - provision script and first boot service
 - repository revision when available
+- repository dirty state
 - SSH default policy
 - `first_boot_pending=true`
 - `contains_secrets=false`
@@ -300,7 +301,7 @@ The Raspberry Pi image manifest uses format `obos-rpi-image-build-v1` and record
 - SSH disabled by default
 - required kernel config and whether it was verified
 - provision script and first boot service
-- repository revision
+- repository revision and dirty state
 - `first_boot_pending=true`
 - `contains_secrets=false`
 
