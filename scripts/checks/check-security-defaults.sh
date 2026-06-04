@@ -148,6 +148,15 @@ grep -q 'format=obos-agent-response-v1' scripts/agent/obos-agent.sh \
 grep -q 'format=obos-agent-actions-v1' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not declare an action inventory format"
 
+grep -q 'format=obos-agent-audit-v1' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not declare a mutation audit format"
+
+grep -q 'OBOS_AGENT_AUDIT_LOG' scripts/agent/obos-agent.sh \
+  || fail "obos-agent audit log path is not configurable"
+
+grep -q 'write_audit_log' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not audit mutating actions"
+
 grep -q 'action=status-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark read-only actions"
 

@@ -14,6 +14,12 @@ grep -q 'format=obos-agent-response-v1' "${AGENT}" \
   || fail "agent response format missing"
 grep -q 'format=obos-agent-actions-v1' "${AGENT}" \
   || fail "agent actions format missing"
+grep -q 'format=obos-agent-audit-v1' "${AGENT}" \
+  || fail "agent audit format missing"
+grep -q 'OBOS_AGENT_AUDIT_LOG' "${AGENT}" \
+  || fail "agent audit log path is not configurable"
+grep -q 'write_audit_log' "${AGENT}" \
+  || fail "agent does not write mutation audit entries"
 grep -q 'require_no_extra_args' "${AGENT}" \
   || fail "agent does not reject extra arguments"
 grep -q 'require_confirm_args' "${AGENT}" \
@@ -93,11 +99,17 @@ if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" start >/dev/null 2>&1; 
   fail "agent accepted mutation without confirmation"
 fi
 
-OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" start --confirm start |
+[ -f "${tmp_dir}/agent-audit.log" ] \
+  && fail "read-only calls unexpectedly created audit log before configured mutation"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" start --confirm start |
   grep -q 'stdout=started' \
   || fail "agent did not run confirmed start mutation"
 
-OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 192.168.1.0/24 --confirm mqtt-enable-lan |
+grep -q 'format=obos-agent-audit-v1|.*|action=start|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not write expected mutation audit entry"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 192.168.1.0/24 --confirm mqtt-enable-lan |
   grep -q 'stdout=mqtt-enabled:192.168.1.0/24' \
   || fail "agent did not forward MQTT source CIDR"
 
