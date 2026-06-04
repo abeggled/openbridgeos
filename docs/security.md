@@ -196,6 +196,11 @@ Restore staging may extract a validated backup into a private staging directory
 for review, but it must not replace live files until a future explicit apply
 step is implemented.
 
+Staged restores should be inspected before any future apply step. The stage
+inspection verifies the restore stage manifest, staged-only mode, expected app
+name, required restore inputs, and confirms that excluded Mosquitto logs were
+not staged.
+
 Backups should not include:
 
 - transient container layers

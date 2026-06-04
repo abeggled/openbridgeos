@@ -13,6 +13,7 @@ obosctl proxy-health
 obosctl restore-inspect <backup.tar.gz>
 obosctl restore-plan <backup.tar.gz>
 sudo obosctl restore-stage <backup.tar.gz>
+sudo obosctl restore-stage-inspect <stage-dir>
 sudo obosctl start
 sudo obosctl stop
 sudo obosctl restart
@@ -149,6 +150,18 @@ live appliance files. It also writes a mode `0600` `obos-restore-stage.txt`
 manifest that records the source backup, stage path, app, service, staged-only
 mode, and TLS private key presence. The staging directory contains sensitive data
 and should be treated like the original backup.
+
+## Restore Stage Inspection
+
+```sh
+sudo obosctl restore-stage-inspect /srv/obos/state/restore-staging/restore.XXXXXXXX
+```
+
+`restore-stage-inspect` verifies an already extracted staging directory before a
+future apply step is allowed to use it. It checks the stage manifest format,
+staged-only mode, expected app name, required restore inputs, and confirms that
+Mosquitto logs were not staged. The command does not stop services and does not
+replace live appliance files.
 
 ## MQTT LAN Access
 
