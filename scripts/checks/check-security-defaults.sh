@@ -108,6 +108,16 @@ grep -q 'health_https_proxy=ok' scripts/obosctl \
 grep -q 'last-update:' scripts/obosctl \
   || fail "obosctl status does not show last update state"
 
+grep -q 'status-summary)' scripts/obosctl \
+  || fail "obosctl does not expose machine-readable status"
+
+grep -q 'format=obos-status-summary-v1' scripts/obosctl \
+  || fail "obosctl status summary does not declare a format"
+
+# shellcheck disable=SC2016
+grep -Fq 'health_https_proxy=${health_https_proxy}' scripts/obosctl \
+  || fail "obosctl status summary does not report HTTPS proxy health"
+
 grep -q 'proxy-health)' scripts/obosctl \
   || fail "obosctl does not expose verified HTTPS proxy health"
 
