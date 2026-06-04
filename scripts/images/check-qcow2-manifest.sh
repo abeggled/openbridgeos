@@ -62,6 +62,23 @@ check_hash() {
     || fail "${label} sha256 mismatch for ${file_path}"
 }
 
+check_checksum_file() {
+  checksum_file="$1"
+  expected_hash="$2"
+
+  if [ ! -f "${checksum_file}" ]; then
+    if [ "${STRICT_FILES}" = "1" ]; then
+      fail "checksum file missing: ${checksum_file}"
+    fi
+    warn "checksum file missing, content not checked: ${checksum_file}"
+    return 0
+  fi
+
+  actual_hash="$(cut -d ' ' -f 1 < "${checksum_file}")"
+  [ "${actual_hash}" = "${expected_hash}" ] \
+    || fail "checksum file sha256 mismatch for ${checksum_file}"
+}
+
 [ "$#" -eq 1 ] || fail "usage: $0 <manifest>"
 MANIFEST_FILE="$1"
 
@@ -88,6 +105,7 @@ case "${release_build}" in
 esac
 
 image_path="$(manifest_value image "${MANIFEST_FILE}")"
+checksum_file="$(manifest_value checksum_file "${MANIFEST_FILE}")"
 image_sha256="$(manifest_value image_sha256 "${MANIFEST_FILE}")"
 base_image_path="$(manifest_value base_image "${MANIFEST_FILE}")"
 base_image_sha256="$(manifest_value base_image_sha256 "${MANIFEST_FILE}")"
@@ -98,6 +116,7 @@ base_image_sha256="$(manifest_value base_image_sha256 "${MANIFEST_FILE}")"
 [ -n "$(manifest_value repo_revision "${MANIFEST_FILE}")" ] || fail "repo_revision must not be empty"
 
 check_hash image "${image_path}" "${image_sha256}"
+check_checksum_file "${checksum_file}" "${image_sha256}"
 check_hash base_image "${base_image_path}" "${base_image_sha256}"
 
 echo "qcow2 manifest: PASS ${MANIFEST_FILE}"

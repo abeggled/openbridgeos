@@ -122,6 +122,7 @@ output_compression=${OBOS_OUTPUT_COMPRESSION}
 image_extension=${OBOS_IMAGE_EXTENSION}
 release_build=${RELEASE_BUILD}
 image=${image_file}
+checksum_file=${checksum_file}
 image_sha256=${image_sha256}
 network_installer_compatible=${OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE}
 boot_media=${OBOS_RPI_BOOT_MEDIA}

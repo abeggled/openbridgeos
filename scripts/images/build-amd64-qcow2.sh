@@ -74,6 +74,7 @@ debian_release=${OBOS_DEBIAN_RELEASE}
 output_format=${OBOS_OUTPUT_FORMAT}
 release_build=${RELEASE_BUILD}
 image=${image_file}
+checksum_file=${checksum_file}
 image_sha256=${image_sha256}
 base_image=${base_image_file}
 base_image_url=${OBOS_QCOW2_BASE_IMAGE_URL}
