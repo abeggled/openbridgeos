@@ -1,5 +1,7 @@
 # open bridge operating system
 
+Languages: [English](README.md) | [Deutsch](README.de.md)
+
 open bridge operating system (obos) is a security-focused Debian appliance for running
 Open Bridge Server with minimal setup effort.
 
