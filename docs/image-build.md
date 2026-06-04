@@ -33,7 +33,7 @@ Current profiles:
 
 ```text
 amd64-vm.env      Debian Trixie amd64 VM image profile, qcow2 output
-rpi4-arm64.env    Debian Trixie arm64 Raspberry Pi 4+ image profile, planned raw output
+rpi4-arm64.env    Debian Trixie arm64 Raspberry Pi 4+ image profile, raw img.xz output
 ```
 
 Profiles are shell-style key-value files that describe the build target. Required
@@ -46,8 +46,11 @@ minimum output size, required builder tooling, and the default SSH policy.
 Raspberry Pi profiles also declare:
 
 - Raspberry Pi Network Installer compatibility
+- compressed raw `.img.xz` output
 - supported boot media: SD, USB, and NVMe
 - Raspberry Pi bootloader firmware mode
+- boot/root partition layout and labels
+- required build host tooling
 - required kernel config flags
 
 For the `rpi4-arm64` profile, `CONFIG_BLK_DEV_NVME=y` is a hard requirement so
@@ -82,10 +85,12 @@ Every image builder must follow the same contract:
 
 Raspberry Pi image builders must additionally:
 
-1. Produce an image that Raspberry Pi Network Installer can deploy.
-2. Preserve compatibility with SD, USB, and NVMe boot media.
-3. Verify the kernel config contract before publishing artifacts.
-4. Keep `CONFIG_BLK_DEV_NVME=y` enabled for every release image.
+1. Produce a compressed raw `.img.xz` image that Raspberry Pi Network Installer can deploy.
+2. Use a `boot-fat32,root-ext4` partition layout.
+3. Label the boot partition `OBOSBOOT` and the root partition `OBOSROOT`.
+4. Preserve compatibility with SD, USB, and NVMe boot media.
+5. Verify the kernel config contract before publishing artifacts.
+6. Keep `CONFIG_BLK_DEV_NVME=y` enabled for every release image.
 
 ## amd64 qcow2 Builder
 
@@ -186,6 +191,33 @@ OBOS_MANIFEST_STRICT_FILES=1 \
 ```
 
 Local build outputs are ignored by git via `build/`, `dist/`, and `*.qcow2`.
+
+## Raspberry Pi arm64 Image
+
+The `rpi4-arm64` profile targets Raspberry Pi 4 and newer boards with Debian 13
+Trixie arm64 userland. The intended publishable artifact is a compressed raw
+image ending in `.img.xz`, suitable for Raspberry Pi Network Installer style
+deployment and manual flashing.
+
+The contract requires:
+
+- architecture: `arm64`
+- output: raw image compressed with `xz`, extension `.img.xz`
+- minimum image size: `8G`
+- partition layout: `boot-fat32,root-ext4`
+- partition labels: `OBOSBOOT` and `OBOSROOT`
+- boot media: SD, USB, and NVMe
+- required kernel config: `CONFIG_BLK_DEV_NVME=y`, `CONFIG_PCIE_BRCMSTB=y`, and `CONFIG_USB_XHCI_PCI=y`
+
+Check the current Raspberry Pi build contract with:
+
+```sh
+sh scripts/images/print-image-build-plan.sh packaging/images/profiles/rpi4-arm64.env
+```
+
+The builder host must provide the profile tools: `debootstrap`,
+`qemu-aarch64-static`, `sfdisk`, `mkfs.vfat`, `mkfs.ext4`, `xz`, and
+`sha256sum`.
 
 ## amd64 qcow2 Smoke Test
 
