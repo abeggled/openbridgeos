@@ -1,6 +1,6 @@
-# Open Bridge OS
+# open bridge operating system
 
-Open Bridge OS (obos) is a security-focused Debian appliance for running
+open bridge operating system (obos) is a security-focused Debian appliance for running
 Open Bridge Server with minimal setup effort.
 
 The target user should be able to write an image to a USB stick or SD card,

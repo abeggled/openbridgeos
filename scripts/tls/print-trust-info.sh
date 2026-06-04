@@ -20,7 +20,7 @@ hostname_value="$(hostname)"
 ip_addresses="$(hostname -I 2>/dev/null | xargs || true)"
 
 cat <<EOF
-Open Bridge OS TLS trust information
+open bridge operating system TLS trust information
 
 Appliance hostname: ${hostname_value}
 Appliance IPs:      ${ip_addresses:-unknown}

@@ -27,7 +27,7 @@ if [ ! -f "${CA_KEY}" ] || [ ! -f "${CA_CERT}" ]; then
     -key "${CA_KEY}" \
     -sha256 \
     -days "${DAYS_CA}" \
-    -subj "/CN=Open Bridge OS Local CA ${HOSTNAME_VALUE}" \
+    -subj "/CN=open bridge operating system local CA ${HOSTNAME_VALUE}" \
     -addext "basicConstraints=critical,CA:TRUE,pathlen:0" \
     -addext "keyUsage=critical,keyCertSign,cRLSign" \
     -addext "subjectKeyIdentifier=hash" \

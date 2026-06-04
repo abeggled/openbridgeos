@@ -8,7 +8,7 @@ implemented.
 
 ## Context
 
-Open Bridge OS needs HTTPS by default before public release, but many target
+open bridge operating system needs HTTPS by default before public release, but many target
 installations are LAN-only and have no public DNS name. Public ACME certificates
 are therefore not a universal default.
 
@@ -24,7 +24,7 @@ contact.
 
 ## Decision
 
-Open Bridge OS should generate a local certificate authority per appliance
+open bridge operating system should generate a local certificate authority per appliance
 instance during first boot or first onboarding, then use it to issue local
 service certificates.
 
@@ -111,7 +111,7 @@ clean path for trusting several local service certificates.
 Not viable for LAN-only and offline-ish deployments. It would force users into
 DNS/domain operations before the appliance is useful.
 
-### Shared Open Bridge OS root CA
+### Shared open bridge operating system root CA
 
 Rejected. A shared root CA would be a high-impact compromise target and would
 violate the per-appliance-instance trust model.

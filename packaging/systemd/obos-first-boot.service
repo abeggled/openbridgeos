@@ -1,5 +1,5 @@
 [Unit]
-Description=Open Bridge OS first boot provisioning
+Description=open bridge operating system first boot provisioning
 ConditionPathExists=!/srv/obos/state/first-boot.done
 After=local-fs.target
 Before=docker.service nginx.service

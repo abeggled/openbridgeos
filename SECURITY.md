@@ -1,6 +1,6 @@
 # Security Policy
 
-Open Bridge OS is intended to run building automation infrastructure. Security
+open bridge operating system is intended to run building automation infrastructure. Security
 issues should be treated as high impact even when the affected system is
 deployed only on a local network.
 

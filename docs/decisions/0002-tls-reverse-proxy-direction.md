@@ -8,11 +8,11 @@ open.
 
 ## Context
 
-The first Open Bridge OS development path exposed Open Bridge Server directly on
+The first open bridge operating system development path exposed Open Bridge Server directly on
 TCP `8080` inside a default-drop firewall. That was useful for early local VM
 validation, but plain HTTP must not become the appliance default.
 
-Open Bridge OS needs a TLS story that works for:
+open bridge operating system needs a TLS story that works for:
 
 - LAN-only appliances without public DNS
 - Raspberry Pi and x86_64 images
@@ -26,7 +26,7 @@ problem for browsers and users.
 
 ## Decision
 
-Open Bridge OS places Open Bridge Server behind a local reverse proxy that
+open bridge operating system places Open Bridge Server behind a local reverse proxy that
 terminates TLS.
 
 The initial implementation uses nginx because it is packaged in Debian, boring,

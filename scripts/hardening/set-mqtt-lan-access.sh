@@ -11,7 +11,7 @@ usage() {
 Usage: set-mqtt-lan-access.sh <enable|disable|status>
 
 Enables or disables explicit LAN access for MQTT plain TCP and MQTT WebSocket.
-Default Open Bridge OS installs keep both listeners bound to localhost.
+Default open bridge operating system installs keep both listeners bound to localhost.
 EOF
 }
 
