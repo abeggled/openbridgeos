@@ -28,6 +28,7 @@ intended host security posture:
 - non-destructive restore planning
 - private restore staging
 - private restore stage inspection
+- non-destructive restore apply planning
 
 ## Test Setup
 
@@ -244,6 +245,7 @@ latest_stage="$(sudo ls -1dt /srv/obos/state/restore-staging/restore.* | head -n
 sudo test -f "${latest_stage}/obos-restore-stage.txt"
 sudo grep '^format=obos-restore-stage-v1$' "${latest_stage}/obos-restore-stage.txt"
 sudo obosctl restore-stage-inspect "${latest_stage}"
+sudo obosctl restore-apply-plan "${latest_stage}"
 ```
 
 Expected:
@@ -261,6 +263,7 @@ Expected:
 - restore staging extracts into a private staging directory without replacing live files
 - restore staging writes a stage manifest
 - restore stage inspection passes and confirms Mosquitto logs were not staged
+- restore apply plan passes without replacing live files
 - backup is treated as sensitive because it contains secrets and TLS private keys
 
 ## Exit Criteria
@@ -278,6 +281,7 @@ The baseline passes when:
 - `obosctl restore-plan` passes for the latest backup
 - `sudo obosctl restore-stage` creates a private staging directory for the latest backup
 - `sudo obosctl restore-stage-inspect` passes for the latest staging directory
+- `sudo obosctl restore-apply-plan` prints the gated future apply plan
 
 ## Known Follow-Up Tests
 

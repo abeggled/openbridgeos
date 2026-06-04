@@ -47,6 +47,9 @@ grep -q 'restore-stage)' scripts/obosctl \
 grep -q 'restore-stage-inspect)' scripts/obosctl \
   || fail "obosctl does not expose restore stage inspection"
 
+grep -q 'restore-apply-plan)' scripts/obosctl \
+  || fail "obosctl does not expose restore apply planning"
+
 grep -q 'RESTORE_STAGE_DIR=' scripts/obosctl \
   || fail "restore staging does not use a dedicated staging directory"
 
@@ -61,6 +64,15 @@ grep -q 'restore stage inspect: PASS' scripts/obosctl \
 
 grep -q 'Mosquitto logs absent' scripts/obosctl \
   || fail "restore stage inspection does not verify log exclusion"
+
+grep -q 'format=obos-restore-apply-plan-v1' scripts/obosctl \
+  || fail "restore apply plan does not declare a format"
+
+grep -q 'restore apply plan: blocked; restore stage inspection failed' scripts/obosctl \
+  || fail "restore apply plan does not require stage inspection"
+
+grep -q 'require an explicit future apply confirmation flag' scripts/obosctl \
+  || fail "restore apply plan does not require explicit confirmation"
 
 # shellcheck disable=SC2016
 grep -q 'chmod 0600 "${stage_manifest}"' scripts/obosctl \
