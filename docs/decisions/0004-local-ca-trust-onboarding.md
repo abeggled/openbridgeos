@@ -37,7 +37,7 @@ Default release direction:
 - include SANs for `obos.local`, `<hostname>.local`, and current local IP
   addresses where practical
 - terminate HTTPS at the obos reverse proxy
-- bind Open Bridge Server to localhost behind that proxy
+- bind open bridge server to localhost behind that proxy
 - expose HTTPS on TCP `443`
 - keep TCP `8080` closed externally before public release
 

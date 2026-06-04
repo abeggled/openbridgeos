@@ -17,7 +17,7 @@ table inet obos_filter {
     udp sport 67 udp dport 68 accept
     udp sport 547 udp dport 546 accept
 
-    # HTTPS reverse proxy. Open Bridge Server binds to localhost behind it.
+    # HTTPS reverse proxy. open bridge server binds to localhost behind it.
     tcp dport 443 accept
 
     # Optional MQTT LAN access is managed by obosctl.

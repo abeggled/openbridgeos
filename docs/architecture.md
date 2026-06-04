@@ -1,6 +1,6 @@
 # Architecture
 
-open bridge operating system is an appliance layer around Open Bridge Server.
+open bridge operating system is an appliance layer around open bridge server.
 
 The project should stay boring in the best possible way: standard Debian,
 standard container runtime, predictable filesystem layout, conservative update
@@ -26,7 +26,7 @@ Hardware or VM
 
 ## Responsibilities
 
-Open Bridge Server owns building automation:
+open bridge server owns building automation:
 
 - adapter configuration
 - datapoints and bindings
@@ -34,7 +34,7 @@ Open Bridge Server owns building automation:
 - visualization
 - user and API key management
 - MQTT account management
-- Open Bridge Server backup and restore format
+- open bridge server backup and restore format
 
 open bridge operating system owns the appliance:
 
@@ -53,11 +53,11 @@ The initial runtime is Docker Compose.
 
 Reasons:
 
-- Open Bridge Server already ships a Compose stack.
-- The stack contains both Open Bridge Server and Mosquitto.
+- open bridge server already ships a Compose stack.
+- The stack contains both open bridge server and Mosquitto.
 - Current operation depends on shared volumes for Mosquitto password handling.
 - The Compose model is easy to inspect and debug for early adopters.
-- Multi-architecture images are already part of the Open Bridge Server build
+- Multi-architecture images are already part of the open bridge server build
   target.
 
 Podman can be evaluated later, but it should not block the first appliance
@@ -100,7 +100,7 @@ trust material below `/etc/obos` must be included deliberately in backups.
 The default appliance should expose only the minimum useful surface:
 
 - `443/tcp` for nginx TLS reverse proxy
-- `127.0.0.1:8080` for Open Bridge Server behind the proxy
+- `127.0.0.1:8080` for open bridge server behind the proxy
 - `127.0.0.1:1883` for MQTT unless LAN MQTT is explicitly enabled
 - `127.0.0.1:9001` for MQTT over WebSocket unless explicitly enabled
 

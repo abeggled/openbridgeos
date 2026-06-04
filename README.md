@@ -3,16 +3,16 @@
 Languages: [English](README.md) | [Deutsch](README.de.md)
 
 open bridge operating system (obos) is a security-focused Debian appliance for running
-Open Bridge Server with minimal setup effort.
+open bridge server with minimal setup effort.
 
 The target user should be able to write an image to a USB stick or SD card,
 boot it on Raspberry Pi 4+ or x86_64 hardware, open a browser, and operate a
-ready-to-use Open Bridge Server installation without managing Linux packages,
+ready-to-use open bridge server installation without managing Linux packages,
 Docker images, Compose files, volumes, or update workflows manually.
 
 ## Scope
 
-obos is intentionally not a second building automation UI. Open Bridge Server
+obos is intentionally not a second building automation UI. open bridge server
 remains responsible for adapters, data points, bindings, logic, visualization,
 users, API keys, and MQTT access.
 
@@ -20,7 +20,7 @@ obos manages the appliance layer:
 
 - first boot setup
 - host identity, network, timezone, and system access
-- Open Bridge Server lifecycle
+- open bridge server lifecycle
 - container runtime updates
 - system updates
 - health checks and logs
@@ -38,7 +38,7 @@ Version 0.1 is planned as:
 - nftables default-drop host firewall
 - sysctl hardening baseline
 - SSH disabled by default when present
-- Open Bridge Server and Mosquitto as the primary managed app
+- open bridge server and Mosquitto as the primary managed app
 - persistent application data below `/srv/obos`
 - a small local `obos-agent` service
 - a web UI for appliance administration
@@ -85,7 +85,7 @@ sudo obosctl tls-info
 sudo obosctl tls-export
 ```
 
-Open Bridge Server is exposed through the local TLS reverse proxy on TCP `443`.
+open bridge server is exposed through the local TLS reverse proxy on TCP `443`.
 The direct OBS HTTP port binds to `127.0.0.1:8080` only.
 
 See [docs/tls-trust.md](docs/tls-trust.md).
@@ -106,7 +106,7 @@ See [docs/admin-cli.md](docs/admin-cli.md).
 
 ```text
 apps/
-  openbridgeserver/        Managed Open Bridge Server app definition
+  openbridgeserver/        Managed open bridge server app definition
 docs/
   admin-cli.md             Local appliance administration commands
   architecture.md          System shape and design decisions
@@ -144,5 +144,5 @@ Security is part of the product surface, not an optional hardening pass. See
 ## Status
 
 Early project bootstrap. The first milestone is a bootable Debian-based image
-that starts Open Bridge Server reliably and exposes a small local
+that starts open bridge server reliably and exposes a small local
 administration surface for appliance operations.

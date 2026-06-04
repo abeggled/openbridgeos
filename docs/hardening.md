@@ -34,7 +34,7 @@ The default nftables policy is intentionally small:
 - keep forwarding allowed so Docker networking is not broken accidentally
 - keep outbound traffic allowed
 
-Open Bridge Server HTTP is not opened externally. It binds to localhost behind
+open bridge server HTTP is not opened externally. It binds to localhost behind
 nginx:
 
 ```text
@@ -58,7 +58,7 @@ sudo obosctl mqtt-status
 ```
 
 Enabling it updates both the Compose environment and the managed nftables block,
-then restarts the firewall and Open Bridge Server stack. Disabling it restores
+then restarts the firewall and open bridge server stack. Disabling it restores
 localhost-only bind addresses and removes the firewall allow rules.
 
 ## TLS Reverse Proxy

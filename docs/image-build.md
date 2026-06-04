@@ -308,7 +308,7 @@ The builder host must provide the profile tools: `debootstrap`,
 ## amd64 qcow2 Smoke Test
 
 The smoke test boots a qcow2 image in snapshot mode, forwards host TCP `8443` to
-the guest HTTPS port, and waits for the Open Bridge Server health endpoint over
+the guest HTTPS port, and waits for the open bridge server health endpoint over
 HTTPS.
 
 Install runtime dependencies on a Linux host:
@@ -354,4 +354,4 @@ the Network Installer compatible `rpi4-arm64` profile.
   the base while keeping the userland aligned with Debian 13?
 - Should development builds have an explicit opt-in SSH profile separate from release images?
 - How should users recover if first boot cannot reach the network to pull the
-  Open Bridge Server image?
+  open bridge server image?

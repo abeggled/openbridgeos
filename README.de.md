@@ -3,17 +3,17 @@
 Sprachen: [English](README.md) | [Deutsch](README.de.md)
 
 open bridge operating system (obos) ist eine sicherheitsorientierte Debian-Appliance
-zum Betrieb von Open Bridge Server mit möglichst wenig Einrichtungsaufwand.
+zum Betrieb von open bridge server mit möglichst wenig Einrichtungsaufwand.
 
 Die Zielgruppe soll ein Image auf einen USB-Stick oder eine SD-Karte schreiben,
 es auf einem Raspberry Pi 4+ oder x86_64-System booten, einen Browser öffnen
-und eine einsatzbereite Open-Bridge-Server-Installation bedienen können, ohne
+und eine einsatzbereite open-bridge-server-Installation bedienen können, ohne
 Linux-Pakete, Docker-Images, Compose-Dateien, Volumes oder Update-Abläufe
 manuell verwalten zu müssen.
 
 ## Umfang
 
-obos ist bewusst keine zweite Gebäudeautomationsoberfläche. Open Bridge Server
+obos ist bewusst keine zweite Gebäudeautomationsoberfläche. open bridge server
 bleibt zuständig für Adapter, Datenpunkte, Bindings, Logik, Visualisierung,
 Benutzer, API-Schlüssel und MQTT-Zugriff.
 
@@ -21,7 +21,7 @@ obos verwaltet die Appliance-Ebene:
 
 - Einrichtung beim ersten Start
 - Host-Identität, Netzwerk, Zeitzone und Systemzugang
-- Lebenszyklus von Open Bridge Server
+- Lebenszyklus von open bridge server
 - Updates der Container-Laufzeitumgebung
 - Systemupdates
 - Health Checks und Logs
@@ -39,7 +39,7 @@ Version 0.1 ist geplant mit:
 - nftables Host-Firewall mit Default-Drop
 - sysctl Hardening-Baseline
 - standardmässig deaktiviertem SSH, wenn vorhanden
-- Open Bridge Server und Mosquitto als primär verwalteter App
+- open bridge server und Mosquitto als primär verwalteter App
 - persistenten Anwendungsdaten unter `/srv/obos`
 - einem kleinen lokalen `obos-agent`-Dienst
 - einer Weboberfläche für die Appliance-Administration
@@ -86,7 +86,7 @@ sudo obosctl tls-info
 sudo obosctl tls-export
 ```
 
-Open Bridge Server wird über den lokalen TLS Reverse Proxy auf TCP `443`
+open bridge server wird über den lokalen TLS Reverse Proxy auf TCP `443`
 bereitgestellt. Der direkte OBS-HTTP-Port bindet nur an `127.0.0.1:8080`.
 
 Siehe [docs/tls-trust.md](docs/tls-trust.md).
@@ -107,7 +107,7 @@ Siehe [docs/admin-cli.md](docs/admin-cli.md).
 
 ```text
 apps/
-  openbridgeserver/        Verwaltete App-Definition für Open Bridge Server
+  openbridgeserver/        Verwaltete App-Definition für open bridge server
 docs/
   admin-cli.md             Lokale Appliance-Administrationsbefehle
   architecture.md          Systemform und Designentscheidungen
@@ -145,5 +145,5 @@ für das initiale Appliance-Security-Modell.
 ## Status
 
 Früher Projektaufbau. Der erste Meilenstein ist ein bootfähiges Debian-basiertes
-Image, das Open Bridge Server zuverlässig startet und eine kleine lokale
+Image, das open bridge server zuverlässig startet und eine kleine lokale
 Administrationsoberfläche für Appliance-Operationen bereitstellt.
