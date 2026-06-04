@@ -189,6 +189,9 @@ grep -q 'require_no_extra_args' scripts/agent/obos-agent.sh \
 grep -q 'require_confirm_args' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not require confirmation for mutations"
 
+grep -q 'validate_source_cidr' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not validate MQTT source CIDR before sudo"
+
 # shellcheck disable=SC2016
 grep -q 'timeout "${timeout_seconds}"' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not enforce command timeouts"

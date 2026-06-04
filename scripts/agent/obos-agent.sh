@@ -53,6 +53,37 @@ require_confirm_args() {
   [ "${3:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
 }
 
+is_ipv4_cidr() {
+  # shellcheck disable=SC2016
+  printf '%s\n' "$1" | awk -F '[./]' '
+    NF != 5 { exit 1 }
+    $5 !~ /^[0-9]+$/ || $5 < 0 || $5 > 32 { exit 1 }
+    {
+      for (i = 1; i <= 4; i++) {
+        if ($i !~ /^[0-9]+$/ || $i < 0 || $i > 255) {
+          exit 1
+        }
+      }
+      exit 0
+    }
+  '
+}
+
+validate_source_cidr() {
+  source_cidr="$1"
+  [ -n "${source_cidr}" ] || return 0
+
+  if is_ipv4_cidr "${source_cidr}"; then
+    return 0
+  fi
+
+  if printf '%s\n' "${source_cidr}" | grep -Eq '^[0-9A-Fa-f:]+/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8])$'; then
+    return 0
+  fi
+
+  fail "mqtt-enable-lan source CIDR is invalid"
+}
+
 require_mqtt_enable_args() {
   action="$1"
   case "$#" in
@@ -68,6 +99,7 @@ require_mqtt_enable_args() {
       case "${MQTT_SOURCE_CIDR}" in
         ""|-*) fail "${action} source CIDR is invalid" ;;
       esac
+      validate_source_cidr "${MQTT_SOURCE_CIDR}"
       ;;
     *)
       fail "${action} requires: [source-cidr] --confirm ${action}"
