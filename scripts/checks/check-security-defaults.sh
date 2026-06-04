@@ -70,6 +70,12 @@ grep -q 'ssl_certificate /etc/obos/tls/obos.local.crt;' packaging/nginx/openbrid
 grep -q 'proxy_pass http://127.0.0.1:8080;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not target localhost OBS"
 
+grep -q 'no-new-privileges:true' apps/openbridgeserver/compose.yaml \
+  || fail "Compose services do not set no-new-privileges"
+
+grep -q 'init: true' apps/openbridgeserver/compose.yaml \
+  || fail "Compose services do not enable init process handling"
+
 grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-material.sh \
   || fail "local CA is not generated with critical CA constraints"
 
