@@ -188,6 +188,10 @@ inspection must reject unsafe archive paths, verify required restore inputs, and
 report whether TLS private key material is present before any future destructive
 restore operation extracts files.
 
+The next recovery step is a non-destructive restore plan that prints target
+paths, service order, health checks, security audit expectations, and TLS
+identity impact before any future restore command modifies the appliance.
+
 Backups should not include:
 
 - transient container layers

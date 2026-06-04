@@ -11,6 +11,7 @@ obosctl status
 obosctl health
 obosctl proxy-health
 obosctl restore-inspect <backup.tar.gz>
+obosctl restore-plan <backup.tar.gz>
 sudo obosctl start
 sudo obosctl stop
 sudo obosctl restart
@@ -121,6 +122,18 @@ Required archive entries for a complete restore candidate:
 TLS private key material is reported separately because it determines whether a
 restore can preserve the same appliance TLS identity. The command does not stop
 services and does not extract files.
+
+## Restore Plan
+
+```sh
+obosctl restore-plan /srv/obos/backups/obos-openbridgeserver-20260604T103000Z.tar.gz
+```
+
+`restore-plan` first runs the same non-destructive inspection. If the backup is a
+valid restore candidate, it prints the planned target paths, service order,
+permission normalization step, health checks, security audit step, and whether
+TLS private key material is present. It still does not stop services and does not
+extract files.
 
 ## MQTT LAN Access
 
