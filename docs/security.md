@@ -127,8 +127,8 @@ The manual validation plan is documented in
 
 ## Container Runtime
 
-The first version uses Docker Compose because it matches the upstream Open
-Bridge Server deployment.
+The first version uses Docker Compose because it matches the upstream open
+bridge server deployment.
 
 Current container baseline:
 
