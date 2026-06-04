@@ -21,6 +21,7 @@ TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.s
 BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
 TLS_STATUS_SCRIPT="${OBOS_TLS_STATUS_SCRIPT:-/usr/lib/obos/check-tls-status.sh}"
 MQTT_LAN_SCRIPT="${OBOS_MQTT_LAN_SCRIPT:-/usr/lib/obos/set-mqtt-lan-access.sh}"
+SECURITY_BASELINE_SCRIPT="${OBOS_SECURITY_BASELINE_SCRIPT:-/usr/lib/obos/security-baseline.sh}"
 
 usage() {
   cat <<'EOF'
@@ -29,6 +30,7 @@ Usage: obosctl <command>
 Commands:
   status            Show systemd, container, and health status
   status-summary    Print machine-readable appliance status
+  security-summary  Print machine-readable security baseline status
   start             Start open bridge server
   stop              Stop open bridge server
   restart           Restart open bridge server
@@ -618,6 +620,10 @@ case "${1:-}" in
     ;;
   status-summary)
     status_summary
+    ;;
+  security-summary)
+    require_root security-summary
+    run_helper "${SECURITY_BASELINE_SCRIPT}" summary
     ;;
   start)
     require_root start

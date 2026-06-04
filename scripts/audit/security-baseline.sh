@@ -2,6 +2,9 @@
 set -u
 
 FAILED=0
+PASS_COUNT=0
+FAIL_COUNT=0
+SUMMARY_MODE=0
 APP_NAME="openbridgeserver"
 ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
@@ -14,13 +17,29 @@ TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 NGINX_PROXY_CONF="${OBOS_NGINX_PROXY_CONF:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
 
 pass() {
-  printf 'PASS %s\n' "$1"
+  PASS_COUNT=$((PASS_COUNT + 1))
+  if [ "${SUMMARY_MODE}" -ne 1 ]; then
+    printf 'PASS %s\n' "$1"
+  fi
 }
 
 fail() {
-  printf 'FAIL %s\n' "$1"
+  FAIL_COUNT=$((FAIL_COUNT + 1))
+  if [ "${SUMMARY_MODE}" -ne 1 ]; then
+    printf 'FAIL %s\n' "$1"
+  fi
   FAILED=1
 }
+
+case "${1:-}" in
+  summary)
+    SUMMARY_MODE=1
+    ;;
+  -h|--help|help)
+    echo "usage: security-baseline.sh [summary]" >&2
+    exit 2
+    ;;
+esac
 
 check_file_mode() {
   path="$1"
@@ -43,6 +62,10 @@ check_command() {
 
 check_systemd_active() {
   service="$1"
+  if ! command -v systemctl >/dev/null 2>&1; then
+    fail "${service} active not checked because systemctl is missing"
+    return
+  fi
   if systemctl is-active --quiet "${service}"; then
     pass "${service} active"
   else
@@ -52,6 +75,10 @@ check_systemd_active() {
 
 check_systemd_enabled() {
   service="$1"
+  if ! command -v systemctl >/dev/null 2>&1; then
+    fail "${service} enabled not checked because systemctl is missing"
+    return
+  fi
   if systemctl is-enabled --quiet "${service}"; then
     pass "${service} enabled"
   else
@@ -64,6 +91,10 @@ check_systemd_property() {
   property="$2"
   expected="$3"
   label="$4"
+  if ! command -v systemctl >/dev/null 2>&1; then
+    fail "${service} ${label} not checked because systemctl is missing"
+    return
+  fi
   actual="$(systemctl show --property="${property}" --value "${service}" 2>/dev/null || true)"
   if [ "${actual}" = "${expected}" ]; then
     pass "${service} ${label}"
@@ -87,6 +118,10 @@ check_obos_systemd_hardening() {
 
 check_systemd_not_active() {
   service="$1"
+  if ! command -v systemctl >/dev/null 2>&1; then
+    fail "${service} inactive state not checked because systemctl is missing"
+    return
+  fi
   if systemctl list-unit-files "${service}" >/dev/null 2>&1 && systemctl is-active --quiet "${service}"; then
     fail "${service} active"
   else
@@ -232,7 +267,19 @@ else
   fail 'open bridge server data directory missing'
 fi
 
-if [ "${FAILED}" -eq 0 ]; then
+if [ "${SUMMARY_MODE}" -eq 1 ]; then
+  if [ "${FAILED}" -eq 0 ]; then
+    result=PASS
+  else
+    result=FAIL
+  fi
+  cat <<EOF
+format=obos-security-baseline-summary-v1
+result=${result}
+pass_count=${PASS_COUNT}
+fail_count=${FAIL_COUNT}
+EOF
+elif [ "${FAILED}" -eq 0 ]; then
   echo 'security baseline: PASS'
 else
   echo 'security baseline: FAIL'

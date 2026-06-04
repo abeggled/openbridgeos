@@ -151,6 +151,15 @@ grep -q -- '--resolve' scripts/obosctl \
 grep -q 'APPLIANCE_ID_FILE=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit appliance identifier"
 
+grep -q 'security-summary)' scripts/obosctl \
+  || fail "obosctl does not expose machine-readable security baseline status"
+
+grep -q 'format=obos-security-baseline-summary-v1' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not expose a summary format"
+
+grep -q 'fail_count=' scripts/audit/security-baseline.sh \
+  || fail "security baseline summary does not report failure count"
+
 grep -q 'PROXY_HEALTH_HOST=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not verify HTTPS proxy hostname"
 
