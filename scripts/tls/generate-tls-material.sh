@@ -35,6 +35,13 @@ if [ ! -f "${CA_KEY}" ] || [ ! -f "${CA_CERT}" ]; then
   chmod 0644 "${CA_CERT}"
 fi
 
+if [ -f "${LEAF_KEY}" ] && [ -f "${LEAF_CERT}" ]; then
+  chmod 0600 "${LEAF_KEY}"
+  chmod 0644 "${LEAF_CERT}"
+  printf 'TLS material already exists in %s\n' "${TLS_DIR}"
+  exit 0
+fi
+
 openssl genrsa -out "${LEAF_KEY}" 4096
 chmod 0600 "${LEAF_KEY}"
 openssl req -new -key "${LEAF_KEY}" -subj "/CN=${HOSTNAME_VALUE}" -out "${LEAF_CSR}"
