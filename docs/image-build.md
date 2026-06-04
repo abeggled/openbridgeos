@@ -310,12 +310,39 @@ Validate a Raspberry Pi image manifest after building:
 sh scripts/images/check-rpi-image-manifest.sh dist/images/obos-rpi4-arm64-latest.img.xz.manifest
 ```
 
-Use strict file verification when the referenced image is present on the same
-build host:
+Use strict file verification when the referenced image and checksum file are
+present on the same build host:
 
 ```sh
 OBOS_MANIFEST_STRICT_FILES=1 \
   sh scripts/images/check-rpi-image-manifest.sh dist/images/obos-rpi4-arm64-latest.img.xz.manifest
+```
+
+## Release Bundle Manifest
+
+Release publishing should create one bundle manifest that references the
+individual image manifests:
+
+```sh
+sh scripts/images/create-release-manifest.sh \
+  dist/images/obos-release.manifest \
+  dist/images/obos-amd64-vm-latest.qcow2.manifest \
+  dist/images/obos-rpi4-arm64-latest.img.xz.manifest
+```
+
+The release bundle manifest uses format `obos-release-bundle-v1` and records:
+
+- creation timestamp and repository revision
+- artifact count
+- each artifact profile, architecture, image path, checksum file, image hash,
+  and source image manifest
+
+Only image manifests with `release_build=1` can be added to a release bundle.
+Validate the release bundle before publishing:
+
+```sh
+OBOS_MANIFEST_STRICT_FILES=1 \
+  sh scripts/images/check-release-manifest.sh dist/images/obos-release.manifest
 ```
 
 The builder host must provide the profile tools: `debootstrap`,
