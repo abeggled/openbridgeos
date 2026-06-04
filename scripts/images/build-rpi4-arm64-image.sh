@@ -14,6 +14,7 @@ CHECK_RPI_MANIFEST="${REPO_ROOT}/scripts/images/check-rpi-image-manifest.sh"
 LOOP_DEVICE=
 BOOT_MOUNT=
 ROOT_MOUNT=
+BUILD_ROOT=
 
 fail() {
   echo "Raspberry Pi arm64 image build failed: $1" >&2
@@ -40,14 +41,14 @@ cleanup() {
   if [ -n "${BOOT_MOUNT}" ] && mountpoint -q "${BOOT_MOUNT}"; then
     umount "${BOOT_MOUNT}" || true
   fi
-  if [ -n "${ROOT_MOUNT}" ] && mountpoint -q "${ROOT_MOUNT}/proc"; then
-    umount "${ROOT_MOUNT}/proc" || true
+  if [ -n "${BUILD_ROOT}" ] && mountpoint -q "${BUILD_ROOT}/proc"; then
+    umount "${BUILD_ROOT}/proc" || true
   fi
-  if [ -n "${ROOT_MOUNT}" ] && mountpoint -q "${ROOT_MOUNT}/sys"; then
-    umount "${ROOT_MOUNT}/sys" || true
+  if [ -n "${BUILD_ROOT}" ] && mountpoint -q "${BUILD_ROOT}/sys"; then
+    umount "${BUILD_ROOT}/sys" || true
   fi
-  if [ -n "${ROOT_MOUNT}" ] && mountpoint -q "${ROOT_MOUNT}/dev"; then
-    umount "${ROOT_MOUNT}/dev" || true
+  if [ -n "${BUILD_ROOT}" ] && mountpoint -q "${BUILD_ROOT}/dev"; then
+    umount "${BUILD_ROOT}/dev" || true
   fi
   if [ -n "${ROOT_MOUNT}" ] && mountpoint -q "${ROOT_MOUNT}"; then
     umount "${ROOT_MOUNT}" || true
@@ -55,6 +56,19 @@ cleanup() {
   if [ -n "${LOOP_DEVICE}" ]; then
     losetup -d "${LOOP_DEVICE}" || true
   fi
+}
+
+copy_repo_into_root() {
+  root_dir="$1"
+  image_repo_parent="${root_dir}/opt/openbridgeos"
+
+  mkdir -p "${image_repo_parent}"
+  tar -C "${REPO_ROOT}" \
+    --exclude ./.git \
+    --exclude ./build \
+    --exclude ./dist \
+    -cf - . | tar -C "${image_repo_parent}" -xf -
+  mv "${image_repo_parent}"/. "${image_repo_parent}/${REPO_NAME}"
 }
 
 write_fstab() {
@@ -171,10 +185,12 @@ require_command mkfs.ext4
 require_command mkfs.vfat
 require_command mount
 require_command mountpoint
+require_command mv
 require_command partprobe
 require_command qemu-aarch64-static
 require_command sha256sum
 require_command sfdisk
+require_command tar
 require_command truncate
 require_command umount
 require_command xz
@@ -213,17 +229,18 @@ mount "${LOOP_DEVICE}p2" "${ROOT_MOUNT}"
 mkdir -p "${ROOT_MOUNT}/boot"
 mount "${LOOP_DEVICE}p1" "${BOOT_MOUNT}"
 
-base_packages="$(printf '%s' "${OBOS_BASE_PACKAGES}" | tr ',' ' ')"
-debootstrap --arch=arm64 --foreign --include="${base_packages}" "${OBOS_DEBIAN_RELEASE}" "${BUILD_ROOT}"
+debootstrap --arch=arm64 --foreign --include="${OBOS_BASE_PACKAGES}" "${OBOS_DEBIAN_RELEASE}" "${BUILD_ROOT}"
 cp "$(command -v qemu-aarch64-static)" "${BUILD_ROOT}/usr/bin/qemu-aarch64-static"
 chroot "${BUILD_ROOT}" /debootstrap/debootstrap --second-stage
 
-mkdir -p "${BUILD_ROOT}/opt/openbridgeos"
-cp -a "${REPO_ROOT}" "${BUILD_ROOT}/opt/openbridgeos/${REPO_NAME}"
+copy_repo_into_root "${BUILD_ROOT}"
 mount --bind /dev "${BUILD_ROOT}/dev"
 mount -t proc proc "${BUILD_ROOT}/proc"
 mount -t sysfs sysfs "${BUILD_ROOT}/sys"
 chroot "${BUILD_ROOT}" /bin/sh -c "cd /opt/openbridgeos/${REPO_NAME} && OBOS_DISABLE_SSH=1 ${OBOS_PROVISION_SCRIPT} /opt/openbridgeos/${REPO_NAME}"
+umount "${BUILD_ROOT}/proc"
+umount "${BUILD_ROOT}/sys"
+umount "${BUILD_ROOT}/dev"
 rm -f "${BUILD_ROOT}/etc/obos/first-boot.done"
 truncate -s 0 "${BUILD_ROOT}/etc/machine-id"
 rm -f "${BUILD_ROOT}/var/lib/dbus/machine-id"
@@ -237,9 +254,6 @@ sh "${CHECK_RPI_KERNEL_CONFIG}" "${ROOT_MOUNT}"
 
 umount "${BOOT_MOUNT}"
 BOOT_MOUNT=
-umount "${ROOT_MOUNT}/proc" || true
-umount "${ROOT_MOUNT}/sys" || true
-umount "${ROOT_MOUNT}/dev" || true
 umount "${ROOT_MOUNT}"
 ROOT_MOUNT=
 losetup -d "${LOOP_DEVICE}"
