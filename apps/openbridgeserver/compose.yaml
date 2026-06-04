@@ -3,6 +3,7 @@ services:
     image: eclipse-mosquitto:2
     restart: unless-stopped
     init: true
+    pids_limit: 128
     security_opt:
       - no-new-privileges:true
     user: root
@@ -53,6 +54,7 @@ services:
     image: ghcr.io/abeggled/openbridgeserver:${OBS_IMAGE_TAG:-latest}
     restart: unless-stopped
     init: true
+    pids_limit: 256
     security_opt:
       - no-new-privileges:true
     pid: "service:mosquitto"
