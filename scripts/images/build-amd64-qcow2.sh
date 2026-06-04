@@ -8,6 +8,7 @@ REPO_ROOT="${OBOS_REPO_ROOT:-$(cd -- "$(dirname -- "$0")/../.." && pwd)}"
 REPO_NAME="$(basename -- "${REPO_ROOT}")"
 IMAGE_REPO_DIR="/opt/openbridgeos/${REPO_NAME}"
 BASE_IMAGE="${OBOS_QCOW2_BASE_IMAGE:-}"
+VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
 
 fail() {
   echo "amd64 qcow2 build failed: $1" >&2
@@ -59,6 +60,8 @@ EOF
 }
 
 [ -f "${PROFILE_FILE}" ] || fail "missing image profile: ${PROFILE_FILE}"
+[ -f "${VALIDATE_IMAGE_PROFILES}" ] || fail "missing image profile validator: ${VALIDATE_IMAGE_PROFILES}"
+sh "${VALIDATE_IMAGE_PROFILES}" "${PROFILE_FILE}" >/dev/null
 
 OBOS_IMAGE_PROFILE=
 OBOS_IMAGE_ARCH=
