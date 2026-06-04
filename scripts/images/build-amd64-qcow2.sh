@@ -8,6 +8,7 @@ REPO_ROOT="${OBOS_REPO_ROOT:-$(cd -- "$(dirname -- "$0")/../.." && pwd)}"
 REPO_NAME="$(basename -- "${REPO_ROOT}")"
 IMAGE_REPO_DIR="/opt/openbridgeos/${REPO_NAME}"
 BASE_IMAGE="${OBOS_QCOW2_BASE_IMAGE:-}"
+BASE_IMAGE_SHA256="${OBOS_QCOW2_BASE_IMAGE_SHA256:-}"
 VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
 
 fail() {
@@ -25,6 +26,20 @@ repo_revision() {
   else
     echo unknown
   fi
+}
+
+verify_base_image_hash() {
+  base_image_file="$1"
+
+  if [ -z "${BASE_IMAGE_SHA256}" ]; then
+    return 0
+  fi
+
+  actual_sha256="$(sha256sum "${base_image_file}" | cut -d ' ' -f 1)"
+  [ "${actual_sha256}" = "${BASE_IMAGE_SHA256}" ] \
+    || fail "base qcow2 sha256 mismatch for ${base_image_file}"
+
+  printf 'base image sha256 verified: %s\n' "${actual_sha256}"
 }
 
 write_manifest() {
@@ -103,6 +118,7 @@ if [ -z "${BASE_IMAGE}" ]; then
 fi
 
 [ -f "${BASE_IMAGE}" ] || fail "base qcow2 not found: ${BASE_IMAGE}"
+verify_base_image_hash "${BASE_IMAGE}"
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUTPUT_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-${STAMP}.qcow2"
