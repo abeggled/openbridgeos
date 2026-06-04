@@ -146,9 +146,20 @@ sudo OBOS_QCOW2_BASE_IMAGE=/srv/images/debian-13-genericcloud-amd64.qcow2 \
 When `OBOS_QCOW2_BASE_IMAGE_SHA256` is set, the builder fails before image
 customization if the downloaded or supplied base image hash does not match.
 
+For release artifacts, set `OBOS_RELEASE_BUILD=1`. Release builds require
+`OBOS_QCOW2_BASE_IMAGE_SHA256` and record `release_build=1` in the manifest:
+
+```sh
+sudo OBOS_RELEASE_BUILD=1 \
+  OBOS_QCOW2_BASE_IMAGE=/srv/images/debian-13-genericcloud-amd64.qcow2 \
+  OBOS_QCOW2_BASE_IMAGE_SHA256=<expected-sha256> \
+  scripts/images/build-amd64-qcow2.sh
+```
+
 The qcow2 manifest uses format `obos-qcow2-build-v1` and records:
 
 - image profile, architecture, Debian release, and output format
+- whether the artifact was built as a release build
 - image path and SHA-256 hash
 - base image path, source URL, and SHA-256 hash
 - provision script and first boot service

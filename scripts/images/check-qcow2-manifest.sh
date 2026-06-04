@@ -81,6 +81,12 @@ expect_value ssh_default disabled "${MANIFEST_FILE}"
 expect_value first_boot_pending true "${MANIFEST_FILE}"
 expect_value contains_secrets false "${MANIFEST_FILE}"
 
+release_build="$(manifest_value release_build "${MANIFEST_FILE}")"
+case "${release_build}" in
+  0|1) ;;
+  *) fail "release_build must be 0 or 1, got ${release_build}" ;;
+esac
+
 image_path="$(manifest_value image "${MANIFEST_FILE}")"
 image_sha256="$(manifest_value image_sha256 "${MANIFEST_FILE}")"
 base_image_path="$(manifest_value base_image "${MANIFEST_FILE}")"

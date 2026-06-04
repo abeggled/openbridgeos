@@ -21,6 +21,7 @@ profile=amd64-vm
 architecture=amd64
 debian_release=trixie
 output_format=qcow2
+release_build=1
 image=${IMAGE_FILE}
 image_sha256=${IMAGE_SHA256}
 base_image=${BASE_IMAGE_FILE}
