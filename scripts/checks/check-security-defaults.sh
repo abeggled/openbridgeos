@@ -352,6 +352,18 @@ grep -q 'backup includes TLS private key material' scripts/obosctl \
 grep -q 'mqtt-enable-lan)' scripts/obosctl \
   || fail "obosctl does not expose MQTT LAN enablement"
 
+grep -q 'mqtt-summary)' scripts/obosctl \
+  || fail "obosctl does not expose machine-readable MQTT status"
+
+grep -q 'format=obos-mqtt-summary-v1' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not expose a summary format"
+
+grep -q 'lan_enabled=' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT summary does not report LAN exposure"
+
+grep -q 'firewall_source=' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT summary does not report firewall source scope"
+
 grep -q 'mqtt-disable-lan)' scripts/obosctl \
   || fail "obosctl does not expose MQTT LAN disablement"
 

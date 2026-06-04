@@ -39,6 +39,7 @@
 - Surface hardening status and security baseline results.
 - Surface TLS trust fingerprints and root CA export workflow.
 - Provide explicit opt-in controls for LAN MQTT exposure.
+- Consume stable `obosctl mqtt-summary` key-value output for MQTT exposure state.
 
 ## Milestone 4: Hardened Release
 
