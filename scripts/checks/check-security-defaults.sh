@@ -29,8 +29,26 @@ grep -q 'obos-backup-manifest.txt' scripts/obosctl \
 grep -q 'contains_secrets=true' scripts/obosctl \
   || fail "obosctl backup manifest does not mark secret-bearing backups"
 
+grep -q 'proxy-health)' scripts/obosctl \
+  || fail "obosctl does not expose verified HTTPS proxy health"
+
+grep -q 'PROXY_HEALTH_HOST=' scripts/obosctl \
+  || fail "obosctl proxy health does not use an explicit TLS hostname"
+
+grep -q -- '--cacert' scripts/obosctl \
+  || fail "obosctl proxy health does not verify the local CA"
+
+grep -q -- '--resolve' scripts/obosctl \
+  || fail "obosctl proxy health does not resolve the TLS hostname locally"
+
 grep -q 'APPLIANCE_ID_FILE=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit appliance identifier"
+
+grep -q 'PROXY_HEALTH_HOST=' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not verify HTTPS proxy hostname"
+
+grep -q -- '--cacert' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not verify HTTPS proxy local CA trust"
 
 grep -q 'OBS_HTTP_HOST_PORT=127.0.0.1:8080' scripts/bootstrap/first-boot.sh \
   || fail "Open Bridge Server HTTP is not localhost-only by default"
