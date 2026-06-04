@@ -12,6 +12,7 @@ obosctl health
 obosctl proxy-health
 obosctl restore-inspect <backup.tar.gz>
 obosctl restore-plan <backup.tar.gz>
+sudo obosctl restore-stage <backup.tar.gz>
 sudo obosctl start
 sudo obosctl stop
 sudo obosctl restart
@@ -134,6 +135,18 @@ valid restore candidate, it prints the planned target paths, service order,
 permission normalization step, health checks, security audit step, and whether
 TLS private key material is present. It still does not stop services and does not
 extract files.
+
+## Restore Staging
+
+```sh
+sudo obosctl restore-stage /srv/obos/backups/obos-openbridgeserver-20260604T103000Z.tar.gz
+```
+
+`restore-stage` first runs the same backup inspection and then extracts the
+backup into a private mode `0700` staging directory below
+`/srv/obos/state/restore-staging`. It does not stop services and does not replace
+live appliance files. The staging directory contains sensitive data and should be
+treated like the original backup.
 
 ## MQTT LAN Access
 

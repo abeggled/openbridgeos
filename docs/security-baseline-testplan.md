@@ -26,6 +26,7 @@ intended host security posture:
 - backup file permissions and identity material coverage
 - non-destructive restore inspection
 - non-destructive restore planning
+- private restore staging
 
 ## Test Setup
 
@@ -237,6 +238,7 @@ sudo tar -tzf "${latest_backup}" | grep '^tls/obos.local.key$'
 sudo tar -tzf "${latest_backup}" | grep '^mqtt/log' && false || true
 obosctl restore-inspect "${latest_backup}"
 obosctl restore-plan "${latest_backup}"
+sudo obosctl restore-stage "${latest_backup}"
 ```
 
 Expected:
@@ -251,6 +253,7 @@ Expected:
 - backup does not include Mosquitto logs by default
 - restore inspection passes without extracting files
 - restore plan prints target paths and identity impact without extracting files
+- restore staging extracts into a private staging directory without replacing live files
 - backup is treated as sensitive because it contains secrets and TLS private keys
 
 ## Exit Criteria
@@ -266,6 +269,7 @@ The baseline passes when:
 - backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated
 - `obosctl restore-inspect` passes for the latest backup
 - `obosctl restore-plan` passes for the latest backup
+- `sudo obosctl restore-stage` creates a private staging directory for the latest backup
 
 ## Known Follow-Up Tests
 
