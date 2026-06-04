@@ -20,7 +20,9 @@ fi
 
 install -d -m 0700 "${TLS_DIR}"
 
+ca_created=0
 if [ ! -f "${CA_KEY}" ] || [ ! -f "${CA_CERT}" ]; then
+  ca_created=1
   openssl genrsa -out "${CA_KEY}" 4096
   chmod 0600 "${CA_KEY}"
   openssl req -x509 -new -nodes \
@@ -35,7 +37,7 @@ if [ ! -f "${CA_KEY}" ] || [ ! -f "${CA_CERT}" ]; then
   chmod 0644 "${CA_CERT}"
 fi
 
-if [ -f "${LEAF_KEY}" ] && [ -f "${LEAF_CERT}" ]; then
+if [ "${ca_created}" -eq 0 ] && [ -f "${LEAF_KEY}" ] && [ -f "${LEAF_CERT}" ]; then
   chmod 0600 "${LEAF_KEY}"
   chmod 0644 "${LEAF_CERT}"
   printf 'TLS material already exists in %s\n' "${TLS_DIR}"
