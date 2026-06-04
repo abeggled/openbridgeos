@@ -145,8 +145,10 @@ sudo obosctl restore-stage /srv/obos/backups/obos-openbridgeserver-20260604T1030
 `restore-stage` first runs the same backup inspection and then extracts the
 backup into a private mode `0700` staging directory below
 `/srv/obos/state/restore-staging`. It does not stop services and does not replace
-live appliance files. The staging directory contains sensitive data and should be
-treated like the original backup.
+live appliance files. It also writes a mode `0600` `obos-restore-stage.txt`
+manifest that records the source backup, stage path, app, service, staged-only
+mode, and TLS private key presence. The staging directory contains sensitive data
+and should be treated like the original backup.
 
 ## MQTT LAN Access
 

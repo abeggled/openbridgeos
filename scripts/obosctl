@@ -341,9 +341,27 @@ restore_stage() {
   stage_dir="$(mktemp -d "${RESTORE_STAGE_DIR}/restore.XXXXXXXX")"
   chmod 0700 "${stage_dir}"
   tar -xzf "${archive}" -C "${stage_dir}"
+  stage_manifest="${stage_dir}/obos-restore-stage.txt"
+  staged_at="$(date -u +%Y%m%dT%H%M%SZ)"
+  tls_private_keys="missing"
+  if tar -tzf "${archive}" | grep -Eq '^tls/obos-local-ca\.key$|^tls/obos\.local\.key$'; then
+    tls_private_keys="present"
+  fi
+  cat > "${stage_manifest}" <<EOF
+format=obos-restore-stage-v1
+staged_at=${staged_at}
+source_backup=${archive}
+app=${APP_NAME}
+service=${SERVICE_NAME}
+stage_dir=${stage_dir}
+mode=staged-only
+tls_private_keys=${tls_private_keys}
+EOF
+  chmod 0600 "${stage_manifest}"
 
   echo "restore stage: PASS"
   echo "stage_dir=${stage_dir}"
+  echo "stage_manifest=${stage_manifest}"
   echo "mode=staged-only"
   echo "next=review staged files, then run a future restore apply command"
 }
