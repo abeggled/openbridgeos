@@ -142,6 +142,9 @@ grep -q 'set-mqtt-lan-access.sh' scripts/bootstrap/provision-debian.sh \
 grep -q 'OBOS_MQTT_LAN_SOURCE_CIDR' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not support source CIDR restriction"
 
+grep -q 'is_ipv4_cidr' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not validate IPv4 CIDR numerically"
+
 grep -q 'export-boot-trust-summary.sh' scripts/bootstrap/provision-debian.sh \
   || fail "boot trust summary helper is not installed during provisioning"
 
