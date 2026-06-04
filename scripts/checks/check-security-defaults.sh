@@ -278,6 +278,9 @@ grep -q 'mqtt-disable-lan)' scripts/obosctl \
 grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-material.sh \
   || fail "local CA is not generated with critical CA constraints"
 
+grep -q 'TLS material already exists' scripts/tls/generate-tls-material.sh \
+  || fail "TLS material generation is not idempotent"
+
 grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
   || fail "TLS trust export does not state that private keys are excluded"
 

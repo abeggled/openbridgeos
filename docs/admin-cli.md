@@ -157,7 +157,8 @@ sudo obosctl tls-export-boot
 ```
 
 `tls-generate` creates the per-appliance-instance local CA and leaf certificate
-material below `/etc/obos/tls`. `tls-status` checks the local CA and leaf
+material below `/etc/obos/tls`. It preserves existing TLS material instead of
+rotating appliance identity implicitly. `tls-status` checks the local CA and leaf
 certificate status, including expiry warnings. `tls-info` prints the appliance
 hostname, IP addresses, certificate paths, and SHA-256 fingerprints.
 `tls-export` writes a public trust bundle below `/srv/obos/state/trust`.

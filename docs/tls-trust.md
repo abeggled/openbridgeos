@@ -13,6 +13,10 @@ manually on a provisioned appliance instance:
 sudo obosctl tls-generate
 ```
 
+TLS generation is idempotent. If the local CA and leaf certificate material
+already exist, `obosctl tls-generate` preserves them instead of rotating the
+appliance TLS identity implicitly.
+
 This creates:
 
 ```text
