@@ -103,6 +103,7 @@ Provisioning applies:
 - nftables firewall rules from `packaging/nftables/obos.nft`
 - nginx TLS reverse proxy config from `packaging/nginx/openbridgeserver.conf`
 - sysctl baseline from `packaging/sysctl/99-obos-hardening.conf`
+- unattended Debian security updates without automatic reboots
 - SSH service disablement when `ssh.service` exists
 
 Manual remote development installs can preserve SSH temporarily with:
@@ -148,6 +149,11 @@ Future hardening should include:
 - Docker user namespace remapping compatibility testing
 
 ## Updates
+
+Host security updates and application updates are intentionally separate.
+Debian security updates are handled by `unattended-upgrades` for security
+origins only, with automatic reboots disabled. Open Bridge Server container
+updates remain an explicit `obosctl update` action.
 
 A successful `obosctl update` should leave an audit-friendly state record at
 `/srv/obos/state/last-update`. The record should include the completion time,
