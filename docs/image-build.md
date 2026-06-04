@@ -53,6 +53,7 @@ Raspberry Pi profiles also declare:
 - compressed raw `.img.xz` output
 - supported boot media: SD, USB, and NVMe
 - Raspberry Pi bootloader firmware mode
+- disabled SSH default policy
 - boot/root partition layout and labels
 - required build host tooling
 - required kernel config flags
@@ -222,6 +223,7 @@ The contract requires:
 - partition layout: `boot-fat32,root-ext4`
 - partition labels: `OBOSBOOT` and `OBOSROOT`
 - boot media: SD, USB, and NVMe
+- SSH disabled by default
 - required kernel config: `CONFIG_BLK_DEV_NVME=y`, `CONFIG_PCIE_BRCMSTB=y`, and `CONFIG_USB_XHCI_PCI=y`
 
 Check the current Raspberry Pi build contract with:
@@ -295,6 +297,7 @@ The Raspberry Pi image manifest uses format `obos-rpi-image-build-v1` and record
 - image path and SHA-256 hash
 - Raspberry Pi Network Installer compatibility
 - boot media, firmware mode, partition layout, and partition labels
+- SSH disabled by default
 - required kernel config and whether it was verified
 - provision script and first boot service
 - repository revision

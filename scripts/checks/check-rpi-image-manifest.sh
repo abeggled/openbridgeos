@@ -33,6 +33,7 @@ kernel_config_verified=true
 provision_script=scripts/bootstrap/provision-debian.sh
 first_boot_service=obos-first-boot.service
 repo_revision=test-revision
+ssh_default=disabled
 first_boot_pending=true
 contains_secrets=false
 EOF

@@ -134,6 +134,7 @@ kernel_config_verified=true
 provision_script=${OBOS_PROVISION_SCRIPT}
 first_boot_service=${OBOS_FIRST_BOOT_SERVICE}
 repo_revision=${revision}
+ssh_default=${OBOS_IMAGE_DEFAULT_SSH}
 first_boot_pending=true
 contains_secrets=false
 EOF
@@ -173,6 +174,7 @@ OBOS_RPI_PARTITION_LAYOUT=
 OBOS_RPI_BOOT_PARTITION_LABEL=
 OBOS_RPI_ROOT_PARTITION_LABEL=
 OBOS_KERNEL_REQUIRED_CONFIG=
+OBOS_IMAGE_DEFAULT_SSH=
 
 # shellcheck disable=SC1090
 . "${PROFILE_FILE}"
@@ -183,6 +185,7 @@ OBOS_KERNEL_REQUIRED_CONFIG=
 [ "${OBOS_OUTPUT_FORMAT}" = "raw" ] || fail "profile output format must be raw"
 [ "${OBOS_OUTPUT_COMPRESSION}" = "xz" ] || fail "profile compression must be xz"
 [ "${OBOS_IMAGE_EXTENSION}" = "img.xz" ] || fail "profile extension must be img.xz"
+[ "${OBOS_IMAGE_DEFAULT_SSH}" = "disabled" ] || fail "profile SSH default policy must be disabled"
 
 require_command basename
 require_command chroot

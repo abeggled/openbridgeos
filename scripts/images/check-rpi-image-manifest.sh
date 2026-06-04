@@ -92,6 +92,7 @@ expect_value partition_layout boot-fat32,root-ext4 "${MANIFEST_FILE}"
 expect_value boot_partition_label OBOSBOOT "${MANIFEST_FILE}"
 expect_value root_partition_label OBOSROOT "${MANIFEST_FILE}"
 expect_value kernel_config_verified true "${MANIFEST_FILE}"
+expect_value ssh_default disabled "${MANIFEST_FILE}"
 expect_value first_boot_pending true "${MANIFEST_FILE}"
 expect_value contains_secrets false "${MANIFEST_FILE}"
 
