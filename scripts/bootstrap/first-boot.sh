@@ -6,6 +6,8 @@ OBOS_APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/openbridgeserver}"
 OBOS_STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
 ENV_FILE="${OBOS_ETC_DIR}/apps/openbridgeserver.env"
 FIRST_BOOT_MARKER="${OBOS_STATE_DIR}/first-boot.done"
+TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
+TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -27,7 +29,7 @@ if [ ! -f "${ENV_FILE}" ]; then
   umask 077
   cat > "${ENV_FILE}" <<EOF
 OBS_IMAGE_TAG=latest
-OBS_HTTP_HOST_PORT=8080
+OBS_HTTP_HOST_PORT=127.0.0.1:8080
 OBS_MQTT_HOST_PORT=127.0.0.1:1883
 OBS_MQTT_WS_HOST_PORT=127.0.0.1:9001
 OBS_MQTT_USERNAME=obs
@@ -38,4 +40,17 @@ EOF
 fi
 
 chmod 0600 "${ENV_FILE}"
+
+if [ -x "${TLS_GENERATE_SCRIPT}" ]; then
+  "${TLS_GENERATE_SCRIPT}"
+fi
+
+if [ -x "${TLS_EXPORT_SCRIPT}" ]; then
+  "${TLS_EXPORT_SCRIPT}"
+fi
+
+if systemctl list-unit-files nginx.service >/dev/null 2>&1; then
+  systemctl enable --now nginx.service
+fi
+
 touch "${FIRST_BOOT_MARKER}"
