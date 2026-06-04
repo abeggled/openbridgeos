@@ -31,7 +31,12 @@ require_command() {
 }
 
 run_build_host_preflight() {
-  OBOS_IMAGE_PROFILE_FILE="${PROFILE_FILE}" sh "${CHECK_RPI_BUILD_HOST}"
+  case "${PROFILE_FILE}" in
+    /*) profile_arg="${PROFILE_FILE}" ;;
+    *) profile_arg="$(pwd)/${PROFILE_FILE}" ;;
+  esac
+
+  (cd "${REPO_ROOT}" && OBOS_IMAGE_PROFILE_FILE="${profile_arg}" sh "${CHECK_RPI_BUILD_HOST}")
 }
 
 repo_revision() {
