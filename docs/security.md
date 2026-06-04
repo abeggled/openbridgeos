@@ -117,14 +117,24 @@ The manual validation plan is documented in
 ## Container Runtime
 
 The first version uses Docker Compose because it matches the upstream Open
-Bridge Server deployment. Hardening should include:
+Bridge Server deployment.
 
-- pinned image tags or digests once release images are available
+Current container baseline:
+
 - least-needed published ports
+- service-level `no-new-privileges:true`
+- `init: true` for signal handling and child reaping
 - explicit restart policy
 - persistent volumes below `/srv/obos`
 - health checks for both Open Bridge Server and Mosquitto
 - no arbitrary Compose editing through the web UI
+
+Future hardening should include:
+
+- pinned image tags or digests once release images are available
+- capability drops after validating the Mosquitto password-file bootstrap path
+- read-only root filesystems where compatible
+- Docker user namespace remapping compatibility testing
 
 ## Backup and Restore
 
