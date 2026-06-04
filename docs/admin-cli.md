@@ -18,8 +18,10 @@ sudo obosctl update
 sudo obosctl backup
 obosctl logs
 sudo obosctl tls-generate
+obosctl tls-status
 sudo obosctl tls-info
 sudo obosctl tls-export
+sudo obosctl tls-export-boot
 sudo obosctl mqtt-status
 sudo obosctl mqtt-enable-lan
 sudo obosctl mqtt-disable-lan
@@ -136,14 +138,19 @@ firewall allow rules. MQTT authentication remains required in both modes.
 
 ```sh
 sudo obosctl tls-generate
+obosctl tls-status
 sudo obosctl tls-info
 sudo obosctl tls-export
+sudo obosctl tls-export-boot
 ```
 
 `tls-generate` creates the per-appliance-instance local CA and leaf certificate
-material below `/etc/obos/tls`. `tls-info` prints the appliance hostname, IP
-addresses, certificate paths, and SHA-256 fingerprints. `tls-export` writes a
-public trust bundle below `/srv/obos/state/trust`.
+material below `/etc/obos/tls`. `tls-status` checks the local CA and leaf
+certificate status, including expiry warnings. `tls-info` prints the appliance
+hostname, IP addresses, certificate paths, and SHA-256 fingerprints.
+`tls-export` writes a public trust bundle below `/srv/obos/state/trust`.
+`tls-export-boot` writes the public trust summary and local CA certificate to a
+mounted boot partition when one is available.
 
 The trust bundle contains the local CA certificate, the current leaf
 certificate, and a text summary. It does not contain private keys. Verify the CA
@@ -169,8 +176,10 @@ OBOS_TLS_CA_CERT=/tmp/tls/obos-local-ca.crt \
 OBOS_PROXY_HEALTH_HOST=obos.local \
 OBOS_PROXY_HEALTH_URL=https://obos.local/api/v1/system/health \
 OBOS_TLS_GENERATE_SCRIPT=/tmp/generate-tls-material.sh \
+OBOS_TLS_STATUS_SCRIPT=/tmp/check-tls-status.sh \
 OBOS_TLS_INFO_SCRIPT=/tmp/print-trust-info.sh \
 OBOS_TLS_EXPORT_SCRIPT=/tmp/export-trust-bundle.sh \
+OBOS_BOOT_TRUST_SCRIPT=/tmp/export-boot-trust-summary.sh \
 OBOS_MQTT_LAN_SCRIPT=/tmp/set-mqtt-lan-access.sh \
 obosctl proxy-health
 ```

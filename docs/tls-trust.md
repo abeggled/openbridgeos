@@ -56,6 +56,21 @@ The output includes:
 Use this output as an out-of-band verification source. A web page alone is not
 sufficient proof before the client trusts the appliance instance.
 
+## Check TLS Status
+
+```sh
+obosctl tls-status
+```
+
+The status command verifies that the local CA and leaf certificates are present,
+parseable, currently valid, and not close to expiry. By default, certificates
+that expire within 30 days produce a warning. Override the warning window for
+tests or support checks with:
+
+```sh
+OBOS_TLS_EXPIRY_WARN_DAYS=90 obosctl tls-status
+```
+
 ## Export Trust Bundle
 
 ```sh
