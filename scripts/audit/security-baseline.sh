@@ -7,7 +7,7 @@ ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
-HTTPS_URL="${OBOS_HTTPS_URL:-https://127.0.0.1/}"
+HTTPS_URL="${OBOS_HTTPS_URL:-https://127.0.0.1/api/v1/system/health}"
 
 pass() {
   printf 'PASS %s\n' "$1"
@@ -159,9 +159,9 @@ else
 fi
 
 if command -v curl >/dev/null 2>&1 && curl --insecure --fail --silent --show-error --max-time 5 "${HTTPS_URL}" >/dev/null; then
-  pass 'HTTPS reverse proxy reachable'
+  pass 'HTTPS reverse proxy health endpoint reachable'
 else
-  fail 'HTTPS reverse proxy unreachable'
+  fail 'HTTPS reverse proxy health endpoint unreachable'
 fi
 
 if [ -d "${APP_DIR}/data" ]; then
