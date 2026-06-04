@@ -236,6 +236,12 @@ grep -q 'tcp dport 443 accept' packaging/nftables/obos.nft \
 ! grep -q 'tcp dport 8080 accept' packaging/nftables/obos.nft \
   || fail "Direct open bridge server HTTP is open in the default firewall"
 
+grep -q 'HOST_HTTP_PORT=' scripts/images/smoke-test-amd64-qcow2.sh \
+  || fail "qcow2 smoke test does not probe direct open bridge server HTTP"
+
+grep -q 'direct open bridge server HTTP is reachable' scripts/images/smoke-test-amd64-qcow2.sh \
+  || fail "qcow2 smoke test does not fail when direct HTTP is reachable"
+
 ! grep -q 'tcp dport 1883 accept' packaging/nftables/obos.nft \
   || fail "MQTT plain TCP is open in the default firewall"
 

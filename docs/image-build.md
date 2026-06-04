@@ -325,8 +325,10 @@ The builder host must provide the profile tools: `debootstrap`,
 ## amd64 qcow2 Smoke Test
 
 The smoke test boots a qcow2 image in snapshot mode, forwards host TCP `8443` to
-the guest HTTPS port, and waits for the open bridge server health endpoint over
-HTTPS.
+the guest HTTPS port, forwards host TCP `18080` to the guest direct HTTP port,
+and waits for the open bridge server health endpoint over HTTPS. After HTTPS
+health passes, the test also verifies that direct open bridge server HTTP is not
+reachable from the VM network boundary.
 
 Install runtime dependencies on a Linux host:
 
@@ -351,6 +353,7 @@ Useful overrides:
 
 ```sh
 sudo OBOS_SMOKE_HOST_HTTPS_PORT=9443 \
+  OBOS_SMOKE_HOST_HTTP_PORT=19080 \
   OBOS_SMOKE_TIMEOUT_SECONDS=1200 \
   scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.qcow2
 ```
