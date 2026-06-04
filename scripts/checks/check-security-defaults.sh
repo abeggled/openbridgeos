@@ -212,6 +212,18 @@ grep -q 'ssl_certificate /etc/obos/tls/obos.local.crt;' packaging/nginx/openbrid
 grep -q 'proxy_pass http://127.0.0.1:8080;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not target localhost OBS"
 
+grep -q 'server_tokens off;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy exposes server tokens"
+
+grep -q 'client_body_timeout 30s;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not bound client body timeout"
+
+grep -q 'client_header_timeout 30s;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not bound client header timeout"
+
+grep -q 'send_timeout 60s;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not bound send timeout"
+
 grep -q 'no-new-privileges:true' apps/openbridgeserver/compose.yaml \
   || fail "Compose services do not set no-new-privileges"
 

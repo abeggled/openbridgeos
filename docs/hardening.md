@@ -75,6 +75,10 @@ packaging/nginx/openbridgeserver.conf
 First boot generates the local CA and leaf certificate before nginx starts.
 Plain HTTP on TCP `80` is closed for now.
 
+The reverse proxy also disables nginx server token disclosure and bounds client
+header, request body, and send timeouts to avoid holding worker resources
+indefinitely.
+
 ## systemd Unit Baseline
 
 obos-managed units use conservative systemd sandboxing where it is compatible
