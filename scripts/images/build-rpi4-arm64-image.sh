@@ -60,15 +60,14 @@ cleanup() {
 
 copy_repo_into_root() {
   root_dir="$1"
-  image_repo_parent="${root_dir}/opt/openbridgeos"
+  image_repo_dir="${root_dir}/opt/openbridgeos/${REPO_NAME}"
 
-  mkdir -p "${image_repo_parent}"
+  mkdir -p "${image_repo_dir}"
   tar -C "${REPO_ROOT}" \
     --exclude ./.git \
     --exclude ./build \
     --exclude ./dist \
-    -cf - . | tar -C "${image_repo_parent}" -xf -
-  mv "${image_repo_parent}"/. "${image_repo_parent}/${REPO_NAME}"
+    -cf - . | tar -C "${image_repo_dir}" -xf -
 }
 
 write_fstab() {
@@ -146,12 +145,13 @@ OBOS_IMAGE_PROFILE=
 OBOS_IMAGE_ARCH=
 OBOS_IMAGE_KIND=
 OBOS_DEBIAN_RELEASE=
-OBOS_BOOT_TARGET=
+OBOS_DEBIAN_COMPONENTS=
 OBOS_OUTPUT_FORMAT=
 OBOS_OUTPUT_COMPRESSION=
 OBOS_IMAGE_EXTENSION=
 OBOS_IMAGE_MIN_SIZE=
 OBOS_BASE_PACKAGES=
+OBOS_RPI_BOOT_PACKAGES=
 OBOS_PROVISION_SCRIPT=
 OBOS_FIRST_BOOT_SERVICE=
 OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=
@@ -160,7 +160,6 @@ OBOS_RPI_FIRMWARE_MODE=
 OBOS_RPI_PARTITION_LAYOUT=
 OBOS_RPI_BOOT_PARTITION_LABEL=
 OBOS_RPI_ROOT_PARTITION_LABEL=
-OBOS_RPI_REQUIRED_TOOLS=
 OBOS_KERNEL_REQUIRED_CONFIG=
 
 # shellcheck disable=SC1090
@@ -185,7 +184,6 @@ require_command mkfs.ext4
 require_command mkfs.vfat
 require_command mount
 require_command mountpoint
-require_command mv
 require_command partprobe
 require_command qemu-aarch64-static
 require_command sha256sum
@@ -229,7 +227,8 @@ mount "${LOOP_DEVICE}p2" "${ROOT_MOUNT}"
 mkdir -p "${ROOT_MOUNT}/boot"
 mount "${LOOP_DEVICE}p1" "${BOOT_MOUNT}"
 
-debootstrap --arch=arm64 --foreign --include="${OBOS_BASE_PACKAGES}" "${OBOS_DEBIAN_RELEASE}" "${BUILD_ROOT}"
+include_packages="${OBOS_BASE_PACKAGES},${OBOS_RPI_BOOT_PACKAGES}"
+debootstrap --arch=arm64 --foreign --components="${OBOS_DEBIAN_COMPONENTS}" --include="${include_packages}" "${OBOS_DEBIAN_RELEASE}" "${BUILD_ROOT}"
 cp "$(command -v qemu-aarch64-static)" "${BUILD_ROOT}/usr/bin/qemu-aarch64-static"
 chroot "${BUILD_ROOT}" /debootstrap/debootstrap --second-stage
 
