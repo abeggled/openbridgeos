@@ -3,6 +3,7 @@ set -eu
 
 IMAGE="${1:-}"
 HOST_HTTPS_PORT="${OBOS_SMOKE_HOST_HTTPS_PORT:-8443}"
+HOST_HTTP_PORT="${OBOS_SMOKE_HOST_HTTP_PORT:-18080}"
 TIMEOUT_SECONDS="${OBOS_SMOKE_TIMEOUT_SECONDS:-900}"
 MEMORY="${OBOS_SMOKE_MEMORY:-2048}"
 CPUS="${OBOS_SMOKE_CPUS:-2}"
@@ -44,7 +45,7 @@ qemu-system-x86_64 \
   -m "${MEMORY}" \
   -smp "${CPUS}" \
   -drive "file=${IMAGE},if=virtio,format=qcow2,snapshot=on" \
-  -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:${HOST_HTTPS_PORT}-:443" \
+  -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:${HOST_HTTPS_PORT}-:443,hostfwd=tcp:127.0.0.1:${HOST_HTTP_PORT}-:8080" \
   -device virtio-net-pci,netdev=net0 \
   -nographic \
   -serial mon:stdio \
@@ -58,6 +59,10 @@ start_time="$(date +%s)"
 while :; do
   if curl --insecure --fail --silent --show-error --max-time 5 \
     "https://127.0.0.1:${HOST_HTTPS_PORT}/api/v1/system/health" >/dev/null; then
+    if curl --fail --silent --show-error --max-time 5 \
+      "http://127.0.0.1:${HOST_HTTP_PORT}/api/v1/system/health" >/dev/null; then
+      fail "direct open bridge server HTTP is reachable from VM network boundary"
+    fi
     echo "qcow2 smoke test: PASS"
     exit 0
   fi
