@@ -232,6 +232,7 @@ sudo tar -xOzf "${latest_backup}" obos-backup-manifest.txt | grep '^contains_sec
 sudo tar -tzf "${latest_backup}" | grep '^appliance-id$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos-local-ca.key$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos.local.key$'
+sudo tar -tzf "${latest_backup}" | grep '^mqtt/log' && false || true
 obosctl restore-inspect "${latest_backup}"
 ```
 
@@ -243,6 +244,7 @@ Expected:
 - backup manifest marks the archive as secret-bearing
 - backup includes appliance identifier
 - backup includes TLS private key material for appliance identity restore
+- backup does not include Mosquitto logs by default
 - restore inspection passes without extracting files
 - backup is treated as sensitive because it contains secrets and TLS private keys
 

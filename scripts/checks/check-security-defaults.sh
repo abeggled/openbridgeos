@@ -29,6 +29,9 @@ grep -q 'obos-backup-manifest.txt' scripts/obosctl \
 grep -q 'contains_secrets=true' scripts/obosctl \
   || fail "obosctl backup manifest does not mark secret-bearing backups"
 
+grep -q -- '--exclude=mqtt/log' scripts/obosctl \
+  || fail "obosctl backup does not exclude Mosquitto logs by default"
+
 grep -q 'restore-inspect)' scripts/obosctl \
   || fail "obosctl does not expose restore inspection"
 
