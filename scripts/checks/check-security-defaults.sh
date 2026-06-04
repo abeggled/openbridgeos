@@ -85,6 +85,27 @@ grep -q 'TLS_GENERATE_SCRIPT=' scripts/bootstrap/first-boot.sh \
 grep -q 'nginx-light' scripts/bootstrap/provision-debian.sh \
   || fail "nginx reverse proxy package is not installed during provisioning"
 
+grep -q 'unattended-upgrades' scripts/bootstrap/provision-debian.sh \
+  || fail "unattended security upgrade package is not installed during provisioning"
+
+grep -q '20auto-upgrades' scripts/bootstrap/provision-debian.sh \
+  || fail "apt periodic unattended upgrade config is not installed"
+
+grep -q '50unattended-upgrades' scripts/bootstrap/provision-debian.sh \
+  || fail "unattended upgrade policy config is not installed"
+
+grep -q 'apt-daily-upgrade.timer' scripts/bootstrap/provision-debian.sh \
+  || fail "apt unattended upgrade timer is not enabled"
+
+grep -q 'Unattended-Upgrade "1"' packaging/apt/20auto-upgrades \
+  || fail "apt periodic unattended upgrades are not enabled"
+
+grep -q 'Debian-Security' packaging/apt/50unattended-upgrades \
+  || fail "unattended upgrades are not restricted to Debian security origins"
+
+grep -q 'Automatic-Reboot "false"' packaging/apt/50unattended-upgrades \
+  || fail "unattended upgrades allow automatic reboot"
+
 grep -q 'systemctl enable nginx.service' scripts/bootstrap/provision-debian.sh \
   || fail "nginx service is not enabled during provisioning"
 

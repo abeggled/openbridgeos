@@ -21,16 +21,19 @@ apt-get install -y --no-install-recommends \
   docker.io \
   nftables \
   nginx-light \
-  openssl
+  openssl \
+  unattended-upgrades
 
 install -d -m 0755 "${OBOS_SHARE_DIR}/apps/openbridgeserver"
 install -d -m 0755 "${OBOS_LIB_DIR}"
-install -d -m 0755 /etc/docker /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled
+install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled
 install -d -m 0750 /srv/obos /srv/obos/apps /srv/obos/backups /srv/obos/state
 
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/compose.yaml" "${OBOS_APP_SOURCE}/compose.yaml"
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/mosquitto.conf" "${OBOS_APP_SOURCE}/mosquitto.conf"
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/obos-app.yaml" "${OBOS_APP_SOURCE}/obos-app.yaml"
+install -m 0644 "${REPO_ROOT}/packaging/apt/20auto-upgrades" /etc/apt/apt.conf.d/20auto-upgrades
+install -m 0644 "${REPO_ROOT}/packaging/apt/50unattended-upgrades" /etc/apt/apt.conf.d/50unattended-upgrades
 install -m 0644 "${REPO_ROOT}/packaging/docker/daemon.json" /etc/docker/daemon.json
 install -m 0644 "${REPO_ROOT}/packaging/nftables/obos.nft" /etc/nftables.conf
 install -m 0644 "${REPO_ROOT}/packaging/nginx/openbridgeserver.conf" /etc/nginx/sites-available/obos-openbridgeserver.conf
@@ -60,6 +63,8 @@ systemctl enable docker.service
 systemctl enable nginx.service
 systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
+systemctl enable apt-daily.timer
+systemctl enable apt-daily-upgrade.timer
 
 # Do not run first boot during image creation. Secrets and TLS material must be
 # generated on the target appliance instance, not in the build environment.
