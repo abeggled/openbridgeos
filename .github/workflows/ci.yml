@@ -26,7 +26,7 @@ jobs:
 
       - name: Shell syntax
         run: |
-          shellcheck scripts/obosctl scripts/audit/*.sh scripts/bootstrap/*.sh scripts/checks/*.sh scripts/hardening/*.sh scripts/images/*.sh scripts/tls/*.sh
+          shellcheck scripts/obosctl scripts/agent/*.sh scripts/audit/*.sh scripts/bootstrap/*.sh scripts/checks/*.sh scripts/hardening/*.sh scripts/images/*.sh scripts/tls/*.sh
 
       - name: Docker daemon JSON syntax
         run: python -m json.tool packaging/docker/daemon.json >/dev/null
@@ -52,6 +52,9 @@ jobs:
 
       - name: Web UI agent contract
         run: sh scripts/checks/check-web-ui-agent-contract.sh
+
+      - name: obos-agent
+        run: sh scripts/checks/check-obos-agent.sh
 
       - name: Image profiles
         run: sh scripts/images/validate-image-profiles.sh

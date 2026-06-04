@@ -139,6 +139,15 @@ grep -Fq 'health_https_proxy=${health_https_proxy}' scripts/obosctl \
 grep -q 'check-web-ui-agent-contract.sh' .github/workflows/ci.yml \
   || fail "CI does not validate the web UI agent contract"
 
+grep -q 'check-obos-agent.sh' .github/workflows/ci.yml \
+  || fail "CI does not validate obos-agent"
+
+grep -q 'format=obos-agent-response-v1' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not declare a response format"
+
+grep -q 'timeout "${TIMEOUT_SECONDS}"' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not enforce command timeouts"
+
 grep -q 'proxy-health)' scripts/obosctl \
   || fail "obosctl does not expose verified HTTPS proxy health"
 
