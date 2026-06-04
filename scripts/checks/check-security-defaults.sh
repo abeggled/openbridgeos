@@ -114,8 +114,14 @@ grep -q 'format=obos-update-v1' scripts/obosctl \
 grep -q 'update-summary)' scripts/obosctl \
   || fail "obosctl does not expose machine-readable update status"
 
+grep -q 'update-rollback-plan)' scripts/obosctl \
+  || fail "obosctl does not expose a last-update rollback plan"
+
 grep -q 'format=obos-update-summary-v1' scripts/obosctl \
   || fail "obosctl update summary does not declare a format"
+
+grep -q 'format=obos-update-rollback-plan-v1' scripts/obosctl \
+  || fail "obosctl update rollback plan does not declare a format"
 
 grep -q 'last_update_present=' scripts/obosctl \
   || fail "obosctl update summary does not report update presence"
@@ -131,6 +137,12 @@ grep -q 'pre_update_backup_created=true' scripts/obosctl \
 
 grep -q 'update: blocked; pre-update backup was not created' scripts/obosctl \
   || fail "obosctl update does not block when the pre-update backup is missing"
+
+grep -q 'update rollback plan: blocked; backup inspection failed' scripts/obosctl \
+  || fail "obosctl update rollback plan does not require backup inspection"
+
+grep -q 'restore-apply-plan <stage-dir>' scripts/obosctl \
+  || fail "obosctl update rollback plan does not end with restore apply planning"
 
 grep -q 'last-update:' scripts/obosctl \
   || fail "obosctl status does not show last update state"
