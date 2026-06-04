@@ -76,6 +76,12 @@ grep -q 'no-new-privileges:true' apps/openbridgeserver/compose.yaml \
 grep -q 'init: true' apps/openbridgeserver/compose.yaml \
   || fail "Compose services do not enable init process handling"
 
+grep -q 'TLS_DIR=' scripts/obosctl \
+  || fail "obosctl backup does not know the TLS material directory"
+
+grep -q 'backup includes TLS private key material' scripts/obosctl \
+  || fail "obosctl backup does not warn about TLS private key material"
+
 grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-material.sh \
   || fail "local CA is not generated with critical CA constraints"
 

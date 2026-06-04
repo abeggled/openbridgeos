@@ -19,7 +19,7 @@ intended host security posture:
 - Docker daemon hardening defaults
 - sysctl hardening baseline
 - Open Bridge Server health
-- backup file permissions
+- backup file permissions and identity material coverage
 
 ## Test Setup
 
@@ -169,18 +169,22 @@ Expected:
 - HTTPS reverse proxy reaches the health endpoint
 - Open Bridge Server is not reachable externally on LAN port `8080`
 
-### Backup Permissions
+### Backup Permissions And Contents
 
 ```sh
 sudo obosctl backup
 sudo ls -l /srv/obos/backups
+latest_backup="$(sudo ls -1t /srv/obos/backups/obos-openbridgeserver-*.tar.gz | head -n 1)"
+sudo tar -tzf "${latest_backup}" | grep '^tls/obos-local-ca.key$'
+sudo tar -tzf "${latest_backup}" | grep '^tls/obos.local.key$'
 ```
 
 Expected:
 
 - backup is created
 - backup file mode is not group/world readable
-- backup is treated as sensitive because it contains secrets
+- backup includes TLS private key material for appliance identity restore
+- backup is treated as sensitive because it contains secrets and TLS private keys
 
 ## Exit Criteria
 
@@ -190,6 +194,7 @@ The baseline passes when:
 - manual port scan matches the expected default exposure
 - Open Bridge Server health endpoint passes through localhost and HTTPS proxy
 - backup file permissions are restrictive
+- backup contains TLS identity material when TLS has been generated
 
 ## Known Follow-Up Tests
 

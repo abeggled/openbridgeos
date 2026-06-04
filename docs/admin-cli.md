@@ -52,11 +52,18 @@ sudo obosctl backup
 ```
 
 Backups are written to `/srv/obos/backups` by default and are mode `0600`.
-They include the Open Bridge Server app data, Mosquitto data, Compose files,
-Mosquitto config, and the generated app environment file.
+They include:
 
-The backup contains secrets, including the Open Bridge Server JWT secret and
-internal MQTT service password. Treat exported backups as sensitive data.
+- Open Bridge Server app data
+- Mosquitto data
+- Compose files and Mosquitto config
+- generated app environment file
+- TLS identity material below `/etc/obos/tls`, when present
+
+The backup contains secrets, including the Open Bridge Server JWT secret,
+internal MQTT service password, and TLS private key material. Treat exported
+backups as sensitive data. Restoring the TLS material preserves the appliance
+instance identity and avoids forcing clients to trust a new local CA.
 
 ## TLS Trust
 
