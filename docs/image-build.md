@@ -98,6 +98,17 @@ Install builder dependencies on a Debian build host:
 sudo apt-get install --no-install-recommends qemu-utils libguestfs-tools curl ca-certificates
 ```
 
+Check the build host before starting a long image build:
+
+```sh
+sh scripts/images/check-amd64-qcow2-build-host.sh
+```
+
+The preflight validates the `amd64-vm` profile, required qcow2 tools, basic
+`qemu-img` and `virt-customize` responsiveness, and reports whether `/dev/kvm` is
+available. Missing KVM is a warning because QEMU can fall back to slower TCG
+emulation for smoke tests.
+
 Build the image:
 
 ```sh
