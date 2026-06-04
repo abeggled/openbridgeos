@@ -181,6 +181,11 @@ archive contains secrets and TLS material. The manifest is metadata for humans,
 future restore tooling, and support triage; it does not make the backup less
 sensitive.
 
+Restore handling should start with a non-destructive inspection step. The
+inspection must reject unsafe archive paths, verify required restore inputs, and
+report whether TLS private key material is present before any future destructive
+restore operation extracts files.
+
 Backups should not include:
 
 - transient container layers
