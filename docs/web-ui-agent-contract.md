@@ -90,6 +90,11 @@ and should not expose a raw shell. It should allowlist commands and arguments,
 enforce timeouts, capture exit status, and return the command format version
 along with stdout and stderr.
 
+The provisioned privilege boundary uses the `obos-agent` system user and
+`/etc/sudoers.d/obos-agent`. The sudoers policy permits only the documented
+`/usr/bin/obosctl` actions with non-interactive `sudo -n`; it does not grant a
+general root shell.
+
 The initial agent skeleton is installed as `obos-agent`. It exposes a stable
 action inventory and read-only status actions:
 

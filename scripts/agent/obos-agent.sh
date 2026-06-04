@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
 set -eu
 
-OBOSCTL="${OBOS_AGENT_OBOSCTL:-obosctl}"
+OBOSCTL="${OBOS_AGENT_OBOSCTL:-/usr/bin/obosctl}"
 TIMEOUT_SECONDS="${OBOS_AGENT_TIMEOUT_SECONDS:-30}"
 MUTATION_TIMEOUT_SECONDS="${OBOS_AGENT_MUTATION_TIMEOUT_SECONDS:-600}"
-AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-/srv/obos/state/obos-agent-audit.log}"
+AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-/srv/obos/state/agent/obos-agent-audit.log}"
 
 usage() {
   cat <<'EOF'
@@ -154,6 +154,19 @@ EOF
   return "${exit_code}"
 }
 
+run_obosctl() {
+  action="$1"
+  timeout_seconds="$2"
+  mutating="$3"
+  shift 3
+
+  if [ -n "${OBOS_AGENT_OBOSCTL:-}" ]; then
+    run_allowed "${action}" "${timeout_seconds}" "${mutating}" "${OBOSCTL}" "$@"
+  else
+    run_allowed "${action}" "${timeout_seconds}" "${mutating}" sudo -n "${OBOSCTL}" "$@"
+  fi
+}
+
 require_timeout
 
 case "${1:-}" in
@@ -163,67 +176,67 @@ case "${1:-}" in
     ;;
   status-summary)
     require_no_extra_args "$@"
-    run_allowed status-summary "${TIMEOUT_SECONDS}" false "${OBOSCTL}" status-summary
+    run_obosctl status-summary "${TIMEOUT_SECONDS}" false status-summary
     ;;
   update-summary)
     require_no_extra_args "$@"
-    run_allowed update-summary "${TIMEOUT_SECONDS}" false "${OBOSCTL}" update-summary
+    run_obosctl update-summary "${TIMEOUT_SECONDS}" false update-summary
     ;;
   backup-list)
     require_no_extra_args "$@"
-    run_allowed backup-list "${TIMEOUT_SECONDS}" false "${OBOSCTL}" backup-list
+    run_obosctl backup-list "${TIMEOUT_SECONDS}" false backup-list
     ;;
   mqtt-summary)
     require_no_extra_args "$@"
-    run_allowed mqtt-summary "${TIMEOUT_SECONDS}" false "${OBOSCTL}" mqtt-summary
+    run_obosctl mqtt-summary "${TIMEOUT_SECONDS}" false mqtt-summary
     ;;
   tls-summary)
     require_no_extra_args "$@"
-    run_allowed tls-summary "${TIMEOUT_SECONDS}" false "${OBOSCTL}" tls-summary
+    run_obosctl tls-summary "${TIMEOUT_SECONDS}" false tls-summary
     ;;
   security-summary)
     require_no_extra_args "$@"
-    run_allowed security-summary "${TIMEOUT_SECONDS}" false "${OBOSCTL}" security-summary
+    run_obosctl security-summary "${TIMEOUT_SECONDS}" false security-summary
     ;;
   start)
     require_confirm_args "$@"
-    run_allowed start "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" start
+    run_obosctl start "${MUTATION_TIMEOUT_SECONDS}" true start
     ;;
   stop)
     require_confirm_args "$@"
-    run_allowed stop "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" stop
+    run_obosctl stop "${MUTATION_TIMEOUT_SECONDS}" true stop
     ;;
   restart)
     require_confirm_args "$@"
-    run_allowed restart "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" restart
+    run_obosctl restart "${MUTATION_TIMEOUT_SECONDS}" true restart
     ;;
   update)
     require_confirm_args "$@"
-    run_allowed update "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" update
+    run_obosctl update "${MUTATION_TIMEOUT_SECONDS}" true update
     ;;
   backup)
     require_confirm_args "$@"
-    run_allowed backup "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" backup
+    run_obosctl backup "${MUTATION_TIMEOUT_SECONDS}" true backup
     ;;
   tls-generate)
     require_confirm_args "$@"
-    run_allowed tls-generate "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" tls-generate
+    run_obosctl tls-generate "${MUTATION_TIMEOUT_SECONDS}" true tls-generate
     ;;
   tls-export)
     require_confirm_args "$@"
-    run_allowed tls-export "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" tls-export
+    run_obosctl tls-export "${MUTATION_TIMEOUT_SECONDS}" true tls-export
     ;;
   mqtt-enable-lan)
     require_mqtt_enable_args "$@"
     if [ -n "${MQTT_SOURCE_CIDR}" ]; then
-      run_allowed mqtt-enable-lan "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" mqtt-enable-lan "${MQTT_SOURCE_CIDR}"
+      run_obosctl mqtt-enable-lan "${MUTATION_TIMEOUT_SECONDS}" true mqtt-enable-lan "${MQTT_SOURCE_CIDR}"
     else
-      run_allowed mqtt-enable-lan "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" mqtt-enable-lan
+      run_obosctl mqtt-enable-lan "${MUTATION_TIMEOUT_SECONDS}" true mqtt-enable-lan
     fi
     ;;
   mqtt-disable-lan)
     require_confirm_args "$@"
-    run_allowed mqtt-disable-lan "${MUTATION_TIMEOUT_SECONDS}" true "${OBOSCTL}" mqtt-disable-lan
+    run_obosctl mqtt-disable-lan "${MUTATION_TIMEOUT_SECONDS}" true mqtt-disable-lan
     ;;
   -h|--help|help|"")
     usage

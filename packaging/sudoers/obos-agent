@@ -1,0 +1,23 @@
+Defaults:obos-agent secure_path="/usr/sbin:/usr/bin:/sbin:/bin"
+
+Cmnd_Alias OBOS_AGENT_READONLY = \
+  /usr/bin/obosctl status-summary, \
+  /usr/bin/obosctl update-summary, \
+  /usr/bin/obosctl backup-list, \
+  /usr/bin/obosctl mqtt-summary, \
+  /usr/bin/obosctl tls-summary, \
+  /usr/bin/obosctl security-summary
+
+Cmnd_Alias OBOS_AGENT_MUTATIONS = \
+  /usr/bin/obosctl start, \
+  /usr/bin/obosctl stop, \
+  /usr/bin/obosctl restart, \
+  /usr/bin/obosctl update, \
+  /usr/bin/obosctl backup, \
+  /usr/bin/obosctl tls-generate, \
+  /usr/bin/obosctl tls-export, \
+  /usr/bin/obosctl mqtt-enable-lan, \
+  /usr/bin/obosctl mqtt-enable-lan *, \
+  /usr/bin/obosctl mqtt-disable-lan
+
+obos-agent ALL=(root) NOPASSWD: OBOS_AGENT_READONLY, OBOS_AGENT_MUTATIONS

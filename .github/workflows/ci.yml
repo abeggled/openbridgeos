@@ -28,6 +28,9 @@ jobs:
         run: |
           shellcheck scripts/obosctl scripts/agent/*.sh scripts/audit/*.sh scripts/bootstrap/*.sh scripts/checks/*.sh scripts/hardening/*.sh scripts/images/*.sh scripts/tls/*.sh
 
+      - name: sudoers syntax
+        run: sudo visudo -cf packaging/sudoers/obos-agent
+
       - name: Docker daemon JSON syntax
         run: python -m json.tool packaging/docker/daemon.json >/dev/null
 
