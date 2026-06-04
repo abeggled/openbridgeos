@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted as release direction. Not yet implemented.
+Accepted as release direction. Trust material helper scripts exist; automatic
+first-boot generation, reverse proxy integration, and UI onboarding are not yet
+implemented.
 
 ## Context
 
@@ -50,7 +52,9 @@ paths:
 1. Local console or attached display shows the CA fingerprint and onboarding URL.
 2. `/usr/lib/obos/print-trust-info.sh` prints the CA fingerprint, leaf
    fingerprint, hostname, IP addresses, and root CA export path.
-3. The obos web onboarding page shows the same fingerprint, but the web page
+3. `/usr/lib/obos/export-trust-bundle.sh` exports public trust artifacts for a
+   future web UI, boot-accessible summary, or manual support workflow.
+4. The obos web onboarding page shows the same fingerprint, but the web page
    alone is not sufficient proof because it can be spoofed before trust is
    established.
 
