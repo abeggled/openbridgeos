@@ -103,6 +103,7 @@ rpi_contract:
   - debootstrap components: ${OBOS_DEBIAN_COMPONENTS}
   - boot packages: ${OBOS_RPI_BOOT_PACKAGES}
   - image must boot from all declared media: ${OBOS_RPI_BOOT_MEDIA}
+  - keep SSH default: ${OBOS_IMAGE_DEFAULT_SSH}
   - image must use partition layout: ${OBOS_RPI_PARTITION_LAYOUT}
   - boot partition label: ${OBOS_RPI_BOOT_PARTITION_LABEL}
   - root partition label: ${OBOS_RPI_ROOT_PARTITION_LABEL}

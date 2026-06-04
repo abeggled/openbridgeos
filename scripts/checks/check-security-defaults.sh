@@ -197,6 +197,12 @@ grep -q 'Debian-Security' packaging/apt/50unattended-upgrades \
 grep -q 'Automatic-Reboot "false"' packaging/apt/50unattended-upgrades \
   || fail "unattended upgrades allow automatic reboot"
 
+grep -q 'OBOS_IMAGE_DEFAULT_SSH=disabled' packaging/images/profiles/rpi4-arm64.env \
+  || fail "Raspberry Pi image profile does not disable SSH by default"
+
+grep -q 'expect_value ssh_default disabled' scripts/images/check-rpi-image-manifest.sh \
+  || fail "Raspberry Pi image manifest does not record disabled SSH by default"
+
 grep -q 'systemctl enable nginx.service' scripts/bootstrap/provision-debian.sh \
   || fail "nginx service is not enabled during provisioning"
 

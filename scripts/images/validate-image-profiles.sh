@@ -171,6 +171,8 @@ validate_profile() {
       || fail "${profile_file}: Raspberry Pi kernel config must enable CONFIG_PCIE_BRCMSTB=y"
     contains_csv_value "${OBOS_KERNEL_REQUIRED_CONFIG}" 'CONFIG_USB_XHCI_PCI=y' \
       || fail "${profile_file}: Raspberry Pi kernel config must enable CONFIG_USB_XHCI_PCI=y"
+    [ "${OBOS_IMAGE_DEFAULT_SSH}" = "disabled" ] \
+      || fail "${profile_file}: Raspberry Pi image default SSH policy must be disabled"
   fi
 
   echo "PASS ${profile_file}"
