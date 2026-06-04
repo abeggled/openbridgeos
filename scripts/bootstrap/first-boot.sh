@@ -49,8 +49,4 @@ if [ -x "${TLS_EXPORT_SCRIPT}" ]; then
   "${TLS_EXPORT_SCRIPT}"
 fi
 
-if systemctl list-unit-files nginx.service >/dev/null 2>&1; then
-  systemctl enable --now nginx.service
-fi
-
 touch "${FIRST_BOOT_MARKER}"
