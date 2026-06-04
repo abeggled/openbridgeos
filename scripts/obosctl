@@ -6,6 +6,7 @@ APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 BACKUP_DIR="${OBOS_BACKUP_DIR:-/srv/obos/backups}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
+APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 SERVICE_NAME="obos-openbridgeserver.service"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
@@ -99,16 +100,20 @@ backup() {
   env_name="$(basename -- "${ENV_FILE}")"
   tls_parent="$(dirname -- "${TLS_DIR}")"
   tls_name="$(basename -- "${TLS_DIR}")"
+  appliance_id_dir="$(dirname -- "${APPLIANCE_ID_FILE}")"
+  appliance_id_name="$(basename -- "${APPLIANCE_ID_FILE}")"
 
   if [ -d "${TLS_DIR}" ]; then
     tar -czf "${target}" \
       -C "${env_dir}" "${env_name}" \
+      -C "${appliance_id_dir}" "${appliance_id_name}" \
       -C "${tls_parent}" "${tls_name}" \
       -C "${APP_DIR}" data mqtt obos-app.yaml compose.yaml mosquitto.conf
     echo "backup includes TLS private key material for appliance identity restore" >&2
   else
     tar -czf "${target}" \
       -C "${env_dir}" "${env_name}" \
+      -C "${appliance_id_dir}" "${appliance_id_name}" \
       -C "${APP_DIR}" data mqtt obos-app.yaml compose.yaml mosquitto.conf
     echo "backup warning: TLS material was not found and was not included" >&2
   fi
