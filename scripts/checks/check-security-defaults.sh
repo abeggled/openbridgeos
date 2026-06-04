@@ -74,6 +74,18 @@ grep -q 'PROXY_HEALTH_HOST=' scripts/audit/security-baseline.sh \
 grep -q -- '--cacert' scripts/audit/security-baseline.sh \
   || fail "security baseline does not verify HTTPS proxy local CA trust"
 
+grep -q 'check_obos_systemd_hardening obos-first-boot.service' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit first boot systemd hardening"
+
+grep -q 'check_obos_systemd_hardening obos-openbridgeserver.service' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit open bridge server systemd hardening"
+
+grep -q 'NoNewPrivileges yes' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit systemd NoNewPrivileges"
+
+grep -q 'SystemCallArchitectures native' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit systemd syscall architecture"
+
 grep -q 'OBS_HTTP_HOST_PORT=127.0.0.1:8080' scripts/bootstrap/first-boot.sh \
   || fail "open bridge server HTTP is not localhost-only by default"
 

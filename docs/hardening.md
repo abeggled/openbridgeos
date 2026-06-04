@@ -93,6 +93,9 @@ with first boot and Docker Compose orchestration:
 The first boot unit also declares explicit write access to `/etc/obos` and
 `/srv/obos`, because it creates secrets, TLS material, and state markers there.
 
+The security baseline audit verifies the enabled state and the shared sandboxing
+properties for both obos-managed units on provisioned systems.
+
 More aggressive options such as `ProtectSystem=strict`, capability bounding, and
 system call filtering should be tested against Docker Compose and the first boot
 certificate path before becoming defaults.

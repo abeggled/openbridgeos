@@ -58,6 +58,32 @@ check_systemd_enabled() {
   fi
 }
 
+check_systemd_property() {
+  service="$1"
+  property="$2"
+  expected="$3"
+  label="$4"
+  actual="$(systemctl show --property="${property}" --value "${service}" 2>/dev/null || true)"
+  if [ "${actual}" = "${expected}" ]; then
+    pass "${service} ${label}"
+  else
+    fail "${service} ${label} expected ${expected}, got ${actual:-missing}"
+  fi
+}
+
+check_obos_systemd_hardening() {
+  service="$1"
+  check_systemd_property "${service}" UMask 0077 "restrictive umask"
+  check_systemd_property "${service}" NoNewPrivileges yes "NoNewPrivileges"
+  check_systemd_property "${service}" PrivateTmp yes "PrivateTmp"
+  check_systemd_property "${service}" ProtectHome yes "ProtectHome"
+  check_systemd_property "${service}" ProtectSystem full "ProtectSystem"
+  check_systemd_property "${service}" LockPersonality yes "LockPersonality"
+  check_systemd_property "${service}" MemoryDenyWriteExecute yes "MemoryDenyWriteExecute"
+  check_systemd_property "${service}" RestrictRealtime yes "RestrictRealtime"
+  check_systemd_property "${service}" SystemCallArchitectures native "native system call architecture"
+}
+
 check_systemd_not_active() {
   service="$1"
   if systemctl list-unit-files "${service}" >/dev/null 2>&1 && systemctl is-active --quiet "${service}"; then
@@ -139,6 +165,8 @@ check_systemd_active nftables.service
 check_systemd_enabled nftables.service
 check_systemd_enabled obos-first-boot.service
 check_systemd_enabled obos-openbridgeserver.service
+check_obos_systemd_hardening obos-first-boot.service
+check_obos_systemd_hardening obos-openbridgeserver.service
 check_systemd_not_active ssh.service
 
 if nft list ruleset 2>/dev/null | grep -q 'policy drop'; then
