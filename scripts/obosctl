@@ -7,6 +7,7 @@ ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 BACKUP_DIR="${OBOS_BACKUP_DIR:-/srv/obos/backups}"
 STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
 LAST_UPDATE_FILE="${OBOS_LAST_UPDATE_FILE:-${STATE_DIR}/last-update}"
+RESTORE_STAGE_DIR="${OBOS_RESTORE_STAGE_DIR:-${STATE_DIR}/restore-staging}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 SERVICE_NAME="obos-openbridgeserver.service"
@@ -35,6 +36,7 @@ Commands:
   backup            Create a timestamped appliance backup
   restore-inspect   Inspect an appliance backup before restore
   restore-plan      Print the non-destructive restore plan for a backup
+  restore-stage     Extract a backup into private restore staging
   health            Check open bridge server localhost health endpoint
   proxy-health      Check HTTPS reverse proxy health with local CA trust
   tls-generate      Generate local CA and leaf certificate material
@@ -323,6 +325,29 @@ restore_plan() {
   echo "restore plan: PASS"
 }
 
+restore_stage() {
+  archive="${1:-}"
+  [ -n "${archive}" ] || {
+    echo "usage: obosctl restore-stage <backup.tar.gz>" >&2
+    return 2
+  }
+
+  if ! restore_inspect "${archive}" >/dev/null; then
+    echo "restore stage: blocked; backup inspection failed" >&2
+    return 1
+  fi
+
+  install -d -m 0700 "${RESTORE_STAGE_DIR}"
+  stage_dir="$(mktemp -d "${RESTORE_STAGE_DIR}/restore.XXXXXXXX")"
+  chmod 0700 "${stage_dir}"
+  tar -xzf "${archive}" -C "${stage_dir}"
+
+  echo "restore stage: PASS"
+  echo "stage_dir=${stage_dir}"
+  echo "mode=staged-only"
+  echo "next=review staged files, then run a future restore apply command"
+}
+
 write_update_state() {
   backup_path="$1"
   state_dir="$(dirname -- "${LAST_UPDATE_FILE}")"
@@ -400,6 +425,11 @@ case "${1:-}" in
   restore-plan)
     shift
     restore_plan "${1:-}"
+    ;;
+  restore-stage)
+    require_root restore-stage
+    shift
+    restore_stage "${1:-}"
     ;;
   health)
     health

@@ -192,6 +192,10 @@ The next recovery step is a non-destructive restore plan that prints target
 paths, service order, health checks, security audit expectations, and TLS
 identity impact before any future restore command modifies the appliance.
 
+Restore staging may extract a validated backup into a private staging directory
+for review, but it must not replace live files until a future explicit apply
+step is implemented.
+
 Backups should not include:
 
 - transient container layers

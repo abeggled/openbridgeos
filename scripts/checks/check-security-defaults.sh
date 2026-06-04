@@ -41,6 +41,15 @@ grep -q 'restore-inspect)' scripts/obosctl \
 grep -q 'restore-plan)' scripts/obosctl \
   || fail "obosctl does not expose restore planning"
 
+grep -q 'restore-stage)' scripts/obosctl \
+  || fail "obosctl does not expose restore staging"
+
+grep -q 'RESTORE_STAGE_DIR=' scripts/obosctl \
+  || fail "restore staging does not use a dedicated staging directory"
+
+grep -q 'mode=staged-only' scripts/obosctl \
+  || fail "restore staging does not declare staged-only mode"
+
 grep -q 'restore inspect: PASS' scripts/obosctl \
   || fail "restore inspection does not report success"
 
