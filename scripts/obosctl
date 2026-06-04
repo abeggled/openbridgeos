@@ -5,6 +5,8 @@ APP_NAME="openbridgeserver"
 APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 BACKUP_DIR="${OBOS_BACKUP_DIR:-/srv/obos/backups}"
+STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
+LAST_UPDATE_FILE="${OBOS_LAST_UPDATE_FILE:-${STATE_DIR}/last-update}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 SERVICE_NAME="obos-openbridgeserver.service"
@@ -115,6 +117,11 @@ status() {
     echo "health-https-proxy: failed"
     failed=1
   fi
+  if [ -f "${LAST_UPDATE_FILE}" ]; then
+    echo
+    echo "last-update:"
+    sed 's/^/  /' "${LAST_UPDATE_FILE}"
+  fi
   return "${failed}"
 }
 
@@ -188,17 +195,41 @@ backup() {
   echo "backup: ${target}"
 }
 
+write_update_state() {
+  backup_path="$1"
+  state_dir="$(dirname -- "${LAST_UPDATE_FILE}")"
+  completed_at="$(date -u +%Y%m%dT%H%M%SZ)"
+  tmp_file="${LAST_UPDATE_FILE}.$$"
+
+  install -d -m 0750 "${state_dir}"
+  cat > "${tmp_file}" <<EOF
+format=obos-update-v1
+completed_at=${completed_at}
+app=${APP_NAME}
+service=${SERVICE_NAME}
+backup=${backup_path}
+health_local=ok
+health_https_proxy=ok
+EOF
+  chmod 0640 "${tmp_file}"
+  mv -f "${tmp_file}" "${LAST_UPDATE_FILE}"
+}
+
 update_app() {
   require_root update
   require_files
-  backup
+  backup_output="$(backup)"
+  printf '%s\n' "${backup_output}"
+  backup_path="$(printf '%s\n' "${backup_output}" | sed -n 's/^backup: //p')"
   compose pull
   systemctl restart "${SERVICE_NAME}"
 
   tries=30
   while [ "${tries}" -gt 0 ]; do
     if health && proxy_health; then
+      write_update_state "${backup_path}"
       echo "update: health checks passed"
+      echo "update-state: ${LAST_UPDATE_FILE}"
       return 0
     fi
     tries=$((tries - 1))
