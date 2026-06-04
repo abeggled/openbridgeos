@@ -43,6 +43,8 @@ Target permissions:
 /etc/obos/apps/*.env        root:root 0600
 /etc/obos/tls/              root:root 0700
 /srv/obos/                  root:root 0750
+/srv/obos/state/            root:root 0750
+/srv/obos/state/last-update root:root 0640
 ```
 
 ## Network Exposure
@@ -143,6 +145,17 @@ Future hardening should include:
 - capability drops after validating the Mosquitto password-file bootstrap path
 - read-only root filesystems where compatible
 - Docker user namespace remapping compatibility testing
+
+## Updates
+
+A successful `obosctl update` should leave an audit-friendly state record at
+`/srv/obos/state/last-update`. The record should include the completion time,
+app name, managed service, backup path, and successful localhost plus verified
+HTTPS proxy health markers.
+
+Failed updates must not overwrite the last successful update record. This keeps
+status output and future web UI state honest: stale success remains visibly old
+instead of being replaced by a failed attempt.
 
 ## Backup and Restore
 

@@ -29,6 +29,18 @@ grep -q 'obos-backup-manifest.txt' scripts/obosctl \
 grep -q 'contains_secrets=true' scripts/obosctl \
   || fail "obosctl backup manifest does not mark secret-bearing backups"
 
+grep -q 'LAST_UPDATE_FILE=' scripts/obosctl \
+  || fail "obosctl update does not track last update state"
+
+grep -q 'format=obos-update-v1' scripts/obosctl \
+  || fail "obosctl update state does not declare a format"
+
+grep -q 'health_https_proxy=ok' scripts/obosctl \
+  || fail "obosctl update state does not record HTTPS proxy health"
+
+grep -q 'last-update:' scripts/obosctl \
+  || fail "obosctl status does not show last update state"
+
 grep -q 'proxy-health)' scripts/obosctl \
   || fail "obosctl does not expose verified HTTPS proxy health"
 

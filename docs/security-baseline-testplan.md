@@ -22,6 +22,7 @@ intended host security posture:
 - Docker daemon hardening defaults
 - sysctl hardening baseline
 - Open Bridge Server health
+- update state recording after successful updates
 - backup file permissions and identity material coverage
 
 ## Test Setup
@@ -195,6 +196,25 @@ Expected:
 - HTTPS reverse proxy health endpoint passes with local CA verification
 - Open Bridge Server is not reachable externally on LAN port `8080`
 
+### Update State
+
+```sh
+sudo obosctl update
+sudo stat -c '%a %U:%G %n' /srv/obos/state /srv/obos/state/last-update
+sudo grep '^format=obos-update-v1$' /srv/obos/state/last-update
+sudo grep '^health_local=ok$' /srv/obos/state/last-update
+sudo grep '^health_https_proxy=ok$' /srv/obos/state/last-update
+obosctl status | grep 'last-update:'
+```
+
+Expected:
+
+- update creates a backup before pulling images
+- update succeeds only after localhost and verified HTTPS proxy health pass
+- `/srv/obos/state` mode is `750`
+- `/srv/obos/state/last-update` mode is `640`
+- last update record is visible in `obosctl status`
+
 ### Backup Permissions And Contents
 
 ```sh
@@ -227,6 +247,7 @@ The baseline passes when:
 - manual port scan matches the expected default exposure
 - MQTT LAN opt-in and disable workflow behaves as expected
 - Open Bridge Server health endpoint passes through localhost and verified HTTPS proxy
+- successful update records `/srv/obos/state/last-update`
 - backup file permissions are restrictive
 - backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated
 

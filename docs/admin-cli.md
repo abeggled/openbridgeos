@@ -35,6 +35,9 @@ Bridge Server health endpoint result, and the HTTPS reverse proxy health result.
 The HTTPS proxy check verifies the response through the per-appliance-instance
 local CA by resolving `obos.local` to `127.0.0.1` for the local probe.
 
+If `/srv/obos/state/last-update` exists, `status` also prints the last
+successful update record.
+
 ```sh
 obosctl health
 obosctl proxy-health
@@ -55,9 +58,14 @@ The update command performs the first conservative update flow:
 2. Pull newer container images.
 3. Restart the managed systemd service.
 4. Poll the localhost and HTTPS proxy health endpoints for up to 60 seconds.
+5. Write `/srv/obos/state/last-update` after both health checks pass.
 
-If either health check fails, the command exits non-zero. Automatic rollback is
-not implemented yet.
+If either health check fails, the command exits non-zero and does not update the
+last successful update record. Automatic rollback is not implemented yet.
+
+The update record is a small key-value file with format `obos-update-v1`. It
+includes the completion timestamp, app name, systemd service name, backup path,
+and successful local/proxy health markers.
 
 ## Backup
 
@@ -124,6 +132,7 @@ For development or image tests, these paths can be overridden:
 OBOS_APP_DIR=/tmp/obos/apps/openbridgeserver \
 OBOS_ENV_FILE=/tmp/obos/etc/openbridgeserver.env \
 OBOS_BACKUP_DIR=/tmp/obos/backups \
+OBOS_STATE_DIR=/tmp/obos/state \
 obosctl status
 ```
 
