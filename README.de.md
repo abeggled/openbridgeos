@@ -64,6 +64,11 @@ lesen. Die Standard-Hardening-Policy deaktiviert SSH, wenn der Dienst vorhanden 
 Siehe [docs/install-debian.md](docs/install-debian.md) und
 [docs/image-build.md](docs/image-build.md).
 
+## Hardware
+
+Siehe [docs/hardware.md](docs/hardware.md) für Raspberry-Pi-4+- und x86_64-Hinweise
+zu Dimensionierung, Speicher, Stromversorgung und Recovery.
+
 ## Security Baseline
 
 Nach Provisionierung und Neustart wird die Appliance so validiert:
@@ -113,6 +118,7 @@ docs/
   architecture.md          Systemform und Designentscheidungen
   decisions/               Architecture Decision Records
   hardening.md             Host-Firewall, SSH und sysctl-Hardening
+  hardware.md              Hardware-Dimensionierung, Speicher und Stromversorgung
   install-debian.md        Erster Debian-Entwicklungsinstallationspfad
   image-build.md           Bootfähiges Image-Profil und Build-Plan
   security-baseline-testplan.md  Erster Security-Validierungsplan für VMs
