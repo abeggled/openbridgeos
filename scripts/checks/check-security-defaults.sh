@@ -13,7 +13,8 @@ fail() {
 grep -q 'APPLIANCE_ID_FILE=' scripts/bootstrap/first-boot.sh \
   || fail "appliance identifier path is not defined on first boot"
 
-grep -q 'uuid > "${APPLIANCE_ID_FILE}"' scripts/bootstrap/first-boot.sh \
+# shellcheck disable=SC2016
+grep -Fq 'uuid > "${APPLIANCE_ID_FILE}"' scripts/bootstrap/first-boot.sh \
   || fail "appliance identifier is not generated on first boot"
 
 grep -q 'APPLIANCE_ID_FILE=' scripts/obosctl \
