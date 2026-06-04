@@ -53,6 +53,7 @@ grep -q 'mode=staged-only' scripts/obosctl \
 grep -q 'format=obos-restore-stage-v1' scripts/obosctl \
   || fail "restore staging does not write a stage manifest"
 
+# shellcheck disable=SC2016
 grep -q 'chmod 0600 "${stage_manifest}"' scripts/obosctl \
   || fail "restore stage manifest permissions are not restrictive"
 
