@@ -25,12 +25,19 @@ validate_profile() {
   OBOS_DEBIAN_RELEASE=
   OBOS_BOOT_TARGET=
   OBOS_OUTPUT_FORMAT=
+  OBOS_OUTPUT_COMPRESSION=
+  OBOS_IMAGE_EXTENSION=
+  OBOS_IMAGE_MIN_SIZE=
   OBOS_BASE_PACKAGES=
   OBOS_PROVISION_SCRIPT=
   OBOS_FIRST_BOOT_SERVICE=
   OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=
   OBOS_RPI_BOOT_MEDIA=
   OBOS_RPI_FIRMWARE_MODE=
+  OBOS_RPI_PARTITION_LAYOUT=
+  OBOS_RPI_BOOT_PARTITION_LABEL=
+  OBOS_RPI_ROOT_PARTITION_LABEL=
+  OBOS_RPI_REQUIRED_TOOLS=
   OBOS_KERNEL_REQUIRED_CONFIG=
   OBOS_QCOW2_BASE_IMAGE_URL=
   OBOS_QCOW2_MIN_SIZE=
@@ -96,6 +103,14 @@ validate_profile() {
   if [ "${OBOS_IMAGE_KIND}" = "rpi-image" ]; then
     [ "${OBOS_IMAGE_ARCH}" = "arm64" ] \
       || fail "${profile_file}: Raspberry Pi images must be arm64"
+    [ "${OBOS_OUTPUT_FORMAT}" = "raw" ] \
+      || fail "${profile_file}: Raspberry Pi images must use raw output before compression"
+    [ "${OBOS_OUTPUT_COMPRESSION}" = "xz" ] \
+      || fail "${profile_file}: Raspberry Pi images must use xz compression"
+    [ "${OBOS_IMAGE_EXTENSION}" = "img.xz" ] \
+      || fail "${profile_file}: Raspberry Pi artifact extension must be img.xz"
+    [ -n "${OBOS_IMAGE_MIN_SIZE}" ] \
+      || fail "${profile_file}: Raspberry Pi image minimum size must be defined"
     [ "${OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE}" = "true" ] \
       || fail "${profile_file}: Raspberry Pi Network Installer compatibility must be explicit"
     [ "${OBOS_RPI_FIRMWARE_MODE}" = "raspberry-pi-bootloader" ] \
@@ -106,8 +121,34 @@ validate_profile() {
       || fail "${profile_file}: Raspberry Pi boot media must include USB"
     contains_csv_value "${OBOS_RPI_BOOT_MEDIA}" nvme \
       || fail "${profile_file}: Raspberry Pi boot media must include NVMe"
+    contains_csv_value "${OBOS_RPI_PARTITION_LAYOUT}" boot-fat32 \
+      || fail "${profile_file}: Raspberry Pi partition layout must include boot-fat32"
+    contains_csv_value "${OBOS_RPI_PARTITION_LAYOUT}" root-ext4 \
+      || fail "${profile_file}: Raspberry Pi partition layout must include root-ext4"
+    [ -n "${OBOS_RPI_BOOT_PARTITION_LABEL}" ] \
+      || fail "${profile_file}: Raspberry Pi boot partition label must be defined"
+    [ -n "${OBOS_RPI_ROOT_PARTITION_LABEL}" ] \
+      || fail "${profile_file}: Raspberry Pi root partition label must be defined"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" debootstrap \
+      || fail "${profile_file}: Raspberry Pi required tools must include debootstrap"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" qemu-aarch64-static \
+      || fail "${profile_file}: Raspberry Pi required tools must include qemu-aarch64-static"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" sfdisk \
+      || fail "${profile_file}: Raspberry Pi required tools must include sfdisk"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" mkfs.vfat \
+      || fail "${profile_file}: Raspberry Pi required tools must include mkfs.vfat"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" mkfs.ext4 \
+      || fail "${profile_file}: Raspberry Pi required tools must include mkfs.ext4"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" xz \
+      || fail "${profile_file}: Raspberry Pi required tools must include xz"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" sha256sum \
+      || fail "${profile_file}: Raspberry Pi required tools must include sha256sum"
     contains_csv_value "${OBOS_KERNEL_REQUIRED_CONFIG}" 'CONFIG_BLK_DEV_NVME=y' \
       || fail "${profile_file}: Raspberry Pi kernel config must enable CONFIG_BLK_DEV_NVME=y"
+    contains_csv_value "${OBOS_KERNEL_REQUIRED_CONFIG}" 'CONFIG_PCIE_BRCMSTB=y' \
+      || fail "${profile_file}: Raspberry Pi kernel config must enable CONFIG_PCIE_BRCMSTB=y"
+    contains_csv_value "${OBOS_KERNEL_REQUIRED_CONFIG}" 'CONFIG_USB_XHCI_PCI=y' \
+      || fail "${profile_file}: Raspberry Pi kernel config must enable CONFIG_USB_XHCI_PCI=y"
   fi
 
   echo "PASS ${profile_file}"
