@@ -15,12 +15,14 @@ OBOS_IMAGE_PROFILE=
 OBOS_IMAGE_ARCH=
 OBOS_IMAGE_KIND=
 OBOS_DEBIAN_RELEASE=
+OBOS_DEBIAN_COMPONENTS=
 OBOS_BOOT_TARGET=
 OBOS_OUTPUT_FORMAT=
 OBOS_OUTPUT_COMPRESSION=
 OBOS_IMAGE_EXTENSION=
 OBOS_IMAGE_MIN_SIZE=
 OBOS_BASE_PACKAGES=
+OBOS_RPI_BOOT_PACKAGES=
 OBOS_PROVISION_SCRIPT=
 OBOS_FIRST_BOOT_SERVICE=
 OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=
@@ -46,12 +48,14 @@ profile=${OBOS_IMAGE_PROFILE}
 architecture=${OBOS_IMAGE_ARCH}
 kind=${OBOS_IMAGE_KIND}
 debian_release=${OBOS_DEBIAN_RELEASE}
+debian_components=${OBOS_DEBIAN_COMPONENTS:-n/a}
 boot_target=${OBOS_BOOT_TARGET}
 output_format=${OBOS_OUTPUT_FORMAT}
 output_compression=${OBOS_OUTPUT_COMPRESSION:-n/a}
 image_extension=${OBOS_IMAGE_EXTENSION:-n/a}
 image_min_size=${OBOS_IMAGE_MIN_SIZE:-n/a}
 base_packages=${OBOS_BASE_PACKAGES}
+rpi_boot_packages=${OBOS_RPI_BOOT_PACKAGES:-n/a}
 provision_script=${OBOS_PROVISION_SCRIPT}
 first_boot_service=${OBOS_FIRST_BOOT_SERVICE}
 rpi_network_installer_compatible=${OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE:-false}
@@ -96,6 +100,8 @@ rpi_contract:
   - image must be Raspberry Pi Network Installer compatible
   - image artifact must use extension: ${OBOS_IMAGE_EXTENSION}
   - image must be at least: ${OBOS_IMAGE_MIN_SIZE}
+  - debootstrap components: ${OBOS_DEBIAN_COMPONENTS}
+  - boot packages: ${OBOS_RPI_BOOT_PACKAGES}
   - image must boot from all declared media: ${OBOS_RPI_BOOT_MEDIA}
   - image must use partition layout: ${OBOS_RPI_PARTITION_LAYOUT}
   - boot partition label: ${OBOS_RPI_BOOT_PARTITION_LABEL}
