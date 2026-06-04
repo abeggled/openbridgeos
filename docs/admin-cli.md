@@ -57,6 +57,7 @@ sudo obosctl backup
 Backups are written to `/srv/obos/backups` by default and are mode `0600`.
 They include:
 
+- `obos-backup-manifest.txt` with creation time, app name, appliance identifier, and secret/TLS inclusion flags
 - Open Bridge Server app data
 - Mosquitto data
 - Compose files and Mosquitto config
