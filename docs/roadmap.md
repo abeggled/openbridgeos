@@ -44,7 +44,7 @@
 - Firewall defaults.
 - SSH policy.
 - TLS reverse proxy for open bridge server and obos UI.
-- Per-device local CA generation and trust onboarding.
+- Per-appliance-instance local CA generation and trust onboarding.
 - Certificate replacement/rotation workflow.
 - Explicit MQTT external access opt-in workflow.
 - Signed release artifacts and checksums.
