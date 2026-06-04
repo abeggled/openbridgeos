@@ -16,6 +16,7 @@ Planned artifacts:
 - Secrets are never generated during image build.
 - First boot performs per-appliance-instance initialization.
 - Build output includes checksums.
+- Build output includes a manifest for provenance and support triage.
 - Release artifacts should be signed before public distribution.
 - The same provisioning scripts should be used for manual installs and images.
 - Image profiles are validated in CI before any image builder is wired in.
@@ -77,7 +78,7 @@ Every image builder must follow the same contract:
 4. Run `scripts/bootstrap/provision-debian.sh` inside the target filesystem or VM.
 5. Do not run first boot during image creation.
 6. Enable `obos-first-boot.service` for target appliance initialization.
-7. Emit the image artifact plus checksum.
+7. Emit the image artifact plus checksum and manifest.
 
 Raspberry Pi image builders must additionally:
 
@@ -124,7 +125,7 @@ By default the script:
 5. runs `scripts/bootstrap/provision-debian.sh` inside the image with SSH disabled
 6. keeps first boot pending for the target appliance instance
 7. cleans machine identity and logs with `virt-sysprep`
-8. writes a `.sha256` checksum next to the image
+8. writes `.sha256` and `.manifest` files next to the image
 
 Use a pre-downloaded base image when needed:
 
@@ -132,6 +133,20 @@ Use a pre-downloaded base image when needed:
 sudo OBOS_QCOW2_BASE_IMAGE=/srv/images/debian-13-genericcloud-amd64.qcow2 \
   scripts/images/build-amd64-qcow2.sh
 ```
+
+The qcow2 manifest uses format `obos-qcow2-build-v1` and records:
+
+- image profile, architecture, Debian release, and output format
+- image path and SHA-256 hash
+- base image path, source URL, and SHA-256 hash
+- provision script and first boot service
+- repository revision when available
+- SSH default policy
+- `first_boot_pending=true`
+- `contains_secrets=false`
+
+Image builds must not generate appliance secrets. Secrets, appliance identifier,
+and TLS material are created only by first boot on the target appliance instance.
 
 Local build outputs are ignored by git via `build/`, `dist/`, and `*.qcow2`.
 
