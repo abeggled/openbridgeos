@@ -1,12 +1,13 @@
 # TLS Trust Material
 
-Open Bridge OS will use a local CA per appliance instance before public release.
-The current scripts make the trust model testable without enabling the reverse
-proxy yet.
+Open Bridge OS uses a local CA per appliance instance for the default HTTPS
+reverse proxy. The current implementation makes Open Bridge Server reachable via
+nginx on TCP `443`, while Open Bridge Server itself binds to localhost.
 
 ## Generate TLS Material
 
-On a provisioned appliance instance:
+First boot generates TLS material automatically. To regenerate or create it
+manually on a provisioned appliance instance:
 
 ```sh
 sudo obosctl tls-generate
@@ -104,9 +105,10 @@ and automation, but administrators should use `obosctl` as the stable interface.
 
 ## Current Limitations
 
-- The reverse proxy is not implemented yet.
-- TLS material is not generated automatically during provisioning.
 - IP SANs are generated from the current network state and are not renewed yet
   when DHCP addresses change.
 - Root CA import guidance for Windows, macOS, iOS, Android, and Linux still
   needs screenshots or tested release instructions.
+- Certificate replacement and rotation are not implemented yet.
+- Plain HTTP redirect/onboarding behavior is still undecided; TCP `80` is closed
+  for now.
