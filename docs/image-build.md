@@ -149,6 +149,20 @@ The qcow2 manifest uses format `obos-qcow2-build-v1` and records:
 Image builds must not generate appliance secrets. Secrets, appliance identifier,
 and TLS material are created only by first boot on the target appliance instance.
 
+Validate a manifest after building:
+
+```sh
+sh scripts/images/check-qcow2-manifest.sh dist/images/obos-amd64-vm-latest.qcow2.manifest
+```
+
+Use strict file verification when the referenced image and base image are present
+on the same build host:
+
+```sh
+OBOS_MANIFEST_STRICT_FILES=1 \
+  sh scripts/images/check-qcow2-manifest.sh dist/images/obos-amd64-vm-latest.qcow2.manifest
+```
+
 Local build outputs are ignored by git via `build/`, `dist/`, and `*.qcow2`.
 
 ## amd64 qcow2 Smoke Test
