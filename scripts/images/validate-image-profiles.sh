@@ -32,6 +32,11 @@ validate_profile() {
   OBOS_RPI_BOOT_MEDIA=
   OBOS_RPI_FIRMWARE_MODE=
   OBOS_KERNEL_REQUIRED_CONFIG=
+  OBOS_QCOW2_BASE_IMAGE_URL=
+  OBOS_QCOW2_MIN_SIZE=
+  OBOS_QCOW2_BUILDER=
+  OBOS_QCOW2_REQUIRED_TOOLS=
+  OBOS_IMAGE_DEFAULT_SSH=
 
   # shellcheck disable=SC1090
   . "${profile_file}"
@@ -70,6 +75,23 @@ validate_profile() {
     || fail "${profile_file}: image profile must use the shared Debian provisioner"
   [ "${OBOS_FIRST_BOOT_SERVICE}" = "obos-first-boot.service" ] \
     || fail "${profile_file}: first boot service must remain obos-first-boot.service"
+
+  if [ "${OBOS_OUTPUT_FORMAT}" = "qcow2" ]; then
+    [ -n "${OBOS_QCOW2_BASE_IMAGE_URL}" ] \
+      || fail "${profile_file}: qcow2 profile must define OBOS_QCOW2_BASE_IMAGE_URL"
+    [ -n "${OBOS_QCOW2_MIN_SIZE}" ] \
+      || fail "${profile_file}: qcow2 profile must define OBOS_QCOW2_MIN_SIZE"
+    [ "${OBOS_QCOW2_BUILDER}" = "virt-customize" ] \
+      || fail "${profile_file}: qcow2 profile must use virt-customize builder"
+    contains_csv_value "${OBOS_QCOW2_REQUIRED_TOOLS}" qemu-img \
+      || fail "${profile_file}: qcow2 required tools must include qemu-img"
+    contains_csv_value "${OBOS_QCOW2_REQUIRED_TOOLS}" virt-customize \
+      || fail "${profile_file}: qcow2 required tools must include virt-customize"
+    contains_csv_value "${OBOS_QCOW2_REQUIRED_TOOLS}" virt-sysprep \
+      || fail "${profile_file}: qcow2 required tools must include virt-sysprep"
+    [ "${OBOS_IMAGE_DEFAULT_SSH}" = "disabled" ] \
+      || fail "${profile_file}: qcow2 image default SSH policy must be disabled"
+  fi
 
   if [ "${OBOS_IMAGE_KIND}" = "rpi-image" ]; then
     [ "${OBOS_IMAGE_ARCH}" = "arm64" ] \
