@@ -2,7 +2,7 @@
 Description=Open Bridge OS first boot provisioning
 ConditionPathExists=!/srv/obos/state/first-boot.done
 After=local-fs.target
-Before=docker.service
+Before=docker.service nginx.service
 
 [Service]
 Type=oneshot
