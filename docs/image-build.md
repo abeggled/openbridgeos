@@ -233,6 +233,19 @@ status, `qemu-aarch64` binfmt registration, and loop-device availability. Missin
 root, binfmt, or loop support is reported as a warning so the script can still be
 used for early diagnostics on non-build hosts.
 
+Verify the kernel config from a mounted or extracted Raspberry Pi image before
+publishing:
+
+```sh
+sh scripts/images/check-rpi-kernel-config.sh /mnt/obos-rpi-root
+```
+
+The checker also accepts a direct kernel config file:
+
+```sh
+sh scripts/images/check-rpi-kernel-config.sh /mnt/obos-rpi-root/boot/config-6.1.0-rpi-arm64
+```
+
 The builder host must provide the profile tools: `debootstrap`,
 `qemu-aarch64-static`, `sfdisk`, `mkfs.vfat`, `mkfs.ext4`, `xz`, and
 `sha256sum`.
