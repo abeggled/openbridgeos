@@ -29,6 +29,18 @@ grep -q 'obos-backup-manifest.txt' scripts/obosctl \
 grep -q 'contains_secrets=true' scripts/obosctl \
   || fail "obosctl backup manifest does not mark secret-bearing backups"
 
+grep -q 'restore-inspect)' scripts/obosctl \
+  || fail "obosctl does not expose restore inspection"
+
+grep -q 'restore inspect: PASS' scripts/obosctl \
+  || fail "restore inspection does not report success"
+
+grep -q 'unsafe absolute or parent-relative paths' scripts/obosctl \
+  || fail "restore inspection does not reject unsafe archive paths"
+
+grep -q 'TLS private key material present' scripts/obosctl \
+  || fail "restore inspection does not report TLS identity material"
+
 grep -q 'LAST_UPDATE_FILE=' scripts/obosctl \
   || fail "obosctl update does not track last update state"
 

@@ -24,6 +24,7 @@ intended host security posture:
 - Open Bridge Server health
 - update state recording after successful updates
 - backup file permissions and identity material coverage
+- non-destructive restore inspection
 
 ## Test Setup
 
@@ -227,6 +228,7 @@ sudo tar -xOzf "${latest_backup}" obos-backup-manifest.txt | grep '^contains_sec
 sudo tar -tzf "${latest_backup}" | grep '^appliance-id$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos-local-ca.key$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos.local.key$'
+obosctl restore-inspect "${latest_backup}"
 ```
 
 Expected:
@@ -237,6 +239,7 @@ Expected:
 - backup manifest marks the archive as secret-bearing
 - backup includes appliance identifier
 - backup includes TLS private key material for appliance identity restore
+- restore inspection passes without extracting files
 - backup is treated as sensitive because it contains secrets and TLS private keys
 
 ## Exit Criteria
@@ -250,6 +253,7 @@ The baseline passes when:
 - successful update records `/srv/obos/state/last-update`
 - backup file permissions are restrictive
 - backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated
+- `obosctl restore-inspect` passes for the latest backup
 
 ## Known Follow-Up Tests
 

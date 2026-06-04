@@ -10,6 +10,7 @@ and agent will need as well.
 obosctl status
 obosctl health
 obosctl proxy-health
+obosctl restore-inspect <backup.tar.gz>
 sudo obosctl start
 sudo obosctl stop
 sudo obosctl restart
@@ -90,6 +91,31 @@ backups as sensitive data. Restoring the appliance identifier and TLS material
 preserves the appliance instance identity and avoids forcing clients to trust a
 new local CA.
 
+## Restore Inspection
+
+```sh
+obosctl restore-inspect /srv/obos/backups/obos-openbridgeserver-20260604T103000Z.tar.gz
+```
+
+`restore-inspect` is a non-destructive preflight check for appliance backups. It
+reads the archive manifest, rejects unsafe archive paths such as absolute paths
+or `..` traversal, verifies required restore inputs, and reports whether TLS
+private key material is present.
+
+Required archive entries for a complete restore candidate:
+
+- `obos-backup-manifest.txt`
+- `appliance-id`
+- generated app environment file
+- `data/`
+- `mqtt/`
+- `compose.yaml`
+- `mosquitto.conf`
+
+TLS private key material is reported separately because it determines whether a
+restore can preserve the same appliance TLS identity. The command does not stop
+services and does not extract files.
+
 ## MQTT LAN Access
 
 ```sh
@@ -152,5 +178,6 @@ obosctl proxy-health
 ## Design Notes
 
 `obosctl` is not meant to replace Open Bridge Server's own UI. It only manages
-the appliance layer: lifecycle, health, logs, updates, backups, local trust
-onboarding helpers, and explicit host exposure changes.
+the appliance layer: lifecycle, health, logs, updates, backups, restore
+preflight checks, local trust onboarding helpers, and explicit host exposure
+changes.
