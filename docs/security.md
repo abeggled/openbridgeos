@@ -4,7 +4,7 @@ Open Bridge OS should inherit the security posture of Open Bridge Server and
 extend it to the appliance.
 
 The core security principle is simple: expose little, generate secrets on the
-device, persist data predictably, and make risky actions visible.
+appliance instance, persist data predictably, and make risky actions visible.
 
 ## Baseline Principles
 
@@ -24,15 +24,15 @@ On first boot, obos should:
 
 - generate `OBS_SECURITY__JWT_SECRET`
 - generate the internal MQTT service password
+- generate per-appliance-instance TLS trust material
+- export public trust information without private keys
 - create an appliance identifier
 - set hostname if configured by image metadata or first setup
 - set timezone
 - write app environment files with restrictive permissions
 - mark first boot as complete
 
-Before public release, first boot or first onboarding should also generate
-per-appliance-instance TLS trust material. See
-[0004: Use a Per-Appliance-Instance Local CA for TLS Trust Onboarding](decisions/0004-local-ca-trust-onboarding.md)
+See [0004: Use a Per-Appliance-Instance Local CA for TLS Trust Onboarding](decisions/0004-local-ca-trust-onboarding.md)
 and [tls-trust.md](tls-trust.md).
 
 Target permissions:
@@ -48,13 +48,20 @@ Target permissions:
 
 Default external exposure is minimal:
 
-- Open Bridge Server HTTP UI/API on `8080/tcp` for the development baseline
+- HTTPS reverse proxy on `443/tcp`
+- no external direct Open Bridge Server HTTP
 - no external SSH
 - MQTT external access disabled by default
-- obos administration UI once implemented
+- obos administration UI once implemented, behind the same TLS boundary
+
+Open Bridge Server binds to localhost behind nginx:
+
+```text
+127.0.0.1:8080
+```
 
 The host firewall uses nftables with inbound default-drop. It allows loopback,
-established traffic, ICMP/IPv6 ICMP, DHCP renewals, and TCP `8080`.
+established traffic, ICMP/IPv6 ICMP, DHCP renewals, and TCP `443`.
 
 MQTT remains bound to localhost by default:
 
@@ -67,13 +74,9 @@ Administrators must be able to enable LAN MQTT access explicitly when their
 installation requires it. See
 [0003: MQTT External Access Is Explicit Opt-In](decisions/0003-mqtt-external-access-opt-in.md).
 
-Before public release, direct TCP `8080` exposure should be replaced by a TLS
-reverse proxy entrypoint. See
-[0002: Use a Local Reverse Proxy for TLS Before Public Release](decisions/0002-tls-reverse-proxy-direction.md).
-
 ## TLS Trust Onboarding
 
-Open Bridge OS should use a local CA per appliance instance for LAN/default TLS.
+Open Bridge OS uses a local CA per appliance instance for LAN/default TLS.
 Trust must be explicit and verifiable through an out-of-band path such as local
 console, attached display, or a future boot-accessible trust summary.
 
@@ -88,6 +91,7 @@ local certificate path later.
 Provisioning applies:
 
 - nftables firewall rules from `packaging/nftables/obos.nft`
+- nginx TLS reverse proxy config from `packaging/nginx/openbridgeserver.conf`
 - sysctl baseline from `packaging/sysctl/99-obos-hardening.conf`
 - SSH service disablement when `ssh.service` exists
 
