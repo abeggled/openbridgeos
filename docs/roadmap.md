@@ -38,6 +38,7 @@
 - Consume stable `obosctl backup-list` key-value output for backup inventory.
 - Configure hostname, timezone, and network basics.
 - Surface hardening status and security baseline results.
+- Consume stable `obosctl security-summary` key-value output for baseline status.
 - Surface TLS trust fingerprints and root CA export workflow.
 - Consume stable `obosctl tls-summary` key-value output for TLS trust state.
 - Provide explicit opt-in controls for LAN MQTT exposure.
