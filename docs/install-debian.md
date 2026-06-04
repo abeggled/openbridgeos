@@ -22,12 +22,12 @@ sudo scripts/bootstrap/provision-debian.sh
 sudo reboot
 ```
 
-Provisioning installs Docker, Compose, nftables, Open Bridge OS app files,
-first boot logic, host hardening, `obosctl`, security baseline audit tooling,
-and systemd units.
+Provisioning installs Docker, Compose, nftables, nginx, Open Bridge OS app
+files, first boot logic, host hardening, `obosctl`, security baseline audit
+tooling, and systemd units.
 
-The first boot service intentionally generates secrets on the target device,
-not during image creation.
+The first boot service intentionally generates secrets and TLS trust material on
+the target appliance instance, not during image creation.
 
 ## Remote Development Warning
 
@@ -50,14 +50,21 @@ After reboot:
 systemctl status obos-first-boot.service
 systemctl status obos-openbridgeserver.service
 systemctl status docker.service
+systemctl status nginx.service
 systemctl status nftables.service
 obosctl status
 ```
 
-Open Bridge Server should be reachable at:
+Open Bridge Server should be reachable through the TLS reverse proxy at:
 
 ```text
-http://<device-ip>:8080
+https://<appliance-ip>/
+```
+
+The direct Open Bridge Server HTTP listener is localhost-only:
+
+```text
+127.0.0.1:8080
 ```
 
 MQTT is bound to localhost by default:
@@ -66,6 +73,18 @@ MQTT is bound to localhost by default:
 127.0.0.1:1883
 127.0.0.1:9001
 ```
+
+## TLS Trust
+
+First boot generates local TLS trust material automatically. To inspect and
+export the public trust bundle:
+
+```sh
+sudo obosctl tls-info
+sudo obosctl tls-export
+```
+
+See [tls-trust.md](tls-trust.md).
 
 ## Security Baseline Audit
 
@@ -102,6 +121,8 @@ See [admin-cli.md](admin-cli.md).
 
 ```text
 /etc/obos/apps/openbridgeserver.env
+/etc/obos/tls
+/etc/nginx/sites-available/obos-openbridgeserver.conf
 /etc/nftables.conf
 /etc/sysctl.d/99-obos-hardening.conf
 /srv/obos/apps/openbridgeserver/data
@@ -114,8 +135,11 @@ See [admin-cli.md](admin-cli.md).
 
 - `OBS_JWT_SECRET` is generated on first boot.
 - `OBS_MQTT_PASSWORD` is generated on first boot.
+- TLS trust material is generated on first boot.
+- Open Bridge Server is exposed externally through HTTPS on TCP `443`.
+- Direct Open Bridge Server HTTP is localhost-only on `127.0.0.1:8080`.
 - MQTT is not exposed to the LAN by default.
-- nftables drops inbound traffic except Open Bridge Server on TCP `8080`.
+- nftables drops inbound traffic except the HTTPS reverse proxy on TCP `443`.
 - SSH is disabled by default when present.
 - Backups contain secrets and are written with mode `0600`.
 
@@ -124,4 +148,4 @@ See [admin-cli.md](admin-cli.md).
 - No ISO or Raspberry Pi image builder yet.
 - No obos web administration UI yet.
 - No rollback path for failed app updates yet.
-- No TLS/default certificate story yet.
+- No tested platform-specific CA import guide yet.
