@@ -70,3 +70,18 @@ The local agent should run with the minimum privilege needed to call `obosctl`
 and should not expose a raw shell. It should allowlist commands and arguments,
 enforce timeouts, capture exit status, and return the command format version
 along with stdout and stderr.
+
+The initial agent skeleton is installed as `obos-agent`. It currently exposes
+only read-only actions:
+
+```sh
+obos-agent status-summary
+obos-agent update-summary
+obos-agent backup-list
+obos-agent mqtt-summary
+obos-agent tls-summary
+obos-agent security-summary
+```
+
+The response envelope uses format `obos-agent-response-v1` and includes the
+requested action, exit code, timeout marker, stdout block, and stderr block.
