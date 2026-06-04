@@ -22,7 +22,7 @@ jobs:
       - name: Install checks
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends nftables shellcheck
+          sudo apt-get install -y --no-install-recommends nftables shellcheck nginx
 
       - name: Shell syntax
         run: |
@@ -33,6 +33,19 @@ jobs:
 
       - name: nftables syntax
         run: sudo nft -c -f packaging/nftables/obos.nft
+
+      - name: nginx syntax
+        run: |
+          sudo install -d -m 0700 /etc/obos/tls
+          sudo openssl req -x509 -nodes -newkey rsa:2048 \
+            -subj "/CN=ci.obos.local" \
+            -keyout /etc/obos/tls/obos.local.key \
+            -out /etc/obos/tls/obos.local.crt \
+            -days 1
+          sudo install -m 0644 packaging/nginx/openbridgeserver.conf /etc/nginx/sites-available/obos-openbridgeserver.conf
+          sudo rm -f /etc/nginx/sites-enabled/default
+          sudo ln -sf /etc/nginx/sites-available/obos-openbridgeserver.conf /etc/nginx/sites-enabled/obos-openbridgeserver.conf
+          sudo nginx -t
 
       - name: Security defaults
         run: sh scripts/checks/check-security-defaults.sh
