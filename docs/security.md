@@ -1,6 +1,6 @@
 # Security Model
 
-Open Bridge OS should inherit the security posture of Open Bridge Server and
+open bridge operating system should inherit the security posture of Open Bridge Server and
 extend it to the appliance.
 
 The core security principle is simple: expose little, generate secrets on the
@@ -86,7 +86,7 @@ stack. MQTT authentication remains required. See
 
 ## TLS Trust Onboarding
 
-Open Bridge OS uses a local CA per appliance instance for LAN/default TLS.
+open bridge operating system uses a local CA per appliance instance for LAN/default TLS.
 Trust must be explicit and verifiable through an out-of-band path such as local
 console, attached display, or a future boot-accessible trust summary.
 
