@@ -70,8 +70,15 @@ MQTT remains bound to localhost by default:
 127.0.0.1:9001
 ```
 
-Administrators must be able to enable LAN MQTT access explicitly when their
-installation requires it. See
+Administrators can enable LAN MQTT access explicitly with:
+
+```sh
+sudo obosctl mqtt-enable-lan
+```
+
+That action exposes TCP `1883` and TCP `9001`, updates the app environment,
+updates the managed firewall block, and restarts the managed Open Bridge Server
+stack. MQTT authentication remains required. See
 [0003: MQTT External Access Is Explicit Opt-In](decisions/0003-mqtt-external-access-opt-in.md).
 
 ## TLS Trust Onboarding
