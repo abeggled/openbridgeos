@@ -10,7 +10,7 @@ contains_csv_value() {
   values="$1"
   expected="$2"
   case ",${values}," in
-    *,"${expected}",*) return 0 ;;
+    *,${expected},*) return 0 ;;
     *) return 1 ;;
   esac
 }
