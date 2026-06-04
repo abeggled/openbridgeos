@@ -123,6 +123,15 @@ grep -q 'last_update_present=' scripts/obosctl \
 grep -q 'health_https_proxy=ok' scripts/obosctl \
   || fail "obosctl update state does not record HTTPS proxy health"
 
+grep -q 'pre_update_backup_required=true' scripts/obosctl \
+  || fail "obosctl update state does not record pre-update backup requirement"
+
+grep -q 'pre_update_backup_created=true' scripts/obosctl \
+  || fail "obosctl update state does not record pre-update backup creation"
+
+grep -q 'update: blocked; pre-update backup was not created' scripts/obosctl \
+  || fail "obosctl update does not block when the pre-update backup is missing"
+
 grep -q 'last-update:' scripts/obosctl \
   || fail "obosctl status does not show last update state"
 
