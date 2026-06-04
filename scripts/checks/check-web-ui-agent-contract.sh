@@ -35,6 +35,7 @@ require_contract_line 'obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-e
 require_contract_line '/etc/sudoers.d/obos-agent'
 require_contract_line 'sudo -n'
 require_contract_line 'obos-agent-audit-v1'
+require_contract_line 'rotated by logrotate'
 require_contract_line 'Optional MQTT source CIDR input is validated by the agent'
 
 grep -q 'status-summary)' scripts/obosctl \

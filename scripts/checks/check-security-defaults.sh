@@ -145,8 +145,14 @@ grep -q 'check-obos-agent.sh' .github/workflows/ci.yml \
 grep -q 'sudo visudo -cf packaging/sudoers/obos-agent' .github/workflows/ci.yml \
   || fail "CI does not validate obos-agent sudoers syntax"
 
+grep -q 'sudo logrotate --debug packaging/logrotate/obos-agent' .github/workflows/ci.yml \
+  || fail "CI does not validate obos-agent logrotate syntax"
+
 grep -q 'sudo' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install sudo for the agent privilege boundary"
+
+grep -q 'logrotate' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install logrotate for agent audit logs"
 
 grep -q 'useradd .*obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not create the obos-agent system user"
@@ -155,8 +161,15 @@ grep -q 'useradd .*obos-agent' scripts/bootstrap/provision-debian.sh \
 grep -q 'install -m 0440 "${REPO_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install the obos-agent sudoers policy"
 
+# shellcheck disable=SC2016
+grep -q 'install -m 0644 "${REPO_ROOT}/packaging/logrotate/obos-agent" /etc/logrotate.d/obos-agent' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install the obos-agent logrotate policy"
+
 grep -q 'obos-agent ALL=(root) NOPASSWD:' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not use an allowlisted root boundary"
+
+grep -q 'create 0640 obos-agent obos-agent' packaging/logrotate/obos-agent \
+  || fail "obos-agent logrotate policy does not preserve restrictive ownership"
 
 grep -q 'format=obos-agent-response-v1' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not declare a response format"
