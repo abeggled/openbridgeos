@@ -1,7 +1,7 @@
 # Install on Debian 13
 
-This document describes the first development installation path for Open Bridge
-OS on a fresh Debian 13 Trixie system.
+This document describes the first development installation path for open bridge
+operating system on a fresh Debian 13 Trixie system.
 
 The goal is not yet a polished image build. The goal is a reproducible path
 from a minimal Debian install to an appliance-like Open Bridge Server host.
@@ -22,7 +22,7 @@ sudo scripts/bootstrap/provision-debian.sh
 sudo reboot
 ```
 
-Provisioning installs Docker, Compose, nftables, nginx, Open Bridge OS app
+Provisioning installs Docker, Compose, nftables, nginx, open bridge operating system app
 files, first boot logic, host hardening, `obosctl`, security baseline audit
 tooling, and systemd units.
 
