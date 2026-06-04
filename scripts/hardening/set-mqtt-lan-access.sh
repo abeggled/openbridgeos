@@ -8,7 +8,7 @@ NFTABLES_SERVICE="${OBOS_NFTABLES_SERVICE:-nftables.service}"
 
 usage() {
   cat <<'EOF'
-Usage: set-mqtt-lan-access.sh <enable [source-cidr]|disable|status>
+Usage: set-mqtt-lan-access.sh <enable [source-cidr]|disable|status|summary>
 
 Enables or disables explicit LAN access for MQTT plain TCP and MQTT WebSocket.
 Default open bridge operating system installs keep both listeners bound to localhost.
@@ -145,6 +145,69 @@ status() {
   grep -E '^(OBS_MQTT_HOST_PORT|OBS_MQTT_WS_HOST_PORT)=' "${ENV_FILE}" || true
 }
 
+env_value() {
+  key="$1"
+  awk -F= -v key="${key}" '
+    $1 == key {
+      print substr($0, length(key) + 2)
+      found = 1
+      exit
+    }
+    END {
+      if (!found) {
+        exit 1
+      }
+    }
+  ' "${ENV_FILE}" || true
+}
+
+summary() {
+  require_file "${ENV_FILE}"
+  mqtt_host_port="$(env_value OBS_MQTT_HOST_PORT)"
+  mqtt_ws_host_port="$(env_value OBS_MQTT_WS_HOST_PORT)"
+  lan_enabled=false
+  firewall_source=unknown
+
+  case "${mqtt_host_port}:${mqtt_ws_host_port}" in
+    127.0.0.1:1883:127.0.0.1:9001) lan_enabled=false ;;
+    *) lan_enabled=true ;;
+  esac
+
+  if [ -f "${NFT_FILE}" ]; then
+    if awk '/# OBOS MQTT LAN BEGIN/ { in_block = 1; next } /# OBOS MQTT LAN END/ { in_block = 0 } in_block && /tcp dport 1883 accept/ { found = 1 } END { exit found ? 0 : 1 }' "${NFT_FILE}"; then
+      firewall_source="$(awk '
+        /# OBOS MQTT LAN BEGIN/ { in_block = 1; next }
+        /# OBOS MQTT LAN END/ { in_block = 0 }
+        in_block && /tcp dport 1883 accept/ {
+          for (i = 1; i <= NF; i++) {
+            if ($i == "saddr") {
+              print $(i + 1)
+              found = 1
+              exit
+            }
+          }
+          if (!found) {
+            print "any"
+            exit
+          }
+        }
+      ' "${NFT_FILE}")"
+    else
+      firewall_source=disabled
+    fi
+  fi
+
+  cat <<EOF
+format=obos-mqtt-summary-v1
+env_file=${ENV_FILE}
+nft_file=${NFT_FILE}
+mqtt_host_port=${mqtt_host_port}
+mqtt_ws_host_port=${mqtt_ws_host_port}
+lan_enabled=${lan_enabled}
+firewall_source=${firewall_source}
+EOF
+}
+
 enable_lan() {
   source_cidr="${1:-${OBOS_MQTT_LAN_SOURCE_CIDR:-}}"
   validate_source_cidr "${source_cidr}"
@@ -184,6 +247,9 @@ case "${1:-}" in
     ;;
   status)
     status
+    ;;
+  summary)
+    summary
     ;;
   -h|--help|help|"")
     usage

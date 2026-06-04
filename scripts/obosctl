@@ -51,6 +51,7 @@ Commands:
   tls-export        Export public TLS trust bundle
   tls-export-boot   Export public TLS trust summary to a boot partition
   mqtt-status       Show MQTT bind addresses
+  mqtt-summary      Print machine-readable MQTT exposure status
   mqtt-enable-lan   Enable explicit LAN MQTT access, optionally limited to CIDR
   mqtt-disable-lan  Disable LAN MQTT access and bind MQTT to localhost
 EOF
@@ -678,6 +679,10 @@ case "${1:-}" in
   mqtt-status)
     require_root mqtt-status
     run_helper "${MQTT_LAN_SCRIPT}" status
+    ;;
+  mqtt-summary)
+    require_root mqtt-summary
+    run_helper "${MQTT_LAN_SCRIPT}" summary
     ;;
   mqtt-enable-lan)
     require_root mqtt-enable-lan
