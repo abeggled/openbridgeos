@@ -10,7 +10,7 @@ directly.
   agent.
 - Read-only views should prefer `*-summary` and `*-list` commands.
 - Mutating actions must stay explicit, auditable, and mapped to existing
-`obosctl` commands.
+  `obosctl` commands.
 - The UI must treat backups, app environment files, TLS private keys, and
   restore staging directories as sensitive.
 - MQTT LAN exposure must remain opt-in and visible whenever it is enabled.
@@ -63,6 +63,11 @@ obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
 obos-agent mqtt-disable-lan --confirm mqtt-disable-lan
 ```
 
+Confirmed mutating actions append metadata-only audit entries using format
+`obos-agent-audit-v1`. Audit entries record the timestamp, action, exit code,
+and timeout state; command stdout, stderr, secrets, and file contents are not
+written to the audit log.
+
 ## Restore Workflow
 
 The UI may expose the current non-destructive restore workflow:
@@ -85,8 +90,8 @@ and should not expose a raw shell. It should allowlist commands and arguments,
 enforce timeouts, capture exit status, and return the command format version
 along with stdout and stderr.
 
-The initial agent skeleton is installed as `obos-agent`. It currently exposes
-only read-only actions:
+The initial agent skeleton is installed as `obos-agent`. It exposes a stable
+action inventory and read-only status actions:
 
 ```sh
 obos-agent actions
@@ -102,4 +107,5 @@ The response envelope uses format `obos-agent-response-v1` and includes the
 requested action, exit code, timeout marker, stdout block, and stderr block.
 The action inventory uses format `obos-agent-actions-v1` and marks every current
 action as `mutating=false` or `mutating=true`. Mutating entries include the
-required confirmation token.
+required confirmation token. Mutating responses are paired with metadata-only
+audit log entries.
