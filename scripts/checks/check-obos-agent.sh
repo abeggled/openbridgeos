@@ -12,6 +12,7 @@ fail() {
 
 grep -q 'format=obos-agent-response-v1' "${AGENT}" \
   || fail "agent response format missing"
+# shellcheck disable=SC2016
 grep -q 'timeout "${TIMEOUT_SECONDS}"' "${AGENT}" \
   || fail "agent does not enforce command timeout"
 grep -q 'status-summary)' "${AGENT}" \
@@ -26,6 +27,7 @@ grep -q 'tls-summary)' "${AGENT}" \
   || fail "tls-summary action missing"
 grep -q 'security-summary)' "${AGENT}" \
   || fail "security-summary action missing"
+# shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "agent is not installed during provisioning"
 
