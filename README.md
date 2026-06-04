@@ -111,12 +111,15 @@ docs/
   decisions/               Architecture decision records
   hardening.md             Host firewall, SSH, and sysctl hardening
   install-debian.md        First Debian development install path
-  image-build.md           Bootable image plan
+  image-build.md           Bootable image profile and build plan
   security-baseline-testplan.md  First VM security validation plan
   security.md              Security model and hardening principles
   tls-trust.md             Local CA trust material notes
   roadmap.md               MVP phases
 packaging/
+  apt/                     Debian unattended security update policy
+  docker/                  Docker daemon defaults
+  images/                  Bootable image profiles
   nginx/                   TLS reverse proxy config
   nftables/                Host firewall rules
   sysctl/                  Host kernel/network hardening
@@ -126,6 +129,7 @@ scripts/
   bootstrap/               First boot and host provisioning scripts
   checks/                  CI validation helpers
   hardening/               Host hardening helpers
+  images/                  Image profile validation and build-plan helpers
   tls/                     TLS trust helper scripts
 ```
 
