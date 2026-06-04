@@ -281,6 +281,9 @@ grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-m
 grep -q 'TLS material already exists' scripts/tls/generate-tls-material.sh \
   || fail "TLS material generation is not idempotent"
 
+grep -q 'ca_created' scripts/tls/generate-tls-material.sh \
+  || fail "TLS idempotency does not account for CA regeneration"
+
 grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
   || fail "TLS trust export does not state that private keys are excluded"
 
