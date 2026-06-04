@@ -36,6 +36,61 @@ cert_not_after() {
   openssl x509 -in "${cert}" -noout -enddate | sed 's/^notAfter=//'
 }
 
+cert_summary() {
+  cert="$1"
+  label="$2"
+
+  if [ ! -f "${cert}" ]; then
+    echo "${label}_present=false"
+    echo "${label}_path=${cert}"
+    echo "${label}_expiry_state=missing"
+    echo "${label}_expiry_warning=missing"
+    return 1
+  fi
+
+  if ! openssl x509 -in "${cert}" -noout >/dev/null 2>&1; then
+    echo "${label}_present=true"
+    echo "${label}_path=${cert}"
+    echo "${label}_expiry_state=unparseable"
+    echo "${label}_expiry_warning=unparseable"
+    return 1
+  fi
+
+  echo "${label}_present=true"
+  echo "${label}_path=${cert}"
+  echo "${label}_subject=$(cert_subject "${cert}")"
+  echo "${label}_issuer=$(cert_issuer "${cert}")"
+  echo "${label}_not_after=$(cert_not_after "${cert}")"
+  echo "${label}_sha256_fingerprint=$(cert_fingerprint "${cert}")"
+
+  warn_seconds=$((WARN_DAYS * 24 * 60 * 60))
+  if openssl x509 -in "${cert}" -noout -checkend 0 >/dev/null 2>&1; then
+    echo "${label}_expiry_state=valid"
+  else
+    echo "${label}_expiry_state=expired"
+    echo "${label}_expiry_warning=expired"
+    return 1
+  fi
+
+  if openssl x509 -in "${cert}" -noout -checkend "${warn_seconds}" >/dev/null 2>&1; then
+    echo "${label}_expiry_warning=none"
+  else
+    echo "${label}_expiry_warning=within_${WARN_DAYS}_days"
+  fi
+}
+
+summary() {
+  failed=0
+  cat <<EOF
+format=obos-tls-summary-v1
+tls_dir=${TLS_DIR}
+warn_days=${WARN_DAYS}
+EOF
+  cert_summary "${CA_CERT}" local_ca || failed=1
+  cert_summary "${LEAF_CERT}" leaf || failed=1
+  return "${failed}"
+}
+
 check_cert() {
   cert="$1"
   label="$2"
@@ -65,6 +120,17 @@ check_cert() {
     warn "${label} certificate expires within ${WARN_DAYS} days"
   fi
 }
+
+case "${1:-}" in
+  summary)
+    summary
+    exit $?
+    ;;
+  -h|--help|help)
+    echo "usage: check-tls-status.sh [summary]" >&2
+    exit 2
+    ;;
+esac
 
 failed=0
 echo "TLS status:"

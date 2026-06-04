@@ -385,6 +385,18 @@ grep -q 'tls-export)' scripts/obosctl \
 grep -q 'tls-status)' scripts/obosctl \
   || fail "obosctl does not expose TLS status checks"
 
+grep -q 'tls-summary)' scripts/obosctl \
+  || fail "obosctl does not expose machine-readable TLS trust status"
+
+grep -q 'format=obos-tls-summary-v1' scripts/tls/check-tls-status.sh \
+  || fail "TLS status helper does not expose a summary format"
+
+grep -q '_sha256_fingerprint=' scripts/tls/check-tls-status.sh \
+  || fail "TLS summary does not report certificate fingerprints"
+
+grep -q '_expiry_state=' scripts/tls/check-tls-status.sh \
+  || fail "TLS summary does not report certificate expiry state"
+
 grep -q 'tls-export-boot)' scripts/obosctl \
   || fail "obosctl does not expose boot trust summary export"
 
