@@ -75,7 +75,7 @@ grep -q -- '--cacert' scripts/audit/security-baseline.sh \
   || fail "security baseline does not verify HTTPS proxy local CA trust"
 
 grep -q 'OBS_HTTP_HOST_PORT=127.0.0.1:8080' scripts/bootstrap/first-boot.sh \
-  || fail "Open Bridge Server HTTP is not localhost-only by default"
+  || fail "open bridge server HTTP is not localhost-only by default"
 
 grep -q 'OBS_MQTT_HOST_PORT=127.0.0.1:1883' scripts/bootstrap/first-boot.sh \
   || fail "MQTT plain listener is not localhost by default"
@@ -137,7 +137,7 @@ grep -q 'tcp dport 443 accept' packaging/nftables/obos.nft \
   || fail "HTTPS reverse proxy port is not allowed"
 
 ! grep -q 'tcp dport 8080 accept' packaging/nftables/obos.nft \
-  || fail "Direct Open Bridge Server HTTP is open in the default firewall"
+  || fail "Direct open bridge server HTTP is open in the default firewall"
 
 ! grep -q 'tcp dport 1883 accept' packaging/nftables/obos.nft \
   || fail "MQTT plain TCP is open in the default firewall"
@@ -180,10 +180,10 @@ grep -q 'ProtectSystem=full' packaging/systemd/obos-first-boot.service \
   || fail "first boot systemd unit is missing filesystem protection"
 
 grep -q 'NoNewPrivileges=true' packaging/systemd/obos-openbridgeserver.service \
-  || fail "Open Bridge Server systemd unit is missing NoNewPrivileges"
+  || fail "open bridge server systemd unit is missing NoNewPrivileges"
 
 grep -q 'ProtectSystem=full' packaging/systemd/obos-openbridgeserver.service \
-  || fail "Open Bridge Server systemd unit is missing filesystem protection"
+  || fail "open bridge server systemd unit is missing filesystem protection"
 
 grep -q 'ssl_certificate /etc/obos/tls/obos.local.crt;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not use obos TLS certificate"
@@ -201,7 +201,7 @@ grep -q 'pids_limit: 128' apps/openbridgeserver/compose.yaml \
   || fail "Mosquitto container does not limit process count"
 
 grep -q 'pids_limit: 256' apps/openbridgeserver/compose.yaml \
-  || fail "Open Bridge Server container does not limit process count"
+  || fail "open bridge server container does not limit process count"
 
 grep -q 'TLS_DIR=' scripts/obosctl \
   || fail "obosctl backup does not know the TLS material directory"

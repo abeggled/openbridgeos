@@ -7,7 +7,7 @@ Accepted for the first development image.
 ## Context
 
 open bridge operating system should use a conservative Debian base and avoid third-party
-package repositories where possible. The Open Bridge Server app stack is managed
+package repositories where possible. The open bridge server app stack is managed
 with `docker compose`, so the base operating system needs Docker and Compose v2
 available in a maintainable way.
 

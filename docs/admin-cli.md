@@ -44,7 +44,7 @@ obosctl health
 obosctl proxy-health
 ```
 
-`health` checks the internal localhost Open Bridge Server endpoint.
+`health` checks the internal localhost open bridge server endpoint.
 `proxy-health` checks the nginx HTTPS boundary with local CA verification.
 
 ## Update
@@ -78,14 +78,14 @@ Backups are written to `/srv/obos/backups` by default and are mode `0600`.
 They include:
 
 - `obos-backup-manifest.txt` with creation time, app name, appliance identifier, and secret/TLS inclusion flags
-- Open Bridge Server app data
+- open bridge server app data
 - Mosquitto data
 - Compose files and Mosquitto config
 - generated app environment file
 - appliance identifier from `/etc/obos/appliance-id`
 - TLS identity material below `/etc/obos/tls`, when present
 
-The backup contains secrets, including the Open Bridge Server JWT secret,
+The backup contains secrets, including the open bridge server JWT secret,
 internal MQTT service password, and TLS private key material. Treat exported
 backups as sensitive data. Restoring the appliance identifier and TLS material
 preserves the appliance instance identity and avoids forcing clients to trust a
@@ -127,7 +127,7 @@ sudo obosctl mqtt-disable-lan
 MQTT is localhost-only by default. `mqtt-enable-lan` deliberately exposes MQTT
 plain TCP on `1883` and MQTT WebSocket on `9001` by updating the app environment
 file, updating the managed nftables block, reloading the firewall, and
-restarting the managed Open Bridge Server stack.
+restarting the managed open bridge server stack.
 
 `mqtt-disable-lan` restores both MQTT listeners to localhost and removes the
 firewall allow rules. MQTT authentication remains required in both modes.
@@ -177,7 +177,7 @@ obosctl proxy-health
 
 ## Design Notes
 
-`obosctl` is not meant to replace Open Bridge Server's own UI. It only manages
+`obosctl` is not meant to replace open bridge server's own UI. It only manages
 the appliance layer: lifecycle, health, logs, updates, backups, restore
 preflight checks, local trust onboarding helpers, and explicit host exposure
 changes.

@@ -5,14 +5,14 @@ Debian 13 VM after provisioning and reboot.
 
 ## Scope
 
-Validate that the appliance starts Open Bridge Server while preserving the
+Validate that the appliance starts open bridge server while preserving the
 intended host security posture:
 
 - generated per-appliance-instance secrets
 - stable appliance identifier
 - generated per-appliance-instance TLS trust material
 - HTTPS reverse proxy exposure on TCP `443`
-- direct Open Bridge Server HTTP closed externally
+- direct open bridge server HTTP closed externally
 - verified HTTPS proxy health through the local CA
 - minimal network exposure
 - nftables default-drop firewall
@@ -21,7 +21,7 @@ intended host security posture:
 - explicit MQTT LAN opt-in and disable workflow
 - Docker daemon hardening defaults
 - sysctl hardening baseline
-- Open Bridge Server health
+- open bridge server health
 - update state recording after successful updates
 - backup file permissions and identity material coverage
 - non-destructive restore inspection
@@ -77,7 +77,7 @@ Expected:
 - nginx active
 - nftables active
 - obos first boot enabled
-- Open Bridge Server service enabled
+- open bridge server service enabled
 
 ### SSH
 
@@ -180,7 +180,7 @@ Expected:
 - security options include `name=no-new-privileges`
 - logging driver is `local`
 
-### Open Bridge Server
+### open bridge server
 
 ```sh
 obosctl status
@@ -195,7 +195,7 @@ Expected:
 - obos service status visible
 - localhost health endpoint passes
 - HTTPS reverse proxy health endpoint passes with local CA verification
-- Open Bridge Server is not reachable externally on LAN port `8080`
+- open bridge server is not reachable externally on LAN port `8080`
 
 ### Update State
 
@@ -249,7 +249,7 @@ The baseline passes when:
 - `sudo /usr/lib/obos/security-baseline.sh` exits `0`
 - manual port scan matches the expected default exposure
 - MQTT LAN opt-in and disable workflow behaves as expected
-- Open Bridge Server health endpoint passes through localhost and verified HTTPS proxy
+- open bridge server health endpoint passes through localhost and verified HTTPS proxy
 - successful update records `/srv/obos/state/last-update`
 - backup file permissions are restrictive
 - backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated

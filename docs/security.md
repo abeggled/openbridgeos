@@ -1,6 +1,6 @@
 # Security Model
 
-open bridge operating system should inherit the security posture of Open Bridge Server and
+open bridge operating system should inherit the security posture of open bridge server and
 extend it to the appliance.
 
 The core security principle is simple: expose little, generate secrets on the
@@ -52,12 +52,12 @@ Target permissions:
 Default external exposure is minimal:
 
 - HTTPS reverse proxy on `443/tcp`
-- no external direct Open Bridge Server HTTP
+- no external direct open bridge server HTTP
 - no external SSH
 - MQTT external access disabled by default
 - obos administration UI once implemented, behind the same TLS boundary
 
-Open Bridge Server binds to localhost behind nginx:
+open bridge server binds to localhost behind nginx:
 
 ```text
 127.0.0.1:8080
@@ -80,7 +80,7 @@ sudo obosctl mqtt-enable-lan
 ```
 
 That action exposes TCP `1883` and TCP `9001`, updates the app environment,
-updates the managed firewall block, and restarts the managed Open Bridge Server
+updates the managed firewall block, and restarts the managed open bridge server
 stack. MQTT authentication remains required. See
 [0003: MQTT External Access Is Explicit Opt-In](decisions/0003-mqtt-external-access-opt-in.md).
 
@@ -138,7 +138,7 @@ Current container baseline:
 - per-service `pids_limit` to reduce process-exhaustion blast radius
 - explicit restart policy
 - persistent volumes below `/srv/obos`
-- health checks for both Open Bridge Server and Mosquitto
+- health checks for both open bridge server and Mosquitto
 - no arbitrary Compose editing through the web UI
 
 Future hardening should include:
@@ -152,7 +152,7 @@ Future hardening should include:
 
 Host security updates and application updates are intentionally separate.
 Debian security updates are handled by `unattended-upgrades` for security
-origins only, with automatic reboots disabled. Open Bridge Server container
+origins only, with automatic reboots disabled. open bridge server container
 updates remain an explicit `obosctl update` action.
 
 A successful `obosctl update` should leave an audit-friendly state record at
@@ -168,7 +168,7 @@ instead of being replaced by a failed attempt.
 
 Backups should include:
 
-- Open Bridge Server data
+- open bridge server data
 - Mosquitto persistent data
 - obos app environment files
 - appliance identifier

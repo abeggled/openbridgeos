@@ -154,9 +154,9 @@ else
 fi
 
 if nft list ruleset 2>/dev/null | grep -q 'tcp dport 8080 accept'; then
-  fail 'nftables exposes direct Open Bridge Server HTTP'
+  fail 'nftables exposes direct open bridge server HTTP'
 else
-  pass 'nftables does not expose direct Open Bridge Server HTTP'
+  pass 'nftables does not expose direct open bridge server HTTP'
 fi
 
 if nft list ruleset 2>/dev/null | grep -q 'tcp dport 22 accept'; then
@@ -184,17 +184,17 @@ else
 fi
 
 if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null; then
-  pass 'Open Bridge Server health endpoint reachable on localhost'
+  pass 'open bridge server health endpoint reachable on localhost'
 else
-  fail 'Open Bridge Server localhost health endpoint unreachable'
+  fail 'open bridge server localhost health endpoint unreachable'
 fi
 
 check_proxy_health
 
 if [ -d "${APP_DIR}/data" ]; then
-  pass 'Open Bridge Server data directory exists'
+  pass 'open bridge server data directory exists'
 else
-  fail 'Open Bridge Server data directory missing'
+  fail 'open bridge server data directory missing'
 fi
 
 if [ "${FAILED}" -eq 0 ]; then

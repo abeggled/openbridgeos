@@ -7,7 +7,7 @@ source-network restrictions are still open.
 
 ## Context
 
-Open Bridge Server includes an internal Mosquitto broker. Many installations can
+open bridge server includes an internal Mosquitto broker. Many installations can
 keep MQTT internal to the appliance, but some real deployments need direct MQTT
 access from other LAN systems, panels, gateways, or automation tools.
 
@@ -45,7 +45,7 @@ The workflow:
 - updates the app environment file instead of hand-editing Compose
 - updates the managed nftables MQTT block
 - restarts the firewall
-- restarts the managed Open Bridge Server stack
+- restarts the managed open bridge server stack
 - remains visible to CI security default checks
 
 ## Consequences

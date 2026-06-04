@@ -1,5 +1,5 @@
 id: openbridgeserver
-name: Open Bridge Server
+name: open bridge server
 description: Multiprotocol building automation server for KNX, Modbus, MQTT, 1-Wire, Home Assistant, ioBroker, SNMP, scheduler, and logic automation.
 runtime: docker-compose
 compose_file: compose.yaml
@@ -25,7 +25,7 @@ ports:
     required: false
 data:
   - path: data
-    description: Open Bridge Server SQLite database, configuration, history, and app data
+    description: open bridge server SQLite database, configuration, history, and app data
   - path: mqtt
     description: Mosquitto password file, persistence, and logs
 secrets:

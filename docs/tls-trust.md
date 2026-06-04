@@ -1,8 +1,8 @@
 # TLS Trust Material
 
 open bridge operating system uses a local CA per appliance instance for the default HTTPS
-reverse proxy. The current implementation makes Open Bridge Server reachable via
-nginx on TCP `443`, while Open Bridge Server itself binds to localhost.
+reverse proxy. The current implementation makes open bridge server reachable via
+nginx on TCP `443`, while open bridge server itself binds to localhost.
 
 ## Generate TLS Material
 

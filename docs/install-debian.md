@@ -4,7 +4,7 @@ This document describes the first development installation path for open bridge
 operating system on a fresh Debian 13 Trixie system.
 
 The goal is not yet a polished image build. The goal is a reproducible path
-from a minimal Debian install to an appliance-like Open Bridge Server host.
+from a minimal Debian install to an appliance-like open bridge server host.
 
 ## Target
 
@@ -55,13 +55,13 @@ systemctl status nftables.service
 obosctl status
 ```
 
-Open Bridge Server should be reachable through the TLS reverse proxy at:
+open bridge server should be reachable through the TLS reverse proxy at:
 
 ```text
 https://<appliance-ip>/
 ```
 
-The direct Open Bridge Server HTTP listener is localhost-only:
+The direct open bridge server HTTP listener is localhost-only:
 
 ```text
 127.0.0.1:8080
@@ -136,8 +136,8 @@ See [admin-cli.md](admin-cli.md).
 - `OBS_JWT_SECRET` is generated on first boot.
 - `OBS_MQTT_PASSWORD` is generated on first boot.
 - TLS trust material is generated on first boot.
-- Open Bridge Server is exposed externally through HTTPS on TCP `443`.
-- Direct Open Bridge Server HTTP is localhost-only on `127.0.0.1:8080`.
+- open bridge server is exposed externally through HTTPS on TCP `443`.
+- Direct open bridge server HTTP is localhost-only on `127.0.0.1:8080`.
 - MQTT is not exposed to the LAN by default.
 - nftables drops inbound traffic except the HTTPS reverse proxy on TCP `443`.
 - SSH is disabled by default when present.

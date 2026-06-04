@@ -1,8 +1,8 @@
-# Open Bridge Server App
+# open bridge server App
 
-This directory contains the obos-managed Open Bridge Server deployment.
+This directory contains the obos-managed open bridge server deployment.
 
-The app follows the upstream Docker Compose model: one Open Bridge Server
+The app follows the upstream Docker Compose model: one open bridge server
 container and one Mosquitto container with shared password management.
 
 ## Managed Files
@@ -26,7 +26,7 @@ simple and auditable.
 
 Default ports:
 
-- `8080/tcp` Open Bridge Server web interface and API
+- `8080/tcp` open bridge server web interface and API
 - `1883/tcp` MQTT, optional external exposure
 - `9001/tcp` MQTT over WebSocket, optional external exposure
 
