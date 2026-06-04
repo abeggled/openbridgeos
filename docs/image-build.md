@@ -46,6 +46,8 @@ minimum output size, required builder tooling, and the default SSH policy.
 Raspberry Pi profiles also declare:
 
 - Raspberry Pi Network Installer compatibility
+- Debian components `main,non-free-firmware`
+- boot packages `linux-image-arm64`, `raspi-firmware`, and `initramfs-tools`
 - compressed raw `.img.xz` output
 - supported boot media: SD, USB, and NVMe
 - Raspberry Pi bootloader firmware mode
@@ -86,11 +88,13 @@ Every image builder must follow the same contract:
 Raspberry Pi image builders must additionally:
 
 1. Produce a compressed raw `.img.xz` image that Raspberry Pi Network Installer can deploy.
-2. Use a `boot-fat32,root-ext4` partition layout.
-3. Label the boot partition `OBOSBOOT` and the root partition `OBOSROOT`.
-4. Preserve compatibility with SD, USB, and NVMe boot media.
-5. Verify the kernel config contract before publishing artifacts.
-6. Keep `CONFIG_BLK_DEV_NVME=y` enabled for every release image.
+2. Use Debian `main,non-free-firmware` components for Raspberry Pi firmware.
+3. Install the profile boot packages into the target root filesystem.
+4. Use a `boot-fat32,root-ext4` partition layout.
+5. Label the boot partition `OBOSBOOT` and the root partition `OBOSROOT`.
+6. Preserve compatibility with SD, USB, and NVMe boot media.
+7. Verify the kernel config contract before publishing artifacts.
+8. Keep `CONFIG_BLK_DEV_NVME=y` enabled for every release image.
 
 ## amd64 qcow2 Builder
 
@@ -202,6 +206,8 @@ deployment and manual flashing.
 The contract requires:
 
 - architecture: `arm64`
+- Debian components: `main,non-free-firmware`
+- boot packages: `linux-image-arm64`, `raspi-firmware`, `initramfs-tools`
 - output: raw image compressed with `xz`, extension `.img.xz`
 - minimum image size: `8G`
 - partition layout: `boot-fat32,root-ext4`
@@ -219,7 +225,7 @@ Install build host dependencies on Debian:
 
 ```sh
 sudo apt-get install --no-install-recommends \
-  debootstrap qemu-user-static dosfstools e2fsprogs fdisk xz-utils mount util-linux
+  debootstrap qemu-user-static dosfstools e2fsprogs fdisk xz-utils mount util-linux parted tar
 ```
 
 Check the build host before starting an image build:
@@ -232,6 +238,25 @@ The preflight validates the `rpi4-arm64` profile, required build tools, root
 status, `qemu-aarch64` binfmt registration, and loop-device availability. Missing
 root, binfmt, or loop support is reported as a warning so the script can still be
 used for early diagnostics on non-build hosts.
+
+Build the Raspberry Pi image:
+
+```sh
+sudo scripts/images/build-rpi4-arm64-image.sh
+```
+
+By default the script:
+
+1. validates the `rpi4-arm64` profile with the shared image profile validator
+2. creates an `8G` raw image with `boot-fat32,root-ext4` partitions
+3. bootstraps Debian arm64 using `main,non-free-firmware`
+4. installs base packages plus Raspberry Pi boot packages
+5. copies this repository into `/opt/openbridgeos` inside the target filesystem
+6. runs `scripts/bootstrap/provision-debian.sh` inside the target filesystem with SSH disabled
+7. keeps first boot pending for the target appliance instance
+8. verifies the kernel config contract, including `CONFIG_BLK_DEV_NVME=y`
+9. writes `.img.xz`, `.sha256`, and `.manifest` artifacts
+10. validates the generated manifest in strict mode
 
 Verify the kernel config from a mounted or extracted Raspberry Pi image before
 publishing:
@@ -275,8 +300,8 @@ OBOS_MANIFEST_STRICT_FILES=1 \
 ```
 
 The builder host must provide the profile tools: `debootstrap`,
-`qemu-aarch64-static`, `sfdisk`, `mkfs.vfat`, `mkfs.ext4`, `xz`, and
-`sha256sum`.
+`qemu-aarch64-static`, `sfdisk`, `mkfs.vfat`, `mkfs.ext4`, `losetup`, `mount`,
+`umount`, `partprobe`, `tar`, `xz`, and `sha256sum`.
 
 ## amd64 qcow2 Smoke Test
 
