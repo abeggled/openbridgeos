@@ -155,6 +155,12 @@ Backups should include:
 - TLS trust material when restoring the same appliance identity
 - obos appliance metadata needed for restore
 
+Each backup archive should include a root-level `obos-backup-manifest.txt` that
+records the creation time, app name, appliance identifier, and whether the
+archive contains secrets and TLS material. The manifest is metadata for humans,
+future restore tooling, and support triage; it does not make the backup less
+sensitive.
+
 Backups should not include:
 
 - transient container layers

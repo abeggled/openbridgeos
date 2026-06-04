@@ -23,6 +23,12 @@ grep -q 'APPLIANCE_ID_FILE=' scripts/obosctl \
 grep -q 'appliance_id_name' scripts/obosctl \
   || fail "obosctl backup does not include appliance identifier"
 
+grep -q 'obos-backup-manifest.txt' scripts/obosctl \
+  || fail "obosctl backup does not include a backup manifest"
+
+grep -q 'contains_secrets=true' scripts/obosctl \
+  || fail "obosctl backup manifest does not mark secret-bearing backups"
+
 grep -q 'APPLIANCE_ID_FILE=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit appliance identifier"
 
