@@ -59,5 +59,8 @@ jobs:
       - name: Raspberry Pi kernel config fixture
         run: sh scripts/checks/check-rpi-kernel-config.sh
 
+      - name: Raspberry Pi image manifest fixture
+        run: sh scripts/checks/check-rpi-image-manifest.sh
+
       - name: Compose config
         run: sh scripts/checks/validate-compose.sh

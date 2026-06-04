@@ -246,6 +246,34 @@ The checker also accepts a direct kernel config file:
 sh scripts/images/check-rpi-kernel-config.sh /mnt/obos-rpi-root/boot/config-6.1.0-rpi-arm64
 ```
 
+The Raspberry Pi image manifest uses format `obos-rpi-image-build-v1` and records:
+
+- image profile, architecture, Debian release, and output format
+- xz compression and `.img.xz` artifact extension
+- whether the artifact was built as a release build
+- image path and SHA-256 hash
+- Raspberry Pi Network Installer compatibility
+- boot media, firmware mode, partition layout, and partition labels
+- required kernel config and whether it was verified
+- provision script and first boot service
+- repository revision
+- `first_boot_pending=true`
+- `contains_secrets=false`
+
+Validate a Raspberry Pi image manifest after building:
+
+```sh
+sh scripts/images/check-rpi-image-manifest.sh dist/images/obos-rpi4-arm64-latest.img.xz.manifest
+```
+
+Use strict file verification when the referenced image is present on the same
+build host:
+
+```sh
+OBOS_MANIFEST_STRICT_FILES=1 \
+  sh scripts/images/check-rpi-image-manifest.sh dist/images/obos-rpi4-arm64-latest.img.xz.manifest
+```
+
 The builder host must provide the profile tools: `debootstrap`,
 `qemu-aarch64-static`, `sfdisk`, `mkfs.vfat`, `mkfs.ext4`, `xz`, and
 `sha256sum`.
