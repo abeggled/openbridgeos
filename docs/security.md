@@ -24,9 +24,9 @@ On first boot, obos should:
 
 - generate `OBS_SECURITY__JWT_SECRET`
 - generate the internal MQTT service password
+- generate `/etc/obos/appliance-id` as a stable UUID
 - generate per-appliance-instance TLS trust material
 - export public trust information without private keys
-- create an appliance identifier
 - set hostname if configured by image metadata or first setup
 - set timezone
 - write app environment files with restrictive permissions
@@ -39,6 +39,7 @@ Target permissions:
 
 ```text
 /etc/obos/                  root:root 0750
+/etc/obos/appliance-id      root:root 0644
 /etc/obos/apps/*.env        root:root 0600
 /etc/obos/tls/              root:root 0700
 /srv/obos/                  root:root 0750
@@ -150,6 +151,7 @@ Backups should include:
 - Open Bridge Server data
 - Mosquitto persistent data
 - obos app environment files
+- appliance identifier
 - TLS trust material when restoring the same appliance identity
 - obos appliance metadata needed for restore
 
