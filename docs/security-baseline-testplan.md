@@ -1,6 +1,6 @@
 # Security Baseline Test Plan
 
-This test plan validates the first Open Bridge OS security baseline on a fresh
+This test plan validates the first open bridge operating system security baseline on a fresh
 Debian 13 VM after provisioning and reboot.
 
 ## Scope
