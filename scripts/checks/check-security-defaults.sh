@@ -10,6 +10,22 @@ fail() {
   apps scripts packaging docs README.md SECURITY.md >/dev/null 2>&1 \
   || fail "default placeholder secret found"
 
+grep -q 'APPLIANCE_ID_FILE=' scripts/bootstrap/first-boot.sh \
+  || fail "appliance identifier path is not defined on first boot"
+
+# shellcheck disable=SC2016
+grep -Fq 'uuid > "${APPLIANCE_ID_FILE}"' scripts/bootstrap/first-boot.sh \
+  || fail "appliance identifier is not generated on first boot"
+
+grep -q 'APPLIANCE_ID_FILE=' scripts/obosctl \
+  || fail "obosctl backup does not know the appliance identifier path"
+
+grep -q 'appliance_id_name' scripts/obosctl \
+  || fail "obosctl backup does not include appliance identifier"
+
+grep -q 'APPLIANCE_ID_FILE=' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit appliance identifier"
+
 grep -q 'OBS_HTTP_HOST_PORT=127.0.0.1:8080' scripts/bootstrap/first-boot.sh \
   || fail "Open Bridge Server HTTP is not localhost-only by default"
 

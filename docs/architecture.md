@@ -67,6 +67,7 @@ image.
 
 ```text
 /etc/obos/
+  appliance-id
   obos.yaml
   apps/
     openbridgeserver.env

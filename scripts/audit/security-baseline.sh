@@ -6,6 +6,7 @@ APP_NAME="openbridgeserver"
 ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
+APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
 HTTPS_URL="${OBOS_HTTPS_URL:-https://127.0.0.1/api/v1/system/health}"
 
@@ -85,6 +86,16 @@ check_certificate() {
   fi
 }
 
+check_uuid_file() {
+  path="$1"
+  label="$2"
+  if grep -Eq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' "${path}" 2>/dev/null; then
+    pass "${label} valid UUID"
+  else
+    fail "${label} missing or invalid UUID"
+  fi
+}
+
 check_command docker
 check_command nft
 check_command nginx
@@ -93,6 +104,8 @@ check_command openssl
 
 check_file_mode /etc/obos 750
 check_file_mode "${ENV_FILE}" 600
+check_file_mode "${APPLIANCE_ID_FILE}" 644
+check_uuid_file "${APPLIANCE_ID_FILE}" 'appliance identifier'
 check_file_mode /srv/obos 750
 check_file_mode "${TLS_DIR}" 700
 check_file_mode "${TLS_DIR}/obos-local-ca.key" 600
