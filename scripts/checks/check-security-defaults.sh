@@ -74,6 +74,15 @@ grep -q 'PROXY_HEALTH_HOST=' scripts/audit/security-baseline.sh \
 grep -q -- '--cacert' scripts/audit/security-baseline.sh \
   || fail "security baseline does not verify HTTPS proxy local CA trust"
 
+grep -q 'NGINX_PROXY_CONF=' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit nginx reverse proxy config"
+
+grep -q 'server_tokens off;' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit nginx server token disclosure"
+
+grep -q 'client_header_timeout 30s;' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit nginx client header timeout"
+
 grep -q 'check_obos_systemd_hardening obos-first-boot.service' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit first boot systemd hardening"
 
