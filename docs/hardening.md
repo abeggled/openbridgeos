@@ -1,6 +1,6 @@
 # Host Hardening
 
-Open Bridge OS treats host hardening as a default behavior, not as an optional
+open bridge operating system treats host hardening as a default behavior, not as an optional
 post-install checklist.
 
 ## Applied Defaults
