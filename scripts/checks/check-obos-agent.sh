@@ -31,6 +31,8 @@ grep -q 'require_confirm_args' "${AGENT}" \
   || fail "agent does not require confirmation for mutating actions"
 grep -q 'require_mqtt_enable_args' "${AGENT}" \
   || fail "agent does not validate MQTT enable arguments"
+grep -q 'validate_source_cidr' "${AGENT}" \
+  || fail "agent does not validate MQTT source CIDR before sudo"
 # shellcheck disable=SC2016
 grep -q 'timeout "${timeout_seconds}"' "${AGENT}" \
   || fail "agent does not enforce command timeout"
@@ -126,5 +128,9 @@ grep -q 'format=obos-agent-audit-v1|.*|action=start|exit_code=0|timed_out=false'
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 192.168.1.0/24 --confirm mqtt-enable-lan |
   grep -q 'stdout=mqtt-enabled:192.168.1.0/24' \
   || fail "agent did not forward MQTT source CIDR"
+
+if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 999.168.1.0/24 --confirm mqtt-enable-lan >/dev/null 2>&1; then
+  fail "agent accepted invalid MQTT source CIDR"
+fi
 
 echo "obos-agent: PASS"

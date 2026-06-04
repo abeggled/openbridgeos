@@ -93,7 +93,8 @@ along with stdout and stderr.
 The provisioned privilege boundary uses the `obos-agent` system user and
 `/etc/sudoers.d/obos-agent`. The sudoers policy permits only the documented
 `/usr/bin/obosctl` actions with non-interactive `sudo -n`; it does not grant a
-general root shell.
+general root shell. Optional MQTT source CIDR input is validated by the agent
+before crossing the sudo boundary.
 
 The initial agent skeleton is installed as `obos-agent`. It exposes a stable
 action inventory and read-only status actions:
