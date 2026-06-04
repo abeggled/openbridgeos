@@ -9,6 +9,7 @@ and agent will need as well.
 ```sh
 obosctl status
 obosctl health
+obosctl proxy-health
 sudo obosctl start
 sudo obosctl stop
 sudo obosctl restart
@@ -29,8 +30,18 @@ sudo obosctl mqtt-disable-lan
 obosctl status
 ```
 
-Shows the systemd unit state, Docker Compose service state, and the Open Bridge
-Server health endpoint result.
+Shows the systemd unit state, Docker Compose service state, the localhost Open
+Bridge Server health endpoint result, and the HTTPS reverse proxy health result.
+The HTTPS proxy check verifies the response through the per-appliance-instance
+local CA by resolving `obos.local` to `127.0.0.1` for the local probe.
+
+```sh
+obosctl health
+obosctl proxy-health
+```
+
+`health` checks the internal localhost Open Bridge Server endpoint.
+`proxy-health` checks the nginx HTTPS boundary with local CA verification.
 
 ## Update
 
@@ -43,10 +54,10 @@ The update command performs the first conservative update flow:
 1. Create a timestamped backup.
 2. Pull newer container images.
 3. Restart the managed systemd service.
-4. Poll the health endpoint for up to 60 seconds.
+4. Poll the localhost and HTTPS proxy health endpoints for up to 60 seconds.
 
-If the health check fails, the command exits non-zero. Automatic rollback is not
-implemented yet.
+If either health check fails, the command exits non-zero. Automatic rollback is
+not implemented yet.
 
 ## Backup
 
@@ -116,14 +127,17 @@ OBOS_BACKUP_DIR=/tmp/obos/backups \
 obosctl status
 ```
 
-TLS and MQTT helper paths can also be overridden for tests:
+TLS, proxy health, and MQTT helper paths can also be overridden for tests:
 
 ```sh
+OBOS_TLS_CA_CERT=/tmp/tls/obos-local-ca.crt \
+OBOS_PROXY_HEALTH_HOST=obos.local \
+OBOS_PROXY_HEALTH_URL=https://obos.local/api/v1/system/health \
 OBOS_TLS_GENERATE_SCRIPT=/tmp/generate-tls-material.sh \
 OBOS_TLS_INFO_SCRIPT=/tmp/print-trust-info.sh \
 OBOS_TLS_EXPORT_SCRIPT=/tmp/export-trust-bundle.sh \
 OBOS_MQTT_LAN_SCRIPT=/tmp/set-mqtt-lan-access.sh \
-obosctl tls-info
+obosctl proxy-health
 ```
 
 ## Design Notes
