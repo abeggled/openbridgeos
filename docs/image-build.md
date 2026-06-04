@@ -9,7 +9,7 @@ Planned artifacts:
 
 - `amd64` VM image for Proxmox, Hyper-V, VirtualBox, and bare-metal testing
 - `amd64` ISO or installer image
-- `arm64` Raspberry Pi 4+ SD/USB image
+- `arm64` Raspberry Pi 4+ SD/USB/NVMe image
 
 ## Build Principles
 
@@ -40,6 +40,18 @@ starting a build. Required keys include architecture, image kind, Debian release
 boot target, output format, base packages, shared provision script, and first
 boot service.
 
+Raspberry Pi profiles also declare:
+
+- Raspberry Pi Network Installer compatibility
+- supported boot media: SD, USB, and NVMe
+- Raspberry Pi bootloader firmware mode
+- required kernel config flags
+
+For the `rpi4-arm64` profile, `CONFIG_BLK_DEV_NVME=y` is a hard requirement so
+NVMe boot/install targets remain supported. The current profile also requires
+`CONFIG_PCIE_BRCMSTB=y` and `CONFIG_USB_XHCI_PCI=y` because those are part of
+the intended Raspberry Pi 4+ storage path.
+
 Validate profiles with:
 
 ```sh
@@ -65,14 +77,22 @@ Every image builder must follow the same contract:
 6. Enable `obos-first-boot.service` for target appliance initialization.
 7. Emit the image artifact plus checksum.
 
+Raspberry Pi image builders must additionally:
+
+1. Produce an image that Raspberry Pi Network Installer can deploy.
+2. Preserve compatibility with SD, USB, and NVMe boot media.
+3. Verify the kernel config contract before publishing artifacts.
+4. Keep `CONFIG_BLK_DEV_NVME=y` enabled for every release image.
+
 The first implementation should turn the `amd64-vm` profile into a bootable
-qcow2 image. The Raspberry Pi profile should follow once firmware and boot
-partition handling are explicit and repeatable.
+qcow2 image. The Raspberry Pi image builder should follow once firmware, boot
+partition handling, and kernel config verification are explicit and repeatable.
 
 ## First Implementation Direction
 
 Start with a Debian 13 `amd64` qcow2 development image. Once that boots and
-starts Open Bridge Server reliably, add the Raspberry Pi image path.
+starts Open Bridge Server reliably, add the Raspberry Pi image path using the
+Network Installer compatible `rpi4-arm64` profile.
 
 The build system should call:
 
