@@ -64,6 +64,18 @@ grep -q 'udp sport 547 udp dport 546 accept' packaging/nftables/obos.nft \
 grep -Fq 'DISABLE_SSH="${OBOS_DISABLE_SSH:-1}"' scripts/hardening/apply-host-hardening.sh \
   || fail "SSH disablement is not the default hardening behavior"
 
+grep -q 'NoNewPrivileges=true' packaging/systemd/obos-first-boot.service \
+  || fail "first boot systemd unit is missing NoNewPrivileges"
+
+grep -q 'ProtectSystem=full' packaging/systemd/obos-first-boot.service \
+  || fail "first boot systemd unit is missing filesystem protection"
+
+grep -q 'NoNewPrivileges=true' packaging/systemd/obos-openbridgeserver.service \
+  || fail "Open Bridge Server systemd unit is missing NoNewPrivileges"
+
+grep -q 'ProtectSystem=full' packaging/systemd/obos-openbridgeserver.service \
+  || fail "Open Bridge Server systemd unit is missing filesystem protection"
+
 grep -q 'ssl_certificate /etc/obos/tls/obos.local.crt;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not use obos TLS certificate"
 
