@@ -7,7 +7,7 @@ zum Betrieb von open bridge server mit möglichst wenig Einrichtungsaufwand.
 
 Die Zielgruppe soll ein Image auf einen USB-Stick oder eine SD-Karte schreiben,
 es auf einem Raspberry Pi 4+ oder x86_64-System booten, einen Browser öffnen
-und eine einsatzbereite open-bridge-server-Installation bedienen können, ohne
+und eine einsatzbereite open bridge server Installation bedienen können, ohne
 Linux-Pakete, Docker-Images, Compose-Dateien, Volumes oder Update-Abläufe
 manuell verwalten zu müssen.
 
