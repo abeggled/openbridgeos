@@ -130,6 +130,9 @@ grep -q 'set-mqtt-lan-access.sh' scripts/bootstrap/provision-debian.sh \
 grep -q 'export-boot-trust-summary.sh' scripts/bootstrap/provision-debian.sh \
   || fail "boot trust summary helper is not installed during provisioning"
 
+grep -q 'check-tls-status.sh' scripts/bootstrap/provision-debian.sh \
+  || fail "TLS status helper is not installed during provisioning"
+
 grep -q '"no-new-privileges": true' packaging/docker/daemon.json \
   || fail "Docker no-new-privileges default is not enabled"
 
@@ -230,8 +233,14 @@ grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
 grep -q 'tls-export)' scripts/obosctl \
   || fail "obosctl does not expose TLS trust export"
 
+grep -q 'tls-status)' scripts/obosctl \
+  || fail "obosctl does not expose TLS status checks"
+
 grep -q 'tls-export-boot)' scripts/obosctl \
   || fail "obosctl does not expose boot trust summary export"
 
 grep -q 'No private keys were exported to the boot partition.' scripts/tls/export-boot-trust-summary.sh \
   || fail "boot trust summary export does not state that private keys are excluded"
+
+grep -q 'openssl x509 -in "${cert}" -noout -checkend' scripts/tls/check-tls-status.sh \
+  || fail "TLS status helper does not check certificate expiry"

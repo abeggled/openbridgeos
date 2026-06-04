@@ -18,6 +18,7 @@ TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-mate
 TLS_INFO_SCRIPT="${OBOS_TLS_INFO_SCRIPT:-/usr/lib/obos/print-trust-info.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
+TLS_STATUS_SCRIPT="${OBOS_TLS_STATUS_SCRIPT:-/usr/lib/obos/check-tls-status.sh}"
 MQTT_LAN_SCRIPT="${OBOS_MQTT_LAN_SCRIPT:-/usr/lib/obos/set-mqtt-lan-access.sh}"
 
 usage() {
@@ -36,6 +37,7 @@ Commands:
   health            Check open bridge server localhost health endpoint
   proxy-health      Check HTTPS reverse proxy health with local CA trust
   tls-generate      Generate local CA and leaf certificate material
+  tls-status        Check local CA and leaf certificate status
   tls-info          Print TLS trust fingerprints and paths
   tls-export        Export public TLS trust bundle
   tls-export-boot   Export public TLS trust summary to a boot partition
@@ -351,6 +353,9 @@ case "${1:-}" in
   tls-generate)
     require_root tls-generate
     run_helper "${TLS_GENERATE_SCRIPT}"
+    ;;
+  tls-status)
+    run_helper "${TLS_STATUS_SCRIPT}"
     ;;
   tls-info)
     require_root tls-info
