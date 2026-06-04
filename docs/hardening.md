@@ -176,7 +176,6 @@ validated under those constraints.
 
 The current hardening layer is host-focused. It does not yet implement:
 
-- MQTT source-network restriction management
 - image signing
 - rollback for failed updates
 - full disk encryption

@@ -11,6 +11,7 @@ HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
 PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
 PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
 TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
+NGINX_PROXY_CONF="${OBOS_NGINX_PROXY_CONF:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
 
 pass() {
   printf 'PASS %s\n' "$1"
@@ -198,6 +199,12 @@ check_grep 'OBS_MQTT_HOST_PORT=127.0.0.1:1883' "${ENV_FILE}" 'MQTT plain localho
 check_grep 'OBS_MQTT_WS_HOST_PORT=127.0.0.1:9001' "${ENV_FILE}" 'MQTT websocket localhost-only'
 check_grep '^OBS_JWT_SECRET=.' "${ENV_FILE}" 'OBS JWT secret exists'
 check_grep '^OBS_MQTT_PASSWORD=.' "${ENV_FILE}" 'OBS MQTT password exists'
+check_grep 'ssl_certificate /etc/obos/tls/obos.local.crt;' "${NGINX_PROXY_CONF}" 'nginx uses obos TLS certificate'
+check_grep 'proxy_pass http://127.0.0.1:8080;' "${NGINX_PROXY_CONF}" 'nginx proxies to localhost open bridge server'
+check_grep 'server_tokens off;' "${NGINX_PROXY_CONF}" 'nginx server token disclosure disabled'
+check_grep 'client_body_timeout 30s;' "${NGINX_PROXY_CONF}" 'nginx client body timeout bounded'
+check_grep 'client_header_timeout 30s;' "${NGINX_PROXY_CONF}" 'nginx client header timeout bounded'
+check_grep 'send_timeout 60s;' "${NGINX_PROXY_CONF}" 'nginx send timeout bounded'
 
 if docker info --format '{{json .SecurityOptions}}' 2>/dev/null | grep -q 'name=no-new-privileges'; then
   pass 'Docker no-new-privileges enabled'
