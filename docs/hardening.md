@@ -8,6 +8,7 @@ post-install checklist.
 Provisioning installs and applies:
 
 - nftables host firewall
+- nginx TLS reverse proxy
 - sysctl hardening baseline
 - Docker daemon hardening defaults
 - SSH disabled by default when `ssh.service` exists
@@ -26,10 +27,17 @@ The default nftables policy is intentionally small:
 - allow established and related traffic
 - allow ICMP and IPv6 ICMP
 - allow DHCPv4 and DHCPv6 client renewals
-- allow TCP `8080` for Open Bridge Server UI/API during the development baseline
+- allow TCP `443` for the nginx TLS reverse proxy
 - drop other inbound traffic
 - keep forwarding allowed so Docker networking is not broken accidentally
 - keep outbound traffic allowed
+
+Open Bridge Server HTTP is not opened externally. It binds to localhost behind
+nginx:
+
+```text
+127.0.0.1:8080
+```
 
 MQTT is not opened in the default firewall because the Compose defaults bind
 MQTT to localhost only:
@@ -43,8 +51,19 @@ LAN MQTT exposure must be an explicit opt-in workflow. Enabling it should update
 both the Compose environment and firewall policy, and should remain visible to
 the security baseline audit.
 
-Before public release, direct TCP `8080` exposure should move behind a TLS
-reverse proxy entrypoint on TCP `443`.
+## TLS Reverse Proxy
+
+nginx terminates HTTPS on TCP `443` using per-appliance-instance certificate
+material below `/etc/obos/tls`.
+
+The default proxy config is installed from:
+
+```text
+packaging/nginx/openbridgeserver.conf
+```
+
+First boot generates the local CA and leaf certificate before nginx starts.
+Plain HTTP on TCP `80` is closed for now.
 
 ## SSH Policy
 
@@ -99,7 +118,6 @@ validated under those constraints.
 
 The current hardening layer is host-focused. It does not yet implement:
 
-- TLS reverse proxy for Open Bridge Server
 - MQTT opt-in management command or UI
 - image signing
 - rollback for failed updates
