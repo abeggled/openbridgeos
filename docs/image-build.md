@@ -118,14 +118,15 @@ sudo scripts/images/build-amd64-qcow2.sh
 
 By default the script:
 
-1. downloads the Debian Trixie genericcloud amd64 qcow2 base image if no local base is provided
-2. copies it to `dist/images/obos-amd64-vm-<timestamp>.qcow2`
-3. resizes it to the profile minimum size
-4. copies the repository into `/opt/openbridgeos` inside the image
-5. runs `scripts/bootstrap/provision-debian.sh` inside the image with SSH disabled
-6. keeps first boot pending for the target appliance instance
-7. cleans machine identity and logs with `virt-sysprep`
-8. writes `.sha256` and `.manifest` files next to the image
+1. validates the `amd64-vm` profile with the shared image profile validator
+2. downloads the Debian Trixie genericcloud amd64 qcow2 base image if no local base is provided
+3. copies it to `dist/images/obos-amd64-vm-<timestamp>.qcow2`
+4. resizes it to the profile minimum size
+5. copies the repository into `/opt/openbridgeos` inside the image
+6. runs `scripts/bootstrap/provision-debian.sh` inside the image with SSH disabled
+7. keeps first boot pending for the target appliance instance
+8. cleans machine identity and logs with `virt-sysprep`
+9. writes `.sha256` and `.manifest` files next to the image
 
 Use a pre-downloaded base image when needed:
 
