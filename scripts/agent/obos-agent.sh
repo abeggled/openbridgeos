@@ -27,6 +27,11 @@ require_timeout() {
   command -v timeout >/dev/null 2>&1 || fail "timeout command missing"
 }
 
+require_no_extra_args() {
+  action="$1"
+  [ "$#" -eq 1 ] || fail "${action} does not accept arguments"
+}
+
 run_allowed() {
   action="$1"
   shift
@@ -69,21 +74,27 @@ require_timeout
 
 case "${1:-}" in
   status-summary)
+    require_no_extra_args "$@"
     run_allowed status-summary "${OBOSCTL}" status-summary
     ;;
   update-summary)
+    require_no_extra_args "$@"
     run_allowed update-summary "${OBOSCTL}" update-summary
     ;;
   backup-list)
+    require_no_extra_args "$@"
     run_allowed backup-list "${OBOSCTL}" backup-list
     ;;
   mqtt-summary)
+    require_no_extra_args "$@"
     run_allowed mqtt-summary "${OBOSCTL}" mqtt-summary
     ;;
   tls-summary)
+    require_no_extra_args "$@"
     run_allowed tls-summary "${OBOSCTL}" tls-summary
     ;;
   security-summary)
+    require_no_extra_args "$@"
     run_allowed security-summary "${OBOSCTL}" security-summary
     ;;
   -h|--help|help|"")
