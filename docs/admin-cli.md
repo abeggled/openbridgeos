@@ -1,6 +1,6 @@
 # obosctl
 
-`obosctl` is the first appliance administration interface for Open Bridge OS.
+`obosctl` is the first appliance administration interface for open bridge operating system.
 It is intentionally small and maps directly to operations that the later web UI
 and agent will need as well.
 
