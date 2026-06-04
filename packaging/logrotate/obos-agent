@@ -1,0 +1,9 @@
+/srv/obos/state/agent/obos-agent-audit.log {
+  daily
+  rotate 30
+  missingok
+  notifempty
+  compress
+  delaycompress
+  create 0640 obos-agent obos-agent
+}

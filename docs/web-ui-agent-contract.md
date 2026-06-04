@@ -66,7 +66,8 @@ obos-agent mqtt-disable-lan --confirm mqtt-disable-lan
 Confirmed mutating actions append metadata-only audit entries using format
 `obos-agent-audit-v1`. Audit entries record the timestamp, action, exit code,
 and timeout state; command stdout, stderr, secrets, and file contents are not
-written to the audit log.
+written to the audit log. The provisioned audit log is rotated by logrotate and
+new log files are created as `0640 obos-agent:obos-agent`.
 
 ## Restore Workflow
 

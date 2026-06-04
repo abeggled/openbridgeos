@@ -19,6 +19,7 @@ apt-get install -y --no-install-recommends \
   curl \
   docker-compose \
   docker.io \
+  logrotate \
   nftables \
   nginx-light \
   openssl \
@@ -31,7 +32,7 @@ fi
 
 install -d -m 0755 "${OBOS_SHARE_DIR}/apps/openbridgeserver"
 install -d -m 0755 "${OBOS_LIB_DIR}"
-install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d
+install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d
 install -d -m 0750 /srv/obos /srv/obos/apps /srv/obos/backups /srv/obos/state
 install -d -m 0750 -o obos-agent -g obos-agent /srv/obos/state/agent
 
@@ -41,6 +42,7 @@ install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/obos-app.yaml" "${OBOS_APP_S
 install -m 0644 "${REPO_ROOT}/packaging/apt/20auto-upgrades" /etc/apt/apt.conf.d/20auto-upgrades
 install -m 0644 "${REPO_ROOT}/packaging/apt/50unattended-upgrades" /etc/apt/apt.conf.d/50unattended-upgrades
 install -m 0644 "${REPO_ROOT}/packaging/docker/daemon.json" /etc/docker/daemon.json
+install -m 0644 "${REPO_ROOT}/packaging/logrotate/obos-agent" /etc/logrotate.d/obos-agent
 install -m 0644 "${REPO_ROOT}/packaging/nftables/obos.nft" /etc/nftables.conf
 install -m 0644 "${REPO_ROOT}/packaging/nginx/openbridgeserver.conf" /etc/nginx/sites-available/obos-openbridgeserver.conf
 install -m 0440 "${REPO_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent

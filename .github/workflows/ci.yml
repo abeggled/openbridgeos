@@ -22,7 +22,7 @@ jobs:
       - name: Install checks
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends nftables shellcheck nginx
+          sudo apt-get install -y --no-install-recommends logrotate nftables shellcheck nginx
 
       - name: Shell syntax
         run: |
@@ -30,6 +30,11 @@ jobs:
 
       - name: sudoers syntax
         run: sudo visudo -cf packaging/sudoers/obos-agent
+
+      - name: logrotate syntax
+        run: |
+          sudo useradd --system --no-create-home --user-group obos-agent
+          sudo logrotate --debug packaging/logrotate/obos-agent
 
       - name: Docker daemon JSON syntax
         run: python -m json.tool packaging/docker/daemon.json >/dev/null

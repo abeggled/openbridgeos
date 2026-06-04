@@ -64,10 +64,17 @@ grep -q 'useradd .*obos-agent' scripts/bootstrap/provision-debian.sh \
 # shellcheck disable=SC2016
 grep -q 'install -m 0440 "${REPO_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "agent sudoers policy is not installed during provisioning"
+# shellcheck disable=SC2016
+grep -q 'install -m 0644 "${REPO_ROOT}/packaging/logrotate/obos-agent" /etc/logrotate.d/obos-agent' scripts/bootstrap/provision-debian.sh \
+  || fail "agent audit logrotate policy is not installed during provisioning"
 grep -q 'obos-agent ALL=(root) NOPASSWD:' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow non-interactive obosctl commands"
 grep -q '/usr/bin/obosctl mqtt-enable-lan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow CIDR-limited MQTT enablement"
+grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
+  || fail "agent audit logrotate policy does not target the audit log"
+grep -q 'create 0640 obos-agent obos-agent' packaging/logrotate/obos-agent \
+  || fail "agent audit logrotate policy does not preserve restrictive ownership"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
