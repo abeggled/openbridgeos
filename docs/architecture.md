@@ -1,6 +1,6 @@
 # Architecture
 
-Open Bridge OS is an appliance layer around Open Bridge Server.
+open bridge operating system is an appliance layer around Open Bridge Server.
 
 The project should stay boring in the best possible way: standard Debian,
 standard container runtime, predictable filesystem layout, conservative update
@@ -36,7 +36,7 @@ Open Bridge Server owns building automation:
 - MQTT account management
 - Open Bridge Server backup and restore format
 
-Open Bridge OS owns the appliance:
+open bridge operating system owns the appliance:
 
 - first boot setup
 - host updates
