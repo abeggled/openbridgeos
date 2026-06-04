@@ -73,11 +73,13 @@ See [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).
 ## TLS Trust
 
 The planned release TLS model uses a local CA per appliance instance. The first
-helper scripts can already generate trust material and print fingerprints:
+helpers can already generate trust material, print fingerprints, and export a
+public trust bundle:
 
 ```sh
-sudo /usr/lib/obos/generate-tls-material.sh
-sudo /usr/lib/obos/print-trust-info.sh
+sudo obosctl tls-generate
+sudo obosctl tls-info
+sudo obosctl tls-export
 ```
 
 See [docs/tls-trust.md](docs/tls-trust.md).
