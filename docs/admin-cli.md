@@ -75,6 +75,7 @@ obosctl proxy-health
 ```sh
 sudo obosctl update
 obosctl update-summary
+sudo obosctl update-rollback-plan
 ```
 
 The update command performs the first conservative update flow:
@@ -98,6 +99,11 @@ backup requirement, backup path, and successful local/proxy health markers.
 `update-summary` prints a stable key-value format for agents and the future web
 UI. It includes the update state file path, whether a successful update record is
 present, and the last update record fields when present.
+
+`update-rollback-plan` is read-only and non-destructive. It reads the last
+successful update record, verifies that the recorded backup still exists and
+passes backup inspection, then prints the restore planning commands to use before
+any future apply workflow.
 
 ## Backup
 

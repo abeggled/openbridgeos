@@ -36,6 +36,8 @@ Commands:
   restart           Restart open bridge server
   update            Pull container images, restart, and verify health
   update-summary    Print machine-readable last update status
+  update-rollback-plan
+                    Print the non-destructive rollback plan for the last update
   logs              Follow open bridge server stack logs
   backup            Create a timestamped appliance backup
   backup-list       Print machine-readable appliance backup inventory
@@ -87,6 +89,23 @@ run_helper() {
     exit 1
   }
   "${helper}" "$@"
+}
+
+key_value() {
+  key="$1"
+  file="$2"
+  awk -F= -v key="${key}" '
+    $1 == key {
+      print substr($0, length(key) + 2)
+      found = 1
+      exit
+    }
+    END {
+      if (!found) {
+        exit 1
+      }
+    }
+  ' "${file}" || true
 }
 
 compose() {
@@ -620,6 +639,46 @@ update_summary() {
   sed 's/^/last_update_/' "${LAST_UPDATE_FILE}"
 }
 
+update_rollback_plan() {
+  require_root update-rollback-plan
+  if [ ! -f "${LAST_UPDATE_FILE}" ]; then
+    echo "update rollback plan: blocked; last update state missing" >&2
+    return 1
+  fi
+
+  backup_path="$(key_value backup "${LAST_UPDATE_FILE}")"
+  completed_at="$(key_value completed_at "${LAST_UPDATE_FILE}")"
+  [ -n "${backup_path}" ] || {
+    echo "update rollback plan: blocked; backup path missing from last update state" >&2
+    return 1
+  }
+  [ -f "${backup_path}" ] || {
+    echo "update rollback plan: blocked; backup missing: ${backup_path}" >&2
+    return 1
+  }
+  if ! restore_inspect "${backup_path}" >/dev/null; then
+    echo "update rollback plan: blocked; backup inspection failed" >&2
+    return 1
+  fi
+
+  echo "update rollback plan: ${backup_path}"
+  echo
+  echo "mode=non-destructive"
+  echo "format=obos-update-rollback-plan-v1"
+  echo "state_file=${LAST_UPDATE_FILE}"
+  echo "last_update_completed_at=${completed_at}"
+  echo "backup=${backup_path}"
+  echo "backup_present=true"
+  echo
+  echo "next_steps:"
+  echo "  1. run: sudo obosctl restore-plan ${backup_path}"
+  echo "  2. run: sudo obosctl restore-stage ${backup_path}"
+  echo "  3. inspect the staged restore before any future apply command"
+  echo "  4. run: sudo obosctl restore-apply-plan <stage-dir>"
+  echo
+  echo "update rollback plan: PASS"
+}
+
 case "${1:-}" in
   status)
     status
@@ -648,6 +707,9 @@ case "${1:-}" in
     ;;
   update-summary)
     update_summary
+    ;;
+  update-rollback-plan)
+    update_rollback_plan
     ;;
   logs)
     compose logs -f --tail=200
