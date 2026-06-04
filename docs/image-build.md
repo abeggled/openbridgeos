@@ -333,15 +333,25 @@ sh scripts/images/create-release-manifest.sh \
 The release bundle manifest uses format `obos-release-bundle-v1` and records:
 
 - creation timestamp and repository revision
+- detached signature requirement, signature type, and expected signature file
 - artifact count
 - each artifact profile, architecture, image path, checksum file, image hash,
   and source image manifest
 
 Only image manifests with `release_build=1` can be added to a release bundle.
-Validate the release bundle before publishing:
+The current release signature contract expects a detached Minisign signature at
+`<release-manifest>.minisig`. Validate the release bundle before publishing:
 
 ```sh
 OBOS_MANIFEST_STRICT_FILES=1 \
+  sh scripts/images/check-release-manifest.sh dist/images/obos-release.manifest
+```
+
+Require the detached signature file during final publication checks:
+
+```sh
+OBOS_MANIFEST_STRICT_FILES=1 \
+  OBOS_RELEASE_SIGNATURE_STRICT=1 \
   sh scripts/images/check-release-manifest.sh dist/images/obos-release.manifest
 ```
 

@@ -87,10 +87,18 @@ RELEASE_MANIFEST="${TMP_DIR}/obos-release.manifest"
 OBOS_REPO_ROOT="$(pwd)" OBOS_MANIFEST_STRICT_FILES=1 \
   sh scripts/images/create-release-manifest.sh "${RELEASE_MANIFEST}" "${QCOW2_MANIFEST}" "${RPI_MANIFEST}" >/dev/null
 
-OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null
+SIGNATURE_FILE="${RELEASE_MANIFEST}.minisig"
+printf 'unverified fixture signature\n' > "${SIGNATURE_FILE}"
+
+OBOS_MANIFEST_STRICT_FILES=1 OBOS_RELEASE_SIGNATURE_STRICT=1 \
+  sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null
 
 grep -q '^format=obos-release-bundle-v1$' "${RELEASE_MANIFEST}" \
   || fail "release manifest format missing"
+grep -q '^signature_required=true$' "${RELEASE_MANIFEST}" \
+  || fail "release manifest signature requirement missing"
+grep -q '^signature_type=minisign$' "${RELEASE_MANIFEST}" \
+  || fail "release manifest signature type missing"
 grep -q '^artifact_count=2$' "${RELEASE_MANIFEST}" \
   || fail "release manifest artifact count missing"
 grep -q '^artifact_1_profile=amd64-vm$' "${RELEASE_MANIFEST}" \
@@ -102,6 +110,12 @@ bad_checksum_file="$(awk -F= '$1 == "artifact_1_checksum_file" { print substr($0
 printf '0000000000000000000000000000000000000000000000000000000000000000  tampered\n' > "${bad_checksum_file}"
 if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null 2>&1; then
   fail "tampered artifact checksum file was accepted"
+fi
+
+sha256sum "$(awk -F= '$1 == "artifact_1_image" { print substr($0, length($1) + 2) }' "${RELEASE_MANIFEST}")" > "${bad_checksum_file}"
+rm -f "${SIGNATURE_FILE}"
+if OBOS_MANIFEST_STRICT_FILES=1 OBOS_RELEASE_SIGNATURE_STRICT=1 sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null 2>&1; then
+  fail "missing release signature file was accepted"
 fi
 
 echo "release manifest fixture: PASS"

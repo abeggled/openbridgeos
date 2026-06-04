@@ -61,6 +61,9 @@ cat > "${tmp_manifest}" <<EOF
 format=obos-release-bundle-v1
 created_at=${created_at}
 repo_revision=${revision}
+signature_required=true
+signature_type=minisign
+signature_file=${OUTPUT_MANIFEST}.minisig
 artifact_count=${artifact_count}
 EOF
 
