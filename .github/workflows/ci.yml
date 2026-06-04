@@ -56,5 +56,8 @@ jobs:
       - name: qcow2 manifest fixture
         run: sh scripts/checks/check-qcow2-manifest.sh
 
+      - name: Raspberry Pi kernel config fixture
+        run: sh scripts/checks/check-rpi-kernel-config.sh
+
       - name: Compose config
         run: sh scripts/checks/validate-compose.sh
