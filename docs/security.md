@@ -77,11 +77,13 @@ Administrators can enable LAN MQTT access explicitly with:
 
 ```sh
 sudo obosctl mqtt-enable-lan
+sudo obosctl mqtt-enable-lan 192.168.1.0/24
 ```
 
 That action exposes TCP `1883` and TCP `9001`, updates the app environment,
 updates the managed firewall block, and restarts the managed open bridge server
-stack. MQTT authentication remains required. See
+stack. When a CIDR is supplied, the firewall rules are restricted to that source
+network. MQTT authentication remains required. See
 [0003: MQTT External Access Is Explicit Opt-In](decisions/0003-mqtt-external-access-opt-in.md).
 
 ## TLS Trust Onboarding
