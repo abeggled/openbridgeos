@@ -25,6 +25,7 @@ obosctl backup-list
 obosctl logs
 sudo obosctl tls-generate
 obosctl tls-status
+obosctl tls-summary
 sudo obosctl tls-info
 sudo obosctl tls-export
 sudo obosctl tls-export-boot
@@ -226,6 +227,7 @@ firewall allow rules. MQTT authentication remains required in both modes.
 ```sh
 sudo obosctl tls-generate
 obosctl tls-status
+obosctl tls-summary
 sudo obosctl tls-info
 sudo obosctl tls-export
 sudo obosctl tls-export-boot
@@ -234,8 +236,11 @@ sudo obosctl tls-export-boot
 `tls-generate` creates the per-appliance-instance local CA and leaf certificate
 material below `/etc/obos/tls`. It preserves existing TLS material instead of
 rotating appliance identity implicitly. `tls-status` checks the local CA and leaf
-certificate status, including expiry warnings. `tls-info` prints the appliance
-hostname, IP addresses, certificate paths, and SHA-256 fingerprints.
+certificate status, including expiry warnings. `tls-summary` prints a stable
+key-value format for agents and the future web UI with certificate presence,
+paths, subjects, issuers, expiry states, expiry warnings, and SHA-256
+fingerprints. `tls-info` prints the appliance hostname, IP addresses,
+certificate paths, and SHA-256 fingerprints.
 `tls-export` writes a public trust bundle below `/srv/obos/state/trust`.
 `tls-export-boot` writes the public trust summary and local CA certificate to a
 mounted boot partition when one is available.
