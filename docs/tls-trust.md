@@ -75,6 +75,39 @@ future onboarding UI, boot-accessible trust summary, or manual support workflow.
 The CA certificate can be copied to client devices after the fingerprint has
 been verified through an out-of-band path.
 
+## Boot-Accessible Trust Summary
+
+First boot also tries to write public trust material to a mounted boot partition
+for headless Raspberry Pi onboarding:
+
+```sh
+sudo obosctl tls-export-boot
+```
+
+The helper looks for a writable mounted boot directory in this order:
+
+- `/boot/firmware`
+- `/boot/efi`
+- `/boot`
+
+If one is found, it writes:
+
+```text
+OBOS-TRUST.txt
+OBOS-LOCAL-CA.crt
+```
+
+The boot summary contains the same fingerprints as `obosctl tls-info` plus the
+public local CA certificate. It does not export private keys. If no writable
+boot partition is mounted, the helper exits successfully and leaves the normal
+trust bundle below `/srv/obos/state/trust` unchanged.
+
+For image tests or custom mount layouts, override the target directory with:
+
+```sh
+sudo OBOS_BOOT_TRUST_DIR=/mnt/obos-boot obosctl tls-export-boot
+```
+
 ## Client Trust
 
 Administrators may install `/etc/obos/tls/obos-local-ca.crt` or the exported

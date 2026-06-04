@@ -94,6 +94,9 @@ grep -Fq 'OBS_MQTT_PASSWORD=$(secret)' scripts/bootstrap/first-boot.sh \
 grep -q 'TLS_GENERATE_SCRIPT=' scripts/bootstrap/first-boot.sh \
   || fail "TLS material is not generated on first boot"
 
+grep -q 'BOOT_TRUST_SCRIPT=' scripts/bootstrap/first-boot.sh \
+  || fail "boot-accessible TLS trust summary is not exported on first boot"
+
 grep -q 'nginx-light' scripts/bootstrap/provision-debian.sh \
   || fail "nginx reverse proxy package is not installed during provisioning"
 
@@ -123,6 +126,9 @@ grep -q 'systemctl enable nginx.service' scripts/bootstrap/provision-debian.sh \
 
 grep -q 'set-mqtt-lan-access.sh' scripts/bootstrap/provision-debian.sh \
   || fail "MQTT LAN opt-in helper is not installed during provisioning"
+
+grep -q 'export-boot-trust-summary.sh' scripts/bootstrap/provision-debian.sh \
+  || fail "boot trust summary helper is not installed during provisioning"
 
 grep -q '"no-new-privileges": true' packaging/docker/daemon.json \
   || fail "Docker no-new-privileges default is not enabled"
@@ -223,3 +229,9 @@ grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
 
 grep -q 'tls-export)' scripts/obosctl \
   || fail "obosctl does not expose TLS trust export"
+
+grep -q 'tls-export-boot)' scripts/obosctl \
+  || fail "obosctl does not expose boot trust summary export"
+
+grep -q 'No private keys were exported to the boot partition.' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot trust summary export does not state that private keys are excluded"

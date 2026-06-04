@@ -17,6 +17,7 @@ TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
 TLS_INFO_SCRIPT="${OBOS_TLS_INFO_SCRIPT:-/usr/lib/obos/print-trust-info.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
+BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
 MQTT_LAN_SCRIPT="${OBOS_MQTT_LAN_SCRIPT:-/usr/lib/obos/set-mqtt-lan-access.sh}"
 
 usage() {
@@ -37,6 +38,7 @@ Commands:
   tls-generate      Generate local CA and leaf certificate material
   tls-info          Print TLS trust fingerprints and paths
   tls-export        Export public TLS trust bundle
+  tls-export-boot   Export public TLS trust summary to a boot partition
   mqtt-status       Show MQTT bind addresses
   mqtt-enable-lan   Enable explicit LAN MQTT access
   mqtt-disable-lan  Disable LAN MQTT access and bind MQTT to localhost
@@ -357,6 +359,10 @@ case "${1:-}" in
   tls-export)
     require_root tls-export
     run_helper "${TLS_EXPORT_SCRIPT}"
+    ;;
+  tls-export-boot)
+    require_root tls-export-boot
+    run_helper "${BOOT_TRUST_SCRIPT}"
     ;;
   mqtt-status)
     require_root mqtt-status
