@@ -21,6 +21,7 @@ sudo obosctl stop
 sudo obosctl restart
 sudo obosctl update
 sudo obosctl backup
+obosctl backup-list
 obosctl logs
 sudo obosctl tls-generate
 obosctl tls-status
@@ -85,6 +86,7 @@ and successful local/proxy health markers.
 
 ```sh
 sudo obosctl backup
+obosctl backup-list
 ```
 
 Backups are written to `/srv/obos/backups` by default and are mode `0600`.
@@ -106,6 +108,11 @@ new local CA.
 
 Mosquitto logs are excluded by default. The backup manifest records this with
 `includes_logs=false`.
+
+`backup-list` prints a stable key-value inventory for agents and the future web
+UI. It includes a format version, backup directory, one line per matching backup
+with path, size, and mode, plus a final backup count. Backup archives contain
+secrets, so UI download flows must still treat every listed file as sensitive.
 
 ## Restore Inspection
 

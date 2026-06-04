@@ -29,6 +29,15 @@ grep -q 'obos-backup-manifest.txt' scripts/obosctl \
 grep -q 'contains_secrets=true' scripts/obosctl \
   || fail "obosctl backup manifest does not mark secret-bearing backups"
 
+grep -q 'backup-list)' scripts/obosctl \
+  || fail "obosctl does not expose machine-readable backup inventory"
+
+grep -q 'format=obos-backup-list-v1' scripts/obosctl \
+  || fail "obosctl backup list does not declare a format"
+
+grep -q 'backup_count=' scripts/obosctl \
+  || fail "obosctl backup list does not report backup count"
+
 grep -q 'includes_logs=false' scripts/obosctl \
   || fail "obosctl backup manifest does not record log exclusion"
 

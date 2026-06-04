@@ -34,6 +34,7 @@
 - Start, stop, restart, and update open bridge server.
 - Show logs.
 - Trigger backups and downloads.
+- Consume stable `obosctl backup-list` key-value output for backup inventory.
 - Configure hostname, timezone, and network basics.
 - Surface hardening status and security baseline results.
 - Surface TLS trust fingerprints and root CA export workflow.
