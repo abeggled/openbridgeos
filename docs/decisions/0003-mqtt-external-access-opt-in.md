@@ -2,8 +2,8 @@
 
 ## Status
 
-Accepted. Initial `obosctl` enable/disable workflow is implemented; web UI and
-source-network restrictions are still open.
+Accepted. The `obosctl` enable/disable workflow is implemented, including
+optional source-network restriction. Web UI confirmation flow is still open.
 
 ## Context
 
@@ -32,6 +32,14 @@ Administrators may enable LAN MQTT access with:
 sudo obosctl mqtt-enable-lan
 ```
 
+They may restrict the firewall allow rules to a specific IPv4 or IPv6 source
+network:
+
+```sh
+sudo obosctl mqtt-enable-lan 192.168.1.0/24
+sudo obosctl mqtt-enable-lan fd00::/64
+```
+
 They may restore the default closed posture with:
 
 ```sh
@@ -44,6 +52,7 @@ The workflow:
 - keeps existing MQTT authentication enabled
 - updates the app environment file instead of hand-editing Compose
 - updates the managed nftables MQTT block
+- can restrict nftables rules to a source CIDR when supplied
 - restarts the firewall
 - restarts the managed open bridge server stack
 - remains visible to CI security default checks
@@ -59,8 +68,6 @@ The workflow:
 ## Open Questions
 
 - Should MQTT WebSocket exposure be controlled independently from plain MQTT?
-- Should obos support source-network restrictions, e.g. only a specific LAN
-  subnet?
 - Should the UI require a confirmation step that displays the current MQTT user
   model before opening the firewall?
 - Should the security baseline audit add a separate admin-enabled MQTT mode?

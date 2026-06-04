@@ -53,13 +53,15 @@ LAN MQTT exposure is an explicit opt-in workflow:
 
 ```sh
 sudo obosctl mqtt-enable-lan
+sudo obosctl mqtt-enable-lan 192.168.1.0/24
 sudo obosctl mqtt-disable-lan
 sudo obosctl mqtt-status
 ```
 
 Enabling it updates both the Compose environment and the managed nftables block,
-then restarts the firewall and open bridge server stack. Disabling it restores
-localhost-only bind addresses and removes the firewall allow rules.
+then restarts the firewall and open bridge server stack. When a CIDR is supplied,
+the firewall allow rules are restricted to that source network. Disabling it
+restores localhost-only bind addresses and removes the firewall allow rules.
 
 ## TLS Reverse Proxy
 

@@ -139,6 +139,9 @@ grep -q 'systemctl enable nginx.service' scripts/bootstrap/provision-debian.sh \
 grep -q 'set-mqtt-lan-access.sh' scripts/bootstrap/provision-debian.sh \
   || fail "MQTT LAN opt-in helper is not installed during provisioning"
 
+grep -q 'OBOS_MQTT_LAN_SOURCE_CIDR' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not support source CIDR restriction"
+
 grep -q 'export-boot-trust-summary.sh' scripts/bootstrap/provision-debian.sh \
   || fail "boot trust summary helper is not installed during provisioning"
 
@@ -174,6 +177,12 @@ grep -q 'tcp dport 1883 accept' scripts/hardening/set-mqtt-lan-access.sh \
 
 grep -q 'tcp dport 9001 accept' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not open MQTT WebSocket when enabled"
+
+grep -q 'ip saddr %s' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not support IPv4 source-restricted firewall rules"
+
+grep -q 'ip6 saddr %s' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not support IPv6 source-restricted firewall rules"
 
 grep -q 'OBS_MQTT_HOST_PORT 0.0.0.0:1883' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not publish MQTT plain TCP when enabled"

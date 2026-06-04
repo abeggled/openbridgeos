@@ -115,6 +115,9 @@ sudo obosctl mqtt-enable-lan
 sudo grep -E '^(OBS_MQTT_HOST_PORT|OBS_MQTT_WS_HOST_PORT)=' /etc/obos/apps/openbridgeserver.env
 sudo nft list ruleset | grep 'tcp dport 1883'
 sudo nft list ruleset | grep 'tcp dport 9001'
+sudo obosctl mqtt-enable-lan 192.168.1.0/24
+sudo nft list ruleset | grep 'ip saddr 192.168.1.0/24 tcp dport 1883'
+sudo nft list ruleset | grep 'ip saddr 192.168.1.0/24 tcp dport 9001'
 sudo obosctl mqtt-disable-lan
 sudo grep -E '^(OBS_MQTT_HOST_PORT|OBS_MQTT_WS_HOST_PORT)=' /etc/obos/apps/openbridgeserver.env
 sudo nft list ruleset | grep 'tcp dport 1883' && false || true
@@ -126,6 +129,7 @@ Expected:
 - default status shows localhost MQTT bind addresses
 - enable switches MQTT bind addresses to `0.0.0.0:1883` and `0.0.0.0:9001`
 - enable adds firewall rules for TCP `1883` and `9001`
+- enable with CIDR restricts firewall rules to the supplied source network
 - disable restores localhost bind addresses
 - disable removes firewall rules for TCP `1883` and `9001`
 
