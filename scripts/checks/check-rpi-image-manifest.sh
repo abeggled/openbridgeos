@@ -5,10 +5,12 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
 IMAGE_FILE="${TMP_DIR}/obos-rpi4-arm64-test.img.xz"
+CHECKSUM_FILE="${IMAGE_FILE}.sha256"
 MANIFEST_FILE="${TMP_DIR}/obos-rpi4-arm64-test.img.xz.manifest"
 
 printf 'test rpi image\n' > "${IMAGE_FILE}"
 IMAGE_SHA256="$(sha256sum "${IMAGE_FILE}" | cut -d ' ' -f 1)"
+sha256sum "${IMAGE_FILE}" > "${CHECKSUM_FILE}"
 
 cat > "${MANIFEST_FILE}" <<EOF
 format=obos-rpi-image-build-v1
@@ -21,6 +23,7 @@ output_compression=xz
 image_extension=img.xz
 release_build=1
 image=${IMAGE_FILE}
+checksum_file=${CHECKSUM_FILE}
 image_sha256=${IMAGE_SHA256}
 network_installer_compatible=true
 boot_media=sd,usb,nvme
@@ -39,5 +42,11 @@ contains_secrets=false
 EOF
 
 OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-rpi-image-manifest.sh "${MANIFEST_FILE}" >/dev/null
+
+printf '0000000000000000000000000000000000000000000000000000000000000000  %s\n' "${IMAGE_FILE}" > "${CHECKSUM_FILE}"
+if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-rpi-image-manifest.sh "${MANIFEST_FILE}" >/dev/null 2>&1; then
+  echo "Raspberry Pi image manifest fixture failed: checksum file mismatch was accepted" >&2
+  exit 1
+fi
 
 echo "Raspberry Pi image manifest fixture: PASS"

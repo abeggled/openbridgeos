@@ -174,7 +174,7 @@ The qcow2 manifest uses format `obos-qcow2-build-v1` and records:
 
 - image profile, architecture, Debian release, and output format
 - whether the artifact was built as a release build
-- image path and SHA-256 hash
+- image path, checksum file, and SHA-256 hash
 - base image path, source URL, and SHA-256 hash
 - provision script and first boot service
 - repository revision when available
@@ -191,8 +191,8 @@ Validate a manifest after building:
 sh scripts/images/check-qcow2-manifest.sh dist/images/obos-amd64-vm-latest.qcow2.manifest
 ```
 
-Use strict file verification when the referenced image and base image are present
-on the same build host:
+Use strict file verification when the referenced image, checksum file, and base
+image are present on the same build host:
 
 ```sh
 OBOS_MANIFEST_STRICT_FILES=1 \
@@ -294,7 +294,7 @@ The Raspberry Pi image manifest uses format `obos-rpi-image-build-v1` and record
 - image profile, architecture, Debian release, and output format
 - xz compression and `.img.xz` artifact extension
 - whether the artifact was built as a release build
-- image path and SHA-256 hash
+- image path, checksum file, and SHA-256 hash
 - Raspberry Pi Network Installer compatibility
 - boot media, firmware mode, partition layout, and partition labels
 - SSH disabled by default
