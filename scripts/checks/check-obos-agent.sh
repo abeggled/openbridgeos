@@ -12,6 +12,8 @@ fail() {
 
 grep -q 'format=obos-agent-response-v1' "${AGENT}" \
   || fail "agent response format missing"
+grep -q 'require_no_extra_args' "${AGENT}" \
+  || fail "agent does not reject extra arguments"
 # shellcheck disable=SC2016
 grep -q 'timeout "${TIMEOUT_SECONDS}"' "${AGENT}" \
   || fail "agent does not enforce command timeout"
@@ -56,5 +58,9 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary |
   grep -q 'stdout=format=obos-status-summary-v1' \
   || fail "agent smoke test did not wrap command stdout"
+
+if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary unexpected >/dev/null 2>&1; then
+  fail "agent accepted unexpected extra argument"
+fi
 
 echo "obos-agent: PASS"

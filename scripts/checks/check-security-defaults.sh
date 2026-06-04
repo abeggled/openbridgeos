@@ -145,6 +145,9 @@ grep -q 'check-obos-agent.sh' .github/workflows/ci.yml \
 grep -q 'format=obos-agent-response-v1' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not declare a response format"
 
+grep -q 'require_no_extra_args' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not reject extra arguments"
+
 # shellcheck disable=SC2016
 grep -q 'timeout "${TIMEOUT_SECONDS}"' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not enforce command timeouts"
