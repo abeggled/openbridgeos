@@ -5,6 +5,7 @@ OBOS_ETC_DIR="${OBOS_ETC_DIR:-/etc/obos}"
 OBOS_APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/openbridgeserver}"
 OBOS_STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
 ENV_FILE="${OBOS_ETC_DIR}/apps/openbridgeserver.env"
+APPLIANCE_ID_FILE="${OBOS_ETC_DIR}/appliance-id"
 FIRST_BOOT_MARKER="${OBOS_STATE_DIR}/first-boot.done"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
@@ -17,6 +18,16 @@ secret() {
   fi
 }
 
+uuid() {
+  if [ -r /proc/sys/kernel/random/uuid ]; then
+    cat /proc/sys/kernel/random/uuid
+  elif command -v uuidgen >/dev/null 2>&1; then
+    uuidgen | tr '[:upper:]' '[:lower:]'
+  else
+    openssl rand -hex 16 | sed 's/^\(.\{8\}\)\(.\{4\}\)\(.\{4\}\)\(.\{4\}\)\(.\{12\}\)$/\1-\2-\3-\4-\5/'
+  fi
+}
+
 if [ -f "${FIRST_BOOT_MARKER}" ]; then
   exit 0
 fi
@@ -24,6 +35,11 @@ fi
 install -d -m 0750 "${OBOS_ETC_DIR}" "${OBOS_ETC_DIR}/apps" "${OBOS_STATE_DIR}"
 install -d -m 0750 "${OBOS_APP_DIR}" "${OBOS_APP_DIR}/data" "${OBOS_APP_DIR}/mqtt"
 install -d -m 0770 "${OBOS_APP_DIR}/mqtt/passwd" "${OBOS_APP_DIR}/mqtt/data" "${OBOS_APP_DIR}/mqtt/log"
+
+if [ ! -f "${APPLIANCE_ID_FILE}" ]; then
+  uuid > "${APPLIANCE_ID_FILE}"
+fi
+chmod 0644 "${APPLIANCE_ID_FILE}"
 
 if [ ! -f "${ENV_FILE}" ]; then
   umask 077
