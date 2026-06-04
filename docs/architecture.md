@@ -12,6 +12,8 @@ behavior, and explicit security boundaries.
 Hardware or VM
   Debian minimal
     systemd
+    nftables
+    nginx TLS reverse proxy
     Docker Engine + Compose plugin
     obos-agent
     obos-web
@@ -68,6 +70,11 @@ image.
   obos.yaml
   apps/
     openbridgeserver.env
+  tls/
+    obos-local-ca.crt
+    obos-local-ca.key
+    obos.local.crt
+    obos.local.key
 
 /srv/obos/
   apps/
@@ -80,21 +87,24 @@ image.
       logs/
   backups/
   state/
+    trust/
 ```
 
 The goal is that every persistent piece of user data lives below `/srv/obos`
-or is explicitly exported by backup tooling.
+or is explicitly exported by backup tooling. Sensitive appliance identity and
+trust material below `/etc/obos` must be included deliberately in backups.
 
 ## Network Defaults
 
 The default appliance should expose only the minimum useful surface:
 
-- `80/tcp` or `443/tcp` for the obos administration UI, once implemented
-- `8080/tcp` for Open Bridge Server during the initial phase
-- `1883/tcp` for MQTT only when enabled
-- `9001/tcp` for MQTT over WebSocket only when enabled
+- `443/tcp` for nginx TLS reverse proxy
+- `127.0.0.1:8080` for Open Bridge Server behind the proxy
+- `127.0.0.1:1883` for MQTT unless LAN MQTT is explicitly enabled
+- `127.0.0.1:9001` for MQTT over WebSocket unless explicitly enabled
 
-Remote shell access should be opt-in or clearly surfaced during first setup.
+Plain HTTP on TCP `80` is closed for now. Remote shell access should be opt-in
+or clearly surfaced during first setup.
 
 ## Update Model
 
