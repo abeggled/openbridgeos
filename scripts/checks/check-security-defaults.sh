@@ -38,8 +38,20 @@ grep -q -- '--exclude=mqtt/log' scripts/obosctl \
 grep -q 'restore-inspect)' scripts/obosctl \
   || fail "obosctl does not expose restore inspection"
 
+grep -q 'restore-plan)' scripts/obosctl \
+  || fail "obosctl does not expose restore planning"
+
 grep -q 'restore inspect: PASS' scripts/obosctl \
   || fail "restore inspection does not report success"
+
+grep -q 'format=obos-restore-plan-v1' scripts/obosctl \
+  || fail "restore plan does not declare a format"
+
+grep -q 'mode=non-destructive' scripts/obosctl \
+  || fail "restore plan does not declare non-destructive mode"
+
+grep -q 'restore preserves appliance TLS identity' scripts/obosctl \
+  || fail "restore plan does not explain TLS identity impact"
 
 grep -q 'unsafe absolute or parent-relative paths' scripts/obosctl \
   || fail "restore inspection does not reject unsafe archive paths"

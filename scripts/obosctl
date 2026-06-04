@@ -34,6 +34,7 @@ Commands:
   logs              Follow open bridge server stack logs
   backup            Create a timestamped appliance backup
   restore-inspect   Inspect an appliance backup before restore
+  restore-plan      Print the non-destructive restore plan for a backup
   health            Check open bridge server localhost health endpoint
   proxy-health      Check HTTPS reverse proxy health with local CA trust
   tls-generate      Generate local CA and leaf certificate material
@@ -273,6 +274,55 @@ restore_inspect() {
   return "${failed}"
 }
 
+restore_plan() {
+  archive="${1:-}"
+  [ -n "${archive}" ] || {
+    echo "usage: obosctl restore-plan <backup.tar.gz>" >&2
+    return 2
+  }
+
+  if ! restore_inspect "${archive}" >/dev/null; then
+    echo "restore plan: blocked; backup inspection failed" >&2
+    return 1
+  fi
+
+  echo "restore plan: ${archive}"
+  echo
+  echo "mode=non-destructive"
+  echo "format=obos-restore-plan-v1"
+  echo "app=${APP_NAME}"
+  echo "service=${SERVICE_NAME}"
+  echo "app_dir=${APP_DIR}"
+  echo "env_file=${ENV_FILE}"
+  echo "appliance_id_file=${APPLIANCE_ID_FILE}"
+  echo "tls_dir=${TLS_DIR}"
+  echo
+  echo "steps:"
+  echo "  1. create a fresh pre-restore backup with: sudo obosctl backup"
+  echo "  2. stop ${SERVICE_NAME}"
+  echo "  3. restore app environment to ${ENV_FILE}"
+  echo "  4. restore appliance identifier to ${APPLIANCE_ID_FILE}"
+  echo "  5. restore open bridge server data below ${APP_DIR}/data"
+  echo "  6. restore Mosquitto data below ${APP_DIR}/mqtt"
+  echo "  7. restore Compose metadata below ${APP_DIR}"
+  echo "  8. restore TLS identity material to ${TLS_DIR} when present"
+  echo "  9. normalize permissions for restored paths"
+  echo "  10. start ${SERVICE_NAME}"
+  echo "  11. verify localhost and HTTPS proxy health"
+  echo "  12. run the security baseline audit"
+  echo
+  echo "identity:"
+  if tar -tzf "${archive}" | grep -Eq '^tls/obos-local-ca\.key$|^tls/obos\.local\.key$'; then
+    echo "  tls_private_keys=present"
+    echo "  effect=restore preserves appliance TLS identity"
+  else
+    echo "  tls_private_keys=missing"
+    echo "  effect=restore will require new TLS trust onboarding"
+  fi
+  echo
+  echo "restore plan: PASS"
+}
+
 write_update_state() {
   backup_path="$1"
   state_dir="$(dirname -- "${LAST_UPDATE_FILE}")"
@@ -346,6 +396,10 @@ case "${1:-}" in
   restore-inspect)
     shift
     restore_inspect "${1:-}"
+    ;;
+  restore-plan)
+    shift
+    restore_plan "${1:-}"
     ;;
   health)
     health
