@@ -29,6 +29,7 @@
 ## Milestone 3: Appliance Web UI
 
 - Show system status.
+- Consume stable `obosctl status-summary` key-value output for read-only status.
 - Show open bridge server status.
 - Start, stop, restart, and update open bridge server.
 - Show logs.

@@ -8,6 +8,7 @@ and agent will need as well.
 
 ```sh
 obosctl status
+obosctl status-summary
 obosctl health
 obosctl proxy-health
 obosctl restore-inspect <backup.tar.gz>
@@ -36,15 +37,20 @@ sudo obosctl mqtt-disable-lan
 
 ```sh
 obosctl status
+obosctl status-summary
 ```
 
-Shows the systemd unit state, Docker Compose service state, the localhost Open
-Bridge Server health endpoint result, and the HTTPS reverse proxy health result.
+Shows the systemd unit state, Docker Compose service state, the localhost open
+bridge server health endpoint result, and the HTTPS reverse proxy health result.
 The HTTPS proxy check verifies the response through the per-appliance-instance
 local CA by resolving `obos.local` to `127.0.0.1` for the local probe.
 
 If `/srv/obos/state/last-update` exists, `status` also prints the last
 successful update record.
+
+`status-summary` prints a stable key-value format for agents and the future web
+UI. It includes a format version, app name, service name, systemd active state,
+localhost health, HTTPS proxy health, and whether a last update record exists.
 
 ```sh
 obosctl health

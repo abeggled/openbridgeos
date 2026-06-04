@@ -28,6 +28,7 @@ Usage: obosctl <command>
 
 Commands:
   status            Show systemd, container, and health status
+  status-summary    Print machine-readable appliance status
   start             Start open bridge server
   stop              Stop open bridge server
   restart           Restart open bridge server
@@ -134,6 +135,46 @@ status() {
     echo "last-update:"
     sed 's/^/  /' "${LAST_UPDATE_FILE}"
   fi
+  return "${failed}"
+}
+
+status_summary() {
+  failed=0
+  service_active="unknown"
+  if command -v systemctl >/dev/null 2>&1; then
+    service_active="$(systemctl is-active "${SERVICE_NAME}" 2>/dev/null || true)"
+    [ -n "${service_active}" ] || service_active="unknown"
+  fi
+
+  health_local="failed"
+  if health; then
+    health_local="ok"
+  else
+    failed=1
+  fi
+
+  health_https_proxy="failed"
+  if proxy_health; then
+    health_https_proxy="ok"
+  else
+    failed=1
+  fi
+
+  last_update_present=false
+  if [ -f "${LAST_UPDATE_FILE}" ]; then
+    last_update_present=true
+  fi
+
+  cat <<EOF
+format=obos-status-summary-v1
+app=${APP_NAME}
+service=${SERVICE_NAME}
+service_active=${service_active}
+health_local=${health_local}
+health_https_proxy=${health_https_proxy}
+last_update_present=${last_update_present}
+EOF
+
   return "${failed}"
 }
 
@@ -537,6 +578,9 @@ update_app() {
 case "${1:-}" in
   status)
     status
+    ;;
+  status-summary)
+    status_summary
     ;;
   start)
     require_root start
