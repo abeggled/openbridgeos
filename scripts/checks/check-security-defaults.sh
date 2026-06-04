@@ -242,5 +242,6 @@ grep -q 'tls-export-boot)' scripts/obosctl \
 grep -q 'No private keys were exported to the boot partition.' scripts/tls/export-boot-trust-summary.sh \
   || fail "boot trust summary export does not state that private keys are excluded"
 
+# shellcheck disable=SC2016
 grep -q 'openssl x509 -in "${cert}" -noout -checkend' scripts/tls/check-tls-status.sh \
   || fail "TLS status helper does not check certificate expiry"
