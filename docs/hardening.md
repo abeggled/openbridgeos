@@ -12,6 +12,7 @@ Provisioning installs and applies:
 - sysctl hardening baseline
 - Docker daemon hardening defaults
 - systemd unit hardening for obos-managed services
+- unattended Debian security updates without automatic reboots
 - SSH disabled by default when `ssh.service` exists
 
 The hardening entry point is:
@@ -95,6 +96,23 @@ The first boot unit also declares explicit write access to `/etc/obos` and
 More aggressive options such as `ProtectSystem=strict`, capability bounding, and
 system call filtering should be tested against Docker Compose and the first boot
 certificate path before becoming defaults.
+
+## OS Security Updates
+
+Provisioning installs `unattended-upgrades` and configures apt periodic updates
+for Debian security origins only. Automatic package installation is enabled for
+security updates, while automatic reboots are disabled.
+
+This separates host CVE handling from application container updates: Debian
+security fixes can land automatically, but reboot timing remains an explicit
+appliance administration decision.
+
+Installed policy files:
+
+```text
+/etc/apt/apt.conf.d/20auto-upgrades
+/etc/apt/apt.conf.d/50unattended-upgrades
+```
 
 ## SSH Policy
 
