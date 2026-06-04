@@ -18,6 +18,9 @@ obosctl logs
 sudo obosctl tls-generate
 sudo obosctl tls-info
 sudo obosctl tls-export
+sudo obosctl mqtt-status
+sudo obosctl mqtt-enable-lan
+sudo obosctl mqtt-disable-lan
 ```
 
 ## Status
@@ -65,6 +68,22 @@ internal MQTT service password, and TLS private key material. Treat exported
 backups as sensitive data. Restoring the TLS material preserves the appliance
 instance identity and avoids forcing clients to trust a new local CA.
 
+## MQTT LAN Access
+
+```sh
+sudo obosctl mqtt-status
+sudo obosctl mqtt-enable-lan
+sudo obosctl mqtt-disable-lan
+```
+
+MQTT is localhost-only by default. `mqtt-enable-lan` deliberately exposes MQTT
+plain TCP on `1883` and MQTT WebSocket on `9001` by updating the app environment
+file, updating the managed nftables block, reloading the firewall, and
+restarting the managed Open Bridge Server stack.
+
+`mqtt-disable-lan` restores both MQTT listeners to localhost and removes the
+firewall allow rules. MQTT authentication remains required in both modes.
+
 ## TLS Trust
 
 ```sh
@@ -94,17 +113,18 @@ OBOS_BACKUP_DIR=/tmp/obos/backups \
 obosctl status
 ```
 
-TLS helper paths can also be overridden for tests:
+TLS and MQTT helper paths can also be overridden for tests:
 
 ```sh
 OBOS_TLS_GENERATE_SCRIPT=/tmp/generate-tls-material.sh \
 OBOS_TLS_INFO_SCRIPT=/tmp/print-trust-info.sh \
 OBOS_TLS_EXPORT_SCRIPT=/tmp/export-trust-bundle.sh \
+OBOS_MQTT_LAN_SCRIPT=/tmp/set-mqtt-lan-access.sh \
 obosctl tls-info
 ```
 
 ## Design Notes
 
 `obosctl` is not meant to replace Open Bridge Server's own UI. It only manages
-the appliance layer: lifecycle, health, logs, updates, backups, and local trust
-onboarding helpers.
+the appliance layer: lifecycle, health, logs, updates, backups, local trust
+onboarding helpers, and explicit host exposure changes.
