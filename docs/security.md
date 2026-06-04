@@ -134,6 +134,7 @@ Current container baseline:
 - least-needed published ports
 - service-level `no-new-privileges:true`
 - `init: true` for signal handling and child reaping
+- per-service `pids_limit` to reduce process-exhaustion blast radius
 - explicit restart policy
 - persistent volumes below `/srv/obos`
 - health checks for both Open Bridge Server and Mosquitto

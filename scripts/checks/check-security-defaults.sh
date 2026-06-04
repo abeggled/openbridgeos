@@ -164,6 +164,12 @@ grep -q 'no-new-privileges:true' apps/openbridgeserver/compose.yaml \
 grep -q 'init: true' apps/openbridgeserver/compose.yaml \
   || fail "Compose services do not enable init process handling"
 
+grep -q 'pids_limit: 128' apps/openbridgeserver/compose.yaml \
+  || fail "Mosquitto container does not limit process count"
+
+grep -q 'pids_limit: 256' apps/openbridgeserver/compose.yaml \
+  || fail "Open Bridge Server container does not limit process count"
+
 grep -q 'TLS_DIR=' scripts/obosctl \
   || fail "obosctl backup does not know the TLS material directory"
 
