@@ -15,6 +15,8 @@ Planned artifacts:
 
 - Secrets are never generated during image build.
 - First boot performs per-appliance-instance initialization.
+- Hardware sizing, power, storage, and cooling requirements are documented in
+  [hardware.md](hardware.md).
 - Build output includes checksums.
 - Build output includes a manifest for provenance and support triage.
 - Release artifacts should be signed before public distribution.
@@ -204,6 +206,11 @@ The `rpi4-arm64` profile targets Raspberry Pi 4 and newer boards with Debian 13
 Trixie arm64 userland. The intended publishable artifact is a compressed raw
 image ending in `.img.xz`, suitable for Raspberry Pi Network Installer style
 deployment and manual flashing.
+
+Before publishing or installing Raspberry Pi images, check the power, cooling,
+storage, and recovery expectations in [hardware.md](hardware.md). In particular,
+production appliances should use reliable power and storage media, and NVMe boot
+support must remain part of the release image contract.
 
 The contract requires:
 

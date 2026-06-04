@@ -63,6 +63,11 @@ first. The default hardening policy disables SSH when present.
 See [docs/install-debian.md](docs/install-debian.md) and
 [docs/image-build.md](docs/image-build.md).
 
+## Hardware
+
+See [docs/hardware.md](docs/hardware.md) for Raspberry Pi 4+ and x86_64 sizing,
+storage, power, and recovery guidance.
+
 ## Security Baseline
 
 After provisioning and reboot, validate the appliance with:
@@ -112,6 +117,7 @@ docs/
   architecture.md          System shape and design decisions
   decisions/               Architecture decision records
   hardening.md             Host firewall, SSH, and sysctl hardening
+  hardware.md              Hardware sizing, storage, and power guidance
   install-debian.md        First Debian development install path
   image-build.md           Bootable image profile and build plan
   security-baseline-testplan.md  First VM security validation plan
