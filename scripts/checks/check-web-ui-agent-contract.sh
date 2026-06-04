@@ -30,6 +30,8 @@ require_contract_line 'sudo obosctl security-summary'
 require_contract_line 'obos-security-baseline-summary-v1'
 require_contract_line 'obos-agent actions'
 require_contract_line 'obos-agent-actions-v1'
+require_contract_line 'obos-agent start --confirm start'
+require_contract_line 'obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan'
 
 grep -q 'status-summary)' scripts/obosctl \
   || fail "obosctl status-summary command missing"

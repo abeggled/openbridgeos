@@ -16,8 +16,12 @@ grep -q 'format=obos-agent-actions-v1' "${AGENT}" \
   || fail "agent actions format missing"
 grep -q 'require_no_extra_args' "${AGENT}" \
   || fail "agent does not reject extra arguments"
+grep -q 'require_confirm_args' "${AGENT}" \
+  || fail "agent does not require confirmation for mutating actions"
+grep -q 'require_mqtt_enable_args' "${AGENT}" \
+  || fail "agent does not validate MQTT enable arguments"
 # shellcheck disable=SC2016
-grep -q 'timeout "${TIMEOUT_SECONDS}"' "${AGENT}" \
+grep -q 'timeout "${timeout_seconds}"' "${AGENT}" \
   || fail "agent does not enforce command timeout"
 grep -q 'status-summary)' "${AGENT}" \
   || fail "status-summary action missing"
@@ -33,6 +37,12 @@ grep -q 'tls-summary)' "${AGENT}" \
   || fail "tls-summary action missing"
 grep -q 'security-summary)' "${AGENT}" \
   || fail "security-summary action missing"
+grep -q 'start)' "${AGENT}" \
+  || fail "start action missing"
+grep -q 'action=start|mutating=true|confirm=start' "${AGENT}" \
+  || fail "start action is not listed as a confirmed mutation"
+grep -q 'action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_arg=source-cidr' "${AGENT}" \
+  || fail "MQTT enable action is not listed with source CIDR"
 # shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "agent is not installed during provisioning"
@@ -45,6 +55,14 @@ cat > "${tmp_dir}/obosctl" <<'EOF'
 case "$1" in
   status-summary)
     echo "format=obos-status-summary-v1"
+    exit 0
+    ;;
+  start)
+    echo "started"
+    exit 0
+    ;;
+  mqtt-enable-lan)
+    echo "mqtt-enabled:${2:-any}"
     exit 0
     ;;
   *)
@@ -70,5 +88,17 @@ sh "${AGENT}" actions |
 if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary unexpected >/dev/null 2>&1; then
   fail "agent accepted unexpected extra argument"
 fi
+
+if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" start >/dev/null 2>&1; then
+  fail "agent accepted mutation without confirmation"
+fi
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" start --confirm start |
+  grep -q 'stdout=started' \
+  || fail "agent did not run confirmed start mutation"
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 192.168.1.0/24 --confirm mqtt-enable-lan |
+  grep -q 'stdout=mqtt-enabled:192.168.1.0/24' \
+  || fail "agent did not forward MQTT source CIDR"
 
 echo "obos-agent: PASS"
