@@ -8,7 +8,9 @@ APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
-HTTPS_URL="${OBOS_HTTPS_URL:-https://127.0.0.1/api/v1/system/health}"
+PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
+PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
+TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 
 pass() {
   printf 'PASS %s\n' "$1"
@@ -96,6 +98,22 @@ check_uuid_file() {
   fi
 }
 
+check_proxy_health() {
+  if [ ! -f "${TLS_CA_CERT}" ]; then
+    fail "HTTPS reverse proxy local CA missing"
+    return
+  fi
+
+  if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 \
+    --cacert "${TLS_CA_CERT}" \
+    --resolve "${PROXY_HEALTH_HOST}:443:127.0.0.1" \
+    "${PROXY_HEALTH_URL}" >/dev/null; then
+    pass 'HTTPS reverse proxy health endpoint reachable with local CA trust'
+  else
+    fail 'HTTPS reverse proxy health endpoint unreachable with local CA trust'
+  fi
+}
+
 check_command docker
 check_command nft
 check_command nginx
@@ -171,11 +189,7 @@ else
   fail 'Open Bridge Server localhost health endpoint unreachable'
 fi
 
-if command -v curl >/dev/null 2>&1 && curl --insecure --fail --silent --show-error --max-time 5 "${HTTPS_URL}" >/dev/null; then
-  pass 'HTTPS reverse proxy health endpoint reachable'
-else
-  fail 'HTTPS reverse proxy health endpoint unreachable'
-fi
+check_proxy_health
 
 if [ -d "${APP_DIR}/data" ]; then
   pass 'Open Bridge Server data directory exists'
