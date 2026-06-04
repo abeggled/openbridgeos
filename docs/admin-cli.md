@@ -94,6 +94,9 @@ backups as sensitive data. Restoring the appliance identifier and TLS material
 preserves the appliance instance identity and avoids forcing clients to trust a
 new local CA.
 
+Mosquitto logs are excluded by default. The backup manifest records this with
+`includes_logs=false`.
+
 ## Restore Inspection
 
 ```sh
