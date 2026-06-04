@@ -145,6 +145,12 @@ grep -q 'check-obos-agent.sh' .github/workflows/ci.yml \
 grep -q 'format=obos-agent-response-v1' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not declare a response format"
 
+grep -q 'format=obos-agent-actions-v1' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not declare an action inventory format"
+
+grep -q 'action=status-summary|mutating=false' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark read-only actions"
+
 grep -q 'require_no_extra_args' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not reject extra arguments"
 

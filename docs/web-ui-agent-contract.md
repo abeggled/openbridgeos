@@ -75,6 +75,7 @@ The initial agent skeleton is installed as `obos-agent`. It currently exposes
 only read-only actions:
 
 ```sh
+obos-agent actions
 obos-agent status-summary
 obos-agent update-summary
 obos-agent backup-list
@@ -85,3 +86,5 @@ obos-agent security-summary
 
 The response envelope uses format `obos-agent-response-v1` and includes the
 requested action, exit code, timeout marker, stdout block, and stderr block.
+The action inventory uses format `obos-agent-actions-v1` and marks every current
+action as `mutating=false`.

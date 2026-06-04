@@ -9,6 +9,7 @@ usage() {
 Usage: obos-agent <action>
 
 Read-only actions:
+  actions
   status-summary
   update-summary
   backup-list
@@ -30,6 +31,19 @@ require_timeout() {
 require_no_extra_args() {
   action="$1"
   [ "$#" -eq 1 ] || fail "${action} does not accept arguments"
+}
+
+print_actions() {
+  cat <<'EOF'
+format=obos-agent-actions-v1
+action=actions|mutating=false
+action=status-summary|mutating=false
+action=update-summary|mutating=false
+action=backup-list|mutating=false
+action=mqtt-summary|mutating=false
+action=tls-summary|mutating=false
+action=security-summary|mutating=false
+EOF
 }
 
 run_allowed() {
@@ -73,6 +87,10 @@ EOF
 require_timeout
 
 case "${1:-}" in
+  actions)
+    require_no_extra_args "$@"
+    print_actions
+    ;;
   status-summary)
     require_no_extra_args "$@"
     run_allowed status-summary "${OBOSCTL}" status-summary
