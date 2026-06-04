@@ -2,14 +2,11 @@
 set -eu
 
 STRICT_FILES="${OBOS_MANIFEST_STRICT_FILES:-0}"
+STRICT_SIGNATURE="${OBOS_RELEASE_SIGNATURE_STRICT:-0}"
 
 fail() {
   echo "release manifest check failed: $1" >&2
   exit 1
-}
-
-warn() {
-  echo "WARN $1" >&2
 }
 
 require_command() {
@@ -61,6 +58,19 @@ check_checksum_file() {
     || fail "checksum file sha256 mismatch for ${checksum_file}"
 }
 
+check_signature_file() {
+  signature_file="$1"
+
+  if [ ! -f "${signature_file}" ]; then
+    if [ "${STRICT_SIGNATURE}" = "1" ]; then
+      fail "signature file missing: ${signature_file}"
+    fi
+    return 0
+  fi
+
+  [ -s "${signature_file}" ] || fail "signature file is empty: ${signature_file}"
+}
+
 check_image_manifest() {
   manifest_file="$1"
   expected_profile="$2"
@@ -94,8 +104,13 @@ require_command cut
 [ -f "${MANIFEST_FILE}" ] || fail "manifest not found: ${MANIFEST_FILE}"
 
 expect_value format obos-release-bundle-v1 "${MANIFEST_FILE}"
+expect_value signature_required true "${MANIFEST_FILE}"
+expect_value signature_type minisign "${MANIFEST_FILE}"
 [ -n "$(manifest_value created_at "${MANIFEST_FILE}")" ] || fail "created_at must not be empty"
 [ -n "$(manifest_value repo_revision "${MANIFEST_FILE}")" ] || fail "repo_revision must not be empty"
+signature_file="$(manifest_value signature_file "${MANIFEST_FILE}")"
+[ -n "${signature_file}" ] || fail "signature_file must not be empty"
+check_signature_file "${signature_file}"
 
 artifact_count="$(manifest_value artifact_count "${MANIFEST_FILE}")"
 case "${artifact_count}" in
