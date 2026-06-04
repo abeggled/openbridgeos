@@ -17,12 +17,19 @@ OBOS_IMAGE_KIND=
 OBOS_DEBIAN_RELEASE=
 OBOS_BOOT_TARGET=
 OBOS_OUTPUT_FORMAT=
+OBOS_OUTPUT_COMPRESSION=
+OBOS_IMAGE_EXTENSION=
+OBOS_IMAGE_MIN_SIZE=
 OBOS_BASE_PACKAGES=
 OBOS_PROVISION_SCRIPT=
 OBOS_FIRST_BOOT_SERVICE=
 OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=
 OBOS_RPI_BOOT_MEDIA=
 OBOS_RPI_FIRMWARE_MODE=
+OBOS_RPI_PARTITION_LAYOUT=
+OBOS_RPI_BOOT_PARTITION_LABEL=
+OBOS_RPI_ROOT_PARTITION_LABEL=
+OBOS_RPI_REQUIRED_TOOLS=
 OBOS_KERNEL_REQUIRED_CONFIG=
 OBOS_QCOW2_BASE_IMAGE_URL=
 OBOS_QCOW2_MIN_SIZE=
@@ -41,12 +48,19 @@ kind=${OBOS_IMAGE_KIND}
 debian_release=${OBOS_DEBIAN_RELEASE}
 boot_target=${OBOS_BOOT_TARGET}
 output_format=${OBOS_OUTPUT_FORMAT}
+output_compression=${OBOS_OUTPUT_COMPRESSION:-n/a}
+image_extension=${OBOS_IMAGE_EXTENSION:-n/a}
+image_min_size=${OBOS_IMAGE_MIN_SIZE:-n/a}
 base_packages=${OBOS_BASE_PACKAGES}
 provision_script=${OBOS_PROVISION_SCRIPT}
 first_boot_service=${OBOS_FIRST_BOOT_SERVICE}
 rpi_network_installer_compatible=${OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE:-false}
 rpi_boot_media=${OBOS_RPI_BOOT_MEDIA:-n/a}
 rpi_firmware_mode=${OBOS_RPI_FIRMWARE_MODE:-n/a}
+rpi_partition_layout=${OBOS_RPI_PARTITION_LAYOUT:-n/a}
+rpi_boot_partition_label=${OBOS_RPI_BOOT_PARTITION_LABEL:-n/a}
+rpi_root_partition_label=${OBOS_RPI_ROOT_PARTITION_LABEL:-n/a}
+rpi_required_tools=${OBOS_RPI_REQUIRED_TOOLS:-n/a}
 kernel_required_config=${OBOS_KERNEL_REQUIRED_CONFIG:-n/a}
 qcow2_base_image_url=${OBOS_QCOW2_BASE_IMAGE_URL:-n/a}
 qcow2_min_size=${OBOS_QCOW2_MIN_SIZE:-n/a}
@@ -80,7 +94,13 @@ if [ "${OBOS_IMAGE_KIND}" = "rpi-image" ]; then
   cat <<EOF
 rpi_contract:
   - image must be Raspberry Pi Network Installer compatible
+  - image artifact must use extension: ${OBOS_IMAGE_EXTENSION}
+  - image must be at least: ${OBOS_IMAGE_MIN_SIZE}
   - image must boot from all declared media: ${OBOS_RPI_BOOT_MEDIA}
+  - image must use partition layout: ${OBOS_RPI_PARTITION_LAYOUT}
+  - boot partition label: ${OBOS_RPI_BOOT_PARTITION_LABEL}
+  - root partition label: ${OBOS_RPI_ROOT_PARTITION_LABEL}
+  - build host must provide tools: ${OBOS_RPI_REQUIRED_TOOLS}
   - kernel config must include: ${OBOS_KERNEL_REQUIRED_CONFIG}
 EOF
 fi
