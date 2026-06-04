@@ -39,14 +39,14 @@ else
   fail "image profile missing: ${PROFILE_FILE}"
 fi
 
-if [ -x scripts/images/validate-image-profiles.sh ]; then
+if [ -f scripts/images/validate-image-profiles.sh ]; then
   if sh scripts/images/validate-image-profiles.sh "${PROFILE_FILE}" >/dev/null 2>&1; then
     pass "image profile validates"
   else
     fail "image profile validation failed"
   fi
 else
-  fail "image profile validator missing or not executable"
+  fail "image profile validator missing"
 fi
 
 check_command qemu-img
