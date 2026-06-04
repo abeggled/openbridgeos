@@ -27,6 +27,15 @@ grep -Fq 'OBS_JWT_SECRET=$(secret)' scripts/bootstrap/first-boot.sh \
 grep -Fq 'OBS_MQTT_PASSWORD=$(secret)' scripts/bootstrap/first-boot.sh \
   || fail "MQTT password is not generated on first boot"
 
+grep -q 'TLS_GENERATE_SCRIPT=' scripts/bootstrap/first-boot.sh \
+  || fail "TLS material is not generated on first boot"
+
+grep -q 'nginx-light' scripts/bootstrap/provision-debian.sh \
+  || fail "nginx reverse proxy package is not installed during provisioning"
+
+grep -q 'systemctl enable nginx.service' scripts/bootstrap/provision-debian.sh \
+  || fail "nginx service is not enabled during provisioning"
+
 grep -q '"no-new-privileges": true' packaging/docker/daemon.json \
   || fail "Docker no-new-privileges default is not enabled"
 
