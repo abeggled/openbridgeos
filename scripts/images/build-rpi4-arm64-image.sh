@@ -47,6 +47,24 @@ repo_revision() {
   fi
 }
 
+repo_dirty() {
+  if command -v git >/dev/null 2>&1 && git -C "${REPO_ROOT}" rev-parse HEAD >/dev/null 2>&1; then
+    status="$(git -C "${REPO_ROOT}" status --porcelain)"
+    if [ -n "${status}" ]; then
+      echo true
+    else
+      echo false
+    fi
+  else
+    echo unknown
+  fi
+}
+
+require_clean_release_repo() {
+  dirty="$(repo_dirty)"
+  [ "${dirty}" = "false" ] || fail "release builds require a clean git tree, got repo_dirty=${dirty}"
+}
+
 cleanup() {
   if [ -n "${BOOT_MOUNT}" ] && mountpoint -q "${BOOT_MOUNT}"; then
     umount "${BOOT_MOUNT}" || true
@@ -135,6 +153,7 @@ kernel_config_verified=true
 provision_script=${OBOS_PROVISION_SCRIPT}
 first_boot_service=${OBOS_FIRST_BOOT_SERVICE}
 repo_revision=${revision}
+repo_dirty=$(repo_dirty)
 ssh_default=${OBOS_IMAGE_DEFAULT_SSH}
 first_boot_pending=true
 contains_secrets=false
@@ -187,6 +206,10 @@ OBOS_IMAGE_DEFAULT_SSH=
 [ "${OBOS_OUTPUT_COMPRESSION}" = "xz" ] || fail "profile compression must be xz"
 [ "${OBOS_IMAGE_EXTENSION}" = "img.xz" ] || fail "profile extension must be img.xz"
 [ "${OBOS_IMAGE_DEFAULT_SSH}" = "disabled" ] || fail "profile SSH default policy must be disabled"
+
+if [ "${RELEASE_BUILD}" = "1" ]; then
+  require_clean_release_repo
+fi
 
 require_command basename
 require_command chroot

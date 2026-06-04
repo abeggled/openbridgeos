@@ -119,6 +119,14 @@ case "${release_build}" in
   *) fail "release_build must be 0 or 1, got ${release_build}" ;;
 esac
 
+repo_dirty="$(manifest_value repo_dirty "${MANIFEST_FILE}")"
+case "${repo_dirty}" in
+  true|false|unknown) ;;
+  *) fail "repo_dirty must be true, false, or unknown, got ${repo_dirty}" ;;
+esac
+[ "${release_build}" != "1" ] || [ "${repo_dirty}" = "false" ] \
+  || fail "release builds must record repo_dirty=false"
+
 boot_media="$(manifest_value boot_media "${MANIFEST_FILE}")"
 contains_csv_value "${boot_media}" sd || fail "boot_media must include sd"
 contains_csv_value "${boot_media}" usb || fail "boot_media must include usb"

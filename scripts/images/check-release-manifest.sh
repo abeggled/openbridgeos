@@ -90,6 +90,7 @@ check_image_manifest() {
   expect_value image "${expected_image}" "${manifest_file}"
   expect_value checksum_file "${expected_checksum_file}" "${manifest_file}"
   expect_value image_sha256 "${expected_image_sha256}" "${manifest_file}"
+  expect_value repo_dirty false "${manifest_file}"
 
   checksum_file="$(manifest_value checksum_file "${manifest_file}")"
   check_checksum_file "${checksum_file}" "${expected_image_sha256}"
