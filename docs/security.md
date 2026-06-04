@@ -201,6 +201,12 @@ inspection verifies the restore stage manifest, staged-only mode, expected app
 name, required restore inputs, and confirms that excluded Mosquitto logs were
 not staged.
 
+Restore apply planning should remain non-destructive until explicit apply
+support is implemented. The apply plan must require a passing stage inspection,
+a fresh pre-restore backup, an explicit future confirmation flag, service
+stop/restart ordering, permission normalization, post-restore health checks, and
+a security baseline audit.
+
 Backups should not include:
 
 - transient container layers

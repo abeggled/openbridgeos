@@ -39,6 +39,8 @@ Commands:
   restore-stage     Extract a backup into private restore staging
   restore-stage-inspect
                     Inspect a private restore staging directory
+  restore-apply-plan
+                    Print the non-destructive apply plan for a staged restore
   health            Check open bridge server localhost health endpoint
   proxy-health      Check HTTPS reverse proxy health with local CA trust
   tls-generate      Generate local CA and leaf certificate material
@@ -442,6 +444,51 @@ restore_stage_inspect() {
   return "${failed}"
 }
 
+restore_apply_plan() {
+  stage_dir="${1:-}"
+  [ -n "${stage_dir}" ] || {
+    echo "usage: obosctl restore-apply-plan <stage-dir>" >&2
+    return 2
+  }
+
+  if ! restore_stage_inspect "${stage_dir}" >/dev/null; then
+    echo "restore apply plan: blocked; restore stage inspection failed" >&2
+    return 1
+  fi
+
+  echo "restore apply plan: ${stage_dir}"
+  echo
+  echo "mode=non-destructive"
+  echo "format=obos-restore-apply-plan-v1"
+  echo "app=${APP_NAME}"
+  echo "service=${SERVICE_NAME}"
+  echo "stage_dir=${stage_dir}"
+  echo "app_dir=${APP_DIR}"
+  echo "env_file=${ENV_FILE}"
+  echo "appliance_id_file=${APPLIANCE_ID_FILE}"
+  echo "tls_dir=${TLS_DIR}"
+  echo
+  echo "required_gates:"
+  echo "  - restore-stage-inspect must pass for ${stage_dir}"
+  echo "  - create a fresh pre-restore backup with: sudo obosctl backup"
+  echo "  - require an explicit future apply confirmation flag"
+  echo "  - stop ${SERVICE_NAME} before replacing live files"
+  echo "  - normalize restored file permissions before restart"
+  echo "  - verify localhost and HTTPS proxy health after restart"
+  echo "  - run the security baseline audit after restart"
+  echo
+  echo "future_apply_steps:"
+  echo "  1. copy staged app environment to ${ENV_FILE}"
+  echo "  2. copy staged appliance identifier to ${APPLIANCE_ID_FILE}"
+  echo "  3. replace ${APP_DIR}/data with staged open bridge server data"
+  echo "  4. replace ${APP_DIR}/mqtt with staged Mosquitto data"
+  echo "  5. copy staged Compose metadata into ${APP_DIR}"
+  echo "  6. restore staged TLS identity material to ${TLS_DIR} when present"
+  echo "  7. start ${SERVICE_NAME}"
+  echo
+  echo "restore apply plan: PASS"
+}
+
 write_update_state() {
   backup_path="$1"
   state_dir="$(dirname -- "${LAST_UPDATE_FILE}")"
@@ -529,6 +576,11 @@ case "${1:-}" in
     require_root restore-stage-inspect
     shift
     restore_stage_inspect "${1:-}"
+    ;;
+  restore-apply-plan)
+    require_root restore-apply-plan
+    shift
+    restore_apply_plan "${1:-}"
     ;;
   health)
     health

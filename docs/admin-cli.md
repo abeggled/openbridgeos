@@ -14,6 +14,7 @@ obosctl restore-inspect <backup.tar.gz>
 obosctl restore-plan <backup.tar.gz>
 sudo obosctl restore-stage <backup.tar.gz>
 sudo obosctl restore-stage-inspect <stage-dir>
+sudo obosctl restore-apply-plan <stage-dir>
 sudo obosctl start
 sudo obosctl stop
 sudo obosctl restart
@@ -162,6 +163,18 @@ future apply step is allowed to use it. It checks the stage manifest format,
 staged-only mode, expected app name, required restore inputs, and confirms that
 Mosquitto logs were not staged. The command does not stop services and does not
 replace live appliance files.
+
+## Restore Apply Plan
+
+```sh
+sudo obosctl restore-apply-plan /srv/obos/state/restore-staging/restore.XXXXXXXX
+```
+
+`restore-apply-plan` first requires restore stage inspection to pass. It then
+prints the future live target paths, required pre-restore backup gate, explicit
+confirmation requirement, service stop/restart order, permission normalization,
+health checks, and security baseline audit step. It is still non-destructive and
+does not replace live appliance files.
 
 ## MQTT LAN Access
 
