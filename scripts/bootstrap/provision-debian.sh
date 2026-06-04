@@ -56,6 +56,7 @@ ln -sf /etc/nginx/sites-available/obos-openbridgeserver.conf /etc/nginx/sites-en
 systemctl daemon-reload
 systemctl restart docker.service
 systemctl enable docker.service
+systemctl enable nginx.service
 systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
 
