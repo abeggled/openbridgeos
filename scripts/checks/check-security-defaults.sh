@@ -10,6 +10,9 @@ fail() {
   apps scripts packaging docs README.md SECURITY.md >/dev/null 2>&1 \
   || fail "default placeholder secret found"
 
+grep -q 'OBS_HTTP_HOST_PORT=127.0.0.1:8080' scripts/bootstrap/first-boot.sh \
+  || fail "Open Bridge Server HTTP is not localhost-only by default"
+
 grep -q 'OBS_MQTT_HOST_PORT=127.0.0.1:1883' scripts/bootstrap/first-boot.sh \
   || fail "MQTT plain listener is not localhost by default"
 
@@ -33,8 +36,11 @@ grep -q '"log-driver": "local"' packaging/docker/daemon.json \
 grep -q 'policy drop' packaging/nftables/obos.nft \
   || fail "nftables input policy is not default-drop"
 
-grep -q 'tcp dport 8080 accept' packaging/nftables/obos.nft \
-  || fail "Open Bridge Server HTTP port is not allowed"
+grep -q 'tcp dport 443 accept' packaging/nftables/obos.nft \
+  || fail "HTTPS reverse proxy port is not allowed"
+
+! grep -q 'tcp dport 8080 accept' packaging/nftables/obos.nft \
+  || fail "Direct Open Bridge Server HTTP is open in the default firewall"
 
 grep -q 'udp sport 67 udp dport 68 accept' packaging/nftables/obos.nft \
   || fail "DHCPv4 client renewals are not allowed"
@@ -48,6 +54,12 @@ grep -q 'udp sport 547 udp dport 546 accept' packaging/nftables/obos.nft \
 # shellcheck disable=SC2016
 grep -Fq 'DISABLE_SSH="${OBOS_DISABLE_SSH:-1}"' scripts/hardening/apply-host-hardening.sh \
   || fail "SSH disablement is not the default hardening behavior"
+
+grep -q 'ssl_certificate /etc/obos/tls/obos.local.crt;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not use obos TLS certificate"
+
+grep -q 'proxy_pass http://127.0.0.1:8080;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not target localhost OBS"
 
 grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-material.sh \
   || fail "local CA is not generated with critical CA constraints"
