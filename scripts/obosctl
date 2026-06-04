@@ -9,6 +9,9 @@ TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 SERVICE_NAME="obos-openbridgeserver.service"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
+PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
+PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
+TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
 TLS_INFO_SCRIPT="${OBOS_TLS_INFO_SCRIPT:-/usr/lib/obos/print-trust-info.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
@@ -26,7 +29,8 @@ Commands:
   update            Pull container images, restart, and verify health
   logs              Follow Open Bridge Server stack logs
   backup            Create a timestamped appliance backup
-  health            Check Open Bridge Server health endpoint
+  health            Check Open Bridge Server localhost health endpoint
+  proxy-health      Check HTTPS reverse proxy health with local CA trust
   tls-generate      Generate local CA and leaf certificate material
   tls-info          Print TLS trust fingerprints and paths
   tls-export        Export public TLS trust bundle
@@ -77,17 +81,41 @@ health() {
   fi
 }
 
+proxy_health() {
+  [ -f "${TLS_CA_CERT}" ] || {
+    echo "missing local CA certificate: ${TLS_CA_CERT}" >&2
+    return 1
+  }
+  command -v curl >/dev/null 2>&1 || {
+    echo "curl is required for verified HTTPS proxy health checks" >&2
+    return 1
+  }
+
+  curl --fail --silent --show-error --max-time 5 \
+    --cacert "${TLS_CA_CERT}" \
+    --resolve "${PROXY_HEALTH_HOST}:443:127.0.0.1" \
+    "${PROXY_HEALTH_URL}" >/dev/null
+}
+
 status() {
   systemctl --no-pager --lines=0 status "${SERVICE_NAME}" || true
   echo
   compose ps || true
   echo
+  failed=0
   if health; then
-    echo "health: ok"
+    echo "health-local: ok"
   else
-    echo "health: failed"
-    return 1
+    echo "health-local: failed"
+    failed=1
   fi
+  if proxy_health; then
+    echo "health-https-proxy: ok"
+  else
+    echo "health-https-proxy: failed"
+    failed=1
+  fi
+  return "${failed}"
 }
 
 write_backup_manifest() {
@@ -169,15 +197,15 @@ update_app() {
 
   tries=30
   while [ "${tries}" -gt 0 ]; do
-    if health; then
-      echo "update: health check passed"
+    if health && proxy_health; then
+      echo "update: health checks passed"
       return 0
     fi
     tries=$((tries - 1))
     sleep 2
   done
 
-  echo "update: health check failed after restart" >&2
+  echo "update: health checks failed after restart" >&2
   return 1
 }
 
@@ -208,6 +236,9 @@ case "${1:-}" in
     ;;
   health)
     health
+    ;;
+  proxy-health)
+    proxy_health
     ;;
   tls-generate)
     require_root tls-generate
