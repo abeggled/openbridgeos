@@ -18,16 +18,58 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "missing required command: $1"
 }
 
+repo_revision() {
+  if command -v git >/dev/null 2>&1 && git -C "${REPO_ROOT}" rev-parse HEAD >/dev/null 2>&1; then
+    git -C "${REPO_ROOT}" rev-parse HEAD
+  else
+    echo unknown
+  fi
+}
+
+write_manifest() {
+  manifest_file="$1"
+  image_file="$2"
+  checksum_file="$3"
+  base_image_file="$4"
+  created_at="$5"
+
+  image_sha256="$(cut -d ' ' -f 1 < "${checksum_file}")"
+  base_sha256="$(sha256sum "${base_image_file}" | cut -d ' ' -f 1)"
+  revision="$(repo_revision)"
+
+  cat > "${manifest_file}" <<EOF
+format=obos-qcow2-build-v1
+created_at=${created_at}
+profile=${OBOS_IMAGE_PROFILE}
+architecture=${OBOS_IMAGE_ARCH}
+debian_release=${OBOS_DEBIAN_RELEASE}
+output_format=${OBOS_OUTPUT_FORMAT}
+image=${image_file}
+image_sha256=${image_sha256}
+base_image=${base_image_file}
+base_image_url=${OBOS_QCOW2_BASE_IMAGE_URL}
+base_image_sha256=${base_sha256}
+provision_script=${OBOS_PROVISION_SCRIPT}
+first_boot_service=${OBOS_FIRST_BOOT_SERVICE}
+repo_revision=${revision}
+ssh_default=${OBOS_IMAGE_DEFAULT_SSH}
+first_boot_pending=true
+contains_secrets=false
+EOF
+}
+
 [ -f "${PROFILE_FILE}" ] || fail "missing image profile: ${PROFILE_FILE}"
 
 OBOS_IMAGE_PROFILE=
 OBOS_IMAGE_ARCH=
+OBOS_DEBIAN_RELEASE=
 OBOS_OUTPUT_FORMAT=
 OBOS_PROVISION_SCRIPT=
 OBOS_FIRST_BOOT_SERVICE=
 OBOS_QCOW2_BASE_IMAGE_URL=
 OBOS_QCOW2_MIN_SIZE=
 OBOS_QCOW2_BUILDER=
+OBOS_IMAGE_DEFAULT_SSH=
 
 # shellcheck disable=SC1090
 . "${PROFILE_FILE}"
@@ -40,6 +82,7 @@ OBOS_QCOW2_BUILDER=
 require_command basename
 require_command cp
 require_command curl
+require_command cut
 require_command date
 require_command mkdir
 require_command qemu-img
@@ -61,6 +104,8 @@ fi
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUTPUT_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-${STAMP}.qcow2"
 LATEST_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-latest.qcow2"
+MANIFEST="${OUTPUT_IMAGE}.manifest"
+LATEST_MANIFEST="${LATEST_IMAGE}.manifest"
 
 cp "${BASE_IMAGE}" "${OUTPUT_IMAGE}"
 qemu-img resize "${OUTPUT_IMAGE}" "${OBOS_QCOW2_MIN_SIZE}"
@@ -80,8 +125,11 @@ virt-sysprep -a "${OUTPUT_IMAGE}" \
 
 qemu-img info "${OUTPUT_IMAGE}"
 sha256sum "${OUTPUT_IMAGE}" > "${OUTPUT_IMAGE}.sha256"
+write_manifest "${MANIFEST}" "${OUTPUT_IMAGE}" "${OUTPUT_IMAGE}.sha256" "${BASE_IMAGE}" "${STAMP}"
 cp "${OUTPUT_IMAGE}" "${LATEST_IMAGE}"
 cp "${OUTPUT_IMAGE}.sha256" "${LATEST_IMAGE}.sha256"
+cp "${MANIFEST}" "${LATEST_MANIFEST}"
 
 printf 'image: %s\n' "${OUTPUT_IMAGE}"
 printf 'checksum: %s\n' "${OUTPUT_IMAGE}.sha256"
+printf 'manifest: %s\n' "${MANIFEST}"
