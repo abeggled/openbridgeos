@@ -12,6 +12,8 @@ fail() {
 
 grep -q 'format=obos-agent-response-v1' "${AGENT}" \
   || fail "agent response format missing"
+grep -q 'format=obos-agent-actions-v1' "${AGENT}" \
+  || fail "agent actions format missing"
 grep -q 'require_no_extra_args' "${AGENT}" \
   || fail "agent does not reject extra arguments"
 # shellcheck disable=SC2016
@@ -19,6 +21,8 @@ grep -q 'timeout "${TIMEOUT_SECONDS}"' "${AGENT}" \
   || fail "agent does not enforce command timeout"
 grep -q 'status-summary)' "${AGENT}" \
   || fail "status-summary action missing"
+grep -q 'action=status-summary|mutating=false' "${AGENT}" \
+  || fail "status-summary action is not listed as read-only"
 grep -q 'update-summary)' "${AGENT}" \
   || fail "update-summary action missing"
 grep -q 'backup-list)' "${AGENT}" \
@@ -58,6 +62,10 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary |
   grep -q 'stdout=format=obos-status-summary-v1' \
   || fail "agent smoke test did not wrap command stdout"
+
+sh "${AGENT}" actions |
+  grep -q 'format=obos-agent-actions-v1' \
+  || fail "agent actions did not print action format"
 
 if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary unexpected >/dev/null 2>&1; then
   fail "agent accepted unexpected extra argument"

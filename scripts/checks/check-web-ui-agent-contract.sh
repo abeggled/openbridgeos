@@ -28,6 +28,8 @@ require_contract_line 'obosctl tls-summary'
 require_contract_line 'obos-tls-summary-v1'
 require_contract_line 'sudo obosctl security-summary'
 require_contract_line 'obos-security-baseline-summary-v1'
+require_contract_line 'obos-agent actions'
+require_contract_line 'obos-agent-actions-v1'
 
 grep -q 'status-summary)' scripts/obosctl \
   || fail "obosctl status-summary command missing"
