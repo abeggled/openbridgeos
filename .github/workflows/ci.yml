@@ -76,5 +76,8 @@ jobs:
       - name: Raspberry Pi image manifest fixture
         run: sh scripts/checks/check-rpi-image-manifest.sh
 
+      - name: Release manifest fixture
+        run: sh scripts/checks/check-release-manifest.sh
+
       - name: Compose config
         run: sh scripts/checks/validate-compose.sh
