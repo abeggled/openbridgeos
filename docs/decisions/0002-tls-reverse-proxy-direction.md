@@ -2,14 +2,15 @@
 
 ## Status
 
-Accepted as release direction. Not yet implemented for the first development
-image.
+Accepted. Initial nginx-based implementation exists for the development image.
+Certificate replacement, HTTP redirect behavior, and web onboarding UI are still
+open.
 
 ## Context
 
-The first Open Bridge OS development path exposes Open Bridge Server directly on
-TCP `8080` inside a default-drop firewall. This is acceptable for early local VM
-validation, but plain HTTP must not become the long-term appliance default.
+The first Open Bridge OS development path exposed Open Bridge Server directly on
+TCP `8080` inside a default-drop firewall. That was useful for early local VM
+validation, but plain HTTP must not become the appliance default.
 
 Open Bridge OS needs a TLS story that works for:
 
@@ -25,37 +26,38 @@ problem for browsers and users.
 
 ## Decision
 
-Before a public release, Open Bridge OS should place Open Bridge Server behind a
-local reverse proxy that terminates TLS.
+Open Bridge OS places Open Bridge Server behind a local reverse proxy that
+terminates TLS.
 
-The initial release direction is:
+The initial implementation uses nginx because it is packaged in Debian, boring,
+well understood, and enough for the first appliance baseline.
+
+Default direction:
 
 - bind Open Bridge Server to localhost only
 - expose HTTPS on TCP `443`
-- redirect or close plain HTTP on TCP `80`
-- use the per-device local CA trust model from
-  [0004: Use a Per-Device Local CA for TLS Trust Onboarding](0004-local-ca-trust-onboarding.md)
+- keep plain HTTP on TCP `80` closed for now
+- use the per-appliance-instance local CA trust model from
+  [0004: Use a Per-Appliance-Instance Local CA for TLS Trust Onboarding](0004-local-ca-trust-onboarding.md)
 - show certificate trust material during onboarding
 - document how administrators can replace the certificate with their own
 - keep MQTT external exposure disabled by default, with explicit opt-in support
 
-The reverse proxy implementation should be decided after the first Debian VM
-baseline has passed. Caddy, nginx, and a small purpose-built proxy are candidate
-paths.
-
 ## Consequences
 
-- The current TCP `8080` exposure is explicitly a development baseline, not a
-  release posture.
-- The firewall must eventually allow TCP `443` instead of direct TCP `8080`.
-- The security baseline audit must grow TLS checks before public images.
-- First boot needs certificate material generation and secure storage.
+- Direct TCP `8080` exposure is no longer the default posture.
+- The firewall allows TCP `443` instead of direct TCP `8080`.
+- First boot generates certificate material and public trust export material.
+- The security baseline audit verifies nginx, TLS material, HTTPS reachability,
+  and closed external TCP `8080`.
 - The obos UI and Open Bridge Server can later share one TLS entrypoint.
 - MQTT remains a separate opt-in exposure decision.
 
 ## Open Questions
 
-- Should the first public image expose TCP `80` only for redirect/onboarding,
-  or keep it closed entirely?
+- Should a later image expose TCP `80` only for redirect/onboarding, or keep it
+  closed entirely?
 - Should certificate replacement be an `obosctl` command, a web UI workflow, or
   both?
+- Should nginx remain the long-term proxy, or should obos eventually own this in
+  the agent/web service?
