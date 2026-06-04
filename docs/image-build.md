@@ -31,14 +31,16 @@ packaging/images/profiles/
 Current profiles:
 
 ```text
-amd64-vm.env      Debian Trixie amd64 VM image profile, planned qcow2 output
+amd64-vm.env      Debian Trixie amd64 VM image profile, qcow2 output
 rpi4-arm64.env    Debian Trixie arm64 Raspberry Pi 4+ image profile, planned raw output
 ```
 
-Profiles are shell-style key-value files that describe the build target without
-starting a build. Required keys include architecture, image kind, Debian release,
-boot target, output format, base packages, shared provision script, and first
-boot service.
+Profiles are shell-style key-value files that describe the build target. Required
+keys include architecture, image kind, Debian release, boot target, output
+format, base packages, shared provision script, and first boot service.
+
+The `amd64-vm` profile also declares the Debian genericcloud qcow2 base image,
+minimum output size, required builder tooling, and the default SSH policy.
 
 Raspberry Pi profiles also declare:
 
@@ -84,29 +86,58 @@ Raspberry Pi image builders must additionally:
 3. Verify the kernel config contract before publishing artifacts.
 4. Keep `CONFIG_BLK_DEV_NVME=y` enabled for every release image.
 
-The first implementation should turn the `amd64-vm` profile into a bootable
-qcow2 image. The Raspberry Pi image builder should follow once firmware, boot
-partition handling, and kernel config verification are explicit and repeatable.
+## amd64 qcow2 Builder
+
+The first qcow2 builder customizes the Debian 13 genericcloud amd64 image using
+`virt-customize`. It is intended for local development and VM smoke tests before
+release automation is added.
+
+Install builder dependencies on a Debian build host:
+
+```sh
+sudo apt-get install --no-install-recommends qemu-utils libguestfs-tools curl ca-certificates
+```
+
+Build the image:
+
+```sh
+sudo scripts/images/build-amd64-qcow2.sh
+```
+
+By default the script:
+
+1. downloads the Debian Trixie genericcloud amd64 qcow2 base image if no local base is provided
+2. copies it to `dist/images/obos-amd64-vm-<timestamp>.qcow2`
+3. resizes it to the profile minimum size
+4. copies the repository into `/opt/openbridgeos` inside the image
+5. runs `scripts/bootstrap/provision-debian.sh` inside the image with SSH disabled
+6. keeps first boot pending for the target appliance instance
+7. cleans machine identity and logs with `virt-sysprep`
+8. writes a `.sha256` checksum next to the image
+
+Use a pre-downloaded base image when needed:
+
+```sh
+sudo OBOS_QCOW2_BASE_IMAGE=/srv/images/debian-13-genericcloud-amd64.qcow2 \
+  scripts/images/build-amd64-qcow2.sh
+```
+
+Local build outputs are ignored by git via `build/`, `dist/`, and `*.qcow2`.
 
 ## First Implementation Direction
 
-Start with a Debian 13 `amd64` qcow2 development image. Once that boots and
-starts Open Bridge Server reliably, add the Raspberry Pi image path using the
-Network Installer compatible `rpi4-arm64` profile.
+Validate the `amd64-vm` qcow2 image in a VM first. The smoke test should confirm
+that first boot generates appliance identity, TLS material, app secrets, and that
+`obosctl status` passes through localhost and verified HTTPS proxy health.
 
-The build system should call:
-
-```sh
-scripts/bootstrap/provision-debian.sh /path/to/openbridgeos
-```
-
-inside the target filesystem or VM during image creation.
+After the amd64 VM path is repeatable, add the Raspberry Pi image builder using
+the Network Installer compatible `rpi4-arm64` profile.
 
 ## Open Questions
 
-- Use Packer, Debian live-build, or debos for the first image builder?
+- Should the qcow2 builder move from local script to GitHub Actions once artifact size and runner privileges are understood?
 - Should Raspberry Pi images use pure Debian or Raspberry Pi OS Lite 64-bit as
   the base while keeping the userland aligned with Debian 13?
-- Should the default image enable SSH for development builds only?
+- Should development builds have an explicit opt-in SSH profile separate from release images?
 - How should users recover if first boot cannot reach the network to pull the
   Open Bridge Server image?

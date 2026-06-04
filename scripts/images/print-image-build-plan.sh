@@ -24,6 +24,11 @@ OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=
 OBOS_RPI_BOOT_MEDIA=
 OBOS_RPI_FIRMWARE_MODE=
 OBOS_KERNEL_REQUIRED_CONFIG=
+OBOS_QCOW2_BASE_IMAGE_URL=
+OBOS_QCOW2_MIN_SIZE=
+OBOS_QCOW2_BUILDER=
+OBOS_QCOW2_REQUIRED_TOOLS=
+OBOS_IMAGE_DEFAULT_SSH=
 OBOS_NOTES=
 
 # shellcheck disable=SC1090
@@ -43,6 +48,11 @@ rpi_network_installer_compatible=${OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE:-false}
 rpi_boot_media=${OBOS_RPI_BOOT_MEDIA:-n/a}
 rpi_firmware_mode=${OBOS_RPI_FIRMWARE_MODE:-n/a}
 kernel_required_config=${OBOS_KERNEL_REQUIRED_CONFIG:-n/a}
+qcow2_base_image_url=${OBOS_QCOW2_BASE_IMAGE_URL:-n/a}
+qcow2_min_size=${OBOS_QCOW2_MIN_SIZE:-n/a}
+qcow2_builder=${OBOS_QCOW2_BUILDER:-n/a}
+qcow2_required_tools=${OBOS_QCOW2_REQUIRED_TOOLS:-n/a}
+default_ssh=${OBOS_IMAGE_DEFAULT_SSH:-n/a}
 notes=${OBOS_NOTES}
 
 build_contract:
@@ -54,6 +64,17 @@ build_contract:
   - enable ${OBOS_FIRST_BOOT_SERVICE} for target appliance initialization
   - emit ${OBOS_OUTPUT_FORMAT} artifact plus checksum
 EOF
+
+if [ "${OBOS_OUTPUT_FORMAT}" = "qcow2" ]; then
+  cat <<EOF
+qcow2_contract:
+  - start from base image: ${OBOS_QCOW2_BASE_IMAGE_URL}
+  - customize with: ${OBOS_QCOW2_BUILDER}
+  - require tools: ${OBOS_QCOW2_REQUIRED_TOOLS}
+  - resize image to at least: ${OBOS_QCOW2_MIN_SIZE}
+  - keep SSH default: ${OBOS_IMAGE_DEFAULT_SSH}
+EOF
+fi
 
 if [ "${OBOS_IMAGE_KIND}" = "rpi-image" ]; then
   cat <<EOF
