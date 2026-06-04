@@ -229,6 +229,7 @@ latest_backup="$(sudo ls -1t /srv/obos/backups/obos-openbridgeserver-*.tar.gz | 
 sudo tar -tzf "${latest_backup}" | grep '^obos-backup-manifest.txt$'
 sudo tar -xOzf "${latest_backup}" obos-backup-manifest.txt | grep '^format=obos-backup-v1$'
 sudo tar -xOzf "${latest_backup}" obos-backup-manifest.txt | grep '^contains_secrets=true$'
+sudo tar -xOzf "${latest_backup}" obos-backup-manifest.txt | grep '^includes_logs=false$'
 sudo tar -tzf "${latest_backup}" | grep '^appliance-id$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos-local-ca.key$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos.local.key$'
@@ -242,6 +243,7 @@ Expected:
 - backup file mode is not group/world readable
 - backup includes manifest metadata
 - backup manifest marks the archive as secret-bearing
+- backup manifest records that logs are excluded
 - backup includes appliance identifier
 - backup includes TLS private key material for appliance identity restore
 - backup does not include Mosquitto logs by default

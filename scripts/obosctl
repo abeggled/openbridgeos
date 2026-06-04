@@ -154,6 +154,7 @@ appliance_id=${appliance_id}
 includes_app_env=true
 includes_app_data=true
 includes_mqtt_data=true
+includes_logs=false
 includes_appliance_id=true
 includes_tls_material=${tls_included}
 contains_secrets=true
