@@ -48,3 +48,12 @@ grep -q 'udp sport 547 udp dport 546 accept' packaging/nftables/obos.nft \
 # shellcheck disable=SC2016
 grep -Fq 'DISABLE_SSH="${OBOS_DISABLE_SSH:-1}"' scripts/hardening/apply-host-hardening.sh \
   || fail "SSH disablement is not the default hardening behavior"
+
+grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-material.sh \
+  || fail "local CA is not generated with critical CA constraints"
+
+grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
+  || fail "TLS trust export does not state that private keys are excluded"
+
+grep -q 'tls-export)' scripts/obosctl \
+  || fail "obosctl does not expose TLS trust export"
