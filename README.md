@@ -32,6 +32,7 @@ Version 0.1 is planned as:
 
 - Debian 13 Trixie minimal base system
 - Docker Engine with Compose v2 from Debian packages
+- nginx TLS reverse proxy on TCP `443`
 - nftables default-drop host firewall
 - sysctl hardening baseline
 - SSH disabled by default when present
@@ -82,6 +83,9 @@ sudo obosctl tls-info
 sudo obosctl tls-export
 ```
 
+Open Bridge Server is exposed through the local TLS reverse proxy on TCP `443`.
+The direct OBS HTTP port binds to `127.0.0.1:8080` only.
+
 See [docs/tls-trust.md](docs/tls-trust.md).
 
 ## Administration
@@ -113,6 +117,7 @@ docs/
   tls-trust.md             Local CA trust material notes
   roadmap.md               MVP phases
 packaging/
+  nginx/                   TLS reverse proxy config
   nftables/                Host firewall rules
   sysctl/                  Host kernel/network hardening
   systemd/                 Host services and timers
