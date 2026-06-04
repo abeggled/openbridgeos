@@ -50,6 +50,12 @@ grep -q 'RESTORE_STAGE_DIR=' scripts/obosctl \
 grep -q 'mode=staged-only' scripts/obosctl \
   || fail "restore staging does not declare staged-only mode"
 
+grep -q 'format=obos-restore-stage-v1' scripts/obosctl \
+  || fail "restore staging does not write a stage manifest"
+
+grep -q 'chmod 0600 "${stage_manifest}"' scripts/obosctl \
+  || fail "restore stage manifest permissions are not restrictive"
+
 grep -q 'restore inspect: PASS' scripts/obosctl \
   || fail "restore inspection does not report success"
 

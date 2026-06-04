@@ -239,6 +239,9 @@ sudo tar -tzf "${latest_backup}" | grep '^mqtt/log' && false || true
 obosctl restore-inspect "${latest_backup}"
 obosctl restore-plan "${latest_backup}"
 sudo obosctl restore-stage "${latest_backup}"
+latest_stage="$(sudo ls -1dt /srv/obos/state/restore-staging/restore.* | head -n 1)"
+sudo test -f "${latest_stage}/obos-restore-stage.txt"
+sudo grep '^format=obos-restore-stage-v1$' "${latest_stage}/obos-restore-stage.txt"
 ```
 
 Expected:
@@ -254,6 +257,7 @@ Expected:
 - restore inspection passes without extracting files
 - restore plan prints target paths and identity impact without extracting files
 - restore staging extracts into a private staging directory without replacing live files
+- restore staging writes a stage manifest
 - backup is treated as sensitive because it contains secrets and TLS private keys
 
 ## Exit Criteria
