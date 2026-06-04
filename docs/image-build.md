@@ -215,6 +215,24 @@ Check the current Raspberry Pi build contract with:
 sh scripts/images/print-image-build-plan.sh packaging/images/profiles/rpi4-arm64.env
 ```
 
+Install build host dependencies on Debian:
+
+```sh
+sudo apt-get install --no-install-recommends \
+  debootstrap qemu-user-static dosfstools e2fsprogs fdisk xz-utils mount util-linux
+```
+
+Check the build host before starting an image build:
+
+```sh
+sh scripts/images/check-rpi4-arm64-build-host.sh
+```
+
+The preflight validates the `rpi4-arm64` profile, required build tools, root
+status, `qemu-aarch64` binfmt registration, and loop-device availability. Missing
+root, binfmt, or loop support is reported as a warning so the script can still be
+used for early diagnostics on non-build hosts.
+
 The builder host must provide the profile tools: `debootstrap`,
 `qemu-aarch64-static`, `sfdisk`, `mkfs.vfat`, `mkfs.ext4`, `xz`, and
 `sha256sum`.
