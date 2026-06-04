@@ -1,6 +1,6 @@
 # Image Build Plan
 
-Open Bridge OS should ship as ready-to-boot artifacts, not as instructions users
+open bridge operating system should ship as ready-to-boot artifacts, not as instructions users
 must assemble manually.
 
 ## Artifacts
