@@ -179,6 +179,7 @@ backup() {
   if [ -d "${TLS_DIR}" ]; then
     write_backup_manifest "${manifest_file}" "${stamp}" true
     tar -czf "${target}" \
+      --exclude=mqtt/log \
       -C "${manifest_dir}" "${manifest_name}" \
       -C "${env_dir}" "${env_name}" \
       -C "${appliance_id_dir}" "${appliance_id_name}" \
@@ -188,6 +189,7 @@ backup() {
   else
     write_backup_manifest "${manifest_file}" "${stamp}" false
     tar -czf "${target}" \
+      --exclude=mqtt/log \
       -C "${manifest_dir}" "${manifest_name}" \
       -C "${env_dir}" "${env_name}" \
       -C "${appliance_id_dir}" "${appliance_id_name}" \
