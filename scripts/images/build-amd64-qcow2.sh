@@ -9,6 +9,7 @@ REPO_NAME="$(basename -- "${REPO_ROOT}")"
 IMAGE_REPO_DIR="/opt/openbridgeos/${REPO_NAME}"
 BASE_IMAGE="${OBOS_QCOW2_BASE_IMAGE:-}"
 BASE_IMAGE_SHA256="${OBOS_QCOW2_BASE_IMAGE_SHA256:-}"
+RELEASE_BUILD="${OBOS_RELEASE_BUILD:-0}"
 VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
 
 fail() {
@@ -25,6 +26,17 @@ repo_revision() {
     git -C "${REPO_ROOT}" rev-parse HEAD
   else
     echo unknown
+  fi
+}
+
+verify_release_build_inputs() {
+  case "${RELEASE_BUILD}" in
+    0|1) ;;
+    *) fail "OBOS_RELEASE_BUILD must be 0 or 1" ;;
+  esac
+
+  if [ "${RELEASE_BUILD}" = "1" ] && [ -z "${BASE_IMAGE_SHA256}" ]; then
+    fail "release builds require OBOS_QCOW2_BASE_IMAGE_SHA256"
   fi
 }
 
@@ -60,6 +72,7 @@ profile=${OBOS_IMAGE_PROFILE}
 architecture=${OBOS_IMAGE_ARCH}
 debian_release=${OBOS_DEBIAN_RELEASE}
 output_format=${OBOS_OUTPUT_FORMAT}
+release_build=${RELEASE_BUILD}
 image=${image_file}
 image_sha256=${image_sha256}
 base_image=${base_image_file}
@@ -77,6 +90,7 @@ EOF
 [ -f "${PROFILE_FILE}" ] || fail "missing image profile: ${PROFILE_FILE}"
 [ -f "${VALIDATE_IMAGE_PROFILES}" ] || fail "missing image profile validator: ${VALIDATE_IMAGE_PROFILES}"
 sh "${VALIDATE_IMAGE_PROFILES}" "${PROFILE_FILE}" >/dev/null
+verify_release_build_inputs
 
 OBOS_IMAGE_PROFILE=
 OBOS_IMAGE_ARCH=
