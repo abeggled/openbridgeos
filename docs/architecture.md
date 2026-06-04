@@ -121,3 +121,9 @@ Updates should be deliberate and recoverable:
 
 Automatic unattended updates can be considered for security patches, but app
 updates should start as explicit user actions.
+
+## Web UI Agent Contract
+
+The appliance web UI should use a local allowlisted agent around stable
+`obosctl` commands. The current command contract is documented in
+[web-ui-agent-contract.md](web-ui-agent-contract.md).
