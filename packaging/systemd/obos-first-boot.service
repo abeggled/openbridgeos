@@ -8,6 +8,16 @@ Before=docker.service nginx.service
 Type=oneshot
 ExecStart=/usr/lib/obos/first-boot.sh
 RemainAfterExit=yes
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/etc/obos /srv/obos
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target
