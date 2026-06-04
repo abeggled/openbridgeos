@@ -8,7 +8,10 @@ Debian 13 VM after provisioning and reboot.
 Validate that the appliance starts Open Bridge Server while preserving the
 intended host security posture:
 
-- generated per-device secrets
+- generated per-appliance-instance secrets
+- generated per-appliance-instance TLS trust material
+- HTTPS reverse proxy exposure on TCP `443`
+- direct Open Bridge Server HTTP closed externally
 - minimal network exposure
 - nftables default-drop firewall
 - SSH disabled by default
@@ -57,6 +60,7 @@ Any `FAIL` line should be treated as a blocking issue for the baseline.
 
 ```sh
 systemctl is-active docker.service
+systemctl is-active nginx.service
 systemctl is-active nftables.service
 systemctl is-enabled obos-first-boot.service
 systemctl is-enabled obos-openbridgeserver.service
@@ -65,6 +69,7 @@ systemctl is-enabled obos-openbridgeserver.service
 Expected:
 
 - Docker active
+- nginx active
 - nftables active
 - obos first boot enabled
 - Open Bridge Server service enabled
@@ -94,8 +99,8 @@ Expected inbound policy:
 - established/related accepted
 - ICMP and IPv6 ICMP accepted
 - DHCP client renewals accepted
-- TCP `8080` accepted for the development baseline
-- TCP `22`, `1883`, and `9001` not accepted externally by default
+- TCP `443` accepted for the HTTPS reverse proxy
+- TCP `22`, `80`, `8080`, `1883`, and `9001` not accepted externally by default
 
 MQTT may be exposed in a future explicit opt-in mode. That mode must have its
 own audit expectations and must not change the default baseline.
@@ -110,25 +115,30 @@ nmap -Pn -p 22,80,443,1883,9001,8080 <obos-ip>
 
 Expected default baseline:
 
-- `8080/tcp` open
+- `443/tcp` open
 - `22/tcp` closed or filtered
+- `80/tcp` closed or filtered
+- `8080/tcp` closed or filtered
 - `1883/tcp` closed or filtered
 - `9001/tcp` closed or filtered
-- `80/tcp` and `443/tcp` closed until the obos web UI/TLS story exists
 
-### Secrets
+### Secrets And TLS
 
 ```sh
-sudo stat -c '%a %U:%G %n' /etc/obos /etc/obos/apps/openbridgeserver.env
-sudo grep -E '^(OBS_JWT_SECRET|OBS_MQTT_PASSWORD)=' /etc/obos/apps/openbridgeserver.env
+sudo stat -c '%a %U:%G %n' /etc/obos /etc/obos/apps/openbridgeserver.env /etc/obos/tls
+sudo grep -E '^(OBS_JWT_SECRET|OBS_MQTT_PASSWORD|OBS_HTTP_HOST_PORT)=' /etc/obos/apps/openbridgeserver.env
+sudo obosctl tls-info
 ```
 
 Expected:
 
 - `/etc/obos` mode `750`
 - app env file mode `600`
+- `/etc/obos/tls` mode `700`
 - JWT secret present and non-empty
 - MQTT password present and non-empty
+- OBS HTTP bound to `127.0.0.1:8080`
+- local CA and leaf fingerprints visible
 - no default placeholder secrets
 
 ### Docker
@@ -149,13 +159,15 @@ Expected:
 obosctl status
 obosctl health
 curl --fail http://127.0.0.1:8080/api/v1/system/health
+curl --insecure --fail https://127.0.0.1/api/v1/system/health
 ```
 
 Expected:
 
 - obos service status visible
 - health endpoint passes locally
-- Open Bridge Server reachable on LAN port `8080`
+- HTTPS reverse proxy reaches the health endpoint
+- Open Bridge Server is not reachable externally on LAN port `8080`
 
 ### Backup Permissions
 
@@ -176,13 +188,13 @@ The baseline passes when:
 
 - `sudo /usr/lib/obos/security-baseline.sh` exits `0`
 - manual port scan matches the expected default exposure
-- Open Bridge Server health endpoint passes
+- Open Bridge Server health endpoint passes through localhost and HTTPS proxy
 - backup file permissions are restrictive
 
 ## Known Follow-Up Tests
 
-- TLS/certificate baseline once HTTP hardening is designed
 - explicit MQTT LAN exposure opt-in test
+- platform-specific CA import validation
 - full disk encryption feasibility
 - Docker user namespace remapping compatibility
 - update rollback and recovery drill
