@@ -151,11 +151,17 @@ grep -q 'format=obos-agent-actions-v1' scripts/agent/obos-agent.sh \
 grep -q 'action=status-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark read-only actions"
 
+grep -q 'action=start|mutating=true|confirm=start' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark confirmed mutations"
+
 grep -q 'require_no_extra_args' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not reject extra arguments"
 
+grep -q 'require_confirm_args' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not require confirmation for mutations"
+
 # shellcheck disable=SC2016
-grep -q 'timeout "${TIMEOUT_SECONDS}"' scripts/agent/obos-agent.sh \
+grep -q 'timeout "${timeout_seconds}"' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not enforce command timeouts"
 
 grep -q 'proxy-health)' scripts/obosctl \

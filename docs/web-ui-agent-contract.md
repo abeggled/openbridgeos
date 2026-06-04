@@ -10,7 +10,7 @@ directly.
   agent.
 - Read-only views should prefer `*-summary` and `*-list` commands.
 - Mutating actions must stay explicit, auditable, and mapped to existing
-  `obosctl` commands.
+`obosctl` commands.
 - The UI must treat backups, app environment files, TLS private keys, and
   restore staging directories as sensitive.
 - MQTT LAN exposure must remain opt-in and visible whenever it is enabled.
@@ -48,6 +48,20 @@ versions instead of guessing.
 Mutating commands should be shown with clear confirmation prompts in the UI.
 MQTT enablement should show whether the firewall source scope is unrestricted or
 CIDR-limited after the operation.
+
+The local agent exposes these mutations only with explicit confirmation:
+
+```sh
+obos-agent start --confirm start
+obos-agent stop --confirm stop
+obos-agent restart --confirm restart
+obos-agent update --confirm update
+obos-agent backup --confirm backup
+obos-agent tls-generate --confirm tls-generate
+obos-agent tls-export --confirm tls-export
+obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
+obos-agent mqtt-disable-lan --confirm mqtt-disable-lan
+```
 
 ## Restore Workflow
 
@@ -87,4 +101,5 @@ obos-agent security-summary
 The response envelope uses format `obos-agent-response-v1` and includes the
 requested action, exit code, timeout marker, stdout block, and stderr block.
 The action inventory uses format `obos-agent-actions-v1` and marks every current
-action as `mutating=false`.
+action as `mutating=false` or `mutating=true`. Mutating entries include the
+required confirmation token.
