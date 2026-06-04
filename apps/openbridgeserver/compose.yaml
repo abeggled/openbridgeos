@@ -2,6 +2,9 @@ services:
   mosquitto:
     image: eclipse-mosquitto:2
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
     user: root
     command: >
       sh -c "
@@ -49,6 +52,9 @@ services:
   obs:
     image: ghcr.io/abeggled/openbridgeserver:${OBS_IMAGE_TAG:-latest}
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
     pid: "service:mosquitto"
     depends_on:
       mosquitto:
