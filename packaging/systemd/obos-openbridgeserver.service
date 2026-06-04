@@ -11,6 +11,15 @@ ExecStart=/usr/bin/docker compose --env-file /etc/obos/apps/openbridgeserver.env
 ExecStop=/usr/bin/docker compose --env-file /etc/obos/apps/openbridgeserver.env down
 RemainAfterExit=yes
 TimeoutStartSec=0
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target
