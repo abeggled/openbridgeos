@@ -124,6 +124,39 @@ sudo OBOS_QCOW2_BASE_IMAGE=/srv/images/debian-13-genericcloud-amd64.qcow2 \
 
 Local build outputs are ignored by git via `build/`, `dist/`, and `*.qcow2`.
 
+## amd64 qcow2 Smoke Test
+
+The smoke test boots a qcow2 image in snapshot mode, forwards host TCP `8443` to
+the guest HTTPS port, and waits for the Open Bridge Server health endpoint over
+HTTPS.
+
+Install runtime dependencies on a Linux host:
+
+```sh
+sudo apt-get install --no-install-recommends qemu-system-x86 curl
+```
+
+Run the smoke test:
+
+```sh
+sudo scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.qcow2
+```
+
+The test deliberately does not require SSH because SSH is disabled by default for
+appliance images. It validates the externally visible appliance boundary:
+
+```text
+https://127.0.0.1:8443/api/v1/system/health
+```
+
+Useful overrides:
+
+```sh
+sudo OBOS_SMOKE_HOST_HTTPS_PORT=9443 \
+  OBOS_SMOKE_TIMEOUT_SECONDS=1200 \
+  scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.qcow2
+```
+
 ## First Implementation Direction
 
 Validate the `amd64-vm` qcow2 image in a VM first. The smoke test should confirm
