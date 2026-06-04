@@ -15,6 +15,9 @@ sudo obosctl restart
 sudo obosctl update
 sudo obosctl backup
 obosctl logs
+sudo obosctl tls-generate
+sudo obosctl tls-info
+sudo obosctl tls-export
 ```
 
 ## Status
@@ -55,6 +58,24 @@ Mosquitto config, and the generated app environment file.
 The backup contains secrets, including the Open Bridge Server JWT secret and
 internal MQTT service password. Treat exported backups as sensitive data.
 
+## TLS Trust
+
+```sh
+sudo obosctl tls-generate
+sudo obosctl tls-info
+sudo obosctl tls-export
+```
+
+`tls-generate` creates the per-appliance-instance local CA and leaf certificate
+material below `/etc/obos/tls`. `tls-info` prints the appliance hostname, IP
+addresses, certificate paths, and SHA-256 fingerprints. `tls-export` writes a
+public trust bundle below `/srv/obos/state/trust`.
+
+The trust bundle contains the local CA certificate, the current leaf
+certificate, and a text summary. It does not contain private keys. Verify the CA
+fingerprint through an out-of-band path before installing the CA certificate on
+client devices.
+
 ## Environment Overrides
 
 For development or image tests, these paths can be overridden:
@@ -66,7 +87,17 @@ OBOS_BACKUP_DIR=/tmp/obos/backups \
 obosctl status
 ```
 
+TLS helper paths can also be overridden for tests:
+
+```sh
+OBOS_TLS_GENERATE_SCRIPT=/tmp/generate-tls-material.sh \
+OBOS_TLS_INFO_SCRIPT=/tmp/print-trust-info.sh \
+OBOS_TLS_EXPORT_SCRIPT=/tmp/export-trust-bundle.sh \
+obosctl tls-info
+```
+
 ## Design Notes
 
 `obosctl` is not meant to replace Open Bridge Server's own UI. It only manages
-the appliance layer: lifecycle, health, logs, updates, and backups.
+the appliance layer: lifecycle, health, logs, updates, backups, and local trust
+onboarding helpers.
