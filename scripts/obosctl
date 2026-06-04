@@ -11,23 +11,27 @@ HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
 TLS_INFO_SCRIPT="${OBOS_TLS_INFO_SCRIPT:-/usr/lib/obos/print-trust-info.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
+MQTT_LAN_SCRIPT="${OBOS_MQTT_LAN_SCRIPT:-/usr/lib/obos/set-mqtt-lan-access.sh}"
 
 usage() {
   cat <<'EOF'
 Usage: obosctl <command>
 
 Commands:
-  status        Show systemd, container, and health status
-  start         Start Open Bridge Server
-  stop          Stop Open Bridge Server
-  restart       Restart Open Bridge Server
-  update        Pull container images, restart, and verify health
-  logs          Follow Open Bridge Server stack logs
-  backup        Create a timestamped appliance backup
-  health        Check Open Bridge Server health endpoint
-  tls-generate  Generate local CA and leaf certificate material
-  tls-info      Print TLS trust fingerprints and paths
-  tls-export    Export public TLS trust bundle
+  status            Show systemd, container, and health status
+  start             Start Open Bridge Server
+  stop              Stop Open Bridge Server
+  restart           Restart Open Bridge Server
+  update            Pull container images, restart, and verify health
+  logs              Follow Open Bridge Server stack logs
+  backup            Create a timestamped appliance backup
+  health            Check Open Bridge Server health endpoint
+  tls-generate      Generate local CA and leaf certificate material
+  tls-info          Print TLS trust fingerprints and paths
+  tls-export        Export public TLS trust bundle
+  mqtt-status       Show MQTT bind addresses
+  mqtt-enable-lan   Enable explicit LAN MQTT access
+  mqtt-disable-lan  Disable LAN MQTT access and bind MQTT to localhost
 EOF
 }
 
@@ -51,11 +55,12 @@ require_files() {
 
 run_helper() {
   helper="$1"
+  shift
   [ -x "${helper}" ] || {
     echo "missing executable helper: ${helper}" >&2
     exit 1
   }
-  "${helper}"
+  "${helper}" "$@"
 }
 
 compose() {
@@ -172,6 +177,18 @@ case "${1:-}" in
   tls-export)
     require_root tls-export
     run_helper "${TLS_EXPORT_SCRIPT}"
+    ;;
+  mqtt-status)
+    require_root mqtt-status
+    run_helper "${MQTT_LAN_SCRIPT}" status
+    ;;
+  mqtt-enable-lan)
+    require_root mqtt-enable-lan
+    run_helper "${MQTT_LAN_SCRIPT}" enable
+    ;;
+  mqtt-disable-lan)
+    require_root mqtt-disable-lan
+    run_helper "${MQTT_LAN_SCRIPT}" disable
     ;;
   -h|--help|help|"")
     usage
