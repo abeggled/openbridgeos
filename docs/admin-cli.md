@@ -24,6 +24,7 @@ sudo obosctl tls-export
 sudo obosctl tls-export-boot
 sudo obosctl mqtt-status
 sudo obosctl mqtt-enable-lan
+sudo obosctl mqtt-enable-lan 192.168.1.0/24
 sudo obosctl mqtt-disable-lan
 ```
 
@@ -130,6 +131,14 @@ MQTT is localhost-only by default. `mqtt-enable-lan` deliberately exposes MQTT
 plain TCP on `1883` and MQTT WebSocket on `9001` by updating the app environment
 file, updating the managed nftables block, reloading the firewall, and
 restarting the managed open bridge server stack.
+
+Pass an IPv4 or IPv6 CIDR to restrict the firewall allow rules to a source
+network while still publishing the MQTT listeners on the host:
+
+```sh
+sudo obosctl mqtt-enable-lan 192.168.1.0/24
+sudo obosctl mqtt-enable-lan fd00::/64
+```
 
 `mqtt-disable-lan` restores both MQTT listeners to localhost and removes the
 firewall allow rules. MQTT authentication remains required in both modes.
