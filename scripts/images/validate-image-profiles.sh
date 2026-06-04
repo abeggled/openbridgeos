@@ -23,12 +23,14 @@ validate_profile() {
   OBOS_IMAGE_ARCH=
   OBOS_IMAGE_KIND=
   OBOS_DEBIAN_RELEASE=
+  OBOS_DEBIAN_COMPONENTS=
   OBOS_BOOT_TARGET=
   OBOS_OUTPUT_FORMAT=
   OBOS_OUTPUT_COMPRESSION=
   OBOS_IMAGE_EXTENSION=
   OBOS_IMAGE_MIN_SIZE=
   OBOS_BASE_PACKAGES=
+  OBOS_RPI_BOOT_PACKAGES=
   OBOS_PROVISION_SCRIPT=
   OBOS_FIRST_BOOT_SERVICE=
   OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=
@@ -111,6 +113,16 @@ validate_profile() {
       || fail "${profile_file}: Raspberry Pi artifact extension must be img.xz"
     [ -n "${OBOS_IMAGE_MIN_SIZE}" ] \
       || fail "${profile_file}: Raspberry Pi image minimum size must be defined"
+    contains_csv_value "${OBOS_DEBIAN_COMPONENTS}" main \
+      || fail "${profile_file}: Raspberry Pi Debian components must include main"
+    contains_csv_value "${OBOS_DEBIAN_COMPONENTS}" non-free-firmware \
+      || fail "${profile_file}: Raspberry Pi Debian components must include non-free-firmware"
+    contains_csv_value "${OBOS_RPI_BOOT_PACKAGES}" linux-image-arm64 \
+      || fail "${profile_file}: Raspberry Pi boot packages must include linux-image-arm64"
+    contains_csv_value "${OBOS_RPI_BOOT_PACKAGES}" raspi-firmware \
+      || fail "${profile_file}: Raspberry Pi boot packages must include raspi-firmware"
+    contains_csv_value "${OBOS_RPI_BOOT_PACKAGES}" initramfs-tools \
+      || fail "${profile_file}: Raspberry Pi boot packages must include initramfs-tools"
     [ "${OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE}" = "true" ] \
       || fail "${profile_file}: Raspberry Pi Network Installer compatibility must be explicit"
     [ "${OBOS_RPI_FIRMWARE_MODE}" = "raspberry-pi-bootloader" ] \
@@ -139,6 +151,16 @@ validate_profile() {
       || fail "${profile_file}: Raspberry Pi required tools must include mkfs.vfat"
     contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" mkfs.ext4 \
       || fail "${profile_file}: Raspberry Pi required tools must include mkfs.ext4"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" losetup \
+      || fail "${profile_file}: Raspberry Pi required tools must include losetup"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" mount \
+      || fail "${profile_file}: Raspberry Pi required tools must include mount"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" umount \
+      || fail "${profile_file}: Raspberry Pi required tools must include umount"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" partprobe \
+      || fail "${profile_file}: Raspberry Pi required tools must include partprobe"
+    contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" tar \
+      || fail "${profile_file}: Raspberry Pi required tools must include tar"
     contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" xz \
       || fail "${profile_file}: Raspberry Pi required tools must include xz"
     contains_csv_value "${OBOS_RPI_REQUIRED_TOOLS}" sha256sum \
