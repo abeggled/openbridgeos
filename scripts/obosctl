@@ -35,6 +35,7 @@ Commands:
   update            Pull container images, restart, and verify health
   logs              Follow open bridge server stack logs
   backup            Create a timestamped appliance backup
+  backup-list       Print machine-readable appliance backup inventory
   restore-inspect   Inspect an appliance backup before restore
   restore-plan      Print the non-destructive restore plan for a backup
   restore-stage     Extract a backup into private restore staging
@@ -249,6 +250,26 @@ backup() {
   rm -rf "${manifest_dir}"
   chmod 0600 "${target}"
   echo "backup: ${target}"
+}
+
+backup_list() {
+  count=0
+  echo "format=obos-backup-list-v1"
+  echo "backup_dir=${BACKUP_DIR}"
+
+  for backup_file in "${BACKUP_DIR}"/obos-"${APP_NAME}"-*.tar.gz; do
+    [ -f "${backup_file}" ] || continue
+    count=$((count + 1))
+    size_bytes="unknown"
+    mode="unknown"
+    if command -v stat >/dev/null 2>&1; then
+      size_bytes="$(stat -c '%s' "${backup_file}" 2>/dev/null || echo unknown)"
+      mode="$(stat -c '%a' "${backup_file}" 2>/dev/null || echo unknown)"
+    fi
+    echo "backup=${backup_file}|size_bytes=${size_bytes}|mode=${mode}"
+  done
+
+  echo "backup_count=${count}"
 }
 
 restore_inspect() {
@@ -602,6 +623,9 @@ case "${1:-}" in
     ;;
   backup)
     backup
+    ;;
+  backup-list)
+    backup_list
     ;;
   restore-inspect)
     shift
