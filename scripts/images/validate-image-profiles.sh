@@ -19,7 +19,6 @@ validate_profile() {
   OBOS_BASE_PACKAGES=
   OBOS_PROVISION_SCRIPT=
   OBOS_FIRST_BOOT_SERVICE=
-  OBOS_NOTES=
 
   # shellcheck disable=SC1090
   . "${profile_file}"
