@@ -7,6 +7,7 @@ ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
+HTTPS_URL="${OBOS_HTTPS_URL:-https://127.0.0.1/}"
 
 pass() {
   printf 'PASS %s\n' "$1"
@@ -86,15 +87,23 @@ check_certificate() {
 
 check_command docker
 check_command nft
+check_command nginx
 check_command obosctl
 check_command openssl
 
 check_file_mode /etc/obos 750
 check_file_mode "${ENV_FILE}" 600
 check_file_mode /srv/obos 750
+check_file_mode "${TLS_DIR}" 700
+check_file_mode "${TLS_DIR}/obos-local-ca.key" 600
+check_file_mode "${TLS_DIR}/obos.local.key" 600
+check_certificate "${TLS_DIR}/obos-local-ca.crt" 'local CA'
+check_certificate "${TLS_DIR}/obos.local.crt" 'leaf'
 
 check_systemd_active docker.service
 check_systemd_enabled docker.service
+check_systemd_active nginx.service
+check_systemd_enabled nginx.service
 check_systemd_active nftables.service
 check_systemd_enabled nftables.service
 check_systemd_enabled obos-first-boot.service
@@ -107,10 +116,16 @@ else
   fail 'nftables input default-drop missing'
 fi
 
-if nft list ruleset 2>/dev/null | grep -q 'tcp dport 8080 accept'; then
-  pass 'nftables allows Open Bridge Server HTTP'
+if nft list ruleset 2>/dev/null | grep -q 'tcp dport 443 accept'; then
+  pass 'nftables allows HTTPS reverse proxy'
 else
-  fail 'nftables missing Open Bridge Server HTTP allow rule'
+  fail 'nftables missing HTTPS reverse proxy allow rule'
+fi
+
+if nft list ruleset 2>/dev/null | grep -q 'tcp dport 8080 accept'; then
+  fail 'nftables exposes direct Open Bridge Server HTTP'
+else
+  pass 'nftables does not expose direct Open Bridge Server HTTP'
 fi
 
 if nft list ruleset 2>/dev/null | grep -q 'tcp dport 22 accept'; then
@@ -119,6 +134,7 @@ else
   pass 'nftables does not expose SSH'
 fi
 
+check_grep 'OBS_HTTP_HOST_PORT=127.0.0.1:8080' "${ENV_FILE}" 'OBS HTTP localhost-only'
 check_grep 'OBS_MQTT_HOST_PORT=127.0.0.1:1883' "${ENV_FILE}" 'MQTT plain localhost-only'
 check_grep 'OBS_MQTT_WS_HOST_PORT=127.0.0.1:9001' "${ENV_FILE}" 'MQTT websocket localhost-only'
 check_grep '^OBS_JWT_SECRET=.' "${ENV_FILE}" 'OBS JWT secret exists'
@@ -136,20 +152,16 @@ else
   fail 'Docker local log driver missing'
 fi
 
-if [ -d "${TLS_DIR}" ]; then
-  check_file_mode "${TLS_DIR}" 700
-  check_file_mode "${TLS_DIR}/obos-local-ca.key" 600
-  check_file_mode "${TLS_DIR}/obos.local.key" 600
-  check_certificate "${TLS_DIR}/obos-local-ca.crt" 'local CA'
-  check_certificate "${TLS_DIR}/obos.local.crt" 'leaf'
+if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null; then
+  pass 'Open Bridge Server health endpoint reachable on localhost'
 else
-  pass 'TLS material not generated for development baseline'
+  fail 'Open Bridge Server localhost health endpoint unreachable'
 fi
 
-if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null; then
-  pass 'Open Bridge Server health endpoint reachable'
+if command -v curl >/dev/null 2>&1 && curl --insecure --fail --silent --show-error --max-time 5 "${HTTPS_URL}" >/dev/null; then
+  pass 'HTTPS reverse proxy reachable'
 else
-  fail 'Open Bridge Server health endpoint unreachable'
+  fail 'HTTPS reverse proxy unreachable'
 fi
 
 if [ -d "${APP_DIR}/data" ]; then
