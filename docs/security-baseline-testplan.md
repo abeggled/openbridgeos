@@ -9,6 +9,7 @@ Validate that the appliance starts Open Bridge Server while preserving the
 intended host security posture:
 
 - generated per-appliance-instance secrets
+- stable appliance identifier
 - generated per-appliance-instance TLS trust material
 - HTTPS reverse proxy exposure on TCP `443`
 - direct Open Bridge Server HTTP closed externally
@@ -142,10 +143,11 @@ Expected default baseline:
 - `1883/tcp` closed or filtered
 - `9001/tcp` closed or filtered
 
-### Secrets And TLS
+### Identity, Secrets, And TLS
 
 ```sh
-sudo stat -c '%a %U:%G %n' /etc/obos /etc/obos/apps/openbridgeserver.env /etc/obos/tls
+sudo stat -c '%a %U:%G %n' /etc/obos /etc/obos/appliance-id /etc/obos/apps/openbridgeserver.env /etc/obos/tls
+sudo grep -E '^[0-9a-f-]{36}$' /etc/obos/appliance-id
 sudo grep -E '^(OBS_JWT_SECRET|OBS_MQTT_PASSWORD|OBS_HTTP_HOST_PORT)=' /etc/obos/apps/openbridgeserver.env
 sudo obosctl tls-info
 ```
@@ -153,8 +155,10 @@ sudo obosctl tls-info
 Expected:
 
 - `/etc/obos` mode `750`
+- appliance identifier file mode `644`
 - app env file mode `600`
 - `/etc/obos/tls` mode `700`
+- appliance identifier present and UUID-shaped
 - JWT secret present and non-empty
 - MQTT password present and non-empty
 - OBS HTTP bound to `127.0.0.1:8080`
@@ -195,6 +199,7 @@ Expected:
 sudo obosctl backup
 sudo ls -l /srv/obos/backups
 latest_backup="$(sudo ls -1t /srv/obos/backups/obos-openbridgeserver-*.tar.gz | head -n 1)"
+sudo tar -tzf "${latest_backup}" | grep '^appliance-id$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos-local-ca.key$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos.local.key$'
 ```
@@ -203,6 +208,7 @@ Expected:
 
 - backup is created
 - backup file mode is not group/world readable
+- backup includes appliance identifier
 - backup includes TLS private key material for appliance identity restore
 - backup is treated as sensitive because it contains secrets and TLS private keys
 
@@ -215,7 +221,7 @@ The baseline passes when:
 - MQTT LAN opt-in and disable workflow behaves as expected
 - Open Bridge Server health endpoint passes through localhost and HTTPS proxy
 - backup file permissions are restrictive
-- backup contains TLS identity material when TLS has been generated
+- backup contains appliance identifier and TLS identity material when TLS has been generated
 
 ## Known Follow-Up Tests
 
