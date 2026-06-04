@@ -33,11 +33,27 @@ require_file() {
   }
 }
 
+is_ipv4_cidr() {
+  # shellcheck disable=SC2016
+  printf '%s\n' "$1" | awk -F '[./]' '
+    NF != 5 { exit 1 }
+    $5 !~ /^[0-9]+$/ || $5 < 0 || $5 > 32 { exit 1 }
+    {
+      for (i = 1; i <= 4; i++) {
+        if ($i !~ /^[0-9]+$/ || $i < 0 || $i > 255) {
+          exit 1
+        }
+      }
+      exit 0
+    }
+  '
+}
+
 validate_source_cidr() {
   source_cidr="$1"
   [ -n "${source_cidr}" ] || return 0
 
-  if printf '%s\n' "${source_cidr}" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$'; then
+  if is_ipv4_cidr "${source_cidr}"; then
     return 0
   fi
 
