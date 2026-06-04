@@ -199,6 +199,9 @@ Expected:
 sudo obosctl backup
 sudo ls -l /srv/obos/backups
 latest_backup="$(sudo ls -1t /srv/obos/backups/obos-openbridgeserver-*.tar.gz | head -n 1)"
+sudo tar -tzf "${latest_backup}" | grep '^obos-backup-manifest.txt$'
+sudo tar -xOzf "${latest_backup}" obos-backup-manifest.txt | grep '^format=obos-backup-v1$'
+sudo tar -xOzf "${latest_backup}" obos-backup-manifest.txt | grep '^contains_secrets=true$'
 sudo tar -tzf "${latest_backup}" | grep '^appliance-id$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos-local-ca.key$'
 sudo tar -tzf "${latest_backup}" | grep '^tls/obos.local.key$'
@@ -208,6 +211,8 @@ Expected:
 
 - backup is created
 - backup file mode is not group/world readable
+- backup includes manifest metadata
+- backup manifest marks the archive as secret-bearing
 - backup includes appliance identifier
 - backup includes TLS private key material for appliance identity restore
 - backup is treated as sensitive because it contains secrets and TLS private keys
@@ -221,7 +226,7 @@ The baseline passes when:
 - MQTT LAN opt-in and disable workflow behaves as expected
 - Open Bridge Server health endpoint passes through localhost and HTTPS proxy
 - backup file permissions are restrictive
-- backup contains appliance identifier and TLS identity material when TLS has been generated
+- backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated
 
 ## Known Follow-Up Tests
 
