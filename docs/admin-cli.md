@@ -20,6 +20,7 @@ sudo obosctl start
 sudo obosctl stop
 sudo obosctl restart
 sudo obosctl update
+obosctl update-summary
 sudo obosctl backup
 obosctl backup-list
 obosctl logs
@@ -67,6 +68,7 @@ obosctl proxy-health
 
 ```sh
 sudo obosctl update
+obosctl update-summary
 ```
 
 The update command performs the first conservative update flow:
@@ -83,6 +85,10 @@ last successful update record. Automatic rollback is not implemented yet.
 The update record is a small key-value file with format `obos-update-v1`. It
 includes the completion timestamp, app name, systemd service name, backup path,
 and successful local/proxy health markers.
+
+`update-summary` prints a stable key-value format for agents and the future web
+UI. It includes the update state file path, whether a successful update record is
+present, and the last update record fields when present.
 
 ## Backup
 
