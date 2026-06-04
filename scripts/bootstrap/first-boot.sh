@@ -9,6 +9,7 @@ APPLIANCE_ID_FILE="${OBOS_ETC_DIR}/appliance-id"
 FIRST_BOOT_MARKER="${OBOS_STATE_DIR}/first-boot.done"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
+BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -63,6 +64,10 @@ fi
 
 if [ -x "${TLS_EXPORT_SCRIPT}" ]; then
   "${TLS_EXPORT_SCRIPT}"
+fi
+
+if [ -x "${BOOT_TRUST_SCRIPT}" ]; then
+  "${BOOT_TRUST_SCRIPT}"
 fi
 
 touch "${FIRST_BOOT_MARKER}"
