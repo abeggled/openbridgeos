@@ -9,7 +9,7 @@ proxy yet.
 On a provisioned appliance instance:
 
 ```sh
-sudo /usr/lib/obos/generate-tls-material.sh
+sudo obosctl tls-generate
 ```
 
 This creates:
@@ -40,7 +40,7 @@ The leaf certificate includes SANs for:
 ## Print Trust Information
 
 ```sh
-sudo /usr/lib/obos/print-trust-info.sh
+sudo obosctl tls-info
 ```
 
 The output includes:
@@ -58,7 +58,7 @@ sufficient proof before the client trusts the appliance instance.
 ## Export Trust Bundle
 
 ```sh
-sudo /usr/lib/obos/export-trust-bundle.sh
+sudo obosctl tls-export
 ```
 
 This writes public trust artifacts to:
@@ -98,6 +98,9 @@ Important:
 - replacing or rotating the CA requires clients to trust the new CA
 - installing this CA makes the client trust certificates issued by this appliance
   instance's CA
+
+The underlying helper scripts are installed below `/usr/lib/obos` for packaging
+and automation, but administrators should use `obosctl` as the stable interface.
 
 ## Current Limitations
 
