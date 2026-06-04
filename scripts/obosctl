@@ -37,6 +37,8 @@ Commands:
   restore-inspect   Inspect an appliance backup before restore
   restore-plan      Print the non-destructive restore plan for a backup
   restore-stage     Extract a backup into private restore staging
+  restore-stage-inspect
+                    Inspect a private restore staging directory
   health            Check open bridge server localhost health endpoint
   proxy-health      Check HTTPS reverse proxy health with local CA trust
   tls-generate      Generate local CA and leaf certificate material
@@ -366,6 +368,80 @@ EOF
   echo "next=review staged files, then run a future restore apply command"
 }
 
+restore_stage_inspect() {
+  stage_dir="${1:-}"
+  [ -n "${stage_dir}" ] || {
+    echo "usage: obosctl restore-stage-inspect <stage-dir>" >&2
+    return 2
+  }
+  [ -d "${stage_dir}" ] || {
+    echo "restore stage not found: ${stage_dir}" >&2
+    return 1
+  }
+
+  stage_manifest="${stage_dir}/obos-restore-stage.txt"
+  env_name="$(basename -- "${ENV_FILE}")"
+  failed=0
+
+  require_stage_entry() {
+    rel_path="$1"
+    label="$2"
+    if [ -e "${stage_dir}/${rel_path}" ]; then
+      echo "PASS ${label}"
+    else
+      echo "FAIL ${label}"
+      failed=1
+    fi
+  }
+
+  require_stage_manifest_value() {
+    pattern="$1"
+    label="$2"
+    if grep -q "${pattern}" "${stage_manifest}" 2>/dev/null; then
+      echo "PASS ${label}"
+    else
+      echo "FAIL ${label}"
+      failed=1
+    fi
+  }
+
+  echo "restore stage: ${stage_dir}"
+  echo
+  if [ -f "${stage_manifest}" ]; then
+    echo "stage manifest:"
+    sed 's/^/  /' "${stage_manifest}"
+  else
+    echo "stage manifest: missing"
+    failed=1
+  fi
+  echo
+
+  require_stage_manifest_value '^format=obos-restore-stage-v1$' 'stage manifest format'
+  require_stage_manifest_value '^mode=staged-only$' 'stage-only mode'
+  require_stage_manifest_value "^app=${APP_NAME}$" 'stage manifest app'
+  require_stage_entry obos-backup-manifest.txt 'backup manifest staged'
+  require_stage_entry appliance-id 'appliance identifier staged'
+  require_stage_entry "${env_name}" 'app environment staged'
+  require_stage_entry data 'open bridge server data staged'
+  require_stage_entry mqtt 'Mosquitto data staged'
+  require_stage_entry compose.yaml 'Compose file staged'
+  require_stage_entry mosquitto.conf 'Mosquitto config staged'
+
+  if [ -e "${stage_dir}/mqtt/log" ]; then
+    echo "FAIL Mosquitto logs absent"
+    failed=1
+  else
+    echo "PASS Mosquitto logs absent"
+  fi
+
+  if [ "${failed}" -eq 0 ]; then
+    echo "restore stage inspect: PASS"
+  else
+    echo "restore stage inspect: FAIL"
+  fi
+  return "${failed}"
+}
+
 write_update_state() {
   backup_path="$1"
   state_dir="$(dirname -- "${LAST_UPDATE_FILE}")"
@@ -448,6 +524,11 @@ case "${1:-}" in
     require_root restore-stage
     shift
     restore_stage "${1:-}"
+    ;;
+  restore-stage-inspect)
+    require_root restore-stage-inspect
+    shift
+    restore_stage_inspect "${1:-}"
     ;;
   health)
     health
