@@ -16,6 +16,7 @@ intended host security posture:
 - nftables default-drop firewall
 - SSH disabled by default
 - MQTT closed externally by default
+- explicit MQTT LAN opt-in and disable workflow
 - Docker daemon hardening defaults
 - sysctl hardening baseline
 - Open Bridge Server health
@@ -102,8 +103,27 @@ Expected inbound policy:
 - TCP `443` accepted for the HTTPS reverse proxy
 - TCP `22`, `80`, `8080`, `1883`, and `9001` not accepted externally by default
 
-MQTT may be exposed in a future explicit opt-in mode. That mode must have its
-own audit expectations and must not change the default baseline.
+### MQTT LAN Opt-In
+
+```sh
+sudo obosctl mqtt-status
+sudo obosctl mqtt-enable-lan
+sudo grep -E '^(OBS_MQTT_HOST_PORT|OBS_MQTT_WS_HOST_PORT)=' /etc/obos/apps/openbridgeserver.env
+sudo nft list ruleset | grep 'tcp dport 1883'
+sudo nft list ruleset | grep 'tcp dport 9001'
+sudo obosctl mqtt-disable-lan
+sudo grep -E '^(OBS_MQTT_HOST_PORT|OBS_MQTT_WS_HOST_PORT)=' /etc/obos/apps/openbridgeserver.env
+sudo nft list ruleset | grep 'tcp dport 1883' && false || true
+sudo nft list ruleset | grep 'tcp dport 9001' && false || true
+```
+
+Expected:
+
+- default status shows localhost MQTT bind addresses
+- enable switches MQTT bind addresses to `0.0.0.0:1883` and `0.0.0.0:9001`
+- enable adds firewall rules for TCP `1883` and `9001`
+- disable restores localhost bind addresses
+- disable removes firewall rules for TCP `1883` and `9001`
 
 ### Ports
 
@@ -192,13 +212,13 @@ The baseline passes when:
 
 - `sudo /usr/lib/obos/security-baseline.sh` exits `0`
 - manual port scan matches the expected default exposure
+- MQTT LAN opt-in and disable workflow behaves as expected
 - Open Bridge Server health endpoint passes through localhost and HTTPS proxy
 - backup file permissions are restrictive
 - backup contains TLS identity material when TLS has been generated
 
 ## Known Follow-Up Tests
 
-- explicit MQTT LAN exposure opt-in test
 - platform-specific CA import validation
 - full disk encryption feasibility
 - Docker user namespace remapping compatibility

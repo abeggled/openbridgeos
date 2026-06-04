@@ -48,9 +48,17 @@ MQTT to localhost only:
 127.0.0.1:9001
 ```
 
-LAN MQTT exposure must be an explicit opt-in workflow. Enabling it should update
-both the Compose environment and firewall policy, and should remain visible to
-the security baseline audit.
+LAN MQTT exposure is an explicit opt-in workflow:
+
+```sh
+sudo obosctl mqtt-enable-lan
+sudo obosctl mqtt-disable-lan
+sudo obosctl mqtt-status
+```
+
+Enabling it updates both the Compose environment and the managed nftables block,
+then restarts the firewall and Open Bridge Server stack. Disabling it restores
+localhost-only bind addresses and removes the firewall allow rules.
 
 ## TLS Reverse Proxy
 
@@ -141,7 +149,7 @@ validated under those constraints.
 
 The current hardening layer is host-focused. It does not yet implement:
 
-- MQTT opt-in management command or UI
+- MQTT source-network restriction management
 - image signing
 - rollback for failed updates
 - full disk encryption

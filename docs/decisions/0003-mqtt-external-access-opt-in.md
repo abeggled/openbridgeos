@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted.
+Accepted. Initial `obosctl` enable/disable workflow is implemented; web UI and
+source-network restrictions are still open.
 
 ## Context
 
@@ -25,21 +26,33 @@ The default state is:
 - no nftables allow rule for TCP `1883`
 - no nftables allow rule for TCP `9001`
 
-A future `obosctl` and web UI workflow should allow administrators to enable LAN
-MQTT access intentionally. That workflow must:
+Administrators may enable LAN MQTT access with:
 
-- show which ports will be exposed
-- require existing MQTT authentication to remain enabled
-- update the app environment file instead of hand-editing Compose
-- update the firewall profile
-- restart the managed Open Bridge Server stack
-- record the resulting exposure in the security baseline audit
+```sh
+sudo obosctl mqtt-enable-lan
+```
+
+They may restore the default closed posture with:
+
+```sh
+sudo obosctl mqtt-disable-lan
+```
+
+The workflow:
+
+- shows current bind addresses with `sudo obosctl mqtt-status`
+- keeps existing MQTT authentication enabled
+- updates the app environment file instead of hand-editing Compose
+- updates the managed nftables MQTT block
+- restarts the firewall
+- restarts the managed Open Bridge Server stack
+- remains visible to CI security default checks
 
 ## Consequences
 
-- Security tests should treat external MQTT as closed for the default baseline.
-- The baseline audit should eventually distinguish default-closed and
-  admin-enabled MQTT states.
+- Security tests treat external MQTT as closed for the default baseline.
+- The CLI can support deployments that need LAN MQTT without making it the
+  default.
 - Documentation must say "disabled by default" rather than "never external".
 - Public images can still support LAN MQTT without making it the default.
 
@@ -50,3 +63,4 @@ MQTT access intentionally. That workflow must:
   subnet?
 - Should the UI require a confirmation step that displays the current MQTT user
   model before opening the firewall?
+- Should the security baseline audit add a separate admin-enabled MQTT mode?

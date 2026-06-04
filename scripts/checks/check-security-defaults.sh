@@ -36,6 +36,9 @@ grep -q 'nginx-light' scripts/bootstrap/provision-debian.sh \
 grep -q 'systemctl enable nginx.service' scripts/bootstrap/provision-debian.sh \
   || fail "nginx service is not enabled during provisioning"
 
+grep -q 'set-mqtt-lan-access.sh' scripts/bootstrap/provision-debian.sh \
+  || fail "MQTT LAN opt-in helper is not installed during provisioning"
+
 grep -q '"no-new-privileges": true' packaging/docker/daemon.json \
   || fail "Docker no-new-privileges default is not enabled"
 
@@ -50,6 +53,27 @@ grep -q 'tcp dport 443 accept' packaging/nftables/obos.nft \
 
 ! grep -q 'tcp dport 8080 accept' packaging/nftables/obos.nft \
   || fail "Direct Open Bridge Server HTTP is open in the default firewall"
+
+! grep -q 'tcp dport 1883 accept' packaging/nftables/obos.nft \
+  || fail "MQTT plain TCP is open in the default firewall"
+
+! grep -q 'tcp dport 9001 accept' packaging/nftables/obos.nft \
+  || fail "MQTT WebSocket is open in the default firewall"
+
+grep -q 'OBOS MQTT LAN BEGIN' packaging/nftables/obos.nft \
+  || fail "nftables MQTT LAN managed block is missing"
+
+grep -q 'tcp dport 1883 accept' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not open MQTT plain TCP when enabled"
+
+grep -q 'tcp dport 9001 accept' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not open MQTT WebSocket when enabled"
+
+grep -q 'OBS_MQTT_HOST_PORT 0.0.0.0:1883' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not publish MQTT plain TCP when enabled"
+
+grep -q 'OBS_MQTT_HOST_PORT 127.0.0.1:1883' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not restore localhost MQTT plain TCP"
 
 grep -q 'udp sport 67 udp dport 68 accept' packaging/nftables/obos.nft \
   || fail "DHCPv4 client renewals are not allowed"
@@ -93,6 +117,12 @@ grep -q 'TLS_DIR=' scripts/obosctl \
 
 grep -q 'backup includes TLS private key material' scripts/obosctl \
   || fail "obosctl backup does not warn about TLS private key material"
+
+grep -q 'mqtt-enable-lan)' scripts/obosctl \
+  || fail "obosctl does not expose MQTT LAN enablement"
+
+grep -q 'mqtt-disable-lan)' scripts/obosctl \
+  || fail "obosctl does not expose MQTT LAN disablement"
 
 grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-material.sh \
   || fail "local CA is not generated with critical CA constraints"

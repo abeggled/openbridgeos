@@ -19,6 +19,11 @@ table inet obos_filter {
 
     # HTTPS reverse proxy. Open Bridge Server binds to localhost behind it.
     tcp dport 443 accept
+
+    # Optional MQTT LAN access is managed by obosctl.
+    # OBOS MQTT LAN BEGIN
+    # MQTT LAN disabled by default.
+    # OBOS MQTT LAN END
   }
 
   chain forward {
