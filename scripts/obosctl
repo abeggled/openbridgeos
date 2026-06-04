@@ -7,20 +7,26 @@ ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 BACKUP_DIR="${OBOS_BACKUP_DIR:-/srv/obos/backups}"
 SERVICE_NAME="obos-openbridgeserver.service"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
+TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
+TLS_INFO_SCRIPT="${OBOS_TLS_INFO_SCRIPT:-/usr/lib/obos/print-trust-info.sh}"
+TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 
 usage() {
   cat <<'EOF'
 Usage: obosctl <command>
 
 Commands:
-  status      Show systemd, container, and health status
-  start       Start Open Bridge Server
-  stop        Stop Open Bridge Server
-  restart     Restart Open Bridge Server
-  update      Pull container images, restart, and verify health
-  logs        Follow Open Bridge Server stack logs
-  backup      Create a timestamped appliance backup
-  health      Check Open Bridge Server health endpoint
+  status        Show systemd, container, and health status
+  start         Start Open Bridge Server
+  stop          Stop Open Bridge Server
+  restart       Restart Open Bridge Server
+  update        Pull container images, restart, and verify health
+  logs          Follow Open Bridge Server stack logs
+  backup        Create a timestamped appliance backup
+  health        Check Open Bridge Server health endpoint
+  tls-generate  Generate local CA and leaf certificate material
+  tls-info      Print TLS trust fingerprints and paths
+  tls-export    Export public TLS trust bundle
 EOF
 }
 
@@ -40,6 +46,15 @@ require_files() {
     echo "missing environment file: ${ENV_FILE}" >&2
     exit 1
   }
+}
+
+run_helper() {
+  helper="$1"
+  [ -x "${helper}" ] || {
+    echo "missing executable helper: ${helper}" >&2
+    exit 1
+  }
+  "${helper}"
 }
 
 compose() {
@@ -133,6 +148,18 @@ case "${1:-}" in
     ;;
   health)
     health
+    ;;
+  tls-generate)
+    require_root tls-generate
+    run_helper "${TLS_GENERATE_SCRIPT}"
+    ;;
+  tls-info)
+    require_root tls-info
+    run_helper "${TLS_INFO_SCRIPT}"
+    ;;
+  tls-export)
+    require_root tls-export
+    run_helper "${TLS_EXPORT_SCRIPT}"
     ;;
   -h|--help|help|"")
     usage
