@@ -23,7 +23,7 @@
 - Verify boot from SD and USB.
 - Validate Docker and open bridge server startup.
 - Validate host hardening on Raspberry Pi networking.
-- Explore boot-accessible TLS trust summary for headless onboarding.
+- Export boot-accessible TLS trust summary for headless onboarding.
 - Document expected hardware and power requirements.
 
 ## Milestone 3: Appliance Web UI

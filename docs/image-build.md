@@ -95,6 +95,8 @@ Raspberry Pi image builders must additionally:
 6. Preserve compatibility with SD, USB, and NVMe boot media.
 7. Verify the kernel config contract before publishing artifacts.
 8. Keep `CONFIG_BLK_DEV_NVME=y` enabled for every release image.
+9. Let first boot export public TLS trust material to the mounted boot partition
+   when a writable boot partition is available.
 
 ## amd64 qcow2 Builder
 
@@ -259,6 +261,11 @@ By default the script:
 9. verifies the kernel config contract, including `CONFIG_BLK_DEV_NVME=y`
 10. writes `.img.xz`, `.sha256`, and `.manifest` artifacts
 11. validates the generated manifest in strict mode
+
+On first boot, the target appliance tries to write `OBOS-TRUST.txt` and
+`OBOS-LOCAL-CA.crt` to a writable mounted boot partition such as
+`/boot/firmware`. These files contain only public trust material and are meant
+to support headless Raspberry Pi onboarding.
 
 Verify the kernel config from a mounted or extracted Raspberry Pi image before
 publishing:

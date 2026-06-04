@@ -58,9 +58,10 @@ paths:
    alone is not sufficient proof because it can be spoofed before trust is
    established.
 
-For Raspberry Pi and headless systems, the image process should explore writing
-a first-boot trust summary to a boot-accessible partition after certificate
-generation. This is useful but not required for the first Debian VM baseline.
+For Raspberry Pi and headless systems, first boot should write a public trust
+summary and local CA certificate to a writable boot-accessible partition when
+one is mounted. This is useful for headless onboarding and does not export
+private key material.
 
 ## Root CA Installation
 
