@@ -142,6 +142,22 @@ grep -q 'check-web-ui-agent-contract.sh' .github/workflows/ci.yml \
 grep -q 'check-obos-agent.sh' .github/workflows/ci.yml \
   || fail "CI does not validate obos-agent"
 
+grep -q 'sudo visudo -cf packaging/sudoers/obos-agent' .github/workflows/ci.yml \
+  || fail "CI does not validate obos-agent sudoers syntax"
+
+grep -q 'sudo' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install sudo for the agent privilege boundary"
+
+grep -q 'useradd .*obos-agent' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not create the obos-agent system user"
+
+# shellcheck disable=SC2016
+grep -q 'install -m 0440 "${REPO_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install the obos-agent sudoers policy"
+
+grep -q 'obos-agent ALL=(root) NOPASSWD:' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not use an allowlisted root boundary"
+
 grep -q 'format=obos-agent-response-v1' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not declare a response format"
 
@@ -156,6 +172,10 @@ grep -q 'OBOS_AGENT_AUDIT_LOG' scripts/agent/obos-agent.sh \
 
 grep -q 'write_audit_log' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not audit mutating actions"
+
+# shellcheck disable=SC2016
+grep -q 'sudo -n "${OBOSCTL}"' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not use non-interactive sudo for obosctl"
 
 grep -q 'action=status-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark read-only actions"

@@ -22,12 +22,18 @@ apt-get install -y --no-install-recommends \
   nftables \
   nginx-light \
   openssl \
+  sudo \
   unattended-upgrades
+
+if ! getent passwd obos-agent >/dev/null 2>&1; then
+  useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin --user-group obos-agent
+fi
 
 install -d -m 0755 "${OBOS_SHARE_DIR}/apps/openbridgeserver"
 install -d -m 0755 "${OBOS_LIB_DIR}"
-install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled
+install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d
 install -d -m 0750 /srv/obos /srv/obos/apps /srv/obos/backups /srv/obos/state
+install -d -m 0750 -o obos-agent -g obos-agent /srv/obos/state/agent
 
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/compose.yaml" "${OBOS_APP_SOURCE}/compose.yaml"
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/mosquitto.conf" "${OBOS_APP_SOURCE}/mosquitto.conf"
@@ -37,6 +43,7 @@ install -m 0644 "${REPO_ROOT}/packaging/apt/50unattended-upgrades" /etc/apt/apt.
 install -m 0644 "${REPO_ROOT}/packaging/docker/daemon.json" /etc/docker/daemon.json
 install -m 0644 "${REPO_ROOT}/packaging/nftables/obos.nft" /etc/nftables.conf
 install -m 0644 "${REPO_ROOT}/packaging/nginx/openbridgeserver.conf" /etc/nginx/sites-available/obos-openbridgeserver.conf
+install -m 0440 "${REPO_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent
 install -m 0644 "${REPO_ROOT}/packaging/sysctl/99-obos-hardening.conf" /etc/sysctl.d/99-obos-hardening.conf
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/first-boot.sh" "${OBOS_LIB_DIR}/first-boot.sh"
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/install-openbridgeserver-app.sh" "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh"

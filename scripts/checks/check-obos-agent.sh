@@ -20,6 +20,11 @@ grep -q 'OBOS_AGENT_AUDIT_LOG' "${AGENT}" \
   || fail "agent audit log path is not configurable"
 grep -q 'write_audit_log' "${AGENT}" \
   || fail "agent does not write mutation audit entries"
+# shellcheck disable=SC2016
+grep -q 'sudo -n "${OBOSCTL}"' "${AGENT}" \
+  || fail "agent does not use non-interactive sudo for obosctl"
+grep -q 'OBOS_AGENT_OBOSCTL' "${AGENT}" \
+  || fail "agent obosctl path is not testable"
 grep -q 'require_no_extra_args' "${AGENT}" \
   || fail "agent does not reject extra arguments"
 grep -q 'require_confirm_args' "${AGENT}" \
@@ -52,6 +57,15 @@ grep -q 'action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_a
 # shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "agent is not installed during provisioning"
+grep -q 'useradd .*obos-agent' scripts/bootstrap/provision-debian.sh \
+  || fail "agent system user is not created during provisioning"
+# shellcheck disable=SC2016
+grep -q 'install -m 0440 "${REPO_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent' scripts/bootstrap/provision-debian.sh \
+  || fail "agent sudoers policy is not installed during provisioning"
+grep -q 'obos-agent ALL=(root) NOPASSWD:' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow non-interactive obosctl commands"
+grep -q '/usr/bin/obosctl mqtt-enable-lan \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow CIDR-limited MQTT enablement"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
