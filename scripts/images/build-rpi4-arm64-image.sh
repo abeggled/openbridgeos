@@ -8,6 +8,7 @@ REPO_ROOT="${OBOS_REPO_ROOT:-$(cd -- "$(dirname -- "$0")/../.." && pwd)}"
 REPO_NAME="$(basename -- "${REPO_ROOT}")"
 RELEASE_BUILD="${OBOS_RELEASE_BUILD:-0}"
 VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
+CHECK_RPI_BUILD_HOST="${REPO_ROOT}/scripts/images/check-rpi4-arm64-build-host.sh"
 CHECK_RPI_KERNEL_CONFIG="${REPO_ROOT}/scripts/images/check-rpi-kernel-config.sh"
 CHECK_RPI_MANIFEST="${REPO_ROOT}/scripts/images/check-rpi-image-manifest.sh"
 
@@ -27,6 +28,15 @@ require_root() {
 
 require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "missing required command: $1"
+}
+
+run_build_host_preflight() {
+  case "${PROFILE_FILE}" in
+    /*) profile_arg="${PROFILE_FILE}" ;;
+    *) profile_arg="$(pwd)/${PROFILE_FILE}" ;;
+  esac
+
+  (cd "${REPO_ROOT}" && OBOS_IMAGE_PROFILE_FILE="${profile_arg}" sh "${CHECK_RPI_BUILD_HOST}")
 }
 
 repo_revision() {
@@ -132,8 +142,10 @@ EOF
 require_root
 [ -f "${PROFILE_FILE}" ] || fail "missing image profile: ${PROFILE_FILE}"
 [ -f "${VALIDATE_IMAGE_PROFILES}" ] || fail "missing image profile validator: ${VALIDATE_IMAGE_PROFILES}"
+[ -f "${CHECK_RPI_BUILD_HOST}" ] || fail "missing build host preflight: ${CHECK_RPI_BUILD_HOST}"
 [ -f "${CHECK_RPI_KERNEL_CONFIG}" ] || fail "missing kernel config checker: ${CHECK_RPI_KERNEL_CONFIG}"
 [ -f "${CHECK_RPI_MANIFEST}" ] || fail "missing manifest checker: ${CHECK_RPI_MANIFEST}"
+run_build_host_preflight
 sh "${VALIDATE_IMAGE_PROFILES}" "${PROFILE_FILE}" >/dev/null
 
 case "${RELEASE_BUILD}" in

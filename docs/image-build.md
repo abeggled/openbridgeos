@@ -237,7 +237,8 @@ sh scripts/images/check-rpi4-arm64-build-host.sh
 The preflight validates the `rpi4-arm64` profile, required build tools, root
 status, `qemu-aarch64` binfmt registration, and loop-device availability. Missing
 root, binfmt, or loop support is reported as a warning so the script can still be
-used for early diagnostics on non-build hosts.
+used for early diagnostics on non-build hosts. The image builder runs this
+preflight automatically before it creates or mounts image files.
 
 Build the Raspberry Pi image:
 
@@ -247,16 +248,17 @@ sudo scripts/images/build-rpi4-arm64-image.sh
 
 By default the script:
 
-1. validates the `rpi4-arm64` profile with the shared image profile validator
-2. creates an `8G` raw image with `boot-fat32,root-ext4` partitions
-3. bootstraps Debian arm64 using `main,non-free-firmware`
-4. installs base packages plus Raspberry Pi boot packages
-5. copies this repository into `/opt/openbridgeos` inside the target filesystem
-6. runs `scripts/bootstrap/provision-debian.sh` inside the target filesystem with SSH disabled
-7. keeps first boot pending for the target appliance instance
-8. verifies the kernel config contract, including `CONFIG_BLK_DEV_NVME=y`
-9. writes `.img.xz`, `.sha256`, and `.manifest` artifacts
-10. validates the generated manifest in strict mode
+1. runs the Raspberry Pi build host preflight
+2. validates the `rpi4-arm64` profile with the shared image profile validator
+3. creates an `8G` raw image with `boot-fat32,root-ext4` partitions
+4. bootstraps Debian arm64 using `main,non-free-firmware`
+5. installs base packages plus Raspberry Pi boot packages
+6. copies this repository into `/opt/openbridgeos` inside the target filesystem
+7. runs `scripts/bootstrap/provision-debian.sh` inside the target filesystem with SSH disabled
+8. keeps first boot pending for the target appliance instance
+9. verifies the kernel config contract, including `CONFIG_BLK_DEV_NVME=y`
+10. writes `.img.xz`, `.sha256`, and `.manifest` artifacts
+11. validates the generated manifest in strict mode
 
 Verify the kernel config from a mounted or extracted Raspberry Pi image before
 publishing:
