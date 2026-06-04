@@ -13,6 +13,7 @@ intended host security posture:
 - generated per-appliance-instance TLS trust material
 - HTTPS reverse proxy exposure on TCP `443`
 - direct Open Bridge Server HTTP closed externally
+- verified HTTPS proxy health through the local CA
 - minimal network exposure
 - nftables default-drop firewall
 - SSH disabled by default
@@ -182,15 +183,16 @@ Expected:
 ```sh
 obosctl status
 obosctl health
+obosctl proxy-health
 curl --fail http://127.0.0.1:8080/api/v1/system/health
-curl --insecure --fail https://127.0.0.1/api/v1/system/health
+curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obos.local:443:127.0.0.1 https://obos.local/api/v1/system/health
 ```
 
 Expected:
 
 - obos service status visible
-- health endpoint passes locally
-- HTTPS reverse proxy reaches the health endpoint
+- localhost health endpoint passes
+- HTTPS reverse proxy health endpoint passes with local CA verification
 - Open Bridge Server is not reachable externally on LAN port `8080`
 
 ### Backup Permissions And Contents
@@ -224,7 +226,7 @@ The baseline passes when:
 - `sudo /usr/lib/obos/security-baseline.sh` exits `0`
 - manual port scan matches the expected default exposure
 - MQTT LAN opt-in and disable workflow behaves as expected
-- Open Bridge Server health endpoint passes through localhost and HTTPS proxy
+- Open Bridge Server health endpoint passes through localhost and verified HTTPS proxy
 - backup file permissions are restrictive
 - backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated
 
