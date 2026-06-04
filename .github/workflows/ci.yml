@@ -50,6 +50,9 @@ jobs:
       - name: Security defaults
         run: sh scripts/checks/check-security-defaults.sh
 
+      - name: Web UI agent contract
+        run: sh scripts/checks/check-web-ui-agent-contract.sh
+
       - name: Image profiles
         run: sh scripts/images/validate-image-profiles.sh
 

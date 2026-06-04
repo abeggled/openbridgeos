@@ -136,6 +136,9 @@ grep -q 'format=obos-status-summary-v1' scripts/obosctl \
 grep -Fq 'health_https_proxy=${health_https_proxy}' scripts/obosctl \
   || fail "obosctl status summary does not report HTTPS proxy health"
 
+grep -q 'check-web-ui-agent-contract.sh' .github/workflows/ci.yml \
+  || fail "CI does not validate the web UI agent contract"
+
 grep -q 'proxy-health)' scripts/obosctl \
   || fail "obosctl does not expose verified HTTPS proxy health"
 
