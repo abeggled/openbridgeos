@@ -33,6 +33,7 @@ Commands:
   stop              Stop open bridge server
   restart           Restart open bridge server
   update            Pull container images, restart, and verify health
+  update-summary    Print machine-readable last update status
   logs              Follow open bridge server stack logs
   backup            Create a timestamped appliance backup
   backup-list       Print machine-readable appliance backup inventory
@@ -598,6 +599,19 @@ update_app() {
   return 1
 }
 
+update_summary() {
+  echo "format=obos-update-summary-v1"
+  echo "state_file=${LAST_UPDATE_FILE}"
+
+  if [ ! -f "${LAST_UPDATE_FILE}" ]; then
+    echo "last_update_present=false"
+    return 0
+  fi
+
+  echo "last_update_present=true"
+  sed 's/^/last_update_/' "${LAST_UPDATE_FILE}"
+}
+
 case "${1:-}" in
   status)
     status
@@ -619,6 +633,9 @@ case "${1:-}" in
     ;;
   update)
     update_app
+    ;;
+  update-summary)
+    update_summary
     ;;
   logs)
     compose logs -f --tail=200

@@ -111,6 +111,15 @@ grep -q 'LAST_UPDATE_FILE=' scripts/obosctl \
 grep -q 'format=obos-update-v1' scripts/obosctl \
   || fail "obosctl update state does not declare a format"
 
+grep -q 'update-summary)' scripts/obosctl \
+  || fail "obosctl does not expose machine-readable update status"
+
+grep -q 'format=obos-update-summary-v1' scripts/obosctl \
+  || fail "obosctl update summary does not declare a format"
+
+grep -q 'last_update_present=' scripts/obosctl \
+  || fail "obosctl update summary does not report update presence"
+
 grep -q 'health_https_proxy=ok' scripts/obosctl \
   || fail "obosctl update state does not record HTTPS proxy health"
 
