@@ -3,6 +3,9 @@ set -eu
 
 STRICT_FILES="${OBOS_MANIFEST_STRICT_FILES:-0}"
 STRICT_SIGNATURE="${OBOS_RELEASE_SIGNATURE_STRICT:-0}"
+SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+CHECK_QCOW2_MANIFEST="${SCRIPT_DIR}/check-qcow2-manifest.sh"
+CHECK_RPI_IMAGE_MANIFEST="${SCRIPT_DIR}/check-rpi-image-manifest.sh"
 
 fail() {
   echo "release manifest check failed: $1" >&2
@@ -99,7 +102,12 @@ check_image_manifest() {
   [ -f "${manifest_file}" ] || fail "image manifest missing: ${manifest_file}"
   format="$(manifest_value format "${manifest_file}")"
   case "${format}" in
-    obos-qcow2-build-v1|obos-rpi-image-build-v1) ;;
+    obos-qcow2-build-v1)
+      OBOS_MANIFEST_STRICT_FILES="${STRICT_FILES}" sh "${CHECK_QCOW2_MANIFEST}" "${manifest_file}" >/dev/null
+      ;;
+    obos-rpi-image-build-v1)
+      OBOS_MANIFEST_STRICT_FILES="${STRICT_FILES}" sh "${CHECK_RPI_IMAGE_MANIFEST}" "${manifest_file}" >/dev/null
+      ;;
     *) fail "unsupported image manifest format: ${format}" ;;
   esac
 

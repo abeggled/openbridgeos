@@ -11,11 +11,14 @@ fail() {
 
 write_qcow2_manifest() {
   image_file="${TMP_DIR}/obos-amd64-vm-test.qcow2"
+  base_image_file="${TMP_DIR}/base.qcow2"
   checksum_file="${image_file}.sha256"
   manifest_file="${image_file}.manifest"
   printf 'test qcow2 image\n' > "${image_file}"
+  printf 'test qcow2 base image\n' > "${base_image_file}"
   sha256sum "${image_file}" > "${checksum_file}"
   image_sha256="$(cut -d ' ' -f 1 < "${checksum_file}")"
+  base_image_sha256="$(sha256sum "${base_image_file}" | cut -d ' ' -f 1)"
 
   cat > "${manifest_file}" <<EOF
 format=obos-qcow2-build-v1
@@ -28,9 +31,9 @@ release_build=1
 image=${image_file}
 checksum_file=${checksum_file}
 image_sha256=${image_sha256}
-base_image=${TMP_DIR}/base.qcow2
+base_image=${base_image_file}
 base_image_url=https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2
-base_image_sha256=unused
+base_image_sha256=${base_image_sha256}
 provision_script=scripts/bootstrap/provision-debian.sh
 first_boot_service=obos-first-boot.service
 repo_revision=test-revision
@@ -114,6 +117,12 @@ if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${R
   fail "missing release image file was accepted"
 fi
 mv "${image_file}.missing" "${image_file}"
+
+printf 'tampered release image\n' >> "${image_file}"
+if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null 2>&1; then
+  fail "tampered release image file was accepted"
+fi
+printf 'test qcow2 image\n' > "${image_file}"
 
 bad_checksum_file="$(awk -F= '$1 == "artifact_1_checksum_file" { print substr($0, length($1) + 2) }' "${RELEASE_MANIFEST}")"
 printf '0000000000000000000000000000000000000000000000000000000000000000  tampered\n' > "${bad_checksum_file}"
