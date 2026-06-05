@@ -42,7 +42,7 @@ require_line "Build a Debian-based x86_64 image." docs/roadmap.md
 require_line "Build ARM64 image." docs/roadmap.md
 require_line "Static obos web shell is installed" docs/roadmap.md
 require_line "Start, stop, restart, update, backup creation, and restore staging" docs/roadmap.md
-require_line "Non-destructive encrypted portable backup export/import planning exists" docs/roadmap.md
+require_line "Encrypted portable backup export creation exists" docs/roadmap.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
@@ -56,7 +56,9 @@ require_line "format=obos-mqtt-summary-v1" scripts/hardening/set-mqtt-lan-access
 require_line "format=obos-tls-summary-v1" scripts/tls/check-tls-status.sh
 require_line "format=obos-security-baseline-summary-v1" scripts/audit/security-baseline.sh
 require_line "format=obos-portable-backup-export-plan-v1" scripts/obosctl
+require_line "format=obos-portable-backup-export-v1" scripts/obosctl
 require_line "format=obos-portable-backup-import-plan-v1" scripts/obosctl
+require_line "gpg --batch --yes --pinentry-mode loopback" scripts/obosctl
 
 require_line "action=start|mutating=true|confirm=start" scripts/agent/obos-agent.sh
 require_line "action=stop|mutating=true|confirm=stop" scripts/agent/obos-agent.sh
@@ -103,11 +105,13 @@ require_line 'data-mutation-action="set-timezone"' apps/obos-web/index.html
 require_line "OBOS_IMAGE_PROFILE=amd64-vm" packaging/images/profiles/amd64-vm.env
 require_line "OBOS_IMAGE_KIND=vm-image" packaging/images/profiles/amd64-vm.env
 require_line "OBOS_OUTPUT_FORMAT=qcow2" packaging/images/profiles/amd64-vm.env
+require_line "gnupg" packaging/images/profiles/amd64-vm.env
 require_line "OBOS_IMAGE_PROFILE=rpi4-arm64" packaging/images/profiles/rpi4-arm64.env
 require_line "OBOS_IMAGE_KIND=rpi-image" packaging/images/profiles/rpi4-arm64.env
 require_line "OBOS_OUTPUT_FORMAT=raw" packaging/images/profiles/rpi4-arm64.env
 require_line "OBOS_OUTPUT_COMPRESSION=xz" packaging/images/profiles/rpi4-arm64.env
 require_line "OBOS_IMAGE_EXTENSION=img.xz" packaging/images/profiles/rpi4-arm64.env
+require_line "gnupg" packaging/images/profiles/rpi4-arm64.env
 require_line "OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=true" packaging/images/profiles/rpi4-arm64.env
 require_line "CONFIG_BLK_DEV_NVME=y" packaging/images/profiles/rpi4-arm64.env
 require_line "Raspberry Pi Network Installer" docs/image-build.md

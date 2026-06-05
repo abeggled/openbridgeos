@@ -57,6 +57,7 @@ Commands:
   backup-prune      Delete old backups after explicit confirmation
   portable-export-plan
                     Print the non-destructive encrypted backup export plan
+  portable-export  Create an encrypted portable backup export
   portable-import-plan
                     Print the non-destructive encrypted backup import plan
   restore-inspect   Inspect an appliance backup before restore
@@ -657,6 +658,95 @@ portable_export_plan() {
   echo "portable export plan: PASS"
 }
 
+sha256_file() {
+  file="$1"
+  sha256sum "${file}" | awk '{print $1}'
+}
+
+portable_export() {
+  require_root portable-export
+  backup_path="${1:-}"
+  passphrase_file="${2:-}"
+  [ -n "${backup_path}" ] || {
+    echo "portable export: backup path is required" >&2
+    return 2
+  }
+  [ -n "${passphrase_file}" ] || {
+    echo "portable export: passphrase file is required" >&2
+    return 2
+  }
+  [ -s "${passphrase_file}" ] || {
+    echo "portable export: passphrase file is missing or empty" >&2
+    return 2
+  }
+  command -v gpg >/dev/null 2>&1 || {
+    echo "portable export: gpg is required" >&2
+    return 1
+  }
+  command -v sha256sum >/dev/null 2>&1 || {
+    echo "portable export: sha256sum is required" >&2
+    return 1
+  }
+  if ! restore_inspect "${backup_path}" >/dev/null; then
+    echo "portable export: backup inspection failed" >&2
+    return 1
+  fi
+
+  install -d -m 0700 "${PORTABLE_EXPORT_DIR}"
+  work_dir="$(mktemp -d "${PORTABLE_EXPORT_DIR}/export.XXXXXXXX")"
+  chmod 0700 "${work_dir}"
+  trap 'rm -rf "${work_dir}"' EXIT INT TERM
+  created_at="$(date -u +%Y%m%dT%H%M%SZ)"
+  metadata_file="${work_dir}/metadata.txt"
+  payload_file="${work_dir}/payload.tar.gz.gpg"
+  target="${PORTABLE_EXPORT_DIR}/obos-portable-${created_at}.tar"
+
+  gpg --batch --yes --pinentry-mode loopback \
+    --passphrase-file "${passphrase_file}" \
+    --symmetric --cipher-algo AES256 --force-mdc --s2k-mode 3 --s2k-digest-algo SHA512 \
+    --output "${payload_file}" "${backup_path}"
+  chmod 0600 "${payload_file}"
+
+  appliance_id_hash="unknown"
+  if [ -f "${APPLIANCE_ID_FILE}" ] && [ -r "${APPLIANCE_ID_FILE}" ]; then
+    appliance_id_hash="$(sha256_file "${APPLIANCE_ID_FILE}")"
+  fi
+  backup_manifest_hash="$(tar -xOzf "${backup_path}" obos-backup-manifest.txt | sha256sum | awk '{print $1}')"
+  payload_hash="$(sha256_file "${payload_file}")"
+  backup_hash="$(sha256_file "${backup_path}")"
+
+  cat > "${metadata_file}" <<EOF
+format=obos-portable-backup-v1
+created_at=${created_at}
+source_backup=${backup_path}
+source_backup_sha256=${backup_hash}
+source_appliance_id_sha256=${appliance_id_hash}
+backup_manifest_sha256=${backup_manifest_hash}
+encryption_method=gpg-symmetric-aes256-s2k-sha512
+integrity_protection=gpg-mdc
+payload_file=payload.tar.gz.gpg
+payload_sha256=${payload_hash}
+payload_contains_secrets=true
+metadata_only_cleartext=true
+raw_backup_download_allowed=false
+EOF
+  chmod 0600 "${metadata_file}"
+
+  tar -cf "${target}" -C "${work_dir}" metadata.txt payload.tar.gz.gpg
+  chmod 0600 "${target}"
+  rm -rf "${work_dir}"
+  trap - EXIT INT TERM
+
+  echo "format=obos-portable-backup-export-v1"
+  echo "portable_format=obos-portable-backup-v1"
+  echo "portable_backup=${target}"
+  echo "portable_metadata=metadata.txt"
+  echo "payload_sha256=${payload_hash}"
+  echo "encryption_method=gpg-symmetric-aes256-s2k-sha512"
+  echo "integrity_protection=gpg-mdc"
+  echo "portable export: PASS"
+}
+
 portable_import_plan() {
   portable_path="${1:-}"
   [ -n "${portable_path}" ] || {
@@ -1219,6 +1309,10 @@ case "${1:-}" in
   portable-export-plan)
     shift
     portable_export_plan "${1:-}"
+    ;;
+  portable-export)
+    shift
+    portable_export "${1:-}" "${2:-}"
     ;;
   portable-import-plan)
     shift

@@ -160,6 +160,7 @@ obosctl backup-prune-plan
 obosctl backup-prune
 sudo obosctl backup-prune --confirm backup-prune
 sudo obosctl portable-export-plan <backup.tar.gz>
+sudo obosctl portable-export <backup.tar.gz> <passphrase-file>
 sudo obosctl portable-import-plan <portable-backup>
 ```
 
@@ -217,6 +218,12 @@ selected local backup with `restore-inspect`, then prints the stable
 `obos-portable-backup-export-plan-v1` format. The plan records that raw backup
 download is not allowed, authenticated encryption is required, and download may
 only happen after encryption.
+
+`portable-export` creates a passphrase-encrypted `obos-portable-backup-v1`
+archive below `/srv/obos/state/portable-backups`. It verifies the local backup
+first, encrypts the payload with GnuPG symmetric encryption using the supplied
+passphrase file, and writes cleartext metadata with backup manifest and payload
+SHA-256 hashes. The passphrase itself is never passed on the command line.
 
 `portable-import-plan` is read-only and non-destructive. It accepts only paths
 below `/srv/obos/state/portable-imports`, prints

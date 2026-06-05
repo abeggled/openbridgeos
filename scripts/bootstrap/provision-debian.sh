@@ -20,6 +20,7 @@ apt-get install -y --no-install-recommends \
   curl \
   docker-compose \
   docker.io \
+  gnupg \
   logrotate \
   nftables \
   nginx-light \
