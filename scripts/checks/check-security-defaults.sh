@@ -35,6 +35,12 @@ grep -q 'backup-list)' scripts/obosctl \
 grep -q 'backup-summary)' scripts/obosctl \
   || fail "obosctl does not expose machine-readable backup summary"
 
+grep -q 'system-summary)' scripts/obosctl \
+  || fail "obosctl does not expose machine-readable system summary"
+
+grep -q 'format=obos-system-summary-v1' scripts/obosctl \
+  || fail "obosctl system summary does not declare a format"
+
 grep -q 'backup-prune-plan)' scripts/obosctl \
   || fail "obosctl does not expose non-destructive backup pruning plan"
 
@@ -295,6 +301,9 @@ grep -q 'sudo -n "${OBOSCTL}"' scripts/agent/obos-agent.sh \
 grep -q 'action=status-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark read-only actions"
 
+grep -q 'action=system-summary|mutating=false' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark system summary as read-only"
+
 grep -q 'action=update-rollback-plan|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark update rollback planning as read-only"
 
@@ -336,6 +345,9 @@ grep -q 'action=start|mutating=true|confirm=start' scripts/agent/obos-agent.sh \
 
 grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow update rollback planning"
+
+grep -q '/usr/bin/obosctl system-summary' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow system summary"
 
 grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow backup summary"

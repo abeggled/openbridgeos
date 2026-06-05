@@ -61,6 +61,10 @@
             <span>Rollback plan</span>
             <strong data-agent-field="update-rollback-plan:backup_present">pending</strong>
           </article>
+          <article>
+            <span>Network</span>
+            <strong data-agent-field="system-summary:default_route_present">pending</strong>
+          </article>
         </div>
       </section>
 
@@ -99,6 +103,18 @@
             <div><dt>Plain listener</dt><dd data-agent-field="mqtt-summary:plain_bind">pending</dd></div>
             <div><dt>WebSocket listener</dt><dd data-agent-field="mqtt-summary:websocket_bind">pending</dd></div>
             <div><dt>Firewall source</dt><dd data-agent-field="mqtt-summary:source_cidr">pending</dd></div>
+          </dl>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <h2>Host Basics</h2>
+            <button type="button" disabled>Configure</button>
+          </div>
+          <dl>
+            <div><dt>Hostname</dt><dd data-agent-field="system-summary:hostname">pending</dd></div>
+            <div><dt>Timezone</dt><dd data-agent-field="system-summary:timezone">pending</dd></div>
+            <div><dt>Primary interface</dt><dd data-agent-field="system-summary:primary_interface">pending</dd></div>
           </dl>
         </article>
 

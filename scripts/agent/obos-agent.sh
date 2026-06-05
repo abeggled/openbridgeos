@@ -15,6 +15,7 @@ Usage: obos-agent <action>
 Read-only actions:
   actions
   status-summary
+  system-summary
   update-summary
   update-rollback-plan
   backup-summary
@@ -172,6 +173,7 @@ print_actions() {
 format=obos-agent-actions-v1
 action=actions|mutating=false
 action=status-summary|mutating=false
+action=system-summary|mutating=false
 action=update-summary|mutating=false
 action=update-rollback-plan|mutating=false
 action=backup-summary|mutating=false
@@ -279,6 +281,10 @@ case "${1:-}" in
   status-summary)
     require_no_extra_args "$@"
     run_obosctl status-summary "${TIMEOUT_SECONDS}" false status-summary
+    ;;
+  system-summary)
+    require_no_extra_args "$@"
+    run_obosctl system-summary "${TIMEOUT_SECONDS}" false system-summary
     ;;
   update-summary)
     require_no_extra_args "$@"

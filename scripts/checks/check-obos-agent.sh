@@ -40,6 +40,10 @@ grep -q 'status-summary)' "${AGENT}" \
   || fail "status-summary action missing"
 grep -q 'action=status-summary|mutating=false' "${AGENT}" \
   || fail "status-summary action is not listed as read-only"
+grep -q 'system-summary)' "${AGENT}" \
+  || fail "system-summary action missing"
+grep -q 'action=system-summary|mutating=false' "${AGENT}" \
+  || fail "system-summary action is not listed as read-only"
 grep -q 'update-summary)' "${AGENT}" \
   || fail "update-summary action missing"
 grep -q 'update-rollback-plan)' "${AGENT}" \
@@ -113,6 +117,8 @@ grep -q 'install -m 0644 "${REPO_ROOT}/packaging/logrotate/obos-agent" /etc/logr
   || fail "agent audit logrotate policy is not installed during provisioning"
 grep -q 'obos-agent ALL=(root) NOPASSWD:' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow non-interactive obosctl commands"
+grep -q '/usr/bin/obosctl system-summary' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow system summary"
 grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow update rollback planning"
 grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
@@ -148,6 +154,11 @@ cat > "${tmp_dir}/obosctl" <<'EOF'
 case "$1" in
   status-summary)
     echo "format=obos-status-summary-v1"
+    exit 0
+    ;;
+  system-summary)
+    echo "format=obos-system-summary-v1"
+    echo "hostname=obos-test"
     exit 0
     ;;
   update-rollback-plan)
@@ -215,6 +226,10 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary |
   grep -q 'stdout=format=obos-status-summary-v1' \
   || fail "agent smoke test did not wrap command stdout"
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" system-summary |
+  grep -q 'stdout=hostname=obos-test' \
+  || fail "agent did not expose system summary"
 
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" update-rollback-plan |
   grep -q 'stdout=format=obos-update-rollback-plan-v1' \

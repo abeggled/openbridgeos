@@ -19,6 +19,7 @@ ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 READ_ONLY_ACTIONS = {
     "actions",
     "status-summary",
+    "system-summary",
     "update-summary",
     "update-rollback-plan",
     "backup-summary",
