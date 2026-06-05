@@ -64,6 +64,10 @@ grep -q 'logs-summary)' "${AGENT}" \
   || fail "logs-summary action missing"
 grep -q 'action=logs-summary|mutating=false' "${AGENT}" \
   || fail "logs-summary action is not listed as read-only"
+grep -q 'logs-tail)' "${AGENT}" \
+  || fail "logs-tail action missing"
+grep -q 'action=logs-tail|mutating=false' "${AGENT}" \
+  || fail "logs-tail action is not listed as read-only"
 grep -q 'portable-export-plan)' "${AGENT}" \
   || fail "portable-export-plan action missing"
 grep -q 'action=portable-export-plan|mutating=false|required_arg=backup-path' "${AGENT}" \
@@ -137,6 +141,8 @@ grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup prune planning"
 grep -q '/usr/bin/obosctl logs-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow log summary"
+grep -q '/usr/bin/obosctl logs-tail' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow bounded log tail"
 grep -q '/usr/bin/obosctl portable-export-plan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow portable export planning"
 grep -q '/usr/bin/obosctl portable-import-plan \*' packaging/sudoers/obos-agent \
@@ -190,6 +196,12 @@ case "$1" in
   logs-summary)
     echo "format=obos-logs-summary-v1"
     echo "raw_logs_exposed=false"
+    echo "bounded_logs_exposed=true"
+    exit 0
+    ;;
+  logs-tail)
+    echo "format=obos-logs-tail-v1"
+    echo "log=journal|test log line"
     exit 0
     ;;
   portable-export-plan)
@@ -270,6 +282,10 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune-plan |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" logs-summary |
   grep -q 'stdout=raw_logs_exposed=false' \
   || fail "agent did not expose metadata-only log summary"
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" logs-tail |
+  grep -q 'stdout=log=journal|test log line' \
+  || fail "agent did not expose bounded log tail"
 
 OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-export-plan /srv/obos/backups/obos-openbridgeserver-20260605T080000Z.tar.gz |
   grep -q 'stdout=format=obos-portable-backup-export-plan-v1' \

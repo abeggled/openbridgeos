@@ -47,6 +47,7 @@ Commands:
                     Print the non-destructive rollback plan for the last update
   logs              Follow open bridge server stack logs
   logs-summary      Print metadata-only log availability status
+  logs-tail         Print bounded recent service and container logs
   backup            Create a timestamped appliance backup
   backup-summary    Print machine-readable latest backup status
   backup-list       Print machine-readable appliance backup inventory
@@ -135,6 +136,8 @@ logs_summary() {
   echo "service=${SERVICE_NAME}"
   echo "app_dir=${APP_DIR}"
   echo "raw_logs_exposed=false"
+  echo "bounded_logs_exposed=true"
+  echo "bounded_log_line_limit=100"
 
   if command -v journalctl >/dev/null 2>&1; then
     echo "journalctl_present=true"
@@ -149,6 +152,31 @@ logs_summary() {
     echo "docker_present=true"
   else
     echo "docker_present=false"
+  fi
+}
+
+logs_tail() {
+  line_limit=100
+  echo "format=obos-logs-tail-v1"
+  echo "service=${SERVICE_NAME}"
+  echo "app_dir=${APP_DIR}"
+  echo "line_limit=${line_limit}"
+  echo "mode=bounded-tail"
+  echo "section=journal"
+
+  if command -v journalctl >/dev/null 2>&1; then
+    journalctl --quiet -u "${SERVICE_NAME}" -n "${line_limit}" --no-pager -o short-iso 2>/dev/null |
+      sed 's/^/log=journal|/'
+  else
+    echo "log=journal|unavailable: journalctl missing"
+  fi
+
+  echo "section=compose"
+  if [ -d "${APP_DIR}" ] && [ -f "${ENV_FILE}" ] && command -v docker >/dev/null 2>&1; then
+    compose logs --no-color --tail="${line_limit}" 2>/dev/null |
+      sed 's/^/log=compose|/'
+  else
+    echo "log=compose|unavailable: app files or docker missing"
   fi
 }
 
@@ -1089,6 +1117,9 @@ case "${1:-}" in
     ;;
   logs-summary)
     logs_summary
+    ;;
+  logs-tail)
+    logs_tail
     ;;
   backup)
     backup

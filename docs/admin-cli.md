@@ -29,6 +29,7 @@ sudo obosctl backup
 obosctl backup-list
 obosctl logs
 sudo obosctl logs-summary
+sudo obosctl logs-tail
 sudo obosctl portable-export-plan <backup.tar.gz>
 sudo obosctl portable-import-plan <portable-backup>
 sudo obosctl tls-generate
@@ -91,6 +92,7 @@ obosctl proxy-health
 ```sh
 obosctl logs
 sudo obosctl logs-summary
+sudo obosctl logs-tail
 ```
 
 `logs` follows the open bridge server Docker Compose logs for an interactive
@@ -100,6 +102,10 @@ administrator.
 the web UI. It is metadata-only and reports whether raw logs are exposed,
 whether `journalctl` and Docker are available, and how many journal entries were
 seen for the service in the last hour. It does not print raw log lines.
+
+`logs-tail` prints the stable `obos-logs-tail-v1` format with a bounded recent
+tail from the open bridge server systemd unit and Compose stack. It does not
+accept paths, queries, or a custom shell command.
 
 ## Update
 

@@ -29,6 +29,7 @@ READ_ONLY_ACTIONS = {
     "backup-list",
     "backup-prune-plan",
     "logs-summary",
+    "logs-tail",
     "restore-stage-summary",
     "mqtt-summary",
     "tls-summary",

@@ -38,6 +38,8 @@ grep -q '"backup-list"' "${BRIDGE}" \
   || fail "backup-list is not exposed by the read-only HTTP bridge"
 grep -q '"logs-summary"' "${BRIDGE}" \
   || fail "logs-summary is not exposed by the read-only HTTP bridge"
+grep -q '"logs-tail"' "${BRIDGE}" \
+  || fail "logs-tail is not exposed by the read-only HTTP bridge"
 grep -q '"update-rollback-plan"' "${BRIDGE}" \
   || fail "update-rollback-plan is not exposed by the read-only HTTP bridge"
 grep -q 'OBOS_AGENT_PATH' "${BRIDGE}" \
@@ -169,6 +171,20 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  logs-tail)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=logs-tail
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-logs-tail-v1
+stdout=log=journal|test log line
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   backup)
     [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "backup" ] || exit 2
     cat <<'RESPONSE'
@@ -249,6 +265,10 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/update-rollback-
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/logs-summary |
   grep -q 'stdout=raw_logs_exposed=false' \
   || fail "HTTP bridge did not expose metadata-only logs summary"
+
+curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/logs-tail |
+  grep -q 'stdout=log=journal|test log line' \
+  || fail "HTTP bridge did not expose bounded logs tail"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

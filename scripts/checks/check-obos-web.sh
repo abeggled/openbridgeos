@@ -90,8 +90,17 @@ grep -q 'data-agent-field="agent-audit-summary:' "${INDEX}" \
 grep -q 'data-agent-field="logs-summary:raw_logs_exposed"' "${INDEX}" \
   || fail "web UI does not expose log exposure status"
 
+grep -q 'data-agent-field="logs-summary:bounded_logs_exposed"' "${INDEX}" \
+  || fail "web UI does not expose bounded log availability"
+
 grep -q 'data-agent-field="logs-summary:journal_entry_count_last_hour"' "${INDEX}" \
   || fail "web UI does not expose recent journal entry count"
+
+grep -q 'data-load-logs' "${INDEX}" \
+  || fail "web UI does not expose bounded log loading control"
+
+grep -q 'data-log-output' "${INDEX}" \
+  || fail "web UI does not expose bounded log output"
 
 grep -q '<script src="./app.js" defer></script>' "${INDEX}" \
   || fail "web UI does not load app.js"
@@ -119,6 +128,15 @@ grep -q '/obos/api/v1/actions/' "${JS}" \
 
 grep -q 'parseAgentResponse' "${JS}" \
   || fail "web UI does not parse the agent response envelope"
+
+grep -q 'agentStdoutLines' "${JS}" \
+  || fail "web UI does not parse agent stdout lines"
+
+grep -q 'logs-tail' "${JS}" \
+  || fail "web UI does not request bounded log tail"
+
+grep -q 'renderLogs' "${JS}" \
+  || fail "web UI does not render bounded log output"
 
 grep -q 'data-agent-field' "${JS}" \
   || fail "web UI script does not target agent fields"
@@ -149,6 +167,9 @@ grep -q 'grid-template-columns' "${CSS}" \
 
 grep -q '.button-row' "${CSS}" \
   || fail "web UI CSS does not define action button row layout"
+
+grep -q '.log-viewer' "${CSS}" \
+  || fail "web UI CSS does not define bounded log viewer"
 
 grep -q 'border-radius: var(--radius)' "${CSS}" \
   || fail "web UI CSS does not use bounded card radius"
