@@ -4,6 +4,7 @@ set -eu
 WEB_DIR="apps/obos-web"
 INDEX="${WEB_DIR}/index.html"
 CSS="${WEB_DIR}/styles.css"
+JS="${WEB_DIR}/app.js"
 
 fail() {
   echo "obos-web check failed: $1" >&2
@@ -12,6 +13,7 @@ fail() {
 
 [ -f "${INDEX}" ] || fail "index.html missing"
 [ -f "${CSS}" ] || fail "styles.css missing"
+[ -f "${JS}" ] || fail "app.js missing"
 
 grep -q '<main class="shell">' "${INDEX}" \
   || fail "web UI does not define the appliance shell"
@@ -40,6 +42,24 @@ grep -q 'data-agent-field="security-summary:' "${INDEX}" \
 grep -q 'data-agent-field="agent-audit-summary:' "${INDEX}" \
   || fail "web UI does not expose agent audit summary placeholders"
 
+grep -q '<script src="./app.js" defer></script>' "${INDEX}" \
+  || fail "web UI does not load app.js"
+
+grep -q 'data-refresh-status' "${INDEX}" \
+  || fail "web UI does not expose refresh control"
+
+grep -q '/obos/api/v1/actions/' "${JS}" \
+  || fail "web UI does not call the obos agent HTTP bridge"
+
+grep -q 'parseAgentResponse' "${JS}" \
+  || fail "web UI does not parse the agent response envelope"
+
+grep -q 'data-agent-field' "${JS}" \
+  || fail "web UI script does not target agent fields"
+
+grep -q 'unsupportedActions' "${JS}" \
+  || fail "web UI script does not keep unsupported actions explicit"
+
 grep -q 'grid-template-columns' "${CSS}" \
   || fail "web UI CSS does not define stable grid layout"
 
@@ -60,6 +80,10 @@ grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR
 # shellcheck disable=SC2016
 grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR}/styles.css"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web styles"
+
+# shellcheck disable=SC2016
+grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/app.js" "${OBOS_WEB_DIR}/app.js"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install obos-web script"
 
 grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not expose obos-web under /obos/"

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>open bridge operating system</title>
     <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" defer></script>
   </head>
   <body>
     <main class="shell">
@@ -35,7 +36,7 @@
             <p class="eyebrow">Status</p>
             <h2 id="status-title">Appliance Health</h2>
           </div>
-          <button class="icon-button" type="button" aria-label="Refresh status" title="Refresh status">
+          <button class="icon-button" type="button" aria-label="Refresh status" title="Refresh status" data-refresh-status>
             <span aria-hidden="true">R</span>
           </button>
         </div>
@@ -63,7 +64,7 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>Backups</h2>
-            <button type="button">Create Backup</button>
+            <button type="button" disabled>Create Backup</button>
           </div>
           <dl>
             <div><dt>Latest backup</dt><dd data-agent-field="backup-summary:latest_backup_present">pending</dd></div>
@@ -75,7 +76,7 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>Restore</h2>
-            <button type="button">Stage Backup</button>
+            <button type="button" disabled>Stage Backup</button>
           </div>
           <dl>
             <div><dt>Stage directory</dt><dd data-agent-field="restore-stage-summary:stage_dir_present">pending</dd></div>
@@ -87,7 +88,7 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>MQTT Exposure</h2>
-            <button type="button">Configure</button>
+            <button type="button" disabled>Configure</button>
           </div>
           <dl>
             <div><dt>Plain listener</dt><dd data-agent-field="mqtt-summary:plain_bind">pending</dd></div>
@@ -99,7 +100,7 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>TLS Trust</h2>
-            <button type="button">Export</button>
+            <button type="button" disabled>Export</button>
           </div>
           <dl>
             <div><dt>Local CA</dt><dd data-agent-field="tls-summary:ca_present">pending</dd></div>
@@ -111,7 +112,7 @@
         <article class="panel wide">
           <div class="panel-heading">
             <h2>Security Baseline</h2>
-            <button type="button">Run Audit</button>
+            <button type="button" disabled>Run Audit</button>
           </div>
           <dl class="inline-list">
             <div><dt>Result</dt><dd data-agent-field="security-summary:result">pending</dd></div>
