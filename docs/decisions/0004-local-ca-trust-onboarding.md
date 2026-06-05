@@ -2,9 +2,9 @@
 
 ## Status
 
-Accepted as release direction. Trust material helper scripts exist; automatic
-first-boot generation, reverse proxy integration, and UI onboarding are not yet
-implemented.
+Accepted as release direction. Trust material helper scripts, automatic
+first-boot generation, reverse proxy integration, boot-accessible trust export,
+and web console trust export are implemented for the technical MVP.
 
 ## Context
 
@@ -119,8 +119,8 @@ violate the per-appliance-instance trust model.
 
 ## Open Questions
 
-- Should the local CA be generated automatically on first boot or during an
-  authenticated first-run onboarding step?
+- Should future onboarding rotate or replace the automatically generated local
+  CA during an authenticated first-run flow?
 - How should IP address SANs be renewed when DHCP leases change?
 - Should obos generate a QR code for the fingerprint and root CA download URL?
 - Should certificate rotation be available in `obosctl`, web UI, or both?
