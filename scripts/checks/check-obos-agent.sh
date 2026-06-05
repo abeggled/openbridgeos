@@ -42,6 +42,10 @@ grep -q 'action=status-summary|mutating=false' "${AGENT}" \
   || fail "status-summary action is not listed as read-only"
 grep -q 'update-summary)' "${AGENT}" \
   || fail "update-summary action missing"
+grep -q 'update-rollback-plan)' "${AGENT}" \
+  || fail "update-rollback-plan action missing"
+grep -q 'action=update-rollback-plan|mutating=false' "${AGENT}" \
+  || fail "update-rollback-plan action is not listed as read-only"
 grep -q 'backup-list)' "${AGENT}" \
   || fail "backup-list action missing"
 grep -q 'mqtt-summary)' "${AGENT}" \
@@ -69,6 +73,8 @@ grep -q 'install -m 0644 "${REPO_ROOT}/packaging/logrotate/obos-agent" /etc/logr
   || fail "agent audit logrotate policy is not installed during provisioning"
 grep -q 'obos-agent ALL=(root) NOPASSWD:' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow non-interactive obosctl commands"
+grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow update rollback planning"
 grep -q '/usr/bin/obosctl mqtt-enable-lan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow CIDR-limited MQTT enablement"
 grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
@@ -84,6 +90,10 @@ cat > "${tmp_dir}/obosctl" <<'EOF'
 case "$1" in
   status-summary)
     echo "format=obos-status-summary-v1"
+    exit 0
+    ;;
+  update-rollback-plan)
+    echo "format=obos-update-rollback-plan-v1"
     exit 0
     ;;
   start)
@@ -109,6 +119,10 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" status-summary |
   grep -q 'stdout=format=obos-status-summary-v1' \
   || fail "agent smoke test did not wrap command stdout"
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" update-rollback-plan |
+  grep -q 'stdout=format=obos-update-rollback-plan-v1' \
+  || fail "agent did not expose update rollback plan"
 
 sh "${AGENT}" actions |
   grep -q 'format=obos-agent-actions-v1' \

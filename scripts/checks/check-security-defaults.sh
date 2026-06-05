@@ -214,8 +214,14 @@ grep -q 'sudo -n "${OBOSCTL}"' scripts/agent/obos-agent.sh \
 grep -q 'action=status-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark read-only actions"
 
+grep -q 'action=update-rollback-plan|mutating=false' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark update rollback planning as read-only"
+
 grep -q 'action=start|mutating=true|confirm=start' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark confirmed mutations"
+
+grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow update rollback planning"
 
 grep -q 'require_no_extra_args' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not reject extra arguments"
