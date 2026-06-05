@@ -13,6 +13,42 @@ fail() {
 grep -q 'APPLIANCE_ID_FILE=' scripts/bootstrap/first-boot.sh \
   || fail "appliance identifier path is not defined on first boot"
 
+grep -q 'WEB_AUTH_SCRIPT=' scripts/bootstrap/first-boot.sh \
+  || fail "web console auth is not generated on first boot"
+
+grep -q 'generate-web-auth.sh' scripts/bootstrap/provision-debian.sh \
+  || fail "web console auth helper is not installed during provisioning"
+
+grep -q 'WEB_AUTH_FILE=' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth helper does not define a password file"
+
+grep -q 'WEB_AUTH_INFO_FILE=' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth helper does not define credential record file"
+
+grep -q 'openssl passwd -apr1 -stdin' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth helper does not hash passwords for nginx basic auth"
+
+grep -q 'install -m 0640' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth password file is not installed with restrictive permissions"
+
+grep -q 'install -m 0600' scripts/auth/generate-web-auth.sh \
+  || fail "web console credential record is not installed with restrictive permissions"
+
+grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not require auth for obos web/API"
+
+grep -q 'auth_basic_user_file /etc/obos/web.htpasswd;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not use generated obos web credentials"
+
+grep -q 'WEB_AUTH_INFO_FILE=' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not read web console credentials"
+
+grep -q 'OBOS-ONBOARDING.txt' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not define an onboarding file"
+
+grep -q 'initial web console password' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not label the initial web console password"
+
 # shellcheck disable=SC2016
 grep -Fq 'uuid > "${APPLIANCE_ID_FILE}"' scripts/bootstrap/first-boot.sh \
   || fail "appliance identifier is not generated on first boot"
@@ -594,6 +630,27 @@ grep -q -- '--resolve' scripts/obosctl \
 
 grep -q 'APPLIANCE_ID_FILE=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit appliance identifier"
+
+grep -q 'WEB_AUTH_FILE=' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit web console auth file"
+
+# shellcheck disable=SC2016
+grep -q 'check_file_mode "${WEB_AUTH_FILE}" 640' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit web console auth file permissions"
+
+# shellcheck disable=SC2016
+grep -q 'check_file_mode "${WEB_AUTH_INFO_FILE}" 600' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit web console credential record permissions"
+
+grep -q 'WEB_AUTH_URL=' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not define web console auth probe URL"
+
+grep -q 'check_web_auth' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not verify web console auth challenge"
+
+# shellcheck disable=SC2016
+grep -q -- '--user "${web_user}:${web_password}"' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not verify generated web console credentials"
 
 grep -q 'AGENT_AUDIT_LOG=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit agent audit log"

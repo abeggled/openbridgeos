@@ -53,6 +53,8 @@ Current implementation status:
   `/obos/`.
 - `obos-agent-http.service` exposes selected read-only `obos-agent` actions and
   confirmed mutations below `/obos/api/` on the same HTTPS origin.
+- `/obos/` and `/obos/api/` are protected by per-appliance-instance nginx Basic
+  Auth credentials generated during first boot.
 - The web shell consumes read-only status, update, backup, restore staging,
   host basics, logs metadata, MQTT, TLS, security baseline, and agent audit
   summary fields.

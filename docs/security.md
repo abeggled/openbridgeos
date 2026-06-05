@@ -41,6 +41,8 @@ Target permissions:
 /etc/obos/                  root:root 0750
 /etc/obos/appliance-id      root:root 0644
 /etc/obos/apps/*.env        root:root 0600
+/etc/obos/web.htpasswd      root:www-data 0640
+/etc/obos/web-admin.env     root:root 0600
 /etc/obos/tls/              root:root 0700
 /srv/obos/                  root:root 0750
 /srv/obos/state/            root:root 0750
@@ -55,7 +57,8 @@ Default external exposure is minimal:
 - no external direct open bridge server HTTP
 - no external SSH
 - MQTT external access disabled by default
-- obos administration UI once implemented, behind the same TLS boundary
+- obos administration UI behind the same TLS boundary and protected by
+  per-appliance-instance Basic Auth
 
 open bridge server binds to localhost behind nginx:
 
@@ -65,6 +68,12 @@ open bridge server binds to localhost behind nginx:
 
 The host firewall uses nftables with inbound default-drop. It allows loopback,
 established traffic, ICMP/IPv6 ICMP, DHCP renewals, and TCP `443`.
+
+nginx protects `/obos/` and `/obos/api/` with Basic Auth credentials generated
+during first boot. The initial credential record is stored root-only in
+`/etc/obos/web-admin.env`. Headless images may also export `OBOS-ONBOARDING.txt`
+to a boot-accessible partition; that file contains the initial web console
+password and should be removed after onboarding.
 
 MQTT remains bound to localhost by default:
 
@@ -104,6 +113,7 @@ Provisioning applies:
 
 - nftables firewall rules from `packaging/nftables/obos.nft`
 - nginx TLS reverse proxy config from `packaging/nginx/openbridgeserver.conf`
+- generated web console authentication files and nginx Basic Auth config
 - sysctl baseline from `packaging/sysctl/99-obos-hardening.conf`
 - unattended Debian security updates without automatic reboots
 - SSH service disablement when `ssh.service` exists

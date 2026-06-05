@@ -57,6 +57,7 @@ install -m 0440 "${REPO_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-
 install -m 0644 "${REPO_ROOT}/packaging/sysctl/99-obos-hardening.conf" /etc/sysctl.d/99-obos-hardening.conf
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/first-boot.sh" "${OBOS_LIB_DIR}/first-boot.sh"
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/install-openbridgeserver-app.sh" "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh"
+install -m 0755 "${REPO_ROOT}/scripts/auth/generate-web-auth.sh" "${OBOS_LIB_DIR}/generate-web-auth.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/apply-host-hardening.sh" "${OBOS_LIB_DIR}/apply-host-hardening.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/enable-ssh.sh" "${OBOS_LIB_DIR}/enable-ssh.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/set-mqtt-lan-access.sh" "${OBOS_LIB_DIR}/set-mqtt-lan-access.sh"

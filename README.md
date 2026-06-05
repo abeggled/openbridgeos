@@ -41,7 +41,7 @@ Version 0.1 is planned as:
 - open bridge server and Mosquitto as the primary managed app
 - persistent application data below `/srv/obos`
 - a small local `obos-agent` service
-- a web UI for appliance administration
+- a Basic Auth protected web UI for appliance administration
 
 See [docs/architecture.md](docs/architecture.md),
 [docs/security.md](docs/security.md),
@@ -78,6 +78,11 @@ sudo /usr/lib/obos/mvp-runtime-readiness.sh
 ```
 
 See [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).
+
+The web console and `/obos/api/` bridge are protected with per-appliance-instance
+Basic Auth credentials generated on first boot. On headless images, the initial
+credential may be written to the boot-accessible `OBOS-ONBOARDING.txt` file;
+remove that file after onboarding.
 
 ## TLS Trust
 

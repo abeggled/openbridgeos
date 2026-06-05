@@ -30,6 +30,7 @@ intended host security posture:
 - private restore stage inspection
 - non-destructive restore apply planning
 - local agent sudoers, logrotate, and mutation audit boundary
+- generated web console Basic Auth boundary
 
 ## Test Setup
 
@@ -178,6 +179,7 @@ Expected default baseline:
 
 ```sh
 sudo stat -c '%a %U:%G %n' /etc/obos /etc/obos/appliance-id /etc/obos/apps/openbridgeserver.env /etc/obos/tls
+sudo stat -c '%a %U:%G %n' /etc/obos/web.htpasswd /etc/obos/web-admin.env
 sudo grep -E '^[0-9a-f-]{36}$' /etc/obos/appliance-id
 sudo grep -E '^(OBS_JWT_SECRET|OBS_MQTT_PASSWORD|OBS_HTTP_HOST_PORT)=' /etc/obos/apps/openbridgeserver.env
 sudo obosctl tls-info
@@ -189,6 +191,8 @@ Expected:
 - appliance identifier file mode `644`
 - app env file mode `600`
 - `/etc/obos/tls` mode `700`
+- `/etc/obos/web.htpasswd` mode `640`
+- `/etc/obos/web-admin.env` mode `600`
 - appliance identifier present and UUID-shaped
 - JWT secret present and non-empty
 - MQTT password present and non-empty
@@ -216,6 +220,7 @@ obosctl health
 obosctl proxy-health
 curl --fail http://127.0.0.1:8080/api/v1/system/health
 curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obos.local:443:127.0.0.1 https://obos.local/api/v1/system/health
+curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obos.local:443:127.0.0.1 https://obos.local/obos/ && false || true
 ```
 
 Expected:
@@ -224,6 +229,7 @@ Expected:
 - localhost health endpoint passes
 - HTTPS reverse proxy health endpoint passes with local CA verification
 - open bridge server is not reachable externally on LAN port `8080`
+- `/obos/` and `/obos/api/` require generated web console credentials
 
 ### Update State
 
@@ -297,6 +303,7 @@ The baseline passes when:
 - open bridge server health endpoint passes through localhost and verified HTTPS proxy
 - successful update records `/srv/obos/state/last-update`
 - backup file permissions are restrictive
+- web console Basic Auth files are present with restrictive permissions
 - backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated
 - `obosctl restore-inspect` passes for the latest backup
 - `obosctl restore-plan` passes for the latest backup
