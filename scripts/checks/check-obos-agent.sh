@@ -64,6 +64,12 @@ grep -q 'backup-prune)' "${AGENT}" \
   || fail "backup-prune action missing"
 grep -q 'action=backup-prune|mutating=true|confirm=backup-prune' "${AGENT}" \
   || fail "backup-prune action is not listed as a confirmed mutation"
+grep -q 'restore-stage)' "${AGENT}" \
+  || fail "restore-stage action missing"
+grep -q 'action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path' "${AGENT}" \
+  || fail "restore-stage action is not listed as a confirmed mutation with backup path"
+grep -q 'validate_backup_path' "${AGENT}" \
+  || fail "restore-stage backup path is not validated before sudo"
 grep -q 'mqtt-summary)' "${AGENT}" \
   || fail "mqtt-summary action missing"
 grep -q 'tls-summary)' "${AGENT}" \
@@ -103,6 +109,8 @@ grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow restore stage summary"
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow confirmed backup pruning"
+grep -q '/usr/bin/obosctl restore-stage \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow checked restore staging"
 grep -q '/usr/bin/obosctl agent-audit-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow agent audit summary"
 grep -q '/usr/bin/obosctl mqtt-enable-lan \*' packaging/sudoers/obos-agent \
@@ -141,6 +149,10 @@ case "$1" in
   backup-prune)
     [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "backup-prune" ] || exit 2
     echo "format=obos-backup-prune-v1"
+    exit 0
+    ;;
+  restore-stage)
+    echo "restore-staged:${2:-missing}"
     exit 0
     ;;
   agent-audit-summary)
@@ -223,6 +235,17 @@ OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}
 
 grep -q 'format=obos-agent-audit-v1|.*|action=backup-prune|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
   || fail "agent did not audit confirmed backup prune"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage /srv/obos/backups/obos-openbridgeserver-20260605T080000Z.tar.gz --confirm restore-stage |
+  grep -q 'stdout=restore-staged:/srv/obos/backups/obos-openbridgeserver-20260605T080000Z.tar.gz' \
+  || fail "agent did not run confirmed restore staging"
+
+grep -q 'format=obos-agent-audit-v1|.*|action=restore-stage|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not audit confirmed restore staging"
+
+if OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage /tmp/evil.tar.gz --confirm restore-stage >/dev/null 2>&1; then
+  fail "agent accepted restore staging backup path outside backup dir"
+fi
 
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 192.168.1.0/24 --confirm mqtt-enable-lan |
   grep -q 'stdout=mqtt-enabled:192.168.1.0/24' \

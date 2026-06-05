@@ -67,6 +67,7 @@ obos-agent restart --confirm restart
 obos-agent update --confirm update
 obos-agent backup --confirm backup
 obos-agent backup-prune --confirm backup-prune
+obos-agent restore-stage <backup.tar.gz> --confirm restore-stage
 obos-agent tls-generate --confirm tls-generate
 obos-agent tls-export --confirm tls-export
 obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
@@ -78,6 +79,8 @@ Confirmed mutating actions append metadata-only audit entries using format
 and timeout state; command stdout, stderr, secrets, and file contents are not
 written to the audit log. The provisioned audit log is rotated by logrotate and
 new log files are created as `0640 obos-agent:obos-agent`.
+Restore staging accepts only appliance backup archives below the configured
+backup directory before crossing the sudo boundary.
 
 ## Restore Workflow
 

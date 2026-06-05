@@ -2,6 +2,7 @@
 set -eu
 
 OBOSCTL="${OBOS_AGENT_OBOSCTL:-/usr/bin/obosctl}"
+BACKUP_DIR="${OBOS_AGENT_BACKUP_DIR:-/srv/obos/backups}"
 TIMEOUT_SECONDS="${OBOS_AGENT_TIMEOUT_SECONDS:-30}"
 MUTATION_TIMEOUT_SECONDS="${OBOS_AGENT_MUTATION_TIMEOUT_SECONDS:-600}"
 AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-/srv/obos/state/agent/obos-agent-audit.log}"
@@ -31,6 +32,7 @@ Mutating actions:
   update --confirm update
   backup --confirm backup
   backup-prune --confirm backup-prune
+  restore-stage <backup.tar.gz> --confirm restore-stage
   tls-generate --confirm tls-generate
   tls-export --confirm tls-export
   mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
@@ -90,6 +92,31 @@ validate_source_cidr() {
   fail "mqtt-enable-lan source CIDR is invalid"
 }
 
+validate_backup_path() {
+  backup_path="$1"
+  case "${backup_path}" in
+    "${BACKUP_DIR}"/obos-openbridgeserver-*.tar.gz) ;;
+    *) fail "restore-stage backup path must be below ${BACKUP_DIR}" ;;
+  esac
+  case "${backup_path}" in
+    *'/../'*|*'/..'|'../'*|..)
+      fail "restore-stage backup path must not contain parent traversal"
+      ;;
+  esac
+}
+
+require_restore_stage_args() {
+  action="$1"
+  [ "$#" -eq 4 ] || fail "${action} requires: <backup.tar.gz> --confirm ${action}"
+  [ "${3:-}" = "--confirm" ] || fail "${action} requires: <backup.tar.gz> --confirm ${action}"
+  [ "${4:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
+  RESTORE_BACKUP_PATH="${2:-}"
+  case "${RESTORE_BACKUP_PATH}" in
+    ""|-*) fail "${action} backup path is invalid" ;;
+  esac
+  validate_backup_path "${RESTORE_BACKUP_PATH}"
+}
+
 require_mqtt_enable_args() {
   action="$1"
   case "$#" in
@@ -134,6 +161,7 @@ action=stop|mutating=true|confirm=stop
 action=restart|mutating=true|confirm=restart
 action=update|mutating=true|confirm=update
 action=backup|mutating=true|confirm=backup
+action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path
 action=tls-generate|mutating=true|confirm=tls-generate
 action=tls-export|mutating=true|confirm=tls-export
 action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_arg=source-cidr
@@ -285,6 +313,10 @@ case "${1:-}" in
   backup)
     require_confirm_args "$@"
     run_obosctl backup "${MUTATION_TIMEOUT_SECONDS}" true backup
+    ;;
+  restore-stage)
+    require_restore_stage_args "$@"
+    run_obosctl restore-stage "${MUTATION_TIMEOUT_SECONDS}" true restore-stage "${RESTORE_BACKUP_PATH}"
     ;;
   tls-generate)
     require_confirm_args "$@"
