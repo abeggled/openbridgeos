@@ -33,7 +33,8 @@ On first boot, obos should:
 - mark first boot as complete
 
 See [0004: Use a Per-Appliance-Instance Local CA for TLS Trust Onboarding](decisions/0004-local-ca-trust-onboarding.md)
-and [tls-trust.md](tls-trust.md).
+and [tls-trust.md](tls-trust.md). Client trust validation is tracked in
+[client-ca-trust.md](client-ca-trust.md).
 
 Target permissions:
 

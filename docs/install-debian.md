@@ -159,4 +159,5 @@ See [admin-cli.md](admin-cli.md).
 - Image builders still need real hardware and VM release validation.
 - No automatic rollback for failed app updates yet; rollback planning and
   confirmed CLI restore apply are available.
-- No tested platform-specific CA import guide yet.
+- Client CA import has a technical MVP checklist; tested platform screenshots
+  and release instructions are still pending.

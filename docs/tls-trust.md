@@ -133,14 +133,8 @@ Administrators may install `/etc/obos/tls/obos-local-ca.crt` or the exported
 `/srv/obos/state/trust/obos-local-ca.crt` on client devices to remove browser
 warnings for certificates issued by this appliance instance.
 
-Platform guidance to document before release:
-
-- Windows: import into the local machine or current user trusted root store
-- macOS: import into Keychain Access and mark as trusted for SSL
-- iOS/iPadOS: install the profile, then enable full trust for the root CA
-- Android: install as a user CA and document browser/app trust limitations
-- Linux: install into the distribution trust store and refresh CA certificates
-- Firefox: document separate Firefox trust store behavior where relevant
+See [client-ca-trust.md](client-ca-trust.md) for the technical MVP client trust
+checklist and release validation matrix.
 
 Important:
 
@@ -159,8 +153,8 @@ and automation, but administrators should use `obosctl` as the stable interface.
 
 - IP SANs are generated from the current network state and are not renewed yet
   when DHCP addresses change.
-- Root CA import guidance for Windows, macOS, iOS, Android, and Linux still
-  needs screenshots or tested release instructions.
+- Client CA import guidance still needs screenshots and tested release
+  instructions for each supported platform.
 - Certificate replacement and rotation are not implemented yet.
 - Plain HTTP redirect/onboarding behavior is still undecided; TCP `80` is closed
   for now.
