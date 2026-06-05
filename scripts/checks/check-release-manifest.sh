@@ -108,6 +108,13 @@ grep -q '^artifact_1_profile=amd64-vm$' "${RELEASE_MANIFEST}" \
 grep -q '^artifact_2_profile=rpi4-arm64$' "${RELEASE_MANIFEST}" \
   || fail "rpi artifact profile missing"
 
+image_file="$(awk -F= '$1 == "artifact_1_image" { print substr($0, length($1) + 2) }' "${RELEASE_MANIFEST}")"
+mv "${image_file}" "${image_file}.missing"
+if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null 2>&1; then
+  fail "missing release image file was accepted"
+fi
+mv "${image_file}.missing" "${image_file}"
+
 bad_checksum_file="$(awk -F= '$1 == "artifact_1_checksum_file" { print substr($0, length($1) + 2) }' "${RELEASE_MANIFEST}")"
 printf '0000000000000000000000000000000000000000000000000000000000000000  tampered\n' > "${bad_checksum_file}"
 if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null 2>&1; then

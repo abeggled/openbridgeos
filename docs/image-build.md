@@ -348,7 +348,9 @@ OBOS_MANIFEST_STRICT_FILES=1 \
   sh scripts/images/check-release-manifest.sh dist/images/obos-release.manifest
 ```
 
-Require the detached signature file during final publication checks:
+Strict release bundle validation requires each referenced image file, checksum
+file, image manifest, and optional base image file to be present on the same
+build host. Require the detached signature file during final publication checks:
 
 ```sh
 OBOS_MANIFEST_STRICT_FILES=1 \
