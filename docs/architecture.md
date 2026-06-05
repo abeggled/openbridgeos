@@ -89,6 +89,9 @@ image.
   backups/
   state/
     trust/
+  web/
+    index.html
+    styles.css
 ```
 
 The goal is that every persistent piece of user data lives below `/srv/obos`
@@ -132,3 +135,4 @@ The initial `apps/obos-web` implementation is a static appliance console shell.
 It defines the operational panels and `data-agent-field` placeholders for the
 future local agent bridge, but it does not yet call the agent or perform
 mutating actions.
+Provisioning installs this static shell below `/srv/obos/web`.

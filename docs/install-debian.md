@@ -129,6 +129,7 @@ See [admin-cli.md](admin-cli.md).
 /srv/obos/apps/openbridgeserver/mqtt
 /srv/obos/backups
 /srv/obos/state
+/srv/obos/web
 ```
 
 ## Security Notes
@@ -146,6 +147,6 @@ See [admin-cli.md](admin-cli.md).
 ## Known Gaps
 
 - No ISO or Raspberry Pi image builder yet.
-- No obos web administration UI yet.
+- obos web is a static shell only; no agent HTTP bridge yet.
 - No rollback path for failed app updates yet.
 - No tested platform-specific CA import guide yet.

@@ -226,6 +226,15 @@ grep -q 'data-agent-field="security-summary:' apps/obos-web/index.html \
 grep -q 'data-agent-field="agent-audit-summary:' apps/obos-web/index.html \
   || fail "obos-web does not surface agent audit data"
 
+grep -q 'OBOS_WEB_DIR="/srv/obos/web"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not define obos-web install directory"
+
+grep -q 'apps/obos-web/index.html' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install obos-web index"
+
+grep -q 'apps/obos-web/styles.css' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install obos-web styles"
+
 grep -q 'sudo visudo -cf packaging/sudoers/obos-agent' .github/workflows/ci.yml \
   || fail "CI does not validate obos-agent sudoers syntax"
 
