@@ -4,6 +4,7 @@
   const refreshButton = document.querySelector("[data-refresh-status]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const unsupportedActions = new Set(["restore-apply-plan"]);
+  const latestValues = new Map();
 
   function parseAgentResponse(text) {
     const values = {};
@@ -68,6 +69,7 @@
         throw new Error(text || `HTTP ${response.status}`);
       }
       const values = parseAgentResponse(text);
+      latestValues.set(action, values);
       for (const target of targets) {
         setField(target.element, values[target.key], "ok");
       }
@@ -105,8 +107,20 @@
     const action = button.dataset.mutationAction;
     const confirmToken = button.dataset.confirm;
     const statusTarget = button.dataset.mutationStatusTarget || action;
+    const backupSource = button.dataset.mutationBackupFrom;
     if (!action || !confirmToken || !window.confirm(`Confirm ${action}?`)) {
       return;
+    }
+
+    const body = { confirm: confirmToken };
+    if (backupSource) {
+      const [sourceAction, sourceKey] = backupSource.split(":");
+      const backupPath = latestValues.get(sourceAction)?.[sourceKey];
+      if (!backupPath) {
+        setMutationStatus(statusTarget, "missing backup", "error");
+        return;
+      }
+      body.backup_path = backupPath;
     }
 
     button.disabled = true;
@@ -119,7 +133,7 @@
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ confirm: confirmToken }),
+        body: JSON.stringify(body),
       });
       const text = await response.text();
       if (!response.ok) {

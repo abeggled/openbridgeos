@@ -38,6 +38,7 @@ READ_ONLY_ACTIONS = {
 MUTATING_ACTIONS = {
     "backup": "backup",
     "restart": "restart",
+    "restore-stage": "restore-stage",
     "start": "start",
     "stop": "stop",
     "update": "update",
@@ -107,11 +108,18 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         except (UnicodeDecodeError, json.JSONDecodeError):
             return None, (400, error_envelope("invalid-json", "POST body must be valid JSON"))
 
-        if not isinstance(payload, dict) or set(payload) != {"confirm"}:
-            return None, (400, error_envelope("invalid-body", "POST body must contain only confirm"))
+        expected_fields = {"confirm"}
+        if action == "restore-stage":
+            expected_fields.add("backup_path")
+        if not isinstance(payload, dict) or set(payload) != expected_fields:
+            return None, (400, error_envelope("invalid-body", "POST body contains unexpected fields"))
         if payload["confirm"] != MUTATING_ACTIONS[action]:
             return None, (403, error_envelope("confirmation-mismatch", "confirmation token mismatch"))
-        return payload["confirm"], None
+        if action == "restore-stage":
+            backup_path = payload.get("backup_path")
+            if not isinstance(backup_path, str) or not backup_path or backup_path.startswith("-"):
+                return None, (400, error_envelope("invalid-backup-path", "backup_path is invalid"))
+        return payload, None
 
     def do_GET(self):
         action, error = self.parse_action_path()
@@ -146,13 +154,17 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             self.send_text(404, error_envelope("unknown-action", "action is not exposed by the HTTP bridge"))
             return
 
-        confirm, body_error = self.read_confirm_body(action)
+        payload, body_error = self.read_confirm_body(action)
         if body_error:
             self.send_text(*body_error)
             return
 
+        args = [action, "--confirm", payload["confirm"]]
+        if action == "restore-stage":
+            args = [action, payload["backup_path"], "--confirm", payload["confirm"]]
+
         try:
-            completed = self.run_agent([action, "--confirm", confirm], AGENT_MUTATION_TIMEOUT_SECONDS)
+            completed = self.run_agent(args, AGENT_MUTATION_TIMEOUT_SECONDS)
         except subprocess.TimeoutExpired:
             self.send_text(504, error_envelope("agent-timeout", "obos-agent mutation timed out"))
             return

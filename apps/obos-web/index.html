@@ -96,12 +96,13 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>Restore</h2>
-            <button type="button" disabled>Stage Backup</button>
+            <button type="button" data-mutation-action="restore-stage" data-confirm="restore-stage" data-mutation-status-target="restore-stage" data-mutation-backup-from="backup-summary:latest_backup">Stage Latest</button>
           </div>
           <dl>
             <div><dt>Stage directory</dt><dd data-agent-field="restore-stage-summary:stage_dir_present">pending</dd></div>
             <div><dt>Staged restores</dt><dd data-agent-field="restore-stage-summary:stage_count">pending</dd></div>
             <div><dt>Apply plan</dt><dd data-agent-field="restore-apply-plan:format">not selected</dd></div>
+            <div><dt>Restore action</dt><dd data-mutation-status="restore-stage">ready</dd></div>
           </dl>
         </article>
 

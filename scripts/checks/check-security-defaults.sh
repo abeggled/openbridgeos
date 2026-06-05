@@ -406,6 +406,9 @@ grep -q '"stop": "stop"' scripts/agent/obos-agent-http.py \
 grep -q '"restart": "restart"' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not restrict restart mutation confirmation"
 
+grep -q '"restore-stage": "restore-stage"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not restrict restore-stage mutation confirmation"
+
 grep -q '"update": "update"' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not restrict update mutation confirmation"
 
@@ -415,11 +418,17 @@ grep -q 'application/json' scripts/agent/obos-agent-http.py \
 grep -q 'MAX_POST_BYTES = 1024' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge mutation body size is not bounded"
 
-grep -q 'set(payload) != {"confirm"}' scripts/agent/obos-agent-http.py \
+grep -q 'expected_fields = {"confirm"}' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not reject unexpected mutation body fields"
 
 grep -q 'data-mutation-action="backup"' apps/obos-web/index.html \
   || fail "web UI does not expose confirmed backup mutation"
+
+grep -q 'data-mutation-action="restore-stage"' apps/obos-web/index.html \
+  || fail "web UI does not expose confirmed restore-stage mutation"
+
+grep -q 'data-mutation-backup-from="backup-summary:latest_backup"' apps/obos-web/index.html \
+  || fail "web UI restore-stage mutation does not source latest backup"
 
 grep -q 'data-mutation-action="restart"' apps/obos-web/index.html \
   || fail "web UI does not expose confirmed service lifecycle mutations"
