@@ -158,6 +158,12 @@ check_agent_http_systemd_hardening() {
   check_systemd_property "${service}" SystemCallArchitectures native "native system call architecture"
 }
 
+check_openbridgeserver_systemd_runtime() {
+  service="obos-openbridgeserver.service"
+  check_systemd_property "${service}" Restart on-failure "failed-start retry"
+  check_systemd_property "${service}" RestartUSec 30s "failed-start retry delay"
+}
+
 check_systemd_not_active() {
   service="$1"
   if ! command -v systemctl >/dev/null 2>&1; then
@@ -317,6 +323,7 @@ check_systemd_enabled obos-openbridgeserver.service
 check_obos_systemd_hardening obos-first-boot.service
 check_agent_http_systemd_hardening
 check_obos_systemd_hardening obos-openbridgeserver.service
+check_openbridgeserver_systemd_runtime
 check_systemd_not_active ssh.service
 
 if nft list ruleset 2>/dev/null | grep -q 'policy drop'; then

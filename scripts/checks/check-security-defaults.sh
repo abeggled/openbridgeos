@@ -768,6 +768,15 @@ grep -q 'check_obos_systemd_hardening obos-first-boot.service' scripts/audit/sec
 grep -q 'check_obos_systemd_hardening obos-openbridgeserver.service' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit open bridge server systemd hardening"
 
+grep -q 'check_openbridgeserver_systemd_runtime' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit open bridge server runtime policy"
+
+grep -q 'Restart on-failure' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit open bridge server failed-start retry"
+
+grep -q 'RestartUSec 30s' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit open bridge server retry delay"
+
 grep -q 'check_agent_http_systemd_hardening' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit obos-agent-http systemd hardening"
 
