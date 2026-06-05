@@ -168,6 +168,18 @@ grep -q 'data-agent-field="security-summary:' "${INDEX}" \
 grep -q 'data-agent-field="agent-audit-summary:' "${INDEX}" \
   || fail "web UI does not expose agent audit summary placeholders"
 
+grep -q 'data-agent-field="mvp-readiness-summary:result"' "${INDEX}" \
+  || fail "web UI does not expose MVP readiness result"
+
+grep -q 'data-agent-field="mvp-readiness-summary:pass_count"' "${INDEX}" \
+  || fail "web UI does not expose MVP readiness pass count"
+
+grep -q 'data-agent-field="mvp-readiness-summary:fail_count"' "${INDEX}" \
+  || fail "web UI does not expose MVP readiness fail count"
+
+grep -q 'data-run-mvp-readiness' "${INDEX}" \
+  || fail "web UI does not expose MVP readiness refresh control"
+
 grep -q 'data-run-security-audit' "${INDEX}" \
   || fail "web UI does not expose security audit refresh control"
 
@@ -290,6 +302,15 @@ grep -q 'body.timezone = timezone' "${JS}" \
 
 grep -q 'runSecurityAudit' "${JS}" \
   || fail "web UI does not handle security audit refresh"
+
+grep -q 'runMvpReadiness' "${JS}" \
+  || fail "web UI does not handle MVP readiness refresh"
+
+grep -q 'refreshReadOnlyActions' "${JS}" \
+  || fail "web UI does not share read-only action refresh handling"
+
+grep -q 'mvp-readiness-summary' "${JS}" \
+  || fail "web UI does not refresh MVP readiness fields"
 
 grep -q 'security-summary", "agent-audit-summary' "${JS}" \
   || fail "web UI security audit refresh does not target security fields"
