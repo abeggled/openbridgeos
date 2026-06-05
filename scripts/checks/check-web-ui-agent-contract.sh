@@ -36,11 +36,14 @@ require_contract_line 'obosctl tls-summary'
 require_contract_line 'obos-tls-summary-v1'
 require_contract_line 'sudo obosctl security-summary'
 require_contract_line 'obos-security-baseline-summary-v1'
+require_contract_line 'sudo obosctl agent-audit-summary'
+require_contract_line 'obos-agent-audit-summary-v1'
 require_contract_line 'obos-agent actions'
 require_contract_line 'obos-agent-actions-v1'
 require_contract_line 'obos-agent update-rollback-plan'
 require_contract_line 'obos-agent backup-summary'
 require_contract_line 'obos-agent backup-prune-plan'
+require_contract_line 'obos-agent agent-audit-summary'
 require_contract_line 'latest-backup inspection status'
 require_contract_line 'obos-agent start --confirm start'
 require_contract_line 'obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan'
@@ -70,5 +73,7 @@ grep -q 'tls-summary)' scripts/obosctl \
   || fail "obosctl tls-summary command missing"
 grep -q 'security-summary)' scripts/obosctl \
   || fail "obosctl security-summary command missing"
+grep -q 'agent-audit-summary)' scripts/obosctl \
+  || fail "obosctl agent-audit-summary command missing"
 
 echo "web UI agent contract: PASS"

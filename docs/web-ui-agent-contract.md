@@ -30,6 +30,7 @@ directly.
 | MQTT exposure | `sudo obosctl mqtt-summary` | `obos-mqtt-summary-v1` |
 | TLS trust | `obosctl tls-summary` | `obos-tls-summary-v1` |
 | Security baseline | `sudo obosctl security-summary` | `obos-security-baseline-summary-v1` |
+| Agent mutation audit | `sudo obosctl agent-audit-summary` | `obos-agent-audit-summary-v1` |
 
 These commands print key-value records. The agent should reject unknown format
 versions instead of guessing.
@@ -119,6 +120,7 @@ obos-agent backup-prune-plan
 obos-agent mqtt-summary
 obos-agent tls-summary
 obos-agent security-summary
+obos-agent agent-audit-summary
 ```
 
 The response envelope uses format `obos-agent-response-v1` and includes the

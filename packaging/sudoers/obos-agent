@@ -9,7 +9,8 @@ Cmnd_Alias OBOS_AGENT_READONLY = \
   /usr/bin/obosctl backup-prune-plan, \
   /usr/bin/obosctl mqtt-summary, \
   /usr/bin/obosctl tls-summary, \
-  /usr/bin/obosctl security-summary
+  /usr/bin/obosctl security-summary, \
+  /usr/bin/obosctl agent-audit-summary
 
 Cmnd_Alias OBOS_AGENT_MUTATIONS = \
   /usr/bin/obosctl start, \

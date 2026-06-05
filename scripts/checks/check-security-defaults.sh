@@ -53,6 +53,12 @@ grep -q 'format=obos-backup-prune-plan-v1' scripts/obosctl \
 grep -q 'format=obos-backup-prune-v1' scripts/obosctl \
   || fail "obosctl backup prune does not declare a format"
 
+grep -q 'agent-audit-summary)' scripts/obosctl \
+  || fail "obosctl does not expose agent audit summary"
+
+grep -q 'format=obos-agent-audit-summary-v1' scripts/obosctl \
+  || fail "obosctl agent audit summary does not declare a format"
+
 grep -q 'mode=non-destructive' scripts/obosctl \
   || fail "obosctl backup prune plan does not declare non-destructive mode"
 
@@ -268,6 +274,9 @@ grep -q 'action=backup-prune-plan|mutating=false' scripts/agent/obos-agent.sh \
 grep -q 'action=backup-prune|mutating=true|confirm=backup-prune' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark backup pruning as a confirmed mutation"
 
+grep -q 'action=agent-audit-summary|mutating=false' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark audit summary as read-only"
+
 grep -q 'action=start|mutating=true|confirm=start' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark confirmed mutations"
 
@@ -282,6 +291,9 @@ grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
 
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow confirmed backup pruning"
+
+grep -q '/usr/bin/obosctl agent-audit-summary' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow agent audit summary"
 
 grep -q 'require_no_extra_args' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not reject extra arguments"

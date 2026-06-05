@@ -10,6 +10,7 @@ and agent will need as well.
 obosctl status
 obosctl status-summary
 sudo obosctl security-summary
+sudo obosctl agent-audit-summary
 obosctl health
 obosctl proxy-health
 obosctl restore-inspect <backup.tar.gz>
@@ -44,6 +45,7 @@ sudo obosctl mqtt-disable-lan
 obosctl status
 obosctl status-summary
 sudo obosctl security-summary
+sudo obosctl agent-audit-summary
 ```
 
 Shows the systemd unit state, Docker Compose service state, the localhost open
@@ -61,6 +63,10 @@ localhost health, HTTPS proxy health, and whether a last update record exists.
 `security-summary` runs the security baseline audit in machine-readable mode. It
 prints the summary format, PASS/FAIL result, pass count, and fail count for
 agents and the future web UI.
+
+`agent-audit-summary` prints metadata-only mutation audit status for the local
+agent. It reports whether the audit log exists, how many agent mutation entries
+are present, and recent `obos-agent-audit-v1` events.
 
 ```sh
 obosctl health

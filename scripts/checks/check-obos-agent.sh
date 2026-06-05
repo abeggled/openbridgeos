@@ -66,6 +66,10 @@ grep -q 'tls-summary)' "${AGENT}" \
   || fail "tls-summary action missing"
 grep -q 'security-summary)' "${AGENT}" \
   || fail "security-summary action missing"
+grep -q 'agent-audit-summary)' "${AGENT}" \
+  || fail "agent-audit-summary action missing"
+grep -q 'action=agent-audit-summary|mutating=false' "${AGENT}" \
+  || fail "agent-audit-summary action is not listed as read-only"
 grep -q 'start)' "${AGENT}" \
   || fail "start action missing"
 grep -q 'action=start|mutating=true|confirm=start' "${AGENT}" \
@@ -93,6 +97,8 @@ grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup prune planning"
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow confirmed backup pruning"
+grep -q '/usr/bin/obosctl agent-audit-summary' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow agent audit summary"
 grep -q '/usr/bin/obosctl mqtt-enable-lan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow CIDR-limited MQTT enablement"
 grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
@@ -125,6 +131,10 @@ case "$1" in
   backup-prune)
     [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "backup-prune" ] || exit 2
     echo "format=obos-backup-prune-v1"
+    exit 0
+    ;;
+  agent-audit-summary)
+    echo "format=obos-agent-audit-summary-v1"
     exit 0
     ;;
   start)
@@ -162,6 +172,10 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-summary |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune-plan |
   grep -q 'stdout=format=obos-backup-prune-plan-v1' \
   || fail "agent did not expose backup prune plan"
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" agent-audit-summary |
+  grep -q 'stdout=format=obos-agent-audit-summary-v1' \
+  || fail "agent did not expose agent audit summary"
 
 if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune >/dev/null 2>&1; then
   fail "agent accepted backup prune without confirmation"
