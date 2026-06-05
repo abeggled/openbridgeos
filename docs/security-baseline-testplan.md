@@ -317,6 +317,8 @@ The baseline passes when:
 
 - platform-specific CA import validation using
   [client-ca-trust.md](client-ca-trust.md)
+- image release validation using
+  [image-release-validation.md](image-release-validation.md)
 - full disk encryption feasibility
 - Docker user namespace remapping compatibility
 - live update recovery drill

@@ -21,6 +21,7 @@ require_file README.md
 require_file README.de.md
 require_file docs/roadmap.md
 require_file docs/image-build.md
+require_file docs/image-release-validation.md
 require_file docs/client-ca-trust.md
 require_file docs/security-baseline-testplan.md
 require_file scripts/obosctl
@@ -47,6 +48,7 @@ require_line "Build ARM64 image." docs/roadmap.md
 require_line "Static obos web shell is installed" docs/roadmap.md
 require_line "Start, stop, restart, update, backup creation, and restore staging" docs/roadmap.md
 require_line "Encrypted portable backup export creation exists in" docs/roadmap.md
+require_line "image-release-validation.md" docs/roadmap.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
@@ -121,6 +123,10 @@ require_line "OBOS-ONBOARDING.txt" scripts/tls/export-boot-trust-summary.sh
 require_line "initial web console password" scripts/tls/export-boot-trust-summary.sh
 require_line "Validation Matrix" docs/client-ca-trust.md
 require_line "fingerprint_verified=yes|no" docs/client-ca-trust.md
+require_line "Raspberry Pi Network Installer" docs/image-release-validation.md
+require_line "CONFIG_BLK_DEV_NVME=y" docs/image-release-validation.md
+require_line "update-rollback-stage" docs/image-release-validation.md
+require_line "signature_verified=yes|no" docs/image-release-validation.md
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html
