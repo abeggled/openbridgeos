@@ -138,6 +138,7 @@ See [admin-cli.md](admin-cli.md).
 - `OBS_MQTT_PASSWORD` is generated on first boot.
 - TLS trust material is generated on first boot.
 - open bridge server is exposed externally through HTTPS on TCP `443`.
+- obos web is served below `/obos/` on the same HTTPS origin.
 - Direct open bridge server HTTP is localhost-only on `127.0.0.1:8080`.
 - MQTT is not exposed to the LAN by default.
 - nftables drops inbound traffic except the HTTPS reverse proxy on TCP `443`.

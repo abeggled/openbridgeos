@@ -582,6 +582,12 @@ grep -q 'ssl_certificate /etc/obos/tls/obos.local.crt;' packaging/nginx/openbrid
 grep -q 'proxy_pass http://127.0.0.1:8080;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not target localhost OBS"
 
+grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not expose obos-web path"
+
+grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not serve obos-web assets"
+
 grep -q 'server_tokens off;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy exposes server tokens"
 
