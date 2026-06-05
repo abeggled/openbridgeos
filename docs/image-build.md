@@ -268,9 +268,10 @@ By default the script:
 6. copies this repository into `/opt/openbridgeos` inside the target filesystem
 7. runs `scripts/bootstrap/provision-debian.sh` inside the target filesystem with SSH disabled
 8. keeps first boot pending for the target appliance instance
-9. verifies the kernel config contract, including `CONFIG_BLK_DEV_NVME=y`
-10. writes `.img.xz`, `.sha256`, and `.manifest` artifacts
-11. validates the generated manifest in strict mode
+9. verifies Raspberry Pi boot files, including partition labels and `rootwait`
+10. verifies the kernel config contract, including `CONFIG_BLK_DEV_NVME=y`
+11. writes `.img.xz`, `.sha256`, and `.manifest` artifacts
+12. validates the generated manifest in strict mode
 
 On first boot, the target appliance tries to write `OBOS-TRUST.txt` and
 `OBOS-LOCAL-CA.crt` to a writable mounted boot partition such as
@@ -289,6 +290,15 @@ The checker also accepts a direct kernel config file:
 ```sh
 sh scripts/images/check-rpi-kernel-config.sh /mnt/obos-rpi-root/boot/config-6.1.0-rpi-arm64
 ```
+
+Verify generated Raspberry Pi boot files from a mounted root filesystem:
+
+```sh
+sh scripts/images/check-rpi-boot-files.sh /mnt/obos-rpi-root
+```
+
+The boot file checker validates `/etc/fstab`, `/boot/config.txt`, and
+`/boot/cmdline.txt` against the `rpi4-arm64` profile labels and boot contract.
 
 The Raspberry Pi image manifest uses format `obos-rpi-image-build-v1` and records:
 
