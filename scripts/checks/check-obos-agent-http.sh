@@ -20,6 +20,8 @@ grep -q 'READ_ONLY_ACTIONS' "${BRIDGE}" \
   || fail "read-only action allowlist missing"
 grep -q '"backup-list"' "${BRIDGE}" \
   || fail "backup-list is not exposed by the read-only HTTP bridge"
+grep -q '"update-rollback-plan"' "${BRIDGE}" \
+  || fail "update-rollback-plan is not exposed by the read-only HTTP bridge"
 grep -q 'OBOS_AGENT_PATH' "${BRIDGE}" \
   || fail "agent path is not configurable"
 grep -q '127.0.0.1' "${BRIDGE}" \
@@ -96,6 +98,21 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  update-rollback-plan)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=update-rollback-plan
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=update rollback plan: /srv/obos/backups/obos-openbridgeserver-test.tar.gz
+stdout=format=obos-update-rollback-plan-v1
+stdout=backup_present=true
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -119,6 +136,10 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/status-summary |
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/backup-list |
   grep -q 'stdout=backup_count=2' \
   || fail "HTTP bridge did not expose backup inventory"
+
+curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/update-rollback-plan |
+  grep -q 'stdout=backup_present=true' \
+  || fail "HTTP bridge did not expose update rollback plan"
 
 curl --silent --output "${tmp_dir}/unknown.out" --write-out '%{http_code}' \
   http://127.0.0.1:18091/obos/api/v1/actions/unknown |
