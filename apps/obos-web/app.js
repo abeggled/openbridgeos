@@ -6,6 +6,7 @@
   const refreshButton = document.querySelector("[data-refresh-status]");
   const logsButton = document.querySelector("[data-load-logs]");
   const logOutput = document.querySelector("[data-log-output]");
+  const securityAuditButton = document.querySelector("[data-run-security-audit]");
   const portableDownloadLink = document.querySelector("[data-portable-download]");
   const portableUploadButton = document.querySelector("[data-upload-portable]");
   const webAuthPassword = document.querySelector("[data-web-auth-password]");
@@ -130,6 +131,24 @@
 
   if (refreshButton) {
     refreshButton.addEventListener("click", refresh);
+  }
+
+  async function runSecurityAudit() {
+    if (!securityAuditButton) {
+      return;
+    }
+    securityAuditButton.disabled = true;
+    const grouped = fieldsByAction();
+    const actions = ["security-summary", "agent-audit-summary"];
+    await Promise.all(actions.map((action) => {
+      const targets = grouped.get(action) || [];
+      return targets.length > 0 ? loadAction(action, targets) : Promise.resolve();
+    }));
+    securityAuditButton.disabled = false;
+  }
+
+  if (securityAuditButton) {
+    securityAuditButton.addEventListener("click", runSecurityAudit);
   }
 
   async function loadLogs() {

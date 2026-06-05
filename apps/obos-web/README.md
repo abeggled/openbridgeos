@@ -36,9 +36,10 @@ Initial read-only panels:
 The TLS trust panel surfaces certificate presence, SHA-256 fingerprints, expiry
 warning state, and trust bundle availability for onboarding and support.
 
-The security panel can run the confirmed web console password rotation through
-the local agent and shows the newly generated password from the response for the
-administrator who triggered the operation.
+The security panel can refresh the non-destructive security baseline audit
+through the read-only local agent endpoint. It can also run the confirmed web
+console password rotation and shows the newly generated password from the
+response for the administrator who triggered the operation.
 
 The logs panel starts with metadata only. Raw log viewing remains disabled
 because service logs can contain sensitive operational data.
