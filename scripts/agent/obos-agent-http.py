@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Read-only HTTP bridge for the local obos-agent."""
+"""HTTP bridge for the local obos-agent."""
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
 import os
 import re
 import subprocess
@@ -13,6 +14,8 @@ AGENT_PATH = os.environ.get("OBOS_AGENT_PATH", "/usr/bin/obos-agent")
 BIND_HOST = os.environ.get("OBOS_AGENT_HTTP_BIND", "127.0.0.1")
 BIND_PORT = int(os.environ.get("OBOS_AGENT_HTTP_PORT", "8091"))
 AGENT_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_TIMEOUT_SECONDS", "45"))
+AGENT_MUTATION_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_MUTATION_TIMEOUT_SECONDS", "600"))
+MAX_POST_BYTES = 1024
 
 API_PREFIX = "/obos/api/v1/actions/"
 ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -31,6 +34,9 @@ READ_ONLY_ACTIONS = {
     "tls-summary",
     "security-summary",
     "agent-audit-summary",
+}
+MUTATING_ACTIONS = {
+    "backup": "backup",
 }
 
 
@@ -57,7 +63,7 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-    def parse_action(self):
+    def parse_action_path(self):
         parsed = urlparse(self.path)
         if parsed.query:
             return None, (400, error_envelope("query-not-allowed", "query strings are not accepted"))
@@ -67,24 +73,53 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         action = parsed.path[len(API_PREFIX):]
         if not action or "/" in action or not ACTION_RE.match(action):
             return None, (400, error_envelope("invalid-action", "action path segment is invalid"))
-        if action not in READ_ONLY_ACTIONS:
-            return None, (404, error_envelope("unknown-action", "action is not exposed by the read-only bridge"))
         return action, None
 
+    def run_agent(self, args, timeout_seconds):
+        return subprocess.run(
+            [AGENT_PATH, *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+        )
+
+    def read_confirm_body(self, action):
+        content_type = self.headers.get("Content-Type", "")
+        if content_type.split(";", 1)[0].strip().lower() != "application/json":
+            return None, (415, error_envelope("unsupported-media-type", "POST requires application/json"))
+
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            return None, (400, error_envelope("invalid-content-length", "Content-Length is invalid"))
+        if content_length <= 0:
+            return None, (400, error_envelope("empty-body", "POST body is required"))
+        if content_length > MAX_POST_BYTES:
+            return None, (413, error_envelope("body-too-large", "POST body is too large"))
+
+        try:
+            payload = json.loads(self.rfile.read(content_length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return None, (400, error_envelope("invalid-json", "POST body must be valid JSON"))
+
+        if not isinstance(payload, dict) or set(payload) != {"confirm"}:
+            return None, (400, error_envelope("invalid-body", "POST body must contain only confirm"))
+        if payload["confirm"] != MUTATING_ACTIONS[action]:
+            return None, (403, error_envelope("confirmation-mismatch", "confirmation token mismatch"))
+        return payload["confirm"], None
+
     def do_GET(self):
-        action, error = self.parse_action()
+        action, error = self.parse_action_path()
         if error:
             self.send_text(*error)
             return
+        if action not in READ_ONLY_ACTIONS:
+            self.send_text(404, error_envelope("unknown-action", "action is not exposed by the read-only bridge"))
+            return
 
         try:
-            completed = subprocess.run(
-                [AGENT_PATH, action],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=AGENT_TIMEOUT_SECONDS,
-            )
+            completed = self.run_agent([action], AGENT_TIMEOUT_SECONDS)
         except subprocess.TimeoutExpired:
             self.send_text(504, error_envelope("agent-timeout", "obos-agent execution timed out"))
             return
@@ -96,14 +131,33 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         self.send_text(status, completed.stdout)
 
     def do_POST(self):
-        action, error = self.parse_action()
+        action, error = self.parse_action_path()
         if error:
             self.send_text(*error)
             return
-        self.send_text(
-            405,
-            error_envelope("mutations-disabled", f"HTTP mutation endpoint for {action} is not enabled"),
-        )
+        if action in READ_ONLY_ACTIONS:
+            self.send_text(405, error_envelope("mutations-disabled", f"HTTP mutation endpoint for {action} is not enabled"))
+            return
+        if action not in MUTATING_ACTIONS:
+            self.send_text(404, error_envelope("unknown-action", "action is not exposed by the HTTP bridge"))
+            return
+
+        confirm, body_error = self.read_confirm_body(action)
+        if body_error:
+            self.send_text(*body_error)
+            return
+
+        try:
+            completed = self.run_agent([action, "--confirm", confirm], AGENT_MUTATION_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            self.send_text(504, error_envelope("agent-timeout", "obos-agent mutation timed out"))
+            return
+        except OSError as exc:
+            self.send_text(502, error_envelope("agent-exec-failed", str(exc)))
+            return
+
+        status = 200 if completed.returncode == 0 else 502
+        self.send_text(status, completed.stdout)
 
     def do_OPTIONS(self):
         self.send_text(405, error_envelope("method-not-allowed", "CORS preflight is not enabled"))

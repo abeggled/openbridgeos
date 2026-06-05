@@ -49,14 +49,15 @@ Current implementation status:
 
 - Static obos web shell is installed below `/srv/obos/web` and served below
   `/obos/`.
-- Read-only `obos-agent-http.service` exposes selected `obos-agent` actions
-  below `/obos/api/` on the same HTTPS origin.
+- `obos-agent-http.service` exposes selected read-only `obos-agent` actions and
+  the confirmed backup mutation below `/obos/api/` on the same HTTPS origin.
 - The web shell consumes read-only status, update, backup, restore staging,
   host basics, logs metadata, MQTT, TLS, security baseline, and agent audit
   summary fields.
-- Confirmed mutations remain disabled over HTTP.
-- Backup creation/download, log viewing, hostname, timezone, network basics,
-  and MQTT/TLS mutation controls are still future UI work.
+- Backup creation is exposed as the first confirmed HTTP mutation through
+  `obos-agent`.
+- Backup download, log viewing, hostname, timezone, network basics, and MQTT/TLS
+  mutation controls are still future UI work.
 
 ## Milestone 4: Hardened Release
 

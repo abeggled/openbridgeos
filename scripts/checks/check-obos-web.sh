@@ -42,6 +42,15 @@ grep -q 'data-agent-field="backup-summary:' "${INDEX}" \
 grep -q 'data-agent-field="backup-list:backup_count"' "${INDEX}" \
   || fail "web UI does not expose backup inventory count"
 
+grep -q 'data-mutation-action="backup"' "${INDEX}" \
+  || fail "web UI does not expose backup mutation control"
+
+grep -q 'data-confirm="backup"' "${INDEX}" \
+  || fail "web UI backup mutation control does not carry confirmation token"
+
+grep -q 'data-mutation-status="backup"' "${INDEX}" \
+  || fail "web UI does not expose backup mutation status"
+
 grep -q 'data-agent-field="restore-stage-summary:' "${INDEX}" \
   || fail "web UI does not expose restore staging placeholders"
 
@@ -89,6 +98,15 @@ grep -q 'data-agent-field' "${JS}" \
 
 grep -q 'unsupportedActions' "${JS}" \
   || fail "web UI script does not keep unsupported actions explicit"
+
+grep -q 'runMutation' "${JS}" \
+  || fail "web UI script does not handle confirmed mutations"
+
+grep -q 'Content-Type": "application/json"' "${JS}" \
+  || fail "web UI mutations do not use JSON requests"
+
+grep -q 'JSON.stringify({ confirm: confirmToken })' "${JS}" \
+  || fail "web UI mutations do not send confirmation token"
 
 grep -q 'grid-template-columns' "${CSS}" \
   || fail "web UI CSS does not define stable grid layout"

@@ -189,11 +189,22 @@ The first implementation should start with read-only endpoints for `actions`,
 `status-summary`, `system-summary`, `update-summary`, `update-rollback-plan`,
 `backup-summary`, `backup-list`, `backup-prune-plan`, `logs-summary`,
 `restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`, and
-`agent-audit-summary`. Confirmed mutations should remain unavailable over HTTP
-until the read-only bridge, nginx path, and service hardening are validated in
-CI.
+`agent-audit-summary`.
 
-The initial read-only bridge is installed as `obos-agent-http.service`. It binds
-to `127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, and exposes only
-the first read-only endpoint set. POST requests return
-`obos-agent-http-error-v1` with `mutations-disabled`.
+The first confirmed HTTP mutation is `POST /obos/api/v1/actions/backup`. It
+requires `Content-Type: application/json` and exactly this body:
+
+```json
+{"confirm":"backup"}
+```
+
+The bridge forwards it to `obos-agent backup --confirm backup`, keeps the
+existing agent audit trail, and returns the normal `obos-agent-response-v1`
+envelope. Backup archive download remains out of scope because appliance
+backups contain secrets.
+
+The initial bridge is installed as `obos-agent-http.service`. It binds to
+`127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the first
+read-only endpoint set, and allows only the confirmed backup mutation. Other
+POST requests return `obos-agent-http-error-v1` with `mutations-disabled` or
+`unknown-action`.
