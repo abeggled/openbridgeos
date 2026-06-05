@@ -88,10 +88,14 @@ image.
       logs/
   backups/
   state/
+    portable-backups/
+    portable-imports/
+    restore-staging/
     trust/
   web/
     index.html
     styles.css
+    app.js
 ```
 
 The goal is that every persistent piece of user data lives below `/srv/obos`
@@ -131,23 +135,26 @@ The appliance web UI should use a local allowlisted agent around stable
 `obosctl` commands. The current command contract is documented in
 [web-ui-agent-contract.md](web-ui-agent-contract.md).
 
-The initial `apps/obos-web` implementation is a static appliance console shell.
-It defines the operational panels and `data-agent-field` placeholders for the
-future local agent bridge, but it does not yet call the agent or perform
-mutating actions.
-Provisioning installs this static shell below `/srv/obos/web`.
+`apps/obos-web` is a static appliance console installed below `/srv/obos/web`.
 nginx serves it below `/obos/` on the same HTTPS origin while leaving `/` for
-open bridge server.
+open bridge server. `/obos/` and `/obos/api/` are protected by per-appliance
+Basic Auth credentials generated during first boot.
 
-The future HTTP bridge for that web UI is intentionally a separate local
-boundary. It should be exposed only below `/obos/api/` on the same HTTPS origin,
-bind locally or to a Unix socket, call the installed `obos-agent` binary, and
-keep confirmed mutations disabled until the read-only bridge and systemd
-hardening are validated. Because `obos-agent` currently crosses the privilege
-boundary with `sudo -n`, the HTTP bridge must not use `NoNewPrivileges=true`
-until that sudo dependency is removed. The detailed contract is in
+The web console reads status, host basics, update state, backups, restore
+staging, MQTT exposure, TLS trust, logs metadata, security baseline, technical
+MVP readiness, and agent audit state through `obos-agent-http.service`. The
+bridge binds to `127.0.0.1:8091`, is exposed by nginx below `/obos/api/`, calls
+the installed `obos-agent` binary, and never exposes a raw shell.
+
+Confirmed HTTP mutations are enabled only for allowlisted workflows: service
+start/stop/restart, update, backup creation, encrypted portable backup export
+and download, encrypted portable backup upload and private import staging,
+restore staging, hostname/timezone changes, MQTT LAN opt-in/opt-out, TLS
+generation/export, and web console password rotation. Restore apply remains
+CLI-only until a separate browser-safe review adds stronger confirmation and
+rollback UX.
+
+Because `obos-agent` currently crosses the privilege boundary with `sudo -n`,
+the HTTP bridge must not use `NoNewPrivileges=true` until that sudo dependency
+is removed. The detailed command and HTTP contract is in
 [web-ui-agent-contract.md](web-ui-agent-contract.md).
-
-The first bridge implementation is read-only and installed as
-`obos-agent-http.service`. It binds to `127.0.0.1:8091`, is exposed by nginx
-below `/obos/api/`, and rejects HTTP mutations.
