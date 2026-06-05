@@ -131,6 +131,8 @@ require_line "update-rollback-stage" docs/image-release-validation.md
 require_line "format=obos-image-release-validation-v1" docs/image-release-validation.md
 require_line "signature_verified=yes|no" docs/image-release-validation.md
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
+require_line "MINISIGN_PUBLIC_KEY=" scripts/images/check-release-manifest.sh
+require_line "minisign -Vm" scripts/images/check-release-manifest.sh
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html

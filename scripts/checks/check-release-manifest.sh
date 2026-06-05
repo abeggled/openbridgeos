@@ -3,6 +3,8 @@ set -eu
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
+FAKE_BIN="${TMP_DIR}/bin"
+mkdir -p "${FAKE_BIN}"
 
 fail() {
   echo "release manifest fixture failed: $1" >&2
@@ -96,6 +98,24 @@ SIGNATURE_FILE="${RELEASE_MANIFEST}.minisig"
 printf 'unverified fixture signature\n' > "${SIGNATURE_FILE}"
 
 OBOS_MANIFEST_STRICT_FILES=1 OBOS_RELEASE_SIGNATURE_STRICT=1 \
+  sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null
+
+cat > "${FAKE_BIN}/minisign" <<'EOF'
+#!/usr/bin/env sh
+set -eu
+
+[ "${1:-}" = "-Vm" ] || exit 1
+[ -f "${2:-}" ] || exit 1
+[ "${3:-}" = "-x" ] || exit 1
+[ -s "${4:-}" ] || exit 1
+[ "${5:-}" = "-P" ] || exit 1
+[ -n "${6:-}" ] || exit 1
+exit 0
+EOF
+chmod 0755 "${FAKE_BIN}/minisign"
+
+PATH="${FAKE_BIN}:$PATH" OBOS_MANIFEST_STRICT_FILES=1 OBOS_RELEASE_SIGNATURE_STRICT=1 \
+  OBOS_RELEASE_MINISIGN_PUBLIC_KEY="RWQfixturepublickey" \
   sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null
 
 grep -q '^format=obos-release-bundle-v1$' "${RELEASE_MANIFEST}" \
