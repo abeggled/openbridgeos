@@ -150,6 +150,13 @@ dd,
   margin-bottom: 14px;
 }
 
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .icon-button {
   width: 36px;
   padding: 0;

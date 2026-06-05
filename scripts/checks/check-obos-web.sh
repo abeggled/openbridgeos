@@ -87,6 +87,21 @@ grep -q '<script src="./app.js" defer></script>' "${INDEX}" \
 grep -q 'data-refresh-status' "${INDEX}" \
   || fail "web UI does not expose refresh control"
 
+grep -q 'data-mutation-action="start"' "${INDEX}" \
+  || fail "web UI does not expose start mutation control"
+
+grep -q 'data-mutation-action="stop"' "${INDEX}" \
+  || fail "web UI does not expose stop mutation control"
+
+grep -q 'data-mutation-action="restart"' "${INDEX}" \
+  || fail "web UI does not expose restart mutation control"
+
+grep -q 'data-mutation-action="update"' "${INDEX}" \
+  || fail "web UI does not expose update mutation control"
+
+grep -q 'data-mutation-status="service-action"' "${INDEX}" \
+  || fail "web UI does not expose service mutation status"
+
 grep -q '/obos/api/v1/actions/' "${JS}" \
   || fail "web UI does not call the obos agent HTTP bridge"
 
@@ -108,8 +123,14 @@ grep -q 'Content-Type": "application/json"' "${JS}" \
 grep -q 'JSON.stringify({ confirm: confirmToken })' "${JS}" \
   || fail "web UI mutations do not send confirmation token"
 
+grep -q 'mutationStatusTarget' "${JS}" \
+  || fail "web UI mutations do not route status to explicit targets"
+
 grep -q 'grid-template-columns' "${CSS}" \
   || fail "web UI CSS does not define stable grid layout"
+
+grep -q '.button-row' "${CSS}" \
+  || fail "web UI CSS does not define action button row layout"
 
 grep -q 'border-radius: var(--radius)' "${CSS}" \
   || fail "web UI CSS does not use bounded card radius"

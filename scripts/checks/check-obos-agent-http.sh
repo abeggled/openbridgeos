@@ -22,6 +22,14 @@ grep -q 'MUTATING_ACTIONS' "${BRIDGE}" \
   || fail "mutating action allowlist missing"
 grep -q '"backup": "backup"' "${BRIDGE}" \
   || fail "backup mutation is not exposed with a matching confirmation token"
+grep -q '"start": "start"' "${BRIDGE}" \
+  || fail "start mutation is not exposed with a matching confirmation token"
+grep -q '"stop": "stop"' "${BRIDGE}" \
+  || fail "stop mutation is not exposed with a matching confirmation token"
+grep -q '"restart": "restart"' "${BRIDGE}" \
+  || fail "restart mutation is not exposed with a matching confirmation token"
+grep -q '"update": "update"' "${BRIDGE}" \
+  || fail "update mutation is not exposed with a matching confirmation token"
 grep -q '"system-summary"' "${BRIDGE}" \
   || fail "system-summary is not exposed by the read-only HTTP bridge"
 grep -q '"backup-list"' "${BRIDGE}" \
@@ -172,6 +180,20 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  start|stop|restart|update)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "${1:-}" ] || exit 2
+    cat <<RESPONSE
+format=obos-agent-response-v1
+action=${1:-}
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=${1:-}:ok
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -214,6 +236,20 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/backup |
   grep -q 'stdout=format=obos-backup-v1' \
   || fail "HTTP bridge did not run confirmed backup mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"restart"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/restart |
+  grep -q 'stdout=restart:ok' \
+  || fail "HTTP bridge did not run confirmed restart mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"update"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/update |
+  grep -q 'stdout=update:ok' \
+  || fail "HTTP bridge did not run confirmed update mutation"
 
 curl --silent --output "${tmp_dir}/backup-bad-confirm.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \

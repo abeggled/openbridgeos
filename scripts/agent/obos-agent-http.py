@@ -37,6 +37,10 @@ READ_ONLY_ACTIONS = {
 }
 MUTATING_ACTIONS = {
     "backup": "backup",
+    "restart": "restart",
+    "start": "start",
+    "stop": "stop",
+    "update": "update",
 }
 
 
