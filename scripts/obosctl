@@ -10,6 +10,8 @@ STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
 AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-${STATE_DIR}/agent/obos-agent-audit.log}"
 LAST_UPDATE_FILE="${OBOS_LAST_UPDATE_FILE:-${STATE_DIR}/last-update}"
 RESTORE_STAGE_DIR="${OBOS_RESTORE_STAGE_DIR:-${STATE_DIR}/restore-staging}"
+PORTABLE_EXPORT_DIR="${OBOS_PORTABLE_EXPORT_DIR:-${STATE_DIR}/portable-backups}"
+PORTABLE_IMPORT_DIR="${OBOS_PORTABLE_IMPORT_DIR:-${STATE_DIR}/portable-imports}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 SERVICE_NAME="obos-openbridgeserver.service"
@@ -50,6 +52,10 @@ Commands:
   backup-list       Print machine-readable appliance backup inventory
   backup-prune-plan Print a non-destructive backup retention plan
   backup-prune      Delete old backups after explicit confirmation
+  portable-export-plan
+                    Print the non-destructive encrypted backup export plan
+  portable-import-plan
+                    Print the non-destructive encrypted backup import plan
   restore-inspect   Inspect an appliance backup before restore
   restore-plan      Print the non-destructive restore plan for a backup
   restore-stage     Extract a backup into private restore staging
@@ -525,6 +531,63 @@ backup_prune() {
   rm -f "${plan_file}"
   trap - EXIT INT TERM
   return "${prune_exit}"
+}
+
+portable_export_plan() {
+  backup_path="${1:-}"
+  [ -n "${backup_path}" ] || {
+    echo "portable export plan: backup path is required" >&2
+    return 2
+  }
+  if ! restore_inspect "${backup_path}" >/dev/null; then
+    echo "portable export plan: backup inspection failed" >&2
+    return 1
+  fi
+
+  echo "format=obos-portable-backup-export-plan-v1"
+  echo "mode=non-destructive"
+  echo "portable_format=obos-portable-backup-v1"
+  echo "source_backup=${backup_path}"
+  echo "export_dir=${PORTABLE_EXPORT_DIR}"
+  echo "raw_backup_download_allowed=false"
+  echo "authenticated_encryption_required=true"
+  echo "passphrase_required=true"
+  echo "metadata_only_cleartext=true"
+  echo "payload_contains_secrets=true"
+  echo "download_after_encryption=true"
+  echo "import_plan_command=sudo obosctl portable-import-plan <portable-backup>"
+  echo "portable export plan: PASS"
+}
+
+portable_import_plan() {
+  portable_path="${1:-}"
+  [ -n "${portable_path}" ] || {
+    echo "portable import plan: portable backup path is required" >&2
+    return 2
+  }
+  case "${portable_path}" in
+    "${PORTABLE_IMPORT_DIR}"/*) ;;
+    *) echo "portable import plan: path must be below ${PORTABLE_IMPORT_DIR}" >&2; return 2 ;;
+  esac
+  case "${portable_path}" in
+    *'/../'*|*'/..'|'../'*|..)
+      echo "portable import plan: path must not contain parent traversal" >&2
+      return 2
+      ;;
+  esac
+
+  echo "format=obos-portable-backup-import-plan-v1"
+  echo "mode=non-destructive"
+  echo "portable_format=obos-portable-backup-v1"
+  echo "portable_backup=${portable_path}"
+  echo "import_dir=${PORTABLE_IMPORT_DIR}"
+  echo "decrypt_to_private_staging=true"
+  echo "verify_payload_hash=true"
+  echo "run_backup_inspection=true"
+  echo "restore_stage_required=true"
+  echo "live_apply_allowed=false"
+  echo "pre_restore_backup_required=true"
+  echo "portable import plan: PASS"
 }
 
 agent_audit_summary() {
@@ -1043,6 +1106,14 @@ case "${1:-}" in
   backup-prune)
     shift
     backup_prune "$@"
+    ;;
+  portable-export-plan)
+    shift
+    portable_export_plan "${1:-}"
+    ;;
+  portable-import-plan)
+    shift
+    portable_import_plan "${1:-}"
     ;;
   restore-inspect)
     shift

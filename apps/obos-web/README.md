@@ -43,6 +43,8 @@ Backup creation is the first confirmed mutation exposed through the HTTP bridge.
 It uses the same `obos-agent backup --confirm backup` contract and audit rules.
 Raw backup archive download remains disabled because appliance backups contain
 secret-bearing configuration. Future download and migration support should use
-the encrypted portable backup format `obos-portable-backup-v1`.
+the encrypted portable backup format `obos-portable-backup-v1`. The current CLI
+and agent expose non-destructive export/import planning only; the web UI does
+not yet create, download, upload, or decrypt portable backup files.
 
 Other mutation controls are intentionally disabled in HTML.

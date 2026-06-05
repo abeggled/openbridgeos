@@ -30,6 +30,8 @@ directly.
 | Latest backup | `obosctl backup-summary` | `obos-backup-summary-v1` |
 | Backup inventory | `obosctl backup-list` | `obos-backup-list-v1` |
 | Backup retention plan | `obosctl backup-prune-plan` | `obos-backup-prune-plan-v1` |
+| Portable backup export plan | `sudo obosctl portable-export-plan <backup.tar.gz>` | `obos-portable-backup-export-plan-v1` |
+| Portable backup import plan | `sudo obosctl portable-import-plan <portable-backup>` | `obos-portable-backup-import-plan-v1` |
 | Logs metadata | `sudo obosctl logs-summary` | `obos-logs-summary-v1` |
 | Restore staging inventory | `sudo obosctl restore-stage-summary` | `obos-restore-stage-summary-v1` |
 | MQTT exposure | `sudo obosctl mqtt-summary` | `obos-mqtt-summary-v1` |
@@ -134,6 +136,8 @@ obos-agent backup-summary
 obos-agent backup-list
 obos-agent backup-prune-plan
 obos-agent logs-summary
+obos-agent portable-export-plan <backup.tar.gz>
+obos-agent portable-import-plan <portable-backup>
 obos-agent restore-stage-summary
 obos-agent restore-stage-inspect <stage-dir>
 obos-agent restore-apply-plan <stage-dir>
@@ -208,6 +212,12 @@ raw appliance backup archive. The intended format is `obos-portable-backup-v1`.
 Future import support must upload encrypted portable backups into private
 staging, decrypt after explicit confirmation, run backup inspection, and then use
 the existing restore staging and apply planning gates.
+
+The first executable contracts for that future workflow are
+`obos-portable-backup-export-plan-v1` and
+`obos-portable-backup-import-plan-v1`. They are non-destructive planning outputs
+only; they do not create encrypted files, accept uploads, decrypt payloads, or
+apply restores.
 
 The initial bridge is installed as `obos-agent-http.service`. It binds to
 `127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the first
