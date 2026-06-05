@@ -319,11 +319,12 @@ staging, decrypt after explicit confirmation, run backup inspection, and then us
 the existing restore staging and apply planning gates.
 
 The first executable contracts for that future workflow are
-`obos-portable-backup-export-plan-v1`, `obos-portable-backup-export-v1`, and
-`obos-portable-backup-import-plan-v1`. The web UI must still not download raw
-backups; download support may only expose the portable export artifact after
-encryption. Import planning remains non-destructive and does not accept uploads,
-decrypt payloads, or apply restores.
+`obos-portable-backup-export-plan-v1`, `obos-portable-backup-export-v1`,
+`obos-portable-backup-import-plan-v1`, and
+`obos-portable-import-stage-v1`. The web UI must still not download raw backups;
+download support may only expose the portable export artifact after encryption.
+Import staging decrypts only into private staging and still does not apply
+restores to the live appliance.
 
 The initial bridge is installed as `obos-agent-http.service`. It binds to
 `127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the first

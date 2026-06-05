@@ -134,11 +134,23 @@ grep -q 'gnupg' scripts/bootstrap/provision-debian.sh \
 grep -q 'portable-import-plan)' scripts/obosctl \
   || fail "obosctl does not expose non-destructive portable import planning"
 
+grep -q 'portable-import-stage)' scripts/obosctl \
+  || fail "obosctl does not expose private portable import staging"
+
 grep -q 'format=obos-portable-backup-import-plan-v1' scripts/obosctl \
   || fail "portable import plan does not declare a format"
 
+grep -q 'format=obos-portable-import-stage-v1' scripts/obosctl \
+  || fail "portable import staging does not declare a format"
+
 grep -q 'live_apply_allowed=false' scripts/obosctl \
   || fail "portable import plan must not allow live apply"
+
+grep -q 'mode=private-import-staging' scripts/obosctl \
+  || fail "portable import staging does not use private staging mode"
+
+grep -q 'restore_inspection=pass' scripts/obosctl \
+  || fail "portable import staging does not require restore inspection"
 
 grep -q 'latest_backup_tls_private_keys=' scripts/obosctl \
   || fail "obosctl backup summary does not report TLS private key status"

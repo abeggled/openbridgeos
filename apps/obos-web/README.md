@@ -47,7 +47,8 @@ non-destructive.
 Raw backup archive download remains disabled because appliance backups contain
 secret-bearing configuration. Future download and migration support should use
 the encrypted portable backup format `obos-portable-backup-v1`. The current CLI
-can create encrypted portable exports, while the web UI still does not create,
-download, upload, or decrypt portable backup files.
+can create encrypted portable exports and decrypt them into private import
+staging, while the web UI still does not create, download, upload, or decrypt
+portable backup files.
 
 Restore apply and other mutation controls are intentionally disabled in HTML.
