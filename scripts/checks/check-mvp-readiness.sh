@@ -70,6 +70,8 @@ require_line '"backup": "backup"' scripts/agent/obos-agent-http.py
 require_line '"restore-stage": "restore-stage"' scripts/agent/obos-agent-http.py
 require_line '"update": "update"' scripts/agent/obos-agent-http.py
 require_line '"logs-tail"' scripts/agent/obos-agent-http.py
+require_line '"mqtt-enable-lan": "mqtt-enable-lan"' scripts/agent/obos-agent-http.py
+require_line '"mqtt-disable-lan": "mqtt-disable-lan"' scripts/agent/obos-agent-http.py
 require_line "MAX_POST_BYTES = 1024" scripts/agent/obos-agent-http.py
 require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.sh
 
@@ -83,6 +85,8 @@ require_line 'data-agent-field="security-summary:result"' apps/obos-web/index.ht
 require_line 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' apps/obos-web/index.html
 require_line 'data-agent-field="mqtt-summary:source_cidr"' apps/obos-web/index.html
 require_line 'data-load-logs' apps/obos-web/index.html
+require_line 'data-mutation-action="mqtt-enable-lan"' apps/obos-web/index.html
+require_line 'data-mutation-action="mqtt-disable-lan"' apps/obos-web/index.html
 
 require_line "OBOS_IMAGE_PROFILE=amd64-vm" packaging/images/profiles/amd64-vm.env
 require_line "OBOS_IMAGE_KIND=vm-image" packaging/images/profiles/amd64-vm.env

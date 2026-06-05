@@ -69,6 +69,24 @@ grep -q 'data-mutation-status="restore-stage"' "${INDEX}" \
 grep -q 'data-agent-field="mqtt-summary:' "${INDEX}" \
   || fail "web UI does not expose MQTT summary placeholders"
 
+grep -q 'id="mqtt-source-cidr"' "${INDEX}" \
+  || fail "web UI does not expose MQTT source CIDR input"
+
+grep -q 'data-mutation-action="mqtt-enable-lan"' "${INDEX}" \
+  || fail "web UI does not expose MQTT enable mutation control"
+
+grep -q 'data-confirm="mqtt-enable-lan"' "${INDEX}" \
+  || fail "web UI MQTT enable mutation control does not carry confirmation token"
+
+grep -q 'data-mutation-action="mqtt-disable-lan"' "${INDEX}" \
+  || fail "web UI does not expose MQTT disable mutation control"
+
+grep -q 'data-confirm="mqtt-disable-lan"' "${INDEX}" \
+  || fail "web UI MQTT disable mutation control does not carry confirmation token"
+
+grep -q 'data-mutation-status="mqtt"' "${INDEX}" \
+  || fail "web UI does not expose MQTT mutation status"
+
 grep -q 'data-agent-field="tls-summary:' "${INDEX}" \
   || fail "web UI does not expose TLS summary placeholders"
 
@@ -162,11 +180,20 @@ grep -q 'mutationBackupFrom' "${JS}" \
 grep -q 'body.backup_path = backupPath' "${JS}" \
   || fail "web UI restore-stage mutation does not send backup path"
 
+grep -q 'mqtt-enable-lan' "${JS}" \
+  || fail "web UI does not handle MQTT enable mutation body"
+
+grep -q 'body.source_cidr = cidr' "${JS}" \
+  || fail "web UI does not send optional MQTT source CIDR"
+
 grep -q 'grid-template-columns' "${CSS}" \
   || fail "web UI CSS does not define stable grid layout"
 
 grep -q '.button-row' "${CSS}" \
   || fail "web UI CSS does not define action button row layout"
+
+grep -q '^input {' "${CSS}" \
+  || fail "web UI CSS does not style input controls"
 
 grep -q '.log-viewer' "${CSS}" \
   || fail "web UI CSS does not define bounded log viewer"

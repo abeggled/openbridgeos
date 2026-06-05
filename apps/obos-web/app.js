@@ -171,6 +171,12 @@
       }
       body.backup_path = backupPath;
     }
+    if (action === "mqtt-enable-lan") {
+      const cidr = document.querySelector("#mqtt-source-cidr")?.value.trim();
+      if (cidr) {
+        body.source_cidr = cidr;
+      }
+    }
 
     button.disabled = true;
     setMutationStatus(statusTarget, "running", "loading");

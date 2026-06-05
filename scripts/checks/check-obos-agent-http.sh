@@ -22,6 +22,10 @@ grep -q 'MUTATING_ACTIONS' "${BRIDGE}" \
   || fail "mutating action allowlist missing"
 grep -q '"backup": "backup"' "${BRIDGE}" \
   || fail "backup mutation is not exposed with a matching confirmation token"
+grep -q '"mqtt-enable-lan": "mqtt-enable-lan"' "${BRIDGE}" \
+  || fail "mqtt-enable-lan mutation is not exposed with a matching confirmation token"
+grep -q '"mqtt-disable-lan": "mqtt-disable-lan"' "${BRIDGE}" \
+  || fail "mqtt-disable-lan mutation is not exposed with a matching confirmation token"
 grep -q '"start": "start"' "${BRIDGE}" \
   || fail "start mutation is not exposed with a matching confirmation token"
 grep -q '"stop": "stop"' "${BRIDGE}" \
@@ -62,6 +66,8 @@ grep -q 'expected_fields = {"confirm"}' "${BRIDGE}" \
   || fail "bridge does not reject unexpected mutation body fields"
 grep -q 'backup_path' "${BRIDGE}" \
   || fail "bridge does not support checked restore-stage backup path payload"
+grep -q 'source_cidr' "${BRIDGE}" \
+  || fail "bridge does not support optional MQTT source CIDR payload"
 grep -q 'obos-agent-http-error-v1' "${BRIDGE}" \
   || fail "HTTP error envelope missing"
 if grep -q 'Access-Control-Allow-Origin' "${BRIDGE}"; then
@@ -230,6 +236,42 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  mqtt-enable-lan)
+    if [ "${2:-}" = "--confirm" ]; then
+      [ "${3:-}" = "mqtt-enable-lan" ] || exit 2
+      cidr="any"
+    else
+      cidr="${2:-missing}"
+      [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "mqtt-enable-lan" ] || exit 2
+    fi
+    cat <<RESPONSE
+format=obos-agent-response-v1
+action=mqtt-enable-lan
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-mqtt-summary-v1
+stdout=source_cidr=${cidr}
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  mqtt-disable-lan)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "mqtt-disable-lan" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=mqtt-disable-lan
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-mqtt-summary-v1
+stdout=lan_enabled=false
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -297,6 +339,36 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/restore-stage |
   grep -q 'stdout=format=obos-restore-stage-v1' \
   || fail "HTTP bridge did not run confirmed restore-stage mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"mqtt-enable-lan"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/mqtt-enable-lan |
+  grep -q 'stdout=source_cidr=any' \
+  || fail "HTTP bridge did not run confirmed MQTT enable mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"mqtt-enable-lan","source_cidr":"192.168.1.0/24"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/mqtt-enable-lan |
+  grep -q 'stdout=source_cidr=192.168.1.0/24' \
+  || fail "HTTP bridge did not forward MQTT source CIDR"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"mqtt-disable-lan"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/mqtt-disable-lan |
+  grep -q 'stdout=lan_enabled=false' \
+  || fail "HTTP bridge did not run confirmed MQTT disable mutation"
+
+curl --silent --output "${tmp_dir}/mqtt-extra-field.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"mqtt-disable-lan","source_cidr":"192.168.1.0/24"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/mqtt-disable-lan |
+  grep -q '^400$' \
+  || fail "HTTP bridge did not reject unexpected MQTT disable body fields"
+grep -q 'invalid-body' "${tmp_dir}/mqtt-extra-field.out" \
+  || fail "HTTP bridge MQTT unexpected body rejection missing marker"
 
 curl --silent --output "${tmp_dir}/restore-stage-extra-field.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \
