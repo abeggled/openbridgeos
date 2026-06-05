@@ -27,6 +27,9 @@ grep -q 'data-agent-field="status-summary:' "${INDEX}" \
 grep -q 'data-agent-field="backup-summary:' "${INDEX}" \
   || fail "web UI does not expose backup summary placeholders"
 
+grep -q 'data-agent-field="backup-list:backup_count"' "${INDEX}" \
+  || fail "web UI does not expose backup inventory count"
+
 grep -q 'data-agent-field="restore-stage-summary:' "${INDEX}" \
   || fail "web UI does not expose restore staging placeholders"
 

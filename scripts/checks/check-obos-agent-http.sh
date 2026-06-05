@@ -18,6 +18,8 @@ python3 -m py_compile "${BRIDGE}" \
 
 grep -q 'READ_ONLY_ACTIONS' "${BRIDGE}" \
   || fail "read-only action allowlist missing"
+grep -q '"backup-list"' "${BRIDGE}" \
+  || fail "backup-list is not exposed by the read-only HTTP bridge"
 grep -q 'OBOS_AGENT_PATH' "${BRIDGE}" \
   || fail "agent path is not configurable"
 grep -q '127.0.0.1' "${BRIDGE}" \
@@ -80,6 +82,20 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  backup-list)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=backup-list
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-backup-list-v1
+stdout=backup_count=2
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -99,6 +115,10 @@ sleep 1
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/status-summary |
   grep -q 'stdout=format=obos-status-summary-v1' \
   || fail "HTTP bridge did not return agent response"
+
+curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/backup-list |
+  grep -q 'stdout=backup_count=2' \
+  || fail "HTTP bridge did not expose backup inventory"
 
 curl --silent --output "${tmp_dir}/unknown.out" --write-out '%{http_code}' \
   http://127.0.0.1:18091/obos/api/v1/actions/unknown |

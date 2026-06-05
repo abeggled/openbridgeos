@@ -21,6 +21,7 @@ READ_ONLY_ACTIONS = {
     "status-summary",
     "update-summary",
     "backup-summary",
+    "backup-list",
     "backup-prune-plan",
     "restore-stage-summary",
     "mqtt-summary",
