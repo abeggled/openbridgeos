@@ -165,10 +165,16 @@ appliance boundary:
   envelope.
 - Run under a dedicated unprivileged service account and call only the installed
   `obos-agent` binary, never `obosctl` or a shell directly.
-- Use systemd hardening at least as strict as the local agent boundary:
-  `NoNewPrivileges=true`, `PrivateTmp=true`, `ProtectSystem=strict`,
-  `ProtectHome=true`, and a narrow `ReadWritePaths=` entry only for agent state
-  if the bridge itself needs state.
+- Use systemd hardening around the local sudo boundary: `PrivateTmp=true`,
+  `ProtectSystem=strict`, `ProtectHome=true`, `LockPersonality=true`,
+  `MemoryDenyWriteExecute=true`, `RestrictRealtime=true`, and
+  `SystemCallArchitectures=native`.
+- Do not enable `NoNewPrivileges=true` while the bridge depends on
+  `obos-agent` using `sudo -n`; that would block the intended sudoers
+  allowlist boundary. `NoNewPrivileges=true` becomes mandatory only after the
+  HTTP bridge no longer needs sudo privilege elevation.
+- Use a narrow `ReadWritePaths=` entry only for agent state if the bridge itself
+  needs state.
 
 The first implementation should start with read-only endpoints for `actions`,
 `status-summary`, `update-summary`, `backup-summary`, `backup-prune-plan`,

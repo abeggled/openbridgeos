@@ -143,5 +143,7 @@ The future HTTP bridge for that web UI is intentionally a separate local
 boundary. It should be exposed only below `/obos/api/` on the same HTTPS origin,
 bind locally or to a Unix socket, call the installed `obos-agent` binary, and
 keep confirmed mutations disabled until the read-only bridge and systemd
-hardening are validated. The detailed contract is in
+hardening are validated. Because `obos-agent` currently crosses the privilege
+boundary with `sudo -n`, the HTTP bridge must not use `NoNewPrivileges=true`
+until that sudo dependency is removed. The detailed contract is in
 [web-ui-agent-contract.md](web-ui-agent-contract.md).
