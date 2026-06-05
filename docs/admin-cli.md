@@ -198,6 +198,7 @@ extract files.
 ```sh
 sudo obosctl restore-stage /srv/obos/backups/obos-openbridgeserver-20260604T103000Z.tar.gz
 sudo obosctl restore-stage-summary
+obos-agent restore-stage /srv/obos/backups/obos-openbridgeserver-20260604T103000Z.tar.gz --confirm restore-stage
 ```
 
 `restore-stage` first runs the same backup inspection and then extracts the
@@ -211,6 +212,10 @@ and should be treated like the original backup.
 `restore-stage-summary` prints a machine-readable inventory of existing private
 restore staging directories. It reports whether each stage manifest exists and
 whether `restore-stage-inspect` passes for that staging directory.
+
+Through `obos-agent`, restore staging is a confirmed mutation. The agent accepts
+only appliance backup archives below the configured backup directory before
+calling `sudo obosctl restore-stage`.
 
 ## Restore Stage Inspection
 

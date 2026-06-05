@@ -283,6 +283,12 @@ grep -q 'action=restore-stage-summary|mutating=false' scripts/agent/obos-agent.s
 grep -q 'action=backup-prune|mutating=true|confirm=backup-prune' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark backup pruning as a confirmed mutation"
 
+grep -q 'action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark restore staging as a confirmed mutation"
+
+grep -q 'validate_backup_path' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not validate restore backup path before sudo"
+
 grep -q 'action=agent-audit-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark audit summary as read-only"
 
@@ -303,6 +309,9 @@ grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
 
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow confirmed backup pruning"
+
+grep -q '/usr/bin/obosctl restore-stage \*' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow checked restore staging"
 
 grep -q '/usr/bin/obosctl agent-audit-summary' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow agent audit summary"
