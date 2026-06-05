@@ -237,6 +237,7 @@ below the configured private restore staging directory.
 
 ```sh
 sudo obosctl restore-apply-plan /srv/obos/state/restore-staging/restore.XXXXXXXX
+obos-agent restore-apply-plan /srv/obos/state/restore-staging/restore.XXXXXXXX
 ```
 
 `restore-apply-plan` first requires restore stage inspection to pass. It then
@@ -244,6 +245,9 @@ prints the future live target paths, required pre-restore backup gate, explicit
 confirmation requirement, service stop/restart order, permission normalization,
 health checks, and security baseline audit step. It is still non-destructive and
 does not replace live appliance files.
+
+Through `obos-agent`, restore apply planning uses the same private staging path
+validation as restore stage inspection.
 
 ## MQTT LAN Access
 

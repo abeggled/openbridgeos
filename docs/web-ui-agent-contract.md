@@ -83,6 +83,8 @@ Restore staging accepts only appliance backup archives below the configured
 backup directory before crossing the sudo boundary.
 Restore stage inspection accepts only private restore staging directories below
 the configured restore staging directory.
+Restore apply planning uses the same stage path validation and remains
+non-destructive.
 
 ## Restore Workflow
 
@@ -125,6 +127,7 @@ obos-agent backup-list
 obos-agent backup-prune-plan
 obos-agent restore-stage-summary
 obos-agent restore-stage-inspect <stage-dir>
+obos-agent restore-apply-plan <stage-dir>
 obos-agent mqtt-summary
 obos-agent tls-summary
 obos-agent security-summary
