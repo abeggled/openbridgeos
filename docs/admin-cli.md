@@ -189,6 +189,11 @@ The web UI can enable or disable MQTT LAN exposure through the same local HTTP
 bridge. Enabling MQTT accepts an optional source CIDR, which `obos-agent`
 validates before calling `sudo obosctl mqtt-enable-lan`.
 
+The web UI can also generate TLS material and export the public trust bundle
+through confirmed `tls-generate` and `tls-export` mutations. TLS generation
+preserves existing appliance identity material instead of rotating it
+implicitly.
+
 The web UI can stage the latest listed backup through `obos-agent restore-stage
 <backup.tar.gz> --confirm restore-stage`. This extracts into private restore
 staging only; restore apply remains unavailable through the web UI.

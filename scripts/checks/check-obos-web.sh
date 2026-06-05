@@ -99,6 +99,21 @@ grep -q 'data-agent-field="tls-summary:leaf_sha256_fingerprint"' "${INDEX}" \
 grep -q 'data-agent-field="tls-summary:leaf_expiry_warning"' "${INDEX}" \
   || fail "web UI does not expose leaf certificate expiry warning"
 
+grep -q 'data-mutation-action="tls-generate"' "${INDEX}" \
+  || fail "web UI does not expose TLS generate mutation control"
+
+grep -q 'data-confirm="tls-generate"' "${INDEX}" \
+  || fail "web UI TLS generate mutation control does not carry confirmation token"
+
+grep -q 'data-mutation-action="tls-export"' "${INDEX}" \
+  || fail "web UI does not expose TLS export mutation control"
+
+grep -q 'data-confirm="tls-export"' "${INDEX}" \
+  || fail "web UI TLS export mutation control does not carry confirmation token"
+
+grep -q 'data-mutation-status="tls"' "${INDEX}" \
+  || fail "web UI does not expose TLS mutation status"
+
 grep -q 'data-agent-field="security-summary:' "${INDEX}" \
   || fail "web UI does not expose security summary placeholders"
 
