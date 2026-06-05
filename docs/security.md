@@ -177,7 +177,7 @@ app name, managed service, backup path, and successful localhost plus verified
 HTTPS proxy health markers.
 
 Failed updates must not overwrite the last successful update record. This keeps
-status output and future web UI state honest: stale success remains visibly old
+status output and web UI state honest: stale success remains visibly old
 instead of being replaced by a failed attempt.
 
 ## Backup and Restore

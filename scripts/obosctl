@@ -1111,7 +1111,7 @@ EOF
   echo "stage_dir=${stage_dir}"
   echo "stage_manifest=${stage_manifest}"
   echo "mode=staged-only"
-  echo "next=review staged files, then run a future restore apply command"
+  echo "next=review staged files, then run: sudo obosctl restore-apply-plan ${stage_dir}"
 }
 
 restore_stage_inspect() {
@@ -1514,7 +1514,7 @@ update_rollback_plan() {
   echo "next_steps:"
   echo "  1. run: sudo obosctl restore-plan ${backup_path}"
   echo "  2. run: sudo obosctl restore-stage ${backup_path}"
-  echo "  3. inspect the staged restore before any future apply command"
+  echo "  3. inspect the staged restore before confirmed CLI apply"
   echo "  4. run: sudo obosctl restore-apply-plan <stage-dir>"
   echo
   echo "update rollback plan: PASS"

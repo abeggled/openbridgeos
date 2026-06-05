@@ -365,6 +365,12 @@ grep -q 'restore stage inspect: PASS' scripts/obosctl \
 grep -q 'Mosquitto logs absent' scripts/obosctl \
   || fail "restore stage inspection does not verify log exclusion"
 
+grep -q 'next=review staged files, then run: sudo obosctl restore-apply-plan' scripts/obosctl \
+  || fail "restore stage output does not point to restore apply planning"
+
+! grep -q 'future restore apply command' scripts/obosctl \
+  || fail "restore stage output still references a future restore apply command"
+
 grep -q 'format=obos-restore-apply-plan-v1' scripts/obosctl \
   || fail "restore apply plan does not declare a format"
 
@@ -434,6 +440,9 @@ grep -q 'update rollback plan: blocked; backup inspection failed' scripts/obosct
 
 grep -q 'restore-apply-plan <stage-dir>' scripts/obosctl \
   || fail "obosctl update rollback plan does not end with restore apply planning"
+
+! grep -q 'future apply command' scripts/obosctl \
+  || fail "obosctl update rollback plan still references a future apply command"
 
 grep -q 'last-update:' scripts/obosctl \
   || fail "obosctl status does not show last update state"

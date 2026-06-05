@@ -53,7 +53,7 @@ paths:
 2. `/usr/lib/obos/print-trust-info.sh` prints the CA fingerprint, leaf
    fingerprint, hostname, IP addresses, and root CA export path.
 3. `/usr/lib/obos/export-trust-bundle.sh` exports public trust artifacts for a
-   future web UI, boot-accessible summary, or manual support workflow.
+   web UI, boot-accessible summary, or manual support workflow.
 4. The obos web onboarding page shows the same fingerprint, but the web page
    alone is not sufficient proof because it can be spoofed before trust is
    established.

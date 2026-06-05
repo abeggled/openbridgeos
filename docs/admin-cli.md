@@ -70,8 +70,8 @@ local CA by resolving `obos.local` to `127.0.0.1` for the local probe.
 If `/srv/obos/state/last-update` exists, `status` also prints the last
 successful update record.
 
-`status-summary` prints a stable key-value format for agents and the future web
-UI. It includes a format version, app name, service name, systemd active state,
+`status-summary` prints a stable key-value format for agents and the web UI. It
+includes a format version, app name, service name, systemd active state,
 localhost health, HTTPS proxy health, and whether a last update record exists.
 
 `system-summary` prints the stable `obos-system-summary-v1` format for agents
@@ -84,7 +84,7 @@ mutations.
 
 `security-summary` runs the security baseline audit in machine-readable mode. It
 prints the summary format, PASS/FAIL result, pass count, and fail count for
-agents and the future web UI.
+agents and the web UI.
 
 `mvp-readiness-summary` runs the non-destructive technical MVP runtime readiness
 audit in machine-readable mode. It checks services, health summaries, TLS, MQTT
@@ -148,14 +148,14 @@ The update record is a small key-value file with format `obos-update-v1`. It
 includes the completion timestamp, app name, systemd service name, pre-update
 backup requirement, backup path, and successful local/proxy health markers.
 
-`update-summary` prints a stable key-value format for agents and the future web
-UI. It includes the update state file path, whether a successful update record is
+`update-summary` prints a stable key-value format for agents and the web UI. It
+includes the update state file path, whether a successful update record is
 present, and the last update record fields when present.
 
 `update-rollback-plan` is read-only and non-destructive. It reads the last
 successful update record, verifies that the recorded backup still exists and
 passes backup inspection, then prints the restore planning commands to use before
-any future apply workflow.
+confirmed CLI apply.
 
 ## Backup
 
@@ -226,6 +226,10 @@ portable-import-stage <portable-backup> <passphrase-file> --confirm
 portable-import-stage`. Import staging decrypts into private staging, runs
 backup inspection, and then leaves restore apply unavailable.
 
+Confirmed restore apply is available only through
+`sudo obosctl restore-apply <stage-dir> --confirm restore-apply` on the local
+CLI.
+
 `portable-export-plan` is read-only and non-destructive. It first verifies the
 selected local backup with `restore-inspect`, then prints the stable
 `obos-portable-backup-export-plan-v1` format. The plan records that raw backup
@@ -250,8 +254,8 @@ verifies the portable metadata, encrypted payload hash, decrypted backup hash,
 and runs `restore-inspect` before reporting the staged backup path. It still
 does not apply anything to the live appliance.
 
-`backup-summary` prints the latest backup state for agents and the future web
-UI, including whether the latest archive passes backup inspection and whether
+`backup-summary` prints the latest backup state for agents and the web UI,
+including whether the latest archive passes backup inspection and whether
 its manifest records secrets, logs, and TLS private keys. `backup-list` prints a
 stable key-value inventory with one line per matching backup. Backup archives
 contain secrets, so UI download flows must still treat every listed file as
@@ -388,8 +392,8 @@ plain TCP on `1883` and MQTT WebSocket on `9001` by updating the app environment
 file, updating the managed nftables block, reloading the firewall, and
 restarting the managed open bridge server stack.
 
-`mqtt-summary` prints a stable key-value format for agents and the future web
-UI. It includes the app environment file, MQTT bind addresses, and a derived
+`mqtt-summary` prints a stable key-value format for agents and the web UI. It
+includes the app environment file, MQTT bind addresses, and a derived
 `lan_enabled` marker. It also reports the managed nftables source scope as
 `firewall_source`, using `disabled`, `any`, a CIDR value, or `unknown`. The UI
 should treat `lan_enabled=true` as a deliberate external exposure state.
@@ -420,7 +424,7 @@ sudo obosctl tls-export-boot
 material below `/etc/obos/tls`. It preserves existing TLS material instead of
 rotating appliance identity implicitly. `tls-status` checks the local CA and leaf
 certificate status, including expiry warnings. `tls-summary` prints a stable
-key-value format for agents and the future web UI with certificate presence,
+key-value format for agents and the web UI with certificate presence,
 paths, subjects, issuers, expiry states, expiry warnings, and SHA-256
 fingerprints. `tls-info` prints the appliance hostname, IP addresses,
 certificate paths, and SHA-256 fingerprints.
