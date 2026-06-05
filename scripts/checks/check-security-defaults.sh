@@ -101,14 +101,35 @@ grep -q 'raw_logs_exposed=false' scripts/obosctl \
 grep -q 'portable-export-plan)' scripts/obosctl \
   || fail "obosctl does not expose non-destructive portable export planning"
 
+grep -q 'portable-export)' scripts/obosctl \
+  || fail "obosctl does not expose encrypted portable export creation"
+
 grep -q 'format=obos-portable-backup-export-plan-v1' scripts/obosctl \
   || fail "portable export plan does not declare a format"
+
+grep -q 'format=obos-portable-backup-export-v1' scripts/obosctl \
+  || fail "portable export does not declare a format"
 
 grep -q 'raw_backup_download_allowed=false' scripts/obosctl \
   || fail "portable export plan does not block raw backup downloads"
 
 grep -q 'authenticated_encryption_required=true' scripts/obosctl \
   || fail "portable export plan does not require authenticated encryption"
+
+grep -q 'gpg --batch --yes --pinentry-mode loopback' scripts/obosctl \
+  || fail "portable export does not use non-interactive GnuPG encryption"
+
+grep -q -- '--force-mdc' scripts/obosctl \
+  || fail "portable export does not force GnuPG modification detection"
+
+grep -q 'payload_sha256=' scripts/obosctl \
+  || fail "portable export does not record payload hash"
+
+grep -q 'backup_manifest_sha256=' scripts/obosctl \
+  || fail "portable export does not record backup manifest hash"
+
+grep -q 'gnupg' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install GnuPG for portable exports"
 
 grep -q 'portable-import-plan)' scripts/obosctl \
   || fail "obosctl does not expose non-destructive portable import planning"

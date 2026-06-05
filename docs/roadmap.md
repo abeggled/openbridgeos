@@ -66,12 +66,12 @@ Current implementation status:
   explicit confirmed HTTP mutations.
 - Hostname and timezone changes are exposed as explicit confirmed HTTP
   mutations after agent-side input validation.
-- Backup download is intentionally limited to the future encrypted portable
-  backup format.
-- Non-destructive encrypted portable backup export/import planning exists in
-  `obosctl` and `obos-agent`.
-- Restore apply, encrypted portable backup creation/download/upload/decryption,
-  and network basics beyond hostname/timezone
+- Backup download is intentionally limited to encrypted portable backup
+  artifacts, not raw appliance archives.
+- Encrypted portable backup export creation exists in `obosctl`; non-destructive
+  import planning exists in `obosctl` and `obos-agent`.
+- Restore apply, encrypted portable backup web download/upload/decryption, and
+  network basics beyond hostname/timezone
   controls are still future UI work.
 - The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
   criteria for test devices.
