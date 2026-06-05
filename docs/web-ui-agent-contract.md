@@ -195,8 +195,13 @@ The first implementation should start with read-only endpoints for `actions`,
 `restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`, and
 `agent-audit-summary`.
 
-The first confirmed HTTP mutation is `POST /obos/api/v1/actions/backup`. It
-requires `Content-Type: application/json` and exactly this body:
+The first confirmed HTTP mutations are `start`, `stop`, `restart`, `update`,
+and `backup`. Every mutation requires `Content-Type: application/json` and a
+body containing only the matching confirmation token, for example:
+
+```text
+POST /obos/api/v1/actions/backup
+```
 
 ```json
 {"confirm":"backup"}
@@ -206,6 +211,15 @@ The bridge forwards it to `obos-agent backup --confirm backup`, keeps the
 existing agent audit trail, and returns the normal `obos-agent-response-v1`
 envelope. Backup archive download remains out of scope because appliance
 backups contain secrets.
+
+The service lifecycle and update buttons use the same bridge contract:
+
+```sh
+obos-agent start --confirm start
+obos-agent stop --confirm stop
+obos-agent restart --confirm restart
+obos-agent update --confirm update
+```
 
 Future backup download support must use an encrypted portable export, not the
 raw appliance backup archive. The intended format is `obos-portable-backup-v1`.
@@ -221,6 +235,6 @@ apply restores.
 
 The initial bridge is installed as `obos-agent-http.service`. It binds to
 `127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the first
-read-only endpoint set, and allows only the confirmed backup mutation. Other
-POST requests return `obos-agent-http-error-v1` with `mutations-disabled` or
-`unknown-action`.
+read-only endpoint set, and allows only the confirmed service lifecycle, update,
+and backup mutations. Other POST requests return `obos-agent-http-error-v1`
+with `mutations-disabled` or `unknown-action`.

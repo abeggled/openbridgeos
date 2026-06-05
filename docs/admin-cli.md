@@ -174,6 +174,11 @@ The web UI can trigger the same operation through
 archive download is intentionally not exposed through the web UI because backups
 contain secret-bearing appliance configuration.
 
+The web UI can also trigger `start`, `stop`, `restart`, and `update` through the
+same local HTTP bridge confirmation model. These operations still cross the
+`obos-agent` audit boundary and use the same confirmation token as the agent
+command.
+
 Downloadable backups should use the future encrypted portable backup format
 `obos-portable-backup-v1`. This export format is intended for browser download,
 offline storage, and migration to another open bridge operating system

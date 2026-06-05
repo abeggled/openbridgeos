@@ -397,6 +397,18 @@ grep -q 'MUTATING_ACTIONS' scripts/agent/obos-agent-http.py \
 grep -q '"backup": "backup"' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not restrict backup mutation confirmation"
 
+grep -q '"start": "start"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not restrict start mutation confirmation"
+
+grep -q '"stop": "stop"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not restrict stop mutation confirmation"
+
+grep -q '"restart": "restart"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not restrict restart mutation confirmation"
+
+grep -q '"update": "update"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not restrict update mutation confirmation"
+
 grep -q 'application/json' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge mutations do not require JSON"
 
@@ -408,6 +420,12 @@ grep -q 'set(payload) != {"confirm"}' scripts/agent/obos-agent-http.py \
 
 grep -q 'data-mutation-action="backup"' apps/obos-web/index.html \
   || fail "web UI does not expose confirmed backup mutation"
+
+grep -q 'data-mutation-action="restart"' apps/obos-web/index.html \
+  || fail "web UI does not expose confirmed service lifecycle mutations"
+
+grep -q 'data-mutation-action="update"' apps/obos-web/index.html \
+  || fail "web UI does not expose confirmed update mutation"
 
 grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow update rollback planning"

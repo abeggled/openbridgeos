@@ -39,8 +39,9 @@ warning state, and trust bundle availability for onboarding and support.
 The logs panel starts with metadata only. Raw log viewing remains disabled
 because service logs can contain sensitive operational data.
 
-Backup creation is the first confirmed mutation exposed through the HTTP bridge.
-It uses the same `obos-agent backup --confirm backup` contract and audit rules.
+Start, stop, restart, update, and backup creation are the first confirmed
+mutations exposed through the HTTP bridge. They use the same `obos-agent
+<action> --confirm <action>` contract and audit rules.
 Raw backup archive download remains disabled because appliance backups contain
 secret-bearing configuration. Future download and migration support should use
 the encrypted portable backup format `obos-portable-backup-v1`. The current CLI

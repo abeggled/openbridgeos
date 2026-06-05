@@ -93,9 +93,9 @@
     refreshButton.addEventListener("click", refresh);
   }
 
-  function setMutationStatus(action, value, state) {
-    const status = document.querySelector(`[data-mutation-status="${action}"]`);
-    if (status) {
+  function setMutationStatus(statusTarget, value, state) {
+    const statuses = Array.from(document.querySelectorAll(`[data-mutation-status="${statusTarget}"]`));
+    for (const status of statuses) {
       status.textContent = value;
       status.dataset.state = state;
     }
@@ -104,12 +104,13 @@
   async function runMutation(button) {
     const action = button.dataset.mutationAction;
     const confirmToken = button.dataset.confirm;
+    const statusTarget = button.dataset.mutationStatusTarget || action;
     if (!action || !confirmToken || !window.confirm(`Confirm ${action}?`)) {
       return;
     }
 
     button.disabled = true;
-    setMutationStatus(action, "running", "loading");
+    setMutationStatus(statusTarget, "running", "loading");
     try {
       const response = await fetch(`${apiBase}${action}`, {
         method: "POST",
@@ -124,10 +125,10 @@
       if (!response.ok) {
         throw new Error(text || `HTTP ${response.status}`);
       }
-      setMutationStatus(action, "completed", "ok");
+      setMutationStatus(statusTarget, "completed", "ok");
       await refresh();
     } catch (error) {
-      setMutationStatus(action, "failed", "error");
+      setMutationStatus(statusTarget, "failed", "error");
     } finally {
       button.disabled = false;
     }
