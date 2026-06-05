@@ -24,6 +24,7 @@ directly.
 | UI area | Command | Format |
 | --- | --- | --- |
 | Appliance status | `obosctl status-summary` | `obos-status-summary-v1` |
+| Host basics | `obosctl system-summary` | `obos-system-summary-v1` |
 | Last update | `obosctl update-summary` | `obos-update-summary-v1` |
 | Last update rollback plan | `sudo obosctl update-rollback-plan` | `obos-update-rollback-plan-v1` |
 | Latest backup | `obosctl backup-summary` | `obos-backup-summary-v1` |
@@ -126,6 +127,7 @@ action inventory and read-only status actions:
 ```sh
 obos-agent actions
 obos-agent status-summary
+obos-agent system-summary
 obos-agent update-summary
 obos-agent update-rollback-plan
 obos-agent backup-summary
@@ -184,11 +186,12 @@ appliance boundary:
   needs state.
 
 The first implementation should start with read-only endpoints for `actions`,
-`status-summary`, `update-summary`, `update-rollback-plan`, `backup-summary`,
-`backup-list`, `backup-prune-plan`, `logs-summary`, `restore-stage-summary`,
-`mqtt-summary`, `tls-summary`, `security-summary`, and `agent-audit-summary`. Confirmed
-mutations should remain unavailable over HTTP until the read-only bridge, nginx
-path, and service hardening are validated in CI.
+`status-summary`, `system-summary`, `update-summary`, `update-rollback-plan`,
+`backup-summary`, `backup-list`, `backup-prune-plan`, `logs-summary`,
+`restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`, and
+`agent-audit-summary`. Confirmed mutations should remain unavailable over HTTP
+until the read-only bridge, nginx path, and service hardening are validated in
+CI.
 
 The initial read-only bridge is installed as `obos-agent-http.service`. It binds
 to `127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, and exposes only

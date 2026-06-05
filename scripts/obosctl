@@ -32,6 +32,7 @@ Usage: obosctl <command>
 Commands:
   status            Show systemd, container, and health status
   status-summary    Print machine-readable appliance status
+  system-summary    Print machine-readable host and network basics
   security-summary  Print machine-readable security baseline status
   agent-audit-summary
                     Print machine-readable agent mutation audit status
@@ -150,6 +151,43 @@ health() {
     curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null
   else
     wget -q -T 5 -O /dev/null "${HEALTH_URL}"
+  fi
+}
+
+system_summary() {
+  hostname_value="$(hostname 2>/dev/null || true)"
+  timezone_value=
+  primary_interface=
+
+  if command -v timedatectl >/dev/null 2>&1; then
+    timezone_value="$(timedatectl show -p Timezone --value 2>/dev/null || true)"
+  fi
+  if [ -z "${timezone_value}" ] && [ -r /etc/timezone ]; then
+    timezone_value="$(sed -n '1p' /etc/timezone 2>/dev/null || true)"
+  fi
+
+  if command -v ip >/dev/null 2>&1; then
+    primary_interface="$(ip route show default 2>/dev/null | awk '
+      NR == 1 {
+        for (i = 1; i <= NF; i++) {
+          if ($i == "dev") {
+            print $(i + 1)
+            exit
+          }
+        }
+      }
+    ')"
+  fi
+
+  echo "format=obos-system-summary-v1"
+  echo "hostname=${hostname_value:-unknown}"
+  echo "timezone=${timezone_value:-unknown}"
+  if [ -n "${primary_interface}" ]; then
+    echo "default_route_present=true"
+    echo "primary_interface=${primary_interface}"
+  else
+    echo "default_route_present=false"
+    echo "primary_interface=unknown"
   fi
 }
 
@@ -950,6 +988,9 @@ case "${1:-}" in
     ;;
   status-summary)
     status_summary
+    ;;
+  system-summary)
+    system_summary
     ;;
   security-summary)
     require_root security-summary

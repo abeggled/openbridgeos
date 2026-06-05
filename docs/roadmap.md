@@ -52,7 +52,8 @@ Current implementation status:
 - Read-only `obos-agent-http.service` exposes selected `obos-agent` actions
   below `/obos/api/` on the same HTTPS origin.
 - The web shell consumes read-only status, update, backup, restore staging,
-  logs metadata, MQTT, TLS, security baseline, and agent audit summary fields.
+  host basics, logs metadata, MQTT, TLS, security baseline, and agent audit
+  summary fields.
 - Confirmed mutations remain disabled over HTTP.
 - Backup creation/download, log viewing, hostname, timezone, network basics,
   and MQTT/TLS mutation controls are still future UI work.

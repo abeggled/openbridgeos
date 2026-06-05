@@ -18,6 +18,8 @@ require_contract_line() {
 
 require_contract_line 'obosctl status-summary'
 require_contract_line 'obos-status-summary-v1'
+require_contract_line 'obosctl system-summary'
+require_contract_line 'obos-system-summary-v1'
 require_contract_line 'obosctl update-summary'
 require_contract_line 'obos-update-summary-v1'
 require_contract_line 'sudo obosctl update-rollback-plan'
@@ -47,6 +49,7 @@ require_contract_line 'sudo obosctl agent-audit-summary'
 require_contract_line 'obos-agent-audit-summary-v1'
 require_contract_line 'obos-agent actions'
 require_contract_line 'obos-agent-actions-v1'
+require_contract_line 'obos-agent system-summary'
 require_contract_line 'obos-agent update-rollback-plan'
 require_contract_line 'obos-agent backup-summary'
 require_contract_line 'obos-agent backup-list'
@@ -93,6 +96,8 @@ require_contract_line 'mutations should remain unavailable over HTTP'
 
 grep -q 'status-summary)' scripts/obosctl \
   || fail "obosctl status-summary command missing"
+grep -q 'system-summary)' scripts/obosctl \
+  || fail "obosctl system-summary command missing"
 grep -q 'update-summary)' scripts/obosctl \
   || fail "obosctl update-summary command missing"
 grep -q 'update-rollback-plan)' scripts/obosctl \

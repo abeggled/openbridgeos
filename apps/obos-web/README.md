@@ -24,6 +24,7 @@ The UI is expected to consume the allowlisted commands documented in
 Initial read-only panels:
 
 - appliance status
+- host basics
 - update state
 - backup state
 - restore staging state

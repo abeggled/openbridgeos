@@ -24,6 +24,15 @@ grep -q 'open bridge operating system' "${INDEX}" \
 grep -q 'data-agent-field="status-summary:' "${INDEX}" \
   || fail "web UI does not expose status summary placeholders"
 
+grep -q 'data-agent-field="system-summary:hostname"' "${INDEX}" \
+  || fail "web UI does not expose hostname"
+
+grep -q 'data-agent-field="system-summary:timezone"' "${INDEX}" \
+  || fail "web UI does not expose timezone"
+
+grep -q 'data-agent-field="system-summary:default_route_present"' "${INDEX}" \
+  || fail "web UI does not expose network route status"
+
 grep -q 'data-agent-field="update-rollback-plan:backup_present"' "${INDEX}" \
   || fail "web UI does not expose update rollback planning state"
 

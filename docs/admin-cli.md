@@ -9,6 +9,7 @@ and agent will need as well.
 ```sh
 obosctl status
 obosctl status-summary
+obosctl system-summary
 sudo obosctl security-summary
 sudo obosctl agent-audit-summary
 obosctl health
@@ -46,6 +47,7 @@ sudo obosctl mqtt-disable-lan
 ```sh
 obosctl status
 obosctl status-summary
+obosctl system-summary
 sudo obosctl security-summary
 sudo obosctl agent-audit-summary
 ```
@@ -61,6 +63,10 @@ successful update record.
 `status-summary` prints a stable key-value format for agents and the future web
 UI. It includes a format version, app name, service name, systemd active state,
 localhost health, HTTPS proxy health, and whether a last update record exists.
+
+`system-summary` prints the stable `obos-system-summary-v1` format for agents
+and the web UI. It includes hostname, timezone, whether a default route is
+present, and the primary interface name. It does not print IP addresses.
 
 `security-summary` runs the security baseline audit in machine-readable mode. It
 prints the summary format, PASS/FAIL result, pass count, and fail count for

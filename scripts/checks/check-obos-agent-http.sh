@@ -18,6 +18,8 @@ python3 -m py_compile "${BRIDGE}" \
 
 grep -q 'READ_ONLY_ACTIONS' "${BRIDGE}" \
   || fail "read-only action allowlist missing"
+grep -q '"system-summary"' "${BRIDGE}" \
+  || fail "system-summary is not exposed by the read-only HTTP bridge"
 grep -q '"backup-list"' "${BRIDGE}" \
   || fail "backup-list is not exposed by the read-only HTTP bridge"
 grep -q '"logs-summary"' "${BRIDGE}" \
@@ -86,6 +88,21 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  system-summary)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=system-summary
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-system-summary-v1
+stdout=hostname=obos-test
+stdout=default_route_present=true
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   backup-list)
     cat <<'RESPONSE'
 format=obos-agent-response-v1
@@ -149,6 +166,10 @@ sleep 1
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/status-summary |
   grep -q 'stdout=format=obos-status-summary-v1' \
   || fail "HTTP bridge did not return agent response"
+
+curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/system-summary |
+  grep -q 'stdout=hostname=obos-test' \
+  || fail "HTTP bridge did not expose system summary"
 
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/backup-list |
   grep -q 'stdout=backup_count=2' \
