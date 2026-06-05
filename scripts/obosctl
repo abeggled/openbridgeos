@@ -60,6 +60,8 @@ Commands:
   portable-export  Create an encrypted portable backup export
   portable-import-plan
                     Print the non-destructive encrypted backup import plan
+  portable-import-stage
+                    Decrypt a portable backup into private import staging
   restore-inspect   Inspect an appliance backup before restore
   restore-plan      Print the non-destructive restore plan for a backup
   restore-stage     Extract a backup into private restore staging
@@ -778,6 +780,131 @@ portable_import_plan() {
   echo "portable import plan: PASS"
 }
 
+portable_import_stage() {
+  require_root portable-import-stage
+  portable_path="${1:-}"
+  passphrase_file="${2:-}"
+  [ -n "${portable_path}" ] || {
+    echo "portable import stage: portable backup path is required" >&2
+    return 2
+  }
+  [ -n "${passphrase_file}" ] || {
+    echo "portable import stage: passphrase file is required" >&2
+    return 2
+  }
+  case "${portable_path}" in
+    "${PORTABLE_IMPORT_DIR}"/*) ;;
+    *) echo "portable import stage: path must be below ${PORTABLE_IMPORT_DIR}" >&2; return 2 ;;
+  esac
+  case "${portable_path}" in
+    *'/../'*|*'/..'|'../'*|..)
+      echo "portable import stage: path must not contain parent traversal" >&2
+      return 2
+      ;;
+  esac
+  [ -f "${portable_path}" ] || {
+    echo "portable import stage: portable backup not found" >&2
+    return 1
+  }
+  [ -s "${passphrase_file}" ] || {
+    echo "portable import stage: passphrase file is missing or empty" >&2
+    return 2
+  }
+  command -v gpg >/dev/null 2>&1 || {
+    echo "portable import stage: gpg is required" >&2
+    return 1
+  }
+  command -v sha256sum >/dev/null 2>&1 || {
+    echo "portable import stage: sha256sum is required" >&2
+    return 1
+  }
+
+  install -d -m 0700 "${PORTABLE_IMPORT_DIR}"
+  stage_dir="$(mktemp -d "${PORTABLE_IMPORT_DIR}/import.XXXXXXXX")"
+  extract_dir="${stage_dir}/portable"
+  install -d -m 0700 "${extract_dir}"
+  trap 'rm -rf "${stage_dir}"' EXIT INT TERM
+
+  list_file="${stage_dir}/portable.list"
+  if ! tar -tf "${portable_path}" > "${list_file}"; then
+    echo "portable import stage: portable backup is not readable as tar" >&2
+    return 1
+  fi
+  if grep -Eq '(^/|(^|/)\.\.(/|$))' "${list_file}"; then
+    echo "portable import stage: portable backup contains unsafe paths" >&2
+    return 1
+  fi
+  grep -qx 'metadata.txt' "${list_file}" || {
+    echo "portable import stage: metadata missing" >&2
+    return 1
+  }
+  grep -qx 'payload.tar.gz.gpg' "${list_file}" || {
+    echo "portable import stage: encrypted payload missing" >&2
+    return 1
+  }
+
+  tar -xf "${portable_path}" -C "${extract_dir}" metadata.txt payload.tar.gz.gpg
+  metadata_file="${extract_dir}/metadata.txt"
+  payload_file="${extract_dir}/payload.tar.gz.gpg"
+  grep -qx 'format=obos-portable-backup-v1' "${metadata_file}" || {
+    echo "portable import stage: unsupported portable format" >&2
+    return 1
+  }
+  expected_payload_hash="$(key_value payload_sha256 "${metadata_file}")"
+  actual_payload_hash="$(sha256_file "${payload_file}")"
+  if [ -z "${expected_payload_hash}" ] || [ "${expected_payload_hash}" != "${actual_payload_hash}" ]; then
+    echo "portable import stage: payload hash mismatch" >&2
+    return 1
+  fi
+
+  decrypted_backup="${stage_dir}/backup.tar.gz"
+  if ! gpg --batch --yes --pinentry-mode loopback \
+    --passphrase-file "${passphrase_file}" \
+    --output "${decrypted_backup}" --decrypt "${payload_file}"; then
+    echo "portable import stage: payload decryption failed" >&2
+    return 1
+  fi
+  chmod 0600 "${decrypted_backup}"
+
+  expected_backup_hash="$(key_value source_backup_sha256 "${metadata_file}")"
+  actual_backup_hash="$(sha256_file "${decrypted_backup}")"
+  if [ -z "${expected_backup_hash}" ] || [ "${expected_backup_hash}" != "${actual_backup_hash}" ]; then
+    echo "portable import stage: decrypted backup hash mismatch" >&2
+    return 1
+  fi
+  if ! restore_inspect "${decrypted_backup}" >/dev/null; then
+    echo "portable import stage: decrypted backup inspection failed" >&2
+    return 1
+  fi
+
+  staged_at="$(date -u +%Y%m%dT%H%M%SZ)"
+  manifest_file="${stage_dir}/obos-portable-import-stage.txt"
+  cat > "${manifest_file}" <<EOF
+format=obos-portable-import-stage-v1
+staged_at=${staged_at}
+portable_backup=${portable_path}
+stage_dir=${stage_dir}
+decrypted_backup=${decrypted_backup}
+portable_format=obos-portable-backup-v1
+payload_sha256=${actual_payload_hash}
+decrypted_backup_sha256=${actual_backup_hash}
+restore_inspection=pass
+mode=private-import-staging
+live_apply_allowed=false
+EOF
+  chmod 0600 "${manifest_file}"
+  trap - EXIT INT TERM
+
+  echo "format=obos-portable-import-stage-v1"
+  echo "portable_backup=${portable_path}"
+  echo "stage_dir=${stage_dir}"
+  echo "decrypted_backup=${decrypted_backup}"
+  echo "restore_inspection=pass"
+  echo "live_apply_allowed=false"
+  echo "next=sudo obosctl restore-stage ${decrypted_backup}"
+  echo "portable import stage: PASS"
+}
+
 agent_audit_summary() {
   limit="${1:-20}"
   case "${limit}" in
@@ -1317,6 +1444,10 @@ case "${1:-}" in
   portable-import-plan)
     shift
     portable_import_plan "${1:-}"
+    ;;
+  portable-import-stage)
+    shift
+    portable_import_stage "${1:-}" "${2:-}"
     ;;
   restore-inspect)
     shift

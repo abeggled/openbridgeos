@@ -42,7 +42,7 @@ require_line "Build a Debian-based x86_64 image." docs/roadmap.md
 require_line "Build ARM64 image." docs/roadmap.md
 require_line "Static obos web shell is installed" docs/roadmap.md
 require_line "Start, stop, restart, update, backup creation, and restore staging" docs/roadmap.md
-require_line "Encrypted portable backup export creation exists" docs/roadmap.md
+require_line "Encrypted portable backup export creation and private import staging exist" docs/roadmap.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
@@ -58,6 +58,7 @@ require_line "format=obos-security-baseline-summary-v1" scripts/audit/security-b
 require_line "format=obos-portable-backup-export-plan-v1" scripts/obosctl
 require_line "format=obos-portable-backup-export-v1" scripts/obosctl
 require_line "format=obos-portable-backup-import-plan-v1" scripts/obosctl
+require_line "format=obos-portable-import-stage-v1" scripts/obosctl
 require_line "gpg --batch --yes --pinentry-mode loopback" scripts/obosctl
 
 require_line "action=start|mutating=true|confirm=start" scripts/agent/obos-agent.sh

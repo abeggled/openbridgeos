@@ -162,6 +162,7 @@ sudo obosctl backup-prune --confirm backup-prune
 sudo obosctl portable-export-plan <backup.tar.gz>
 sudo obosctl portable-export <backup.tar.gz> <passphrase-file>
 sudo obosctl portable-import-plan <portable-backup>
+sudo obosctl portable-import-stage <portable-backup> <passphrase-file>
 ```
 
 Backups are written to `/srv/obos/backups` by default and are mode `0600`.
@@ -230,6 +231,12 @@ below `/srv/obos/state/portable-imports`, prints
 `obos-portable-backup-import-plan-v1`, and records that import must decrypt into
 private staging, verify hashes, run backup inspection, require restore staging,
 and disallow live apply.
+
+`portable-import-stage` decrypts an uploaded portable backup from
+`/srv/obos/state/portable-imports` into a private import staging directory. It
+verifies the portable metadata, encrypted payload hash, decrypted backup hash,
+and runs `restore-inspect` before reporting the staged backup path. It still
+does not apply anything to the live appliance.
 
 `backup-summary` prints the latest backup state for agents and the future web
 UI, including whether the latest archive passes backup inspection and whether

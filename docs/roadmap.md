@@ -68,10 +68,11 @@ Current implementation status:
   mutations after agent-side input validation.
 - Backup download is intentionally limited to encrypted portable backup
   artifacts, not raw appliance archives.
-- Encrypted portable backup export creation exists in `obosctl`; non-destructive
-  import planning exists in `obosctl` and `obos-agent`.
-- Restore apply, encrypted portable backup web download/upload/decryption, and
-  network basics beyond hostname/timezone
+- Encrypted portable backup export creation and private import staging exist in
+  `obosctl`; non-destructive import planning exists in `obosctl` and
+  `obos-agent`.
+- Restore apply, encrypted portable backup web download/upload, and network
+  basics beyond hostname/timezone
   controls are still future UI work.
 - The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
   criteria for test devices.
