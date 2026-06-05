@@ -70,6 +70,7 @@ open bridge server systemd unit and Compose stack.
 | Prune old backups | `sudo obosctl backup-prune --confirm backup-prune` |
 | Generate TLS material | `sudo obosctl tls-generate` |
 | Export TLS trust bundle | `sudo obosctl tls-export` |
+| Rotate web console password | `sudo obosctl web-auth-rotate` |
 | Enable MQTT LAN access | `sudo obosctl mqtt-enable-lan [source-cidr]` |
 | Disable MQTT LAN access | `sudo obosctl mqtt-disable-lan` |
 
@@ -93,6 +94,7 @@ obos-agent set-hostname <hostname> --confirm set-hostname
 obos-agent set-timezone <timezone> --confirm set-timezone
 obos-agent tls-generate --confirm tls-generate
 obos-agent tls-export --confirm tls-export
+obos-agent web-auth-rotate --confirm web-auth-rotate
 obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
 obos-agent mqtt-disable-lan --confirm mqtt-disable-lan
 ```
@@ -350,6 +352,19 @@ POST /obos/api/v1/actions/tls-export
 
 ```json
 {"confirm":"tls-export"}
+```
+
+Web console password rotation is available as an explicit confirmed mutation.
+The response contains the new generated password in the normal
+`obos-agent-response-v1` stdout block and must be shown only to the authenticated
+administrator who triggered the rotation.
+
+```text
+POST /obos/api/v1/actions/web-auth-rotate
+```
+
+```json
+{"confirm":"web-auth-rotate"}
 ```
 
 Host basics changes are available as explicit confirmed mutations with one

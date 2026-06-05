@@ -41,6 +41,7 @@ obosctl tls-summary
 sudo obosctl tls-info
 sudo obosctl tls-export
 sudo obosctl tls-export-boot
+sudo obosctl web-auth-rotate
 sudo obosctl mqtt-status
 sudo obosctl mqtt-summary
 sudo obosctl mqtt-enable-lan
@@ -426,6 +427,10 @@ certificate paths, and SHA-256 fingerprints.
 `tls-export` writes a public trust bundle below `/srv/obos/state/trust`.
 `tls-export-boot` writes the public trust summary and local CA certificate to a
 mounted boot partition when one is available.
+
+`web-auth-rotate` rotates the generated web console Basic Auth password and
+prints the new password once. Store it in a password manager; the command also
+updates `/etc/obos/web.htpasswd` and `/etc/obos/web-admin.env`.
 
 The trust bundle contains the local CA certificate, the current leaf
 certificate, and a text summary. It does not contain private keys. Verify the CA
