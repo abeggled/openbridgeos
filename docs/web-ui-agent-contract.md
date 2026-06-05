@@ -203,6 +203,12 @@ existing agent audit trail, and returns the normal `obos-agent-response-v1`
 envelope. Backup archive download remains out of scope because appliance
 backups contain secrets.
 
+Future backup download support must use an encrypted portable export, not the
+raw appliance backup archive. The intended format is `obos-portable-backup-v1`.
+Future import support must upload encrypted portable backups into private
+staging, decrypt after explicit confirmation, run backup inspection, and then use
+the existing restore staging and apply planning gates.
+
 The initial bridge is installed as `obos-agent-http.service`. It binds to
 `127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the first
 read-only endpoint set, and allows only the confirmed backup mutation. Other

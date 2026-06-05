@@ -36,6 +36,8 @@
 - Consume stable `obosctl update-summary` key-value output for last update state.
 - Show logs.
 - Trigger backups and downloads.
+- Export encrypted portable backups for download and migration.
+- Import encrypted portable backups into private staging.
 - Consume stable `obosctl backup-list` key-value output for backup inventory.
 - Configure hostname, timezone, and network basics.
 - Surface hardening status and security baseline results.
@@ -56,8 +58,10 @@ Current implementation status:
   summary fields.
 - Backup creation is exposed as the first confirmed HTTP mutation through
   `obos-agent`.
-- Backup download, log viewing, hostname, timezone, network basics, and MQTT/TLS
-  mutation controls are still future UI work.
+- Backup download is intentionally limited to the future encrypted portable
+  backup format.
+- Encrypted portable backup export/import, log viewing, hostname, timezone,
+  network basics, and MQTT/TLS mutation controls are still future UI work.
 
 ## Milestone 4: Hardened Release
 
