@@ -186,6 +186,7 @@ validated under those constraints.
 The current hardening layer is host-focused. It does not yet implement:
 
 - image signing
-- rollback for failed updates
+- automatic rollback for failed updates; explicit rollback staging and
+  confirmed CLI restore apply are available
 - full disk encryption
 - advanced Docker isolation such as user namespace remapping

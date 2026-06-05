@@ -52,6 +52,8 @@ Commands:
   update-summary    Print machine-readable last update status
   update-rollback-plan
                     Print the non-destructive rollback plan for the last update
+  update-rollback-stage
+                    Stage the last update backup for confirmed CLI rollback
   logs              Follow open bridge server stack logs
   logs-summary      Print metadata-only log availability status
   logs-tail         Print bounded recent service and container logs
@@ -1520,6 +1522,46 @@ update_rollback_plan() {
   echo "update rollback plan: PASS"
 }
 
+update_rollback_stage() {
+  require_root update-rollback-stage
+  if [ ! -f "${LAST_UPDATE_FILE}" ]; then
+    echo "update rollback stage: blocked; last update state missing" >&2
+    return 1
+  fi
+
+  backup_path="$(key_value backup "${LAST_UPDATE_FILE}")"
+  completed_at="$(key_value completed_at "${LAST_UPDATE_FILE}")"
+  [ -n "${backup_path}" ] || {
+    echo "update rollback stage: blocked; backup path missing from last update state" >&2
+    return 1
+  }
+  [ -f "${backup_path}" ] || {
+    echo "update rollback stage: blocked; backup missing: ${backup_path}" >&2
+    return 1
+  }
+  if ! restore_inspect "${backup_path}" >/dev/null; then
+    echo "update rollback stage: blocked; backup inspection failed" >&2
+    return 1
+  fi
+
+  stage_output="$(restore_stage "${backup_path}")"
+  stage_dir="$(printf '%s\n' "${stage_output}" | sed -n 's/^stage_dir=//p' | head -n 1)"
+  [ -n "${stage_dir}" ] || {
+    echo "update rollback stage: blocked; restore staging failed" >&2
+    return 1
+  }
+
+  echo "format=obos-update-rollback-stage-v1"
+  echo "state_file=${LAST_UPDATE_FILE}"
+  echo "last_update_completed_at=${completed_at}"
+  echo "backup=${backup_path}"
+  echo "stage_dir=${stage_dir}"
+  echo "mode=staged-only"
+  echo "live_apply_allowed=false"
+  echo "next=review staged files, then run: sudo obosctl restore-apply-plan ${stage_dir}"
+  echo "update rollback stage: PASS"
+}
+
 case "${1:-}" in
   status)
     status
@@ -1574,6 +1616,9 @@ case "${1:-}" in
     ;;
   update-rollback-plan)
     update_rollback_plan
+    ;;
+  update-rollback-stage)
+    update_rollback_stage
     ;;
   logs)
     compose logs -f --tail=200

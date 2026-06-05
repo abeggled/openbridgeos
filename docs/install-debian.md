@@ -157,7 +157,7 @@ See [admin-cli.md](admin-cli.md).
 
 - No ISO builder yet.
 - Image builders still need real hardware and VM release validation.
-- No automatic rollback for failed app updates yet; rollback planning and
-  confirmed CLI restore apply are available.
+- No automatic rollback for failed app updates yet; rollback planning, explicit
+  rollback staging, and confirmed CLI restore apply are available.
 - Client CA import has a technical MVP checklist; tested platform screenshots
   and release instructions are still pending.
