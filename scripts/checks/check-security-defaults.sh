@@ -217,6 +217,15 @@ grep -q 'check-web-ui-agent-contract.sh' .github/workflows/ci.yml \
 grep -q 'check-obos-agent.sh' .github/workflows/ci.yml \
   || fail "CI does not validate obos-agent"
 
+grep -q 'check-obos-web.sh' .github/workflows/ci.yml \
+  || fail "CI does not validate obos-web"
+
+grep -q 'data-agent-field="security-summary:' apps/obos-web/index.html \
+  || fail "obos-web does not surface security baseline data"
+
+grep -q 'data-agent-field="agent-audit-summary:' apps/obos-web/index.html \
+  || fail "obos-web does not surface agent audit data"
+
 grep -q 'sudo visudo -cf packaging/sudoers/obos-agent' .github/workflows/ci.yml \
   || fail "CI does not validate obos-agent sudoers syntax"
 
