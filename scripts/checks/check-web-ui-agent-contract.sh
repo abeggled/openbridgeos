@@ -40,6 +40,7 @@ require_contract_line 'sudo obosctl logs-tail'
 require_contract_line 'obos-logs-tail-v1'
 require_contract_line 'sudo obosctl backup-prune --confirm backup-prune'
 require_contract_line 'obos-agent backup-prune --confirm backup-prune'
+require_contract_line 'obos-agent portable-export <backup.tar.gz> <passphrase-file> --confirm portable-export'
 require_contract_line 'obos-agent restore-stage <backup.tar.gz> --confirm restore-stage'
 require_contract_line 'obos-agent set-hostname <hostname> --confirm set-hostname'
 require_contract_line 'obos-agent set-timezone <timezone> --confirm set-timezone'
@@ -108,6 +109,10 @@ require_contract_line 'POST /obos/api/v1/actions/backup'
 require_contract_line 'Content-Type: application/json'
 require_contract_line '{"confirm":"backup"}'
 require_contract_line 'obos-agent backup --confirm backup'
+require_contract_line 'POST /obos/api/v1/actions/portable-export'
+require_contract_line '{"confirm":"portable-export","backup_path":'
+require_contract_line 'GET /obos/api/v1/downloads/portable-export?path='
+require_contract_line 'only encrypted portable export artifacts'
 require_contract_line 'obos-agent start --confirm start'
 require_contract_line 'obos-agent stop --confirm stop'
 require_contract_line 'obos-agent restart --confirm restart'
@@ -121,7 +126,7 @@ require_contract_line 'encrypted portable export'
 require_contract_line 'obos-portable-backup-v1'
 require_contract_line 'obos-portable-backup-export-v1'
 require_contract_line 'obos-portable-import-stage-v1'
-require_contract_line 'Future import support must upload encrypted portable backups'
+require_contract_line 'must upload encrypted portable backups into private'
 require_contract_line 'obos-agent-http-error-v1'
 require_contract_line 'dedicated unprivileged service account'
 require_contract_line 'never'
@@ -160,6 +165,8 @@ grep -q 'logs-tail)' scripts/obosctl \
   || fail "obosctl logs-tail command missing"
 grep -q 'portable-export-plan)' scripts/obosctl \
   || fail "obosctl portable-export-plan command missing"
+grep -q 'portable-export)' scripts/obosctl \
+  || fail "obosctl portable-export command missing"
 grep -q 'portable-import-plan)' scripts/obosctl \
   || fail "obosctl portable-import-plan command missing"
 grep -q 'backup-prune)' scripts/obosctl \

@@ -208,11 +208,14 @@ The web UI can stage the latest listed backup through `obos-agent restore-stage
 <backup.tar.gz> --confirm restore-stage`. This extracts into private restore
 staging only; restore apply remains unavailable through the web UI.
 
-Downloadable backups should use the future encrypted portable backup format
-`obos-portable-backup-v1`. This export format is intended for browser download,
-offline storage, and migration to another open bridge operating system
-appliance. Import must decrypt into private staging, run backup inspection, and
-then use the existing restore staging and apply planning gates.
+Downloadable backups use the encrypted portable backup format
+`obos-portable-backup-v1`, not raw appliance backup archives. The web UI can
+create an encrypted portable export from the latest listed backup through
+`obos-agent portable-export <backup.tar.gz> <passphrase-file> --confirm
+portable-export` and then download only the resulting portable export artifact
+from `/srv/obos/state/portable-backups`. Import must decrypt into private
+staging, run backup inspection, and then use the existing restore staging and
+apply planning gates.
 
 `portable-export-plan` is read-only and non-destructive. It first verifies the
 selected local backup with `restore-inspect`, then prints the stable

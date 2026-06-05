@@ -83,6 +83,7 @@ obos-agent restart --confirm restart
 obos-agent update --confirm update
 obos-agent backup --confirm backup
 obos-agent backup-prune --confirm backup-prune
+obos-agent portable-export <backup.tar.gz> <passphrase-file> --confirm portable-export
 obos-agent restore-stage <backup.tar.gz> --confirm restore-stage
 obos-agent set-hostname <hostname> --confirm set-hostname
 obos-agent set-timezone <timezone> --confirm set-timezone
@@ -227,6 +228,30 @@ existing agent audit trail, and returns the normal `obos-agent-response-v1`
 envelope. Backup archive download remains out of scope because appliance
 backups contain secrets.
 
+Portable backup export is available only as an encrypted confirmed mutation.
+The browser supplies a passphrase, the HTTP bridge writes it to a mode `0600`
+temporary file below `/tmp`, and the agent forwards only that file path:
+
+```text
+POST /obos/api/v1/actions/portable-export
+```
+
+```json
+{"confirm":"portable-export","backup_path":"/srv/obos/backups/obos-openbridgeserver-20260605T080000Z.tar.gz","passphrase":"example passphrase"}
+```
+
+The bridge forwards it to `obos-agent portable-export <backup.tar.gz>
+<passphrase-file> --confirm portable-export`. The response contains the
+encrypted portable artifact path. Browser download is then limited to:
+
+```text
+GET /obos/api/v1/downloads/portable-export?path=/srv/obos/state/portable-backups/obos-portable-20260605T080000Z.tar
+```
+
+The download endpoint must serve only encrypted portable export artifacts below
+the configured portable export directory. It must reject raw backup archives,
+parent traversal, non-portable filenames, and paths outside that directory.
+
 The service lifecycle and update buttons use the same bridge contract:
 
 ```sh
@@ -312,9 +337,9 @@ POST /obos/api/v1/actions/set-timezone
 {"confirm":"set-timezone","timezone":"Europe/Zurich"}
 ```
 
-Future backup download support must use an encrypted portable export, not the
-raw appliance backup archive. The intended format is `obos-portable-backup-v1`.
-Future import support must upload encrypted portable backups into private
+Backup download support uses an encrypted portable export, not the raw appliance
+backup archive. The format is `obos-portable-backup-v1`. Future import support
+must upload encrypted portable backups into private
 staging, decrypt after explicit confirmation, run backup inspection, and then use
 the existing restore staging and apply planning gates.
 
@@ -322,9 +347,9 @@ The first executable contracts for that future workflow are
 `obos-portable-backup-export-plan-v1`, `obos-portable-backup-export-v1`,
 `obos-portable-backup-import-plan-v1`, and
 `obos-portable-import-stage-v1`. The web UI must still not download raw backups;
-download support may only expose the portable export artifact after encryption.
-Import staging decrypts only into private staging and still does not apply
-restores to the live appliance.
+download support exposes only encrypted portable export artifacts after
+encryption. Import staging decrypts only into private staging and still does not
+apply restores to the live appliance.
 
 The initial bridge is installed as `obos-agent-http.service`. It binds to
 `127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the first

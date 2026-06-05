@@ -29,6 +29,8 @@ grep -q 'require_no_extra_args' "${AGENT}" \
   || fail "agent does not reject extra arguments"
 grep -q 'require_confirm_args' "${AGENT}" \
   || fail "agent does not require confirmation for mutating actions"
+grep -q 'require_portable_export_args' "${AGENT}" \
+  || fail "agent does not validate portable export arguments"
 grep -q 'require_mqtt_enable_args' "${AGENT}" \
   || fail "agent does not validate MQTT enable arguments"
 grep -q 'validate_source_cidr' "${AGENT}" \
@@ -82,6 +84,10 @@ grep -q 'action=portable-import-plan|mutating=false|required_arg=portable-backup
   || fail "portable-import-plan action is not listed as read-only with portable backup"
 grep -q 'validate_portable_import_path' "${AGENT}" \
   || fail "portable import path is not validated before sudo"
+grep -q 'portable-export)' "${AGENT}" \
+  || fail "portable-export action missing"
+grep -q 'action=portable-export|mutating=true|confirm=portable-export|required_arg=backup-path|required_arg=passphrase-file' "${AGENT}" \
+  || fail "portable-export action is not listed as a confirmed mutation with backup path and passphrase file"
 grep -q 'restore-stage-summary)' "${AGENT}" \
   || fail "restore-stage-summary action missing"
 grep -q 'action=restore-stage-summary|mutating=false' "${AGENT}" \
@@ -163,6 +169,8 @@ grep -q '/usr/bin/obosctl restore-apply-plan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow checked restore apply planning"
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow confirmed backup pruning"
+grep -q '/usr/bin/obosctl portable-export \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow confirmed portable export creation"
 grep -q '/usr/bin/obosctl restore-stage \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow checked restore staging"
 grep -q '/usr/bin/obosctl agent-audit-summary' packaging/sudoers/obos-agent \
@@ -224,6 +232,12 @@ case "$1" in
   portable-import-plan)
     echo "portable-import-planned:${2:-missing}"
     echo "format=obos-portable-backup-import-plan-v1"
+    exit 0
+    ;;
+  portable-export)
+    echo "portable-exported:${2:-missing}:${3:-missing}"
+    echo "format=obos-portable-backup-export-v1"
+    echo "portable_backup=/srv/obos/state/portable-backups/obos-portable-test.tar"
     exit 0
     ;;
   restore-stage-summary)
@@ -393,6 +407,21 @@ grep -q 'format=obos-agent-audit-v1|.*|action=restore-stage|exit_code=0|timed_ou
 
 if OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage /tmp/evil.tar.gz --confirm restore-stage >/dev/null 2>&1; then
   fail "agent accepted restore staging backup path outside backup dir"
+fi
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-export /srv/obos/backups/obos-openbridgeserver-20260605T080000Z.tar.gz /tmp/obos-agent-passphrase-test --confirm portable-export |
+  grep -q 'stdout=format=obos-portable-backup-export-v1' \
+  || fail "agent did not run confirmed portable export"
+
+grep -q 'format=obos-agent-audit-v1|.*|action=portable-export|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not audit confirmed portable export"
+
+if OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-export /tmp/evil.tar.gz /tmp/obos-agent-passphrase-test --confirm portable-export >/dev/null 2>&1; then
+  fail "agent accepted portable export backup path outside backup dir"
+fi
+
+if OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-export /srv/obos/backups/obos-openbridgeserver-20260605T080000Z.tar.gz /etc/shadow --confirm portable-export >/dev/null 2>&1; then
+  fail "agent accepted portable export passphrase file outside /tmp"
 fi
 
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 192.168.1.0/24 --confirm mqtt-enable-lan |

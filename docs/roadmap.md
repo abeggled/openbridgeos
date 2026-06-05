@@ -52,7 +52,7 @@ Current implementation status:
 - Static obos web shell is installed below `/srv/obos/web` and served below
   `/obos/`.
 - `obos-agent-http.service` exposes selected read-only `obos-agent` actions and
-  the confirmed backup mutation below `/obos/api/` on the same HTTPS origin.
+  confirmed mutations below `/obos/api/` on the same HTTPS origin.
 - The web shell consumes read-only status, update, backup, restore staging,
   host basics, logs metadata, MQTT, TLS, security baseline, and agent audit
   summary fields.
@@ -68,10 +68,10 @@ Current implementation status:
   mutations after agent-side input validation.
 - Backup download is intentionally limited to encrypted portable backup
   artifacts, not raw appliance archives.
-- Encrypted portable backup export creation and private import staging exist in
-  `obosctl`; non-destructive import planning exists in `obosctl` and
-  `obos-agent`.
-- Restore apply, encrypted portable backup web download/upload, and network
+- Encrypted portable backup export creation exists in `obosctl`, `obos-agent`,
+  and the web UI; private import staging exists in `obosctl`; non-destructive
+  import planning exists in `obosctl` and `obos-agent`.
+- Restore apply, encrypted portable backup web upload/import, and network
   basics beyond hostname/timezone
   controls are still future UI work.
 - The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
