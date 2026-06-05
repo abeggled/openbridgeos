@@ -52,6 +52,10 @@ grep -q 'action=backup-summary|mutating=false' "${AGENT}" \
   || fail "backup-summary action is not listed as read-only"
 grep -q 'backup-list)' "${AGENT}" \
   || fail "backup-list action missing"
+grep -q 'backup-prune-plan)' "${AGENT}" \
+  || fail "backup-prune-plan action missing"
+grep -q 'action=backup-prune-plan|mutating=false' "${AGENT}" \
+  || fail "backup-prune-plan action is not listed as read-only"
 grep -q 'mqtt-summary)' "${AGENT}" \
   || fail "mqtt-summary action missing"
 grep -q 'tls-summary)' "${AGENT}" \
@@ -81,6 +85,8 @@ grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow update rollback planning"
 grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup summary"
+grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow backup prune planning"
 grep -q '/usr/bin/obosctl mqtt-enable-lan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow CIDR-limited MQTT enablement"
 grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
@@ -104,6 +110,10 @@ case "$1" in
     ;;
   backup-summary)
     echo "format=obos-backup-summary-v1"
+    exit 0
+    ;;
+  backup-prune-plan)
+    echo "format=obos-backup-prune-plan-v1"
     exit 0
     ;;
   start)
@@ -137,6 +147,10 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" update-rollback-plan |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-summary |
   grep -q 'stdout=format=obos-backup-summary-v1' \
   || fail "agent did not expose backup summary"
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune-plan |
+  grep -q 'stdout=format=obos-backup-prune-plan-v1' \
+  || fail "agent did not expose backup prune plan"
 
 sh "${AGENT}" actions |
   grep -q 'format=obos-agent-actions-v1' \

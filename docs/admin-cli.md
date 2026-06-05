@@ -111,6 +111,7 @@ any future apply workflow.
 sudo obosctl backup
 obosctl backup-summary
 obosctl backup-list
+obosctl backup-prune-plan
 ```
 
 Backups are written to `/srv/obos/backups` by default and are mode `0600`.
@@ -139,6 +140,10 @@ its manifest records secrets, logs, and TLS private keys. `backup-list` prints a
 stable key-value inventory with one line per matching backup. Backup archives
 contain secrets, so UI download flows must still treat every listed file as
 sensitive.
+
+`backup-prune-plan` prints a non-destructive retention plan. It reports which
+backups would be kept by the current keep count and which older backups would be
+delete candidates for a future explicit prune command.
 
 ## Restore Inspection
 
