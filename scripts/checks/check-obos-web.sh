@@ -99,6 +99,21 @@ grep -q 'data-mutation-backup-from="backup-summary:latest_backup"' "${INDEX}" \
 grep -q 'data-mutation-status="restore-stage"' "${INDEX}" \
   || fail "web UI does not expose restore-stage mutation status"
 
+grep -q 'id="portable-import-file"' "${INDEX}" \
+  || fail "web UI does not expose portable import file input"
+
+grep -q 'data-upload-portable' "${INDEX}" \
+  || fail "web UI does not expose portable import upload control"
+
+grep -q 'id="portable-import-passphrase"' "${INDEX}" \
+  || fail "web UI does not expose portable import passphrase input"
+
+grep -q 'data-mutation-action="portable-import-stage"' "${INDEX}" \
+  || fail "web UI does not expose portable import staging control"
+
+grep -q 'data-mutation-portable-from="portable-import-upload:portable_backup"' "${INDEX}" \
+  || fail "web UI portable import staging does not use uploaded portable backup"
+
 grep -q 'data-agent-field="mqtt-summary:' "${INDEX}" \
   || fail "web UI does not expose MQTT summary placeholders"
 
@@ -231,11 +246,20 @@ grep -q 'body.backup_path = backupPath' "${JS}" \
 grep -q 'downloadBase = "/obos/api/v1/downloads/"' "${JS}" \
   || fail "web UI does not know the portable export download base"
 
+grep -q 'uploadBase = "/obos/api/v1/uploads/"' "${JS}" \
+  || fail "web UI does not know the portable import upload base"
+
 grep -q 'setPortableDownload' "${JS}" \
   || fail "web UI does not prepare portable export downloads"
 
+grep -q 'uploadPortableImport' "${JS}" \
+  || fail "web UI does not upload portable imports"
+
 grep -q 'body.passphrase = passphrase' "${JS}" \
   || fail "web UI portable export mutation does not send passphrase"
+
+grep -q 'body.portable_backup = portablePath' "${JS}" \
+  || fail "web UI portable import staging does not send uploaded portable path"
 
 grep -q 'mqtt-enable-lan' "${JS}" \
   || fail "web UI does not handle MQTT enable mutation body"

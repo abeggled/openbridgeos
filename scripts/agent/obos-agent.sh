@@ -42,6 +42,7 @@ Mutating actions:
   backup --confirm backup
   backup-prune --confirm backup-prune
   portable-export <backup.tar.gz> <passphrase-file> --confirm portable-export
+  portable-import-stage <portable-backup> <passphrase-file> --confirm portable-import-stage
   restore-stage <backup.tar.gz> --confirm restore-stage
   tls-generate --confirm tls-generate
   tls-export --confirm tls-export
@@ -232,6 +233,28 @@ require_portable_export_args() {
   validate_backup_path "${PORTABLE_EXPORT_BACKUP_PATH}"
 }
 
+require_portable_import_stage_args() {
+  action="$1"
+  [ "$#" -eq 5 ] || fail "${action} requires: <portable-backup> <passphrase-file> --confirm ${action}"
+  [ "${4:-}" = "--confirm" ] || fail "${action} requires: <portable-backup> <passphrase-file> --confirm ${action}"
+  [ "${5:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
+  PORTABLE_IMPORT_STAGE_PATH="${2:-}"
+  PORTABLE_IMPORT_STAGE_PASSPHRASE_FILE="${3:-}"
+  case "${PORTABLE_IMPORT_STAGE_PATH}" in
+    ""|-*) fail "${action} portable backup path is invalid" ;;
+  esac
+  case "${PORTABLE_IMPORT_STAGE_PASSPHRASE_FILE}" in
+    /tmp/*) ;;
+    *) fail "${action} passphrase file must be below /tmp" ;;
+  esac
+  case "${PORTABLE_IMPORT_STAGE_PASSPHRASE_FILE}" in
+    *'/../'*|*'/..'|'../'*|..|-*)
+      fail "${action} passphrase file path is invalid"
+      ;;
+  esac
+  validate_portable_import_path "${PORTABLE_IMPORT_STAGE_PATH}"
+}
+
 require_mqtt_enable_args() {
   action="$1"
   case "$#" in
@@ -302,6 +325,7 @@ action=restart|mutating=true|confirm=restart
 action=update|mutating=true|confirm=update
 action=backup|mutating=true|confirm=backup
 action=portable-export|mutating=true|confirm=portable-export|required_arg=backup-path|required_arg=passphrase-file
+action=portable-import-stage|mutating=true|confirm=portable-import-stage|required_arg=portable-backup|required_arg=passphrase-file
 action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path
 action=tls-generate|mutating=true|confirm=tls-generate
 action=tls-export|mutating=true|confirm=tls-export
@@ -488,6 +512,10 @@ case "${1:-}" in
   portable-export)
     require_portable_export_args "$@"
     run_obosctl portable-export "${MUTATION_TIMEOUT_SECONDS}" true portable-export "${PORTABLE_EXPORT_BACKUP_PATH}" "${PORTABLE_EXPORT_PASSPHRASE_FILE}"
+    ;;
+  portable-import-stage)
+    require_portable_import_stage_args "$@"
+    run_obosctl portable-import-stage "${MUTATION_TIMEOUT_SECONDS}" true portable-import-stage "${PORTABLE_IMPORT_STAGE_PATH}" "${PORTABLE_IMPORT_STAGE_PASSPHRASE_FILE}"
     ;;
   restore-stage)
     require_restore_stage_args "$@"

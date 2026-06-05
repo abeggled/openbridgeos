@@ -102,13 +102,20 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>Restore</h2>
-            <button type="button" data-mutation-action="restore-stage" data-confirm="restore-stage" data-mutation-status-target="restore-stage" data-mutation-backup-from="backup-summary:latest_backup">Stage Latest</button>
+            <div class="button-row">
+              <button type="button" data-mutation-action="restore-stage" data-confirm="restore-stage" data-mutation-status-target="restore-stage" data-mutation-backup-from="backup-summary:latest_backup">Stage Latest</button>
+              <input id="portable-import-file" type="file" accept=".tar,application/x-tar">
+              <button type="button" data-upload-portable>Upload Portable</button>
+              <input id="portable-import-passphrase" type="password" autocomplete="new-password" placeholder="import passphrase">
+              <button type="button" data-mutation-action="portable-import-stage" data-confirm="portable-import-stage" data-mutation-status-target="portable-import" data-mutation-portable-from="portable-import-upload:portable_backup">Stage Portable</button>
+            </div>
           </div>
           <dl>
             <div><dt>Stage directory</dt><dd data-agent-field="restore-stage-summary:stage_dir_present">pending</dd></div>
             <div><dt>Staged restores</dt><dd data-agent-field="restore-stage-summary:stage_count">pending</dd></div>
             <div><dt>Apply plan</dt><dd data-agent-field="restore-apply-plan:format">not selected</dd></div>
             <div><dt>Restore action</dt><dd data-mutation-status="restore-stage">ready</dd></div>
+            <div><dt>Portable import</dt><dd data-mutation-status="portable-import">ready</dd></div>
           </dl>
         </article>
 

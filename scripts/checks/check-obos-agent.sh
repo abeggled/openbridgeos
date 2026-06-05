@@ -31,6 +31,8 @@ grep -q 'require_confirm_args' "${AGENT}" \
   || fail "agent does not require confirmation for mutating actions"
 grep -q 'require_portable_export_args' "${AGENT}" \
   || fail "agent does not validate portable export arguments"
+grep -q 'require_portable_import_stage_args' "${AGENT}" \
+  || fail "agent does not validate portable import stage arguments"
 grep -q 'require_mqtt_enable_args' "${AGENT}" \
   || fail "agent does not validate MQTT enable arguments"
 grep -q 'validate_source_cidr' "${AGENT}" \
@@ -88,6 +90,8 @@ grep -q 'portable-export)' "${AGENT}" \
   || fail "portable-export action missing"
 grep -q 'action=portable-export|mutating=true|confirm=portable-export|required_arg=backup-path|required_arg=passphrase-file' "${AGENT}" \
   || fail "portable-export action is not listed as a confirmed mutation with backup path and passphrase file"
+grep -q 'action=portable-import-stage|mutating=true|confirm=portable-import-stage|required_arg=portable-backup|required_arg=passphrase-file' "${AGENT}" \
+  || fail "portable-import-stage action is not listed as a confirmed mutation with portable backup and passphrase file"
 grep -q 'restore-stage-summary)' "${AGENT}" \
   || fail "restore-stage-summary action missing"
 grep -q 'action=restore-stage-summary|mutating=false' "${AGENT}" \
@@ -171,6 +175,8 @@ grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers
   || fail "agent sudoers policy does not allow confirmed backup pruning"
 grep -q '/usr/bin/obosctl portable-export \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow confirmed portable export creation"
+grep -q '/usr/bin/obosctl portable-import-stage \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow confirmed portable import staging"
 grep -q '/usr/bin/obosctl restore-stage \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow checked restore staging"
 grep -q '/usr/bin/obosctl agent-audit-summary' packaging/sudoers/obos-agent \
@@ -238,6 +244,12 @@ case "$1" in
     echo "portable-exported:${2:-missing}:${3:-missing}"
     echo "format=obos-portable-backup-export-v1"
     echo "portable_backup=/srv/obos/state/portable-backups/obos-portable-test.tar"
+    exit 0
+    ;;
+  portable-import-stage)
+    echo "portable-import-staged:${2:-missing}:${3:-missing}"
+    echo "format=obos-portable-import-stage-v1"
+    echo "decrypted_backup=/srv/obos/state/portable-imports/import.test/backup.tar.gz"
     exit 0
     ;;
   restore-stage-summary)
@@ -422,6 +434,17 @@ fi
 
 if OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-export /srv/obos/backups/obos-openbridgeserver-20260605T080000Z.tar.gz /etc/shadow --confirm portable-export >/dev/null 2>&1; then
   fail "agent accepted portable export passphrase file outside /tmp"
+fi
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_PORTABLE_IMPORT_DIR="/srv/obos/state/portable-imports" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-import-stage /srv/obos/state/portable-imports/obos-portable-upload-test.tar /tmp/obos-agent-passphrase-test --confirm portable-import-stage |
+  grep -q 'stdout=format=obos-portable-import-stage-v1' \
+  || fail "agent did not run confirmed portable import staging"
+
+grep -q 'format=obos-agent-audit-v1|.*|action=portable-import-stage|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not audit confirmed portable import staging"
+
+if OBOS_AGENT_PORTABLE_IMPORT_DIR="/srv/obos/state/portable-imports" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-import-stage /tmp/obos-portable-upload-test.tar /tmp/obos-agent-passphrase-test --confirm portable-import-stage >/dev/null 2>&1; then
+  fail "agent accepted portable import staging path outside import dir"
 fi
 
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 192.168.1.0/24 --confirm mqtt-enable-lan |

@@ -2,6 +2,7 @@
 """HTTP bridge for the local obos-agent."""
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from datetime import datetime
 import json
 import os
 import re
@@ -18,12 +19,16 @@ BIND_PORT = int(os.environ.get("OBOS_AGENT_HTTP_PORT", "8091"))
 AGENT_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_TIMEOUT_SECONDS", "45"))
 AGENT_MUTATION_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_MUTATION_TIMEOUT_SECONDS", "600"))
 MAX_POST_BYTES = 1024
+MAX_UPLOAD_BYTES = int(os.environ.get("OBOS_AGENT_HTTP_MAX_UPLOAD_BYTES", str(1024 * 1024 * 1024)))
 PORTABLE_EXPORT_DIR = os.environ.get("OBOS_PORTABLE_EXPORT_DIR", "/srv/obos/state/portable-backups")
+PORTABLE_IMPORT_DIR = os.environ.get("OBOS_PORTABLE_IMPORT_DIR", "/srv/obos/state/portable-imports")
 
 API_PREFIX = "/obos/api/v1/actions/"
 DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"
+UPLOAD_PREFIX = "/obos/api/v1/uploads/portable-import"
 ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 PORTABLE_EXPORT_FILENAME_RE = re.compile(r"^obos-portable-[A-Za-z0-9T._-]+\.tar$")
+PORTABLE_UPLOAD_FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.tar$")
 READ_ONLY_ACTIONS = {
     "actions",
     "status-summary",
@@ -46,6 +51,7 @@ MUTATING_ACTIONS = {
     "mqtt-disable-lan": "mqtt-disable-lan",
     "mqtt-enable-lan": "mqtt-enable-lan",
     "portable-export": "portable-export",
+    "portable-import-stage": "portable-import-stage",
     "restart": "restart",
     "restore-stage": "restore-stage",
     "set-hostname": "set-hostname",
@@ -141,6 +147,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             expected_fields.add("source_cidr")
         if action == "portable-export":
             expected_fields.update({"backup_path", "passphrase"})
+        if action == "portable-import-stage":
+            expected_fields.update({"portable_backup", "passphrase"})
         if action == "restore-stage":
             expected_fields.add("backup_path")
         if action == "set-hostname":
@@ -162,6 +170,13 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             passphrase = payload.get("passphrase")
             if not isinstance(backup_path, str) or not backup_path or backup_path.startswith("-"):
                 return None, (400, error_envelope("invalid-backup-path", "backup_path is invalid"))
+            if not isinstance(passphrase, str) or not passphrase:
+                return None, (400, error_envelope("invalid-passphrase", "passphrase is invalid"))
+        if action == "portable-import-stage":
+            portable_backup = payload.get("portable_backup")
+            passphrase = payload.get("passphrase")
+            if not isinstance(portable_backup, str) or not portable_backup or portable_backup.startswith("-"):
+                return None, (400, error_envelope("invalid-portable-backup", "portable_backup is invalid"))
             if not isinstance(passphrase, str) or not passphrase:
                 return None, (400, error_envelope("invalid-passphrase", "passphrase is invalid"))
         if action == "mqtt-enable-lan" and "source_cidr" in payload:
@@ -214,6 +229,66 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         except OSError as exc:
             self.portable_download_error(502, "download-failed", str(exc))
 
+    def handle_portable_upload(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        if content_type != "application/octet-stream":
+            self.send_text(415, error_envelope("unsupported-media-type", "portable import upload requires application/octet-stream"))
+            return
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            self.send_text(400, error_envelope("invalid-content-length", "Content-Length is invalid"))
+            return
+        if content_length <= 0:
+            self.send_text(400, error_envelope("empty-upload", "portable import upload body is required"))
+            return
+        if content_length > MAX_UPLOAD_BYTES:
+            self.send_text(413, error_envelope("upload-too-large", "portable import upload is too large"))
+            return
+
+        source_name = os.path.basename(self.headers.get("X-Obos-Filename", "portable-import.tar"))
+        if not PORTABLE_UPLOAD_FILENAME_RE.match(source_name) or source_name.startswith("-"):
+            self.send_text(400, error_envelope("invalid-upload-filename", "portable import filename is invalid"))
+            return
+
+        os.makedirs(PORTABLE_IMPORT_DIR, mode=0o700, exist_ok=True)
+        uploaded_at = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        target_name = f"obos-portable-upload-{uploaded_at}-{source_name}"
+        target_path = os.path.join(PORTABLE_IMPORT_DIR, target_name)
+        try:
+            with open(target_path, "xb") as handle:
+                remaining = content_length
+                while remaining > 0:
+                    chunk = self.rfile.read(min(1024 * 1024, remaining))
+                    if not chunk:
+                        raise OSError("upload ended before Content-Length bytes were received")
+                    handle.write(chunk)
+                    remaining -= len(chunk)
+            os.chmod(target_path, 0o600)
+        except FileExistsError:
+            self.send_text(409, error_envelope("upload-conflict", "portable import upload target already exists"))
+            return
+        except OSError as exc:
+            try:
+                os.unlink(target_path)
+            except OSError:
+                pass
+            self.send_text(502, error_envelope("upload-failed", str(exc)))
+            return
+
+        body = (
+            "format=obos-portable-import-upload-v1\n"
+            f"portable_backup={target_path}\n"
+            f"bytes_written={content_length}\n"
+            "decrypt_to_private_staging=true\n"
+            "live_apply_allowed=false\n"
+            "portable upload: PASS\n"
+        )
+        self.send_text(200, body)
+
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == DOWNLOAD_PREFIX:
@@ -241,6 +316,11 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         self.send_text(status, completed.stdout)
 
     def do_POST(self):
+        parsed = urlparse(self.path)
+        if parsed.path == UPLOAD_PREFIX:
+            self.handle_portable_upload(parsed)
+            return
+
         action, error = self.parse_action_path()
         if error:
             self.send_text(*error)
@@ -278,6 +358,25 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
                 self.send_text(502, error_envelope("passphrase-file-failed", str(exc)))
                 return
             args = [action, payload["backup_path"], temp_passphrase_file, "--confirm", payload["confirm"]]
+        if action == "portable-import-stage":
+            try:
+                handle = tempfile.NamedTemporaryFile(
+                    mode="w",
+                    encoding="utf-8",
+                    prefix="obos-agent-passphrase-",
+                    dir="/tmp",
+                    delete=False,
+                )
+                temp_passphrase_file = handle.name
+                try:
+                    os.chmod(temp_passphrase_file, 0o600)
+                    handle.write(payload["passphrase"])
+                finally:
+                    handle.close()
+            except OSError as exc:
+                self.send_text(502, error_envelope("passphrase-file-failed", str(exc)))
+                return
+            args = [action, payload["portable_backup"], temp_passphrase_file, "--confirm", payload["confirm"]]
         if action == "restore-stage":
             args = [action, payload["backup_path"], "--confirm", payload["confirm"]]
         if action == "mqtt-enable-lan" and "source_cidr" in payload:

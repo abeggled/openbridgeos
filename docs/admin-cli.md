@@ -213,9 +213,11 @@ Downloadable backups use the encrypted portable backup format
 create an encrypted portable export from the latest listed backup through
 `obos-agent portable-export <backup.tar.gz> <passphrase-file> --confirm
 portable-export` and then download only the resulting portable export artifact
-from `/srv/obos/state/portable-backups`. Import must decrypt into private
-staging, run backup inspection, and then use the existing restore staging and
-apply planning gates.
+from `/srv/obos/state/portable-backups`. It can also upload encrypted portable
+backups into `/srv/obos/state/portable-imports` and run `obos-agent
+portable-import-stage <portable-backup> <passphrase-file> --confirm
+portable-import-stage`. Import staging decrypts into private staging, runs
+backup inspection, and then leaves restore apply unavailable.
 
 `portable-export-plan` is read-only and non-destructive. It first verifies the
 selected local backup with `restore-inspect`, then prints the stable

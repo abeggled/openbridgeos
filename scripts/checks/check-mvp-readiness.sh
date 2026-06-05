@@ -68,6 +68,7 @@ require_line "action=update|mutating=true|confirm=update" scripts/agent/obos-age
 require_line "action=backup|mutating=true|confirm=backup" scripts/agent/obos-agent.sh
 require_line "action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path" scripts/agent/obos-agent.sh
 require_line "action=portable-export|mutating=true|confirm=portable-export|required_arg=backup-path|required_arg=passphrase-file" scripts/agent/obos-agent.sh
+require_line "action=portable-import-stage|mutating=true|confirm=portable-import-stage|required_arg=portable-backup|required_arg=passphrase-file" scripts/agent/obos-agent.sh
 require_line "action=portable-export-plan|mutating=false|required_arg=backup-path" scripts/agent/obos-agent.sh
 require_line "action=portable-import-plan|mutating=false|required_arg=portable-backup" scripts/agent/obos-agent.sh
 require_line "action=logs-tail|mutating=false" scripts/agent/obos-agent.sh
@@ -76,6 +77,7 @@ require_line "action=set-timezone|mutating=true|confirm=set-timezone|required_ar
 
 require_line '"backup": "backup"' scripts/agent/obos-agent-http.py
 require_line '"portable-export": "portable-export"' scripts/agent/obos-agent-http.py
+require_line '"portable-import-stage": "portable-import-stage"' scripts/agent/obos-agent-http.py
 require_line '"restore-stage": "restore-stage"' scripts/agent/obos-agent-http.py
 require_line '"update": "update"' scripts/agent/obos-agent-http.py
 require_line '"logs-tail"' scripts/agent/obos-agent-http.py
@@ -95,6 +97,8 @@ require_line 'data-mutation-action="update"' apps/obos-web/index.html
 require_line 'data-mutation-action="backup"' apps/obos-web/index.html
 require_line 'data-mutation-action="portable-export"' apps/obos-web/index.html
 require_line 'data-portable-download' apps/obos-web/index.html
+require_line 'data-upload-portable' apps/obos-web/index.html
+require_line 'data-mutation-action="portable-import-stage"' apps/obos-web/index.html
 require_line 'data-mutation-action="restore-stage"' apps/obos-web/index.html
 require_line 'data-agent-field="security-summary:result"' apps/obos-web/index.html
 require_line 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' apps/obos-web/index.html
