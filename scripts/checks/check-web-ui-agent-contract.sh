@@ -28,6 +28,8 @@ require_contract_line 'obosctl backup-list'
 require_contract_line 'obos-backup-list-v1'
 require_contract_line 'obosctl backup-prune-plan'
 require_contract_line 'obos-backup-prune-plan-v1'
+require_contract_line 'sudo obosctl logs-summary'
+require_contract_line 'obos-logs-summary-v1'
 require_contract_line 'sudo obosctl backup-prune --confirm backup-prune'
 require_contract_line 'obos-agent backup-prune --confirm backup-prune'
 require_contract_line 'obos-agent restore-stage <backup.tar.gz> --confirm restore-stage'
@@ -49,6 +51,7 @@ require_contract_line 'obos-agent update-rollback-plan'
 require_contract_line 'obos-agent backup-summary'
 require_contract_line 'obos-agent backup-list'
 require_contract_line 'obos-agent backup-prune-plan'
+require_contract_line 'obos-agent logs-summary'
 require_contract_line 'obos-agent restore-stage-summary'
 require_contract_line 'obos-agent agent-audit-summary'
 require_contract_line 'latest-backup inspection status'
@@ -71,6 +74,7 @@ require_contract_line 'no CORS wildcard is allowed'
 require_contract_line 'GET /obos/api/v1/actions/<action>'
 require_contract_line 'update-rollback-plan'
 require_contract_line 'backup-list'
+require_contract_line 'logs-summary'
 require_contract_line 'POST /obos/api/v1/actions/<action>'
 require_contract_line 'same confirmation token required by'
 require_contract_line 'obos-agent-http-error-v1'
@@ -99,6 +103,8 @@ grep -q 'backup-list)' scripts/obosctl \
   || fail "obosctl backup-list command missing"
 grep -q 'backup-prune-plan)' scripts/obosctl \
   || fail "obosctl backup-prune-plan command missing"
+grep -q 'logs-summary)' scripts/obosctl \
+  || fail "obosctl logs-summary command missing"
 grep -q 'backup-prune)' scripts/obosctl \
   || fail "obosctl backup-prune command missing"
 grep -q 'restore-stage-summary)' scripts/obosctl \

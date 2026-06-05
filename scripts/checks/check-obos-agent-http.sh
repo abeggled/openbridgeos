@@ -20,6 +20,8 @@ grep -q 'READ_ONLY_ACTIONS' "${BRIDGE}" \
   || fail "read-only action allowlist missing"
 grep -q '"backup-list"' "${BRIDGE}" \
   || fail "backup-list is not exposed by the read-only HTTP bridge"
+grep -q '"logs-summary"' "${BRIDGE}" \
+  || fail "logs-summary is not exposed by the read-only HTTP bridge"
 grep -q '"update-rollback-plan"' "${BRIDGE}" \
   || fail "update-rollback-plan is not exposed by the read-only HTTP bridge"
 grep -q 'OBOS_AGENT_PATH' "${BRIDGE}" \
@@ -113,6 +115,21 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  logs-summary)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=logs-summary
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-logs-summary-v1
+stdout=raw_logs_exposed=false
+stdout=journal_entry_count_last_hour=0
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -140,6 +157,10 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/backup-list |
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/update-rollback-plan |
   grep -q 'stdout=backup_present=true' \
   || fail "HTTP bridge did not expose update rollback plan"
+
+curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/logs-summary |
+  grep -q 'stdout=raw_logs_exposed=false' \
+  || fail "HTTP bridge did not expose metadata-only logs summary"
 
 curl --silent --output "${tmp_dir}/unknown.out" --write-out '%{http_code}' \
   http://127.0.0.1:18091/obos/api/v1/actions/unknown |

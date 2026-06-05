@@ -43,6 +43,7 @@ Commands:
   update-rollback-plan
                     Print the non-destructive rollback plan for the last update
   logs              Follow open bridge server stack logs
+  logs-summary      Print metadata-only log availability status
   backup            Create a timestamped appliance backup
   backup-summary    Print machine-readable latest backup status
   backup-list       Print machine-readable appliance backup inventory
@@ -120,6 +121,28 @@ key_value() {
 compose() {
   require_files
   docker compose --env-file "${ENV_FILE}" --project-directory "${APP_DIR}" -f "${APP_DIR}/compose.yaml" "$@"
+}
+
+logs_summary() {
+  echo "format=obos-logs-summary-v1"
+  echo "service=${SERVICE_NAME}"
+  echo "app_dir=${APP_DIR}"
+  echo "raw_logs_exposed=false"
+
+  if command -v journalctl >/dev/null 2>&1; then
+    echo "journalctl_present=true"
+    journal_count="$(journalctl --quiet -u "${SERVICE_NAME}" --since '-1 hour' --no-pager 2>/dev/null | wc -l | awk '{print $1}')"
+    echo "journal_entry_count_last_hour=${journal_count:-unknown}"
+  else
+    echo "journalctl_present=false"
+    echo "journal_entry_count_last_hour=unknown"
+  fi
+
+  if command -v docker >/dev/null 2>&1; then
+    echo "docker_present=true"
+  else
+    echo "docker_present=false"
+  fi
 }
 
 health() {
@@ -959,6 +982,9 @@ case "${1:-}" in
     ;;
   logs)
     compose logs -f --tail=200
+    ;;
+  logs-summary)
+    logs_summary
     ;;
   backup)
     backup

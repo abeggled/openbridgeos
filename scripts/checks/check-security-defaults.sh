@@ -83,6 +83,15 @@ grep -q 'latest_backup_contains_secrets=' scripts/obosctl \
 grep -q 'latest_backup_includes_logs=' scripts/obosctl \
   || fail "obosctl backup summary does not report log inclusion status"
 
+grep -q 'logs-summary)' scripts/obosctl \
+  || fail "obosctl does not expose metadata-only log summary"
+
+grep -q 'format=obos-logs-summary-v1' scripts/obosctl \
+  || fail "obosctl log summary does not declare a format"
+
+grep -q 'raw_logs_exposed=false' scripts/obosctl \
+  || fail "obosctl log summary must not expose raw log contents"
+
 grep -q 'latest_backup_tls_private_keys=' scripts/obosctl \
   || fail "obosctl backup summary does not report TLS private key status"
 
@@ -295,6 +304,9 @@ grep -q 'action=backup-summary|mutating=false' scripts/agent/obos-agent.sh \
 grep -q 'action=backup-prune-plan|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark backup pruning plan as read-only"
 
+grep -q 'action=logs-summary|mutating=false' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark log summary as read-only"
+
 grep -q 'action=restore-stage-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark restore stage summary as read-only"
 
@@ -330,6 +342,9 @@ grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
 
 grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow backup prune planning"
+
+grep -q '/usr/bin/obosctl logs-summary' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow log summary"
 
 grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow restore stage summary"
