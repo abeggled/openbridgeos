@@ -37,6 +37,7 @@ require_file scripts/images/build-amd64-qcow2.sh
 require_file scripts/images/build-rpi4-arm64-image.sh
 require_file scripts/images/smoke-test-amd64-qcow2.sh
 require_file scripts/images/check-rpi-boot-files.sh
+require_file scripts/images/check-image-release-validation-record.sh
 
 require_line "Debian 13 Trixie" README.md
 require_line "Raspberry Pi 4+" README.md
@@ -126,7 +127,9 @@ require_line "fingerprint_verified=yes|no" docs/client-ca-trust.md
 require_line "Raspberry Pi Network Installer" docs/image-release-validation.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/image-release-validation.md
 require_line "update-rollback-stage" docs/image-release-validation.md
+require_line "format=obos-image-release-validation-v1" docs/image-release-validation.md
 require_line "signature_verified=yes|no" docs/image-release-validation.md
+require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html
