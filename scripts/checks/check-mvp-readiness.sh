@@ -1,0 +1,100 @@
+#!/usr/bin/env sh
+set -eu
+
+fail() {
+  echo "mvp readiness check failed: $1" >&2
+  exit 1
+}
+
+require_file() {
+  [ -f "$1" ] || fail "missing file: $1"
+}
+
+require_line() {
+  expected="$1"
+  file="$2"
+  grep -Fq "${expected}" "${file}" \
+    || fail "missing '${expected}' in ${file}"
+}
+
+require_file README.md
+require_file README.de.md
+require_file docs/roadmap.md
+require_file docs/image-build.md
+require_file docs/security-baseline-testplan.md
+require_file scripts/obosctl
+require_file scripts/agent/obos-agent.sh
+require_file scripts/agent/obos-agent-http.py
+require_file apps/obos-web/index.html
+require_file apps/obos-web/app.js
+require_file packaging/images/profiles/amd64-vm.env
+require_file packaging/images/profiles/rpi4-arm64.env
+require_file scripts/images/build-amd64-qcow2.sh
+require_file scripts/images/build-rpi4-arm64-image.sh
+require_file scripts/images/smoke-test-amd64-qcow2.sh
+
+require_line "Debian 13 Trixie" README.md
+require_line "Raspberry Pi 4+" README.md
+require_line "x86_64" README.md
+require_line "security-focused" README.md
+
+require_line "Build a Debian-based x86_64 image." docs/roadmap.md
+require_line "Build ARM64 image." docs/roadmap.md
+require_line "Static obos web shell is installed" docs/roadmap.md
+require_line "Start, stop, restart, update, backup creation, and restore staging" docs/roadmap.md
+require_line "Non-destructive encrypted portable backup export/import planning exists" docs/roadmap.md
+
+require_line "format=obos-status-summary-v1" scripts/obosctl
+require_line "format=obos-system-summary-v1" scripts/obosctl
+require_line "format=obos-update-summary-v1" scripts/obosctl
+require_line "format=obos-backup-summary-v1" scripts/obosctl
+require_line "format=obos-restore-stage-summary-v1" scripts/obosctl
+require_line "format=obos-mqtt-summary-v1" scripts/hardening/set-mqtt-lan-access.sh
+require_line "format=obos-tls-summary-v1" scripts/tls/check-tls-status.sh
+require_line "format=obos-security-baseline-summary-v1" scripts/audit/security-baseline.sh
+require_line "format=obos-portable-backup-export-plan-v1" scripts/obosctl
+require_line "format=obos-portable-backup-import-plan-v1" scripts/obosctl
+
+require_line "action=start|mutating=true|confirm=start" scripts/agent/obos-agent.sh
+require_line "action=stop|mutating=true|confirm=stop" scripts/agent/obos-agent.sh
+require_line "action=restart|mutating=true|confirm=restart" scripts/agent/obos-agent.sh
+require_line "action=update|mutating=true|confirm=update" scripts/agent/obos-agent.sh
+require_line "action=backup|mutating=true|confirm=backup" scripts/agent/obos-agent.sh
+require_line "action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path" scripts/agent/obos-agent.sh
+require_line "action=portable-export-plan|mutating=false|required_arg=backup-path" scripts/agent/obos-agent.sh
+require_line "action=portable-import-plan|mutating=false|required_arg=portable-backup" scripts/agent/obos-agent.sh
+
+require_line '"backup": "backup"' scripts/agent/obos-agent-http.py
+require_line '"restore-stage": "restore-stage"' scripts/agent/obos-agent-http.py
+require_line '"update": "update"' scripts/agent/obos-agent-http.py
+require_line "MAX_POST_BYTES = 1024" scripts/agent/obos-agent-http.py
+require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.sh
+
+require_line 'data-mutation-action="start"' apps/obos-web/index.html
+require_line 'data-mutation-action="stop"' apps/obos-web/index.html
+require_line 'data-mutation-action="restart"' apps/obos-web/index.html
+require_line 'data-mutation-action="update"' apps/obos-web/index.html
+require_line 'data-mutation-action="backup"' apps/obos-web/index.html
+require_line 'data-mutation-action="restore-stage"' apps/obos-web/index.html
+require_line 'data-agent-field="security-summary:result"' apps/obos-web/index.html
+require_line 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' apps/obos-web/index.html
+require_line 'data-agent-field="mqtt-summary:source_cidr"' apps/obos-web/index.html
+
+require_line "OBOS_IMAGE_PROFILE=amd64-vm" packaging/images/profiles/amd64-vm.env
+require_line "OBOS_IMAGE_KIND=vm-image" packaging/images/profiles/amd64-vm.env
+require_line "OBOS_OUTPUT_FORMAT=qcow2" packaging/images/profiles/amd64-vm.env
+require_line "OBOS_IMAGE_PROFILE=rpi4-arm64" packaging/images/profiles/rpi4-arm64.env
+require_line "OBOS_IMAGE_KIND=rpi-image" packaging/images/profiles/rpi4-arm64.env
+require_line "OBOS_OUTPUT_FORMAT=raw" packaging/images/profiles/rpi4-arm64.env
+require_line "OBOS_OUTPUT_COMPRESSION=xz" packaging/images/profiles/rpi4-arm64.env
+require_line "OBOS_IMAGE_EXTENSION=img.xz" packaging/images/profiles/rpi4-arm64.env
+require_line "OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=true" packaging/images/profiles/rpi4-arm64.env
+require_line "CONFIG_BLK_DEV_NVME=y" packaging/images/profiles/rpi4-arm64.env
+require_line "Raspberry Pi Network Installer" docs/image-build.md
+
+require_line "sudo /usr/lib/obos/security-baseline.sh" README.md
+require_line "nftables default-drop host firewall" README.md
+require_line "SSH disabled by default" README.md
+require_line "local CA per appliance instance" README.md
+
+echo "mvp readiness: PASS"

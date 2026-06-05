@@ -70,6 +70,9 @@ jobs:
       - name: obos-web
         run: sh scripts/checks/check-obos-web.sh
 
+      - name: MVP readiness
+        run: sh scripts/checks/check-mvp-readiness.sh
+
       - name: Image profiles
         run: sh scripts/images/validate-image-profiles.sh
 
