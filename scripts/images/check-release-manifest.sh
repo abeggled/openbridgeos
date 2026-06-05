@@ -9,6 +9,10 @@ fail() {
   exit 1
 }
 
+warn() {
+  echo "release manifest check warning: $1" >&2
+}
+
 require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "missing required command: $1"
 }
@@ -71,6 +75,20 @@ check_signature_file() {
   [ -s "${signature_file}" ] || fail "signature file is empty: ${signature_file}"
 }
 
+check_image_file() {
+  image_file="$1"
+
+  if [ ! -f "${image_file}" ]; then
+    if [ "${STRICT_FILES}" = "1" ]; then
+      fail "image file missing: ${image_file}"
+    fi
+    warn "image file missing, content not checked: ${image_file}"
+    return 0
+  fi
+
+  [ -s "${image_file}" ] || fail "image file is empty: ${image_file}"
+}
+
 check_image_manifest() {
   manifest_file="$1"
   expected_profile="$2"
@@ -92,6 +110,7 @@ check_image_manifest() {
   expect_value image_sha256 "${expected_image_sha256}" "${manifest_file}"
   expect_value repo_dirty false "${manifest_file}"
 
+  check_image_file "${expected_image}"
   checksum_file="$(manifest_value checksum_file "${manifest_file}")"
   check_checksum_file "${checksum_file}" "${expected_image_sha256}"
 }
