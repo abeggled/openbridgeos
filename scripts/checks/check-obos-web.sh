@@ -42,6 +42,15 @@ grep -q 'data-agent-field="mqtt-summary:' "${INDEX}" \
 grep -q 'data-agent-field="tls-summary:' "${INDEX}" \
   || fail "web UI does not expose TLS summary placeholders"
 
+grep -q 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' "${INDEX}" \
+  || fail "web UI does not expose local CA fingerprint"
+
+grep -q 'data-agent-field="tls-summary:leaf_sha256_fingerprint"' "${INDEX}" \
+  || fail "web UI does not expose leaf certificate fingerprint"
+
+grep -q 'data-agent-field="tls-summary:leaf_expiry_warning"' "${INDEX}" \
+  || fail "web UI does not expose leaf certificate expiry warning"
+
 grep -q 'data-agent-field="security-summary:' "${INDEX}" \
   || fail "web UI does not expose security summary placeholders"
 

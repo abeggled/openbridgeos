@@ -32,5 +32,8 @@ Initial read-only panels:
 - security baseline
 - agent mutation audit
 
+The TLS trust panel surfaces certificate presence, SHA-256 fingerprints, expiry
+warning state, and trust bundle availability for onboarding and support.
+
 Confirmed mutations will be wired only after an HTTP boundary for `obos-agent`
 exists and keeps the same confirmation and audit rules.
