@@ -34,6 +34,10 @@ grep -q '"restart": "restart"' "${BRIDGE}" \
   || fail "restart mutation is not exposed with a matching confirmation token"
 grep -q '"restore-stage": "restore-stage"' "${BRIDGE}" \
   || fail "restore-stage mutation is not exposed with a matching confirmation token"
+grep -q '"tls-generate": "tls-generate"' "${BRIDGE}" \
+  || fail "tls-generate mutation is not exposed with a matching confirmation token"
+grep -q '"tls-export": "tls-export"' "${BRIDGE}" \
+  || fail "tls-export mutation is not exposed with a matching confirmation token"
 grep -q '"update": "update"' "${BRIDGE}" \
   || fail "update mutation is not exposed with a matching confirmation token"
 grep -q '"system-summary"' "${BRIDGE}" \
@@ -272,6 +276,20 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  tls-generate|tls-export)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "${1:-}" ] || exit 2
+    cat <<RESPONSE
+format=obos-agent-response-v1
+action=${1:-}
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=${1:-}:ok
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -360,6 +378,20 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/mqtt-disable-lan |
   grep -q 'stdout=lan_enabled=false' \
   || fail "HTTP bridge did not run confirmed MQTT disable mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"tls-generate"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/tls-generate |
+  grep -q 'stdout=tls-generate:ok' \
+  || fail "HTTP bridge did not run confirmed TLS generate mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"tls-export"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/tls-export |
+  grep -q 'stdout=tls-export:ok' \
+  || fail "HTTP bridge did not run confirmed TLS export mutation"
 
 curl --silent --output "${tmp_dir}/mqtt-extra-field.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \

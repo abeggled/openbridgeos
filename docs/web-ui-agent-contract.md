@@ -265,6 +265,27 @@ POST /obos/api/v1/actions/mqtt-disable-lan
 {"confirm":"mqtt-disable-lan"}
 ```
 
+TLS material generation and public trust bundle export are also available only
+as explicit confirmed mutations. TLS generation must preserve existing
+per-appliance-instance CA and leaf material instead of rotating trust
+implicitly:
+
+```text
+POST /obos/api/v1/actions/tls-generate
+```
+
+```json
+{"confirm":"tls-generate"}
+```
+
+```text
+POST /obos/api/v1/actions/tls-export
+```
+
+```json
+{"confirm":"tls-export"}
+```
+
 Future backup download support must use an encrypted portable export, not the
 raw appliance backup archive. The intended format is `obos-portable-backup-v1`.
 Future import support must upload encrypted portable backups into private

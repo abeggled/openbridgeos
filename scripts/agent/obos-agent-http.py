@@ -44,6 +44,8 @@ MUTATING_ACTIONS = {
     "restore-stage": "restore-stage",
     "start": "start",
     "stop": "stop",
+    "tls-export": "tls-export",
+    "tls-generate": "tls-generate",
     "update": "update",
 }
 
