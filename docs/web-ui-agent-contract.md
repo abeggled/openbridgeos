@@ -61,6 +61,8 @@ open bridge server systemd unit and Compose stack.
 | Stop open bridge server | `sudo obosctl stop` |
 | Restart open bridge server | `sudo obosctl restart` |
 | Update appliance app stack | `sudo obosctl update` |
+| Set appliance hostname | `sudo obosctl set-hostname <hostname>` |
+| Set appliance timezone | `sudo obosctl set-timezone <timezone>` |
 | Create backup | `sudo obosctl backup` |
 | Prune old backups | `sudo obosctl backup-prune --confirm backup-prune` |
 | Generate TLS material | `sudo obosctl tls-generate` |
@@ -82,6 +84,8 @@ obos-agent update --confirm update
 obos-agent backup --confirm backup
 obos-agent backup-prune --confirm backup-prune
 obos-agent restore-stage <backup.tar.gz> --confirm restore-stage
+obos-agent set-hostname <hostname> --confirm set-hostname
+obos-agent set-timezone <timezone> --confirm set-timezone
 obos-agent tls-generate --confirm tls-generate
 obos-agent tls-export --confirm tls-export
 obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
@@ -99,6 +103,9 @@ Restore stage inspection accepts only private restore staging directories below
 the configured restore staging directory.
 Restore apply planning uses the same stage path validation and remains
 non-destructive.
+Hostname and timezone changes are validated by `obos-agent` before crossing the
+sudo boundary. Hostnames accept a single DNS label; timezones accept installed
+IANA-style zone names such as `Europe/Zurich` or `UTC`.
 
 ## Restore Workflow
 
@@ -284,6 +291,25 @@ POST /obos/api/v1/actions/tls-export
 
 ```json
 {"confirm":"tls-export"}
+```
+
+Host basics changes are available as explicit confirmed mutations with one
+validated value field:
+
+```text
+POST /obos/api/v1/actions/set-hostname
+```
+
+```json
+{"confirm":"set-hostname","hostname":"obos-test"}
+```
+
+```text
+POST /obos/api/v1/actions/set-timezone
+```
+
+```json
+{"confirm":"set-timezone","timezone":"Europe/Zurich"}
 ```
 
 Future backup download support must use an encrypted portable export, not the

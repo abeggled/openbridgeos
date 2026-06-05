@@ -33,6 +33,10 @@ grep -q 'require_mqtt_enable_args' "${AGENT}" \
   || fail "agent does not validate MQTT enable arguments"
 grep -q 'validate_source_cidr' "${AGENT}" \
   || fail "agent does not validate MQTT source CIDR before sudo"
+grep -q 'validate_hostname' "${AGENT}" \
+  || fail "agent does not validate hostname before sudo"
+grep -q 'validate_timezone' "${AGENT}" \
+  || fail "agent does not validate timezone before sudo"
 # shellcheck disable=SC2016
 grep -q 'timeout "${timeout_seconds}"' "${AGENT}" \
   || fail "agent does not enforce command timeout"
@@ -118,6 +122,10 @@ grep -q 'action=start|mutating=true|confirm=start' "${AGENT}" \
   || fail "start action is not listed as a confirmed mutation"
 grep -q 'action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_arg=source-cidr' "${AGENT}" \
   || fail "MQTT enable action is not listed with source CIDR"
+grep -q 'action=set-hostname|mutating=true|confirm=set-hostname|required_arg=hostname' "${AGENT}" \
+  || fail "set-hostname action is not listed as a confirmed mutation"
+grep -q 'action=set-timezone|mutating=true|confirm=set-timezone|required_arg=timezone' "${AGENT}" \
+  || fail "set-timezone action is not listed as a confirmed mutation"
 # shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "agent is not installed during provisioning"
@@ -161,6 +169,10 @@ grep -q '/usr/bin/obosctl agent-audit-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow agent audit summary"
 grep -q '/usr/bin/obosctl mqtt-enable-lan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow CIDR-limited MQTT enablement"
+grep -q '/usr/bin/obosctl set-hostname \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow checked hostname changes"
+grep -q '/usr/bin/obosctl set-timezone \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow checked timezone changes"
 grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
   || fail "agent audit logrotate policy does not target the audit log"
 grep -q 'create 0640 obos-agent obos-agent' packaging/logrotate/obos-agent \
@@ -241,6 +253,14 @@ case "$1" in
     ;;
   start)
     echo "started"
+    exit 0
+    ;;
+  set-hostname)
+    echo "hostname-set:${2:-missing}"
+    exit 0
+    ;;
+  set-timezone)
+    echo "timezone-set:${2:-missing}"
     exit 0
     ;;
   mqtt-enable-lan)
@@ -381,6 +401,22 @@ OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}
 
 if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 999.168.1.0/24 --confirm mqtt-enable-lan >/dev/null 2>&1; then
   fail "agent accepted invalid MQTT source CIDR"
+fi
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-hostname obos-test --confirm set-hostname |
+  grep -q 'stdout=hostname-set:obos-test' \
+  || fail "agent did not forward checked hostname"
+
+if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-hostname '-bad' --confirm set-hostname >/dev/null 2>&1; then
+  fail "agent accepted invalid hostname"
+fi
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-timezone Europe/Zurich --confirm set-timezone |
+  grep -q 'stdout=timezone-set:Europe/Zurich' \
+  || fail "agent did not forward checked timezone"
+
+if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-timezone '../etc/passwd' --confirm set-timezone >/dev/null 2>&1; then
+  fail "agent accepted invalid timezone"
 fi
 
 echo "obos-agent: PASS"

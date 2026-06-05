@@ -35,6 +35,8 @@ Commands:
   status            Show systemd, container, and health status
   status-summary    Print machine-readable appliance status
   system-summary    Print machine-readable host and network basics
+  set-hostname      Set appliance hostname after validation
+  set-timezone      Set appliance timezone after validation
   security-summary  Print machine-readable security baseline status
   agent-audit-summary
                     Print machine-readable agent mutation audit status
@@ -223,6 +225,74 @@ system_summary() {
     echo "default_route_present=false"
     echo "primary_interface=unknown"
   fi
+}
+
+validate_hostname() {
+  hostname_value="$1"
+  case "${hostname_value}" in
+    ""|.*|*-|*_)
+      echo "hostname is invalid" >&2
+      return 2
+      ;;
+  esac
+  if [ "${#hostname_value}" -gt 63 ]; then
+    echo "hostname is too long" >&2
+    return 2
+  fi
+  printf '%s\n' "${hostname_value}" |
+    grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' || {
+      echo "hostname contains unsupported characters" >&2
+      return 2
+    }
+}
+
+set_hostname() {
+  require_root set-hostname
+  hostname_value="${1:-}"
+  validate_hostname "${hostname_value}"
+  if command -v hostnamectl >/dev/null 2>&1; then
+    hostnamectl set-hostname "${hostname_value}"
+  else
+    printf '%s\n' "${hostname_value}" > /etc/hostname
+    hostname "${hostname_value}" 2>/dev/null || true
+  fi
+  echo "format=obos-set-hostname-v1"
+  echo "hostname=${hostname_value}"
+  echo "set_hostname=ok"
+}
+
+validate_timezone() {
+  timezone_value="$1"
+  case "${timezone_value}" in
+    ""|/*|*"/../"*|*".."*|*\\*|*": "*|*" "*)
+      echo "timezone is invalid" >&2
+      return 2
+      ;;
+  esac
+  printf '%s\n' "${timezone_value}" |
+    grep -Eq '^(UTC|[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)+)$' || {
+      echo "timezone contains unsupported characters" >&2
+      return 2
+    }
+  if [ -d /usr/share/zoneinfo ] && [ ! -f "/usr/share/zoneinfo/${timezone_value}" ]; then
+    echo "timezone is not installed: ${timezone_value}" >&2
+    return 2
+  fi
+}
+
+set_timezone() {
+  require_root set-timezone
+  timezone_value="${1:-}"
+  validate_timezone "${timezone_value}"
+  if command -v timedatectl >/dev/null 2>&1; then
+    timedatectl set-timezone "${timezone_value}"
+  else
+    ln -snf "/usr/share/zoneinfo/${timezone_value}" /etc/localtime
+    printf '%s\n' "${timezone_value}" > /etc/timezone
+  fi
+  echo "format=obos-set-timezone-v1"
+  echo "timezone=${timezone_value}"
+  echo "set_timezone=ok"
 }
 
 proxy_health() {
@@ -1082,6 +1152,14 @@ case "${1:-}" in
     ;;
   system-summary)
     system_summary
+    ;;
+  set-hostname)
+    shift
+    set_hostname "${1:-}"
+    ;;
+  set-timezone)
+    shift
+    set_timezone "${1:-}"
     ;;
   security-summary)
     require_root security-summary

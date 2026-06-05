@@ -64,12 +64,14 @@ Current implementation status:
   mutations, with optional CIDR input validated by `obos-agent`.
 - TLS material generation and public trust bundle export are exposed as
   explicit confirmed HTTP mutations.
+- Hostname and timezone changes are exposed as explicit confirmed HTTP
+  mutations after agent-side input validation.
 - Backup download is intentionally limited to the future encrypted portable
   backup format.
 - Non-destructive encrypted portable backup export/import planning exists in
   `obosctl` and `obos-agent`.
 - Restore apply, encrypted portable backup creation/download/upload/decryption,
-  hostname, timezone, and network basics
+  and network basics beyond hostname/timezone
   controls are still future UI work.
 - The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
   criteria for test devices.

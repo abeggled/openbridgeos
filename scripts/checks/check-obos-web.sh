@@ -30,6 +30,27 @@ grep -q 'data-agent-field="system-summary:hostname"' "${INDEX}" \
 grep -q 'data-agent-field="system-summary:timezone"' "${INDEX}" \
   || fail "web UI does not expose timezone"
 
+grep -q 'id="host-name"' "${INDEX}" \
+  || fail "web UI does not expose hostname input"
+
+grep -q 'id="host-timezone"' "${INDEX}" \
+  || fail "web UI does not expose timezone input"
+
+grep -q 'data-mutation-action="set-hostname"' "${INDEX}" \
+  || fail "web UI does not expose hostname mutation control"
+
+grep -q 'data-confirm="set-hostname"' "${INDEX}" \
+  || fail "web UI hostname mutation control does not carry confirmation token"
+
+grep -q 'data-mutation-action="set-timezone"' "${INDEX}" \
+  || fail "web UI does not expose timezone mutation control"
+
+grep -q 'data-confirm="set-timezone"' "${INDEX}" \
+  || fail "web UI timezone mutation control does not carry confirmation token"
+
+grep -q 'data-mutation-status="host"' "${INDEX}" \
+  || fail "web UI does not expose host mutation status"
+
 grep -q 'data-agent-field="system-summary:default_route_present"' "${INDEX}" \
   || fail "web UI does not expose network route status"
 
@@ -200,6 +221,12 @@ grep -q 'mqtt-enable-lan' "${JS}" \
 
 grep -q 'body.source_cidr = cidr' "${JS}" \
   || fail "web UI does not send optional MQTT source CIDR"
+
+grep -q 'body.hostname = hostname' "${JS}" \
+  || fail "web UI does not send hostname mutation payload"
+
+grep -q 'body.timezone = timezone' "${JS}" \
+  || fail "web UI does not send timezone mutation payload"
 
 grep -q 'grid-template-columns' "${CSS}" \
   || fail "web UI CSS does not define stable grid layout"

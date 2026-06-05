@@ -177,6 +177,22 @@
         body.source_cidr = cidr;
       }
     }
+    if (action === "set-hostname") {
+      const hostname = document.querySelector("#host-name")?.value.trim();
+      if (!hostname) {
+        setMutationStatus(statusTarget, "missing hostname", "error");
+        return;
+      }
+      body.hostname = hostname;
+    }
+    if (action === "set-timezone") {
+      const timezone = document.querySelector("#host-timezone")?.value.trim();
+      if (!timezone) {
+        setMutationStatus(statusTarget, "missing timezone", "error");
+        return;
+      }
+      body.timezone = timezone;
+    }
 
     button.disabled = true;
     setMutationStatus(statusTarget, "running", "loading");

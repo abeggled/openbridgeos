@@ -32,6 +32,8 @@ Cmnd_Alias OBOS_AGENT_MUTATIONS = \
   /usr/bin/obosctl tls-export, \
   /usr/bin/obosctl mqtt-enable-lan, \
   /usr/bin/obosctl mqtt-enable-lan *, \
-  /usr/bin/obosctl mqtt-disable-lan
+  /usr/bin/obosctl mqtt-disable-lan, \
+  /usr/bin/obosctl set-hostname *, \
+  /usr/bin/obosctl set-timezone *
 
 obos-agent ALL=(root) NOPASSWD: OBOS_AGENT_READONLY, OBOS_AGENT_MUTATIONS

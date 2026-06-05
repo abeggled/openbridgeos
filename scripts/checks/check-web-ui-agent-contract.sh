@@ -41,6 +41,8 @@ require_contract_line 'obos-logs-tail-v1'
 require_contract_line 'sudo obosctl backup-prune --confirm backup-prune'
 require_contract_line 'obos-agent backup-prune --confirm backup-prune'
 require_contract_line 'obos-agent restore-stage <backup.tar.gz> --confirm restore-stage'
+require_contract_line 'obos-agent set-hostname <hostname> --confirm set-hostname'
+require_contract_line 'obos-agent set-timezone <timezone> --confirm set-timezone'
 require_contract_line 'sudo obosctl restore-stage-summary'
 require_contract_line 'obos-restore-stage-summary-v1'
 require_contract_line 'obos-agent restore-stage-inspect <stage-dir>'
@@ -77,6 +79,10 @@ require_contract_line 'POST /obos/api/v1/actions/tls-generate'
 require_contract_line '{"confirm":"tls-generate"}'
 require_contract_line 'POST /obos/api/v1/actions/tls-export'
 require_contract_line '{"confirm":"tls-export"}'
+require_contract_line 'POST /obos/api/v1/actions/set-hostname'
+require_contract_line '{"confirm":"set-hostname","hostname":"obos-test"}'
+require_contract_line 'POST /obos/api/v1/actions/set-timezone'
+require_contract_line '{"confirm":"set-timezone","timezone":"Europe/Zurich"}'
 require_contract_line '/etc/sudoers.d/obos-agent'
 require_contract_line 'sudo -n'
 require_contract_line 'obos-agent-audit-v1'
@@ -132,6 +138,10 @@ grep -q 'status-summary)' scripts/obosctl \
   || fail "obosctl status-summary command missing"
 grep -q 'system-summary)' scripts/obosctl \
   || fail "obosctl system-summary command missing"
+grep -q 'set-hostname)' scripts/obosctl \
+  || fail "obosctl set-hostname command missing"
+grep -q 'set-timezone)' scripts/obosctl \
+  || fail "obosctl set-timezone command missing"
 grep -q 'update-summary)' scripts/obosctl \
   || fail "obosctl update-summary command missing"
 grep -q 'update-rollback-plan)' scripts/obosctl \

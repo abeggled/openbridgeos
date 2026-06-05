@@ -46,6 +46,8 @@ require_line "Non-destructive encrypted portable backup export/import planning e
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
+require_line "format=obos-set-hostname-v1" scripts/obosctl
+require_line "format=obos-set-timezone-v1" scripts/obosctl
 require_line "format=obos-update-summary-v1" scripts/obosctl
 require_line "format=obos-backup-summary-v1" scripts/obosctl
 require_line "format=obos-restore-stage-summary-v1" scripts/obosctl
@@ -65,6 +67,8 @@ require_line "action=restore-stage|mutating=true|confirm=restore-stage|required_
 require_line "action=portable-export-plan|mutating=false|required_arg=backup-path" scripts/agent/obos-agent.sh
 require_line "action=portable-import-plan|mutating=false|required_arg=portable-backup" scripts/agent/obos-agent.sh
 require_line "action=logs-tail|mutating=false" scripts/agent/obos-agent.sh
+require_line "action=set-hostname|mutating=true|confirm=set-hostname|required_arg=hostname" scripts/agent/obos-agent.sh
+require_line "action=set-timezone|mutating=true|confirm=set-timezone|required_arg=timezone" scripts/agent/obos-agent.sh
 
 require_line '"backup": "backup"' scripts/agent/obos-agent-http.py
 require_line '"restore-stage": "restore-stage"' scripts/agent/obos-agent-http.py
@@ -74,6 +78,8 @@ require_line '"mqtt-enable-lan": "mqtt-enable-lan"' scripts/agent/obos-agent-htt
 require_line '"mqtt-disable-lan": "mqtt-disable-lan"' scripts/agent/obos-agent-http.py
 require_line '"tls-generate": "tls-generate"' scripts/agent/obos-agent-http.py
 require_line '"tls-export": "tls-export"' scripts/agent/obos-agent-http.py
+require_line '"set-hostname": "set-hostname"' scripts/agent/obos-agent-http.py
+require_line '"set-timezone": "set-timezone"' scripts/agent/obos-agent-http.py
 require_line "MAX_POST_BYTES = 1024" scripts/agent/obos-agent-http.py
 require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.sh
 
@@ -91,6 +97,8 @@ require_line 'data-mutation-action="mqtt-enable-lan"' apps/obos-web/index.html
 require_line 'data-mutation-action="mqtt-disable-lan"' apps/obos-web/index.html
 require_line 'data-mutation-action="tls-generate"' apps/obos-web/index.html
 require_line 'data-mutation-action="tls-export"' apps/obos-web/index.html
+require_line 'data-mutation-action="set-hostname"' apps/obos-web/index.html
+require_line 'data-mutation-action="set-timezone"' apps/obos-web/index.html
 
 require_line "OBOS_IMAGE_PROFILE=amd64-vm" packaging/images/profiles/amd64-vm.env
 require_line "OBOS_IMAGE_KIND=vm-image" packaging/images/profiles/amd64-vm.env
