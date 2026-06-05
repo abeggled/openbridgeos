@@ -28,6 +28,8 @@ require_contract_line 'obosctl backup-list'
 require_contract_line 'obos-backup-list-v1'
 require_contract_line 'obosctl backup-prune-plan'
 require_contract_line 'obos-backup-prune-plan-v1'
+require_contract_line 'sudo obosctl backup-prune --confirm backup-prune'
+require_contract_line 'obos-agent backup-prune --confirm backup-prune'
 require_contract_line 'sudo obosctl mqtt-summary'
 require_contract_line 'obos-mqtt-summary-v1'
 require_contract_line 'obosctl tls-summary'
@@ -60,6 +62,8 @@ grep -q 'backup-list)' scripts/obosctl \
   || fail "obosctl backup-list command missing"
 grep -q 'backup-prune-plan)' scripts/obosctl \
   || fail "obosctl backup-prune-plan command missing"
+grep -q 'backup-prune)' scripts/obosctl \
+  || fail "obosctl backup-prune command missing"
 grep -q 'mqtt-summary)' scripts/obosctl \
   || fail "obosctl mqtt-summary command missing"
 grep -q 'tls-summary)' scripts/obosctl \

@@ -112,6 +112,8 @@ sudo obosctl backup
 obosctl backup-summary
 obosctl backup-list
 obosctl backup-prune-plan
+obosctl backup-prune
+sudo obosctl backup-prune --confirm backup-prune
 ```
 
 Backups are written to `/srv/obos/backups` by default and are mode `0600`.
@@ -143,7 +145,9 @@ sensitive.
 
 `backup-prune-plan` prints a non-destructive retention plan. It reports which
 backups would be kept by the current keep count and which older backups would be
-delete candidates for a future explicit prune command.
+delete candidates. `backup-prune` defaults to a dry run and prints the same
+delete candidates as `would_delete=` records. It deletes old backups only when
+called with the explicit `--confirm backup-prune` token.
 
 ## Restore Inspection
 

@@ -44,6 +44,7 @@ Commands:
   backup-summary    Print machine-readable latest backup status
   backup-list       Print machine-readable appliance backup inventory
   backup-prune-plan Print a non-destructive backup retention plan
+  backup-prune      Delete old backups after explicit confirmation
   restore-inspect   Inspect an appliance backup before restore
   restore-plan      Print the non-destructive restore plan for a backup
   restore-stage     Extract a backup into private restore staging
@@ -408,6 +409,56 @@ backup_prune_plan() {
   echo "delete_candidate_count=${delete_count}"
   rm -f "${list_file}" "${sorted_file}"
   trap - EXIT INT TERM
+}
+
+backup_prune() {
+  confirmed=false
+  if [ "${1:-}" = "--confirm" ] && [ "${2:-}" = "backup-prune" ]; then
+    confirmed=true
+  elif [ -n "${1:-}" ]; then
+    echo "usage: obosctl backup-prune [--confirm backup-prune]" >&2
+    return 2
+  fi
+
+  plan_file="$(mktemp)"
+  trap 'rm -f "${plan_file}"' EXIT INT TERM
+  backup_prune_plan > "${plan_file}"
+
+  echo "format=obos-backup-prune-v1"
+  if [ "${confirmed}" = true ]; then
+    echo "mode=confirmed"
+  else
+    echo "mode=dry-run"
+  fi
+  sed -n '/^backup_dir=/p; /^keep_count=/p; /^backup_count=/p; /^delete_candidate_count=/p' "${plan_file}"
+
+  delete_seen=0
+  prune_exit=0
+  while IFS= read -r plan_line; do
+    case "${plan_line}" in
+      delete_candidate=*)
+        candidate="${plan_line#delete_candidate=}"
+        backup_file="${candidate%%|mtime=*}"
+        delete_seen=$((delete_seen + 1))
+        if [ "${confirmed}" = true ]; then
+          if rm -f -- "${backup_file}"; then
+            echo "deleted=${backup_file}"
+          else
+            echo "delete_failed=${backup_file}"
+            prune_exit=1
+            break
+          fi
+        else
+          echo "would_delete=${backup_file}"
+        fi
+        ;;
+    esac
+  done < "${plan_file}"
+
+  echo "processed_delete_candidate_count=${delete_seen}"
+  rm -f "${plan_file}"
+  trap - EXIT INT TERM
+  return "${prune_exit}"
 }
 
 restore_inspect() {
@@ -840,6 +891,10 @@ case "${1:-}" in
   backup-prune-plan)
     shift
     backup_prune_plan "${1:-}"
+    ;;
+  backup-prune)
+    shift
+    backup_prune "$@"
     ;;
   restore-inspect)
     shift

@@ -38,6 +38,9 @@ grep -q 'backup-summary)' scripts/obosctl \
 grep -q 'backup-prune-plan)' scripts/obosctl \
   || fail "obosctl does not expose non-destructive backup pruning plan"
 
+grep -q 'backup-prune)' scripts/obosctl \
+  || fail "obosctl does not expose confirmed backup pruning"
+
 grep -q 'format=obos-backup-list-v1' scripts/obosctl \
   || fail "obosctl backup list does not declare a format"
 
@@ -47,8 +50,17 @@ grep -q 'format=obos-backup-summary-v1' scripts/obosctl \
 grep -q 'format=obos-backup-prune-plan-v1' scripts/obosctl \
   || fail "obosctl backup prune plan does not declare a format"
 
+grep -q 'format=obos-backup-prune-v1' scripts/obosctl \
+  || fail "obosctl backup prune does not declare a format"
+
 grep -q 'mode=non-destructive' scripts/obosctl \
   || fail "obosctl backup prune plan does not declare non-destructive mode"
+
+grep -q 'mode=dry-run' scripts/obosctl \
+  || fail "obosctl backup prune does not default to dry run"
+
+grep -q -- '--confirm backup-prune' scripts/obosctl \
+  || fail "obosctl backup prune does not require explicit confirmation"
 
 grep -q 'backup_count=' scripts/obosctl \
   || fail "obosctl backup list does not report backup count"
@@ -253,6 +265,9 @@ grep -q 'action=backup-summary|mutating=false' scripts/agent/obos-agent.sh \
 grep -q 'action=backup-prune-plan|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark backup pruning plan as read-only"
 
+grep -q 'action=backup-prune|mutating=true|confirm=backup-prune' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark backup pruning as a confirmed mutation"
+
 grep -q 'action=start|mutating=true|confirm=start' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark confirmed mutations"
 
@@ -264,6 +279,9 @@ grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
 
 grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow backup prune planning"
+
+grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow confirmed backup pruning"
 
 grep -q 'require_no_extra_args' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not reject extra arguments"

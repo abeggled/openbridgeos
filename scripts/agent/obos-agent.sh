@@ -28,6 +28,7 @@ Mutating actions:
   restart --confirm restart
   update --confirm update
   backup --confirm backup
+  backup-prune --confirm backup-prune
   tls-generate --confirm tls-generate
   tls-export --confirm tls-export
   mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
@@ -120,6 +121,7 @@ action=update-rollback-plan|mutating=false
 action=backup-summary|mutating=false
 action=backup-list|mutating=false
 action=backup-prune-plan|mutating=false
+action=backup-prune|mutating=true|confirm=backup-prune
 action=mqtt-summary|mutating=false
 action=tls-summary|mutating=false
 action=security-summary|mutating=false
@@ -235,6 +237,10 @@ case "${1:-}" in
   backup-prune-plan)
     require_no_extra_args "$@"
     run_obosctl backup-prune-plan "${TIMEOUT_SECONDS}" false backup-prune-plan
+    ;;
+  backup-prune)
+    require_confirm_args "$@"
+    run_obosctl backup-prune "${MUTATION_TIMEOUT_SECONDS}" true backup-prune --confirm backup-prune
     ;;
   mqtt-summary)
     require_no_extra_args "$@"

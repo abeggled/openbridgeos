@@ -56,6 +56,10 @@ grep -q 'backup-prune-plan)' "${AGENT}" \
   || fail "backup-prune-plan action missing"
 grep -q 'action=backup-prune-plan|mutating=false' "${AGENT}" \
   || fail "backup-prune-plan action is not listed as read-only"
+grep -q 'backup-prune)' "${AGENT}" \
+  || fail "backup-prune action missing"
+grep -q 'action=backup-prune|mutating=true|confirm=backup-prune' "${AGENT}" \
+  || fail "backup-prune action is not listed as a confirmed mutation"
 grep -q 'mqtt-summary)' "${AGENT}" \
   || fail "mqtt-summary action missing"
 grep -q 'tls-summary)' "${AGENT}" \
@@ -87,6 +91,8 @@ grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup summary"
 grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup prune planning"
+grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow confirmed backup pruning"
 grep -q '/usr/bin/obosctl mqtt-enable-lan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow CIDR-limited MQTT enablement"
 grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
@@ -114,6 +120,11 @@ case "$1" in
     ;;
   backup-prune-plan)
     echo "format=obos-backup-prune-plan-v1"
+    exit 0
+    ;;
+  backup-prune)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "backup-prune" ] || exit 2
+    echo "format=obos-backup-prune-v1"
     exit 0
     ;;
   start)
@@ -152,6 +163,10 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune-plan |
   grep -q 'stdout=format=obos-backup-prune-plan-v1' \
   || fail "agent did not expose backup prune plan"
 
+if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune >/dev/null 2>&1; then
+  fail "agent accepted backup prune without confirmation"
+fi
+
 sh "${AGENT}" actions |
   grep -q 'format=obos-agent-actions-v1' \
   || fail "agent actions did not print action format"
@@ -173,6 +188,13 @@ OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}
 
 grep -q 'format=obos-agent-audit-v1|.*|action=start|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
   || fail "agent did not write expected mutation audit entry"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune --confirm backup-prune |
+  grep -q 'stdout=format=obos-backup-prune-v1' \
+  || fail "agent did not run confirmed backup prune"
+
+grep -q 'format=obos-agent-audit-v1|.*|action=backup-prune|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not audit confirmed backup prune"
 
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mqtt-enable-lan 192.168.1.0/24 --confirm mqtt-enable-lan |
   grep -q 'stdout=mqtt-enabled:192.168.1.0/24' \
