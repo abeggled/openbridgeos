@@ -127,3 +127,8 @@ updates should start as explicit user actions.
 The appliance web UI should use a local allowlisted agent around stable
 `obosctl` commands. The current command contract is documented in
 [web-ui-agent-contract.md](web-ui-agent-contract.md).
+
+The initial `apps/obos-web` implementation is a static appliance console shell.
+It defines the operational panels and `data-agent-field` placeholders for the
+future local agent bridge, but it does not yet call the agent or perform
+mutating actions.
