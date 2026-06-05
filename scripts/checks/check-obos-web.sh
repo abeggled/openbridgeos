@@ -46,4 +46,19 @@ grep -q 'grid-template-columns' "${CSS}" \
 grep -q 'border-radius: var(--radius)' "${CSS}" \
   || fail "web UI CSS does not use bounded card radius"
 
+grep -q 'OBOS_WEB_DIR="/srv/obos/web"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not define the obos-web install directory"
+
+# shellcheck disable=SC2016
+grep -q 'install -d -m 0755 "${OBOS_WEB_DIR}"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not create the obos-web install directory"
+
+# shellcheck disable=SC2016
+grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR}/index.html"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install obos-web index"
+
+# shellcheck disable=SC2016
+grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR}/styles.css"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install obos-web styles"
+
 echo "obos-web: PASS"
