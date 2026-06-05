@@ -99,7 +99,7 @@ network. MQTT authentication remains required. See
 
 open bridge operating system uses a local CA per appliance instance for LAN/default TLS.
 Trust must be explicit and verifiable through an out-of-band path such as local
-console, attached display, or a future boot-accessible trust summary.
+console, attached display, or the boot-accessible trust summary.
 
 The web onboarding page may display trust fingerprints, but the web page alone
 is not sufficient proof before the client trusts the appliance instance.

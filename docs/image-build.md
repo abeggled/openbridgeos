@@ -428,5 +428,5 @@ SSH default.
 - Should Raspberry Pi images continue with pure Debian or use Raspberry Pi OS
   Lite 64-bit while keeping the userland aligned with Debian 13?
 - Should development builds have an explicit opt-in SSH profile separate from release images?
-- How should users recover if first boot cannot reach the network to pull the
-  open bridge server image?
+- Which hardware-specific recovery drills should be documented after the first
+  Raspberry Pi and VM release validation runs?

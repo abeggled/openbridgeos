@@ -2,9 +2,9 @@
 
 ## Status
 
-Accepted. Initial nginx-based implementation exists for the development image.
-Certificate replacement, HTTP redirect behavior, and web onboarding UI are still
-open.
+Accepted. nginx-based reverse proxy, per-appliance local CA material, and the
+web console trust export path exist for the technical MVP. Certificate
+replacement and HTTP redirect behavior are still open.
 
 ## Context
 
@@ -17,7 +17,7 @@ open bridge operating system needs a TLS story that works for:
 - LAN-only appliances without public DNS
 - Raspberry Pi and x86_64 images
 - users who cannot manage certificates manually
-- future obos administration UI
+- obos administration UI
 - open bridge server behind the same appliance boundary
 
 Public ACME certificates are not always available for LAN installations. A
