@@ -89,8 +89,8 @@ Initial web console credentials:
 
 Security note:
 - This file contains the initial web console password.
+- Rotate the web console password after onboarding.
 - Remove it from the boot-accessible partition after onboarding.
-- Change the password when the password rotation workflow is available.
 EOF
   chmod 0644 "${onboarding_target}"
   onboarding_exported=true

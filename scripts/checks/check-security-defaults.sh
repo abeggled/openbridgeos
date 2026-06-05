@@ -75,6 +75,12 @@ grep -q 'OBOS-ONBOARDING.txt' scripts/tls/export-boot-trust-summary.sh \
 grep -q 'initial web console password' scripts/tls/export-boot-trust-summary.sh \
   || fail "boot onboarding summary does not label the initial web console password"
 
+grep -q 'Rotate the web console password after onboarding' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not instruct password rotation"
+
+grep -q 'Remove it from the boot-accessible partition after onboarding' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not instruct removing the onboarding file"
+
 # shellcheck disable=SC2016
 grep -Fq 'uuid > "${APPLIANCE_ID_FILE}"' scripts/bootstrap/first-boot.sh \
   || fail "appliance identifier is not generated on first boot"
