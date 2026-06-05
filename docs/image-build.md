@@ -128,6 +128,9 @@ The preflight validates the `amd64-vm` profile, required qcow2 tools, basic
 available. Missing KVM is a warning because QEMU can fall back to slower TCG
 emulation for smoke tests.
 
+The qcow2 builder runs this preflight automatically before it downloads or
+customizes the base image.
+
 Build the image:
 
 ```sh

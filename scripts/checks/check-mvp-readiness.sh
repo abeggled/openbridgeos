@@ -34,6 +34,7 @@ require_file apps/obos-web/app.js
 require_file packaging/images/profiles/amd64-vm.env
 require_file packaging/images/profiles/rpi4-arm64.env
 require_file scripts/images/build-amd64-qcow2.sh
+require_file scripts/images/check-amd64-qcow2-build-host.sh
 require_file scripts/images/build-rpi4-arm64-image.sh
 require_file scripts/images/smoke-test-amd64-qcow2.sh
 require_file scripts/images/check-rpi-boot-files.sh
@@ -156,6 +157,8 @@ require_line "OBOS_IMAGE_PROFILE=amd64-vm" packaging/images/profiles/amd64-vm.en
 require_line "OBOS_IMAGE_KIND=vm-image" packaging/images/profiles/amd64-vm.env
 require_line "OBOS_OUTPUT_FORMAT=qcow2" packaging/images/profiles/amd64-vm.env
 require_line "gnupg" packaging/images/profiles/amd64-vm.env
+require_line "CHECK_AMD64_BUILD_HOST=" scripts/images/build-amd64-qcow2.sh
+require_line "run_build_host_preflight" scripts/images/build-amd64-qcow2.sh
 require_line "OBOS_IMAGE_PROFILE=rpi4-arm64" packaging/images/profiles/rpi4-arm64.env
 require_line "OBOS_IMAGE_KIND=rpi-image" packaging/images/profiles/rpi4-arm64.env
 require_line "OBOS_OUTPUT_FORMAT=raw" packaging/images/profiles/rpi4-arm64.env

@@ -11,6 +11,7 @@ BASE_IMAGE="${OBOS_QCOW2_BASE_IMAGE:-}"
 BASE_IMAGE_SHA256="${OBOS_QCOW2_BASE_IMAGE_SHA256:-}"
 RELEASE_BUILD="${OBOS_RELEASE_BUILD:-0}"
 VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
+CHECK_AMD64_BUILD_HOST="${REPO_ROOT}/scripts/images/check-amd64-qcow2-build-host.sh"
 
 fail() {
   echo "amd64 qcow2 build failed: $1" >&2
@@ -19,6 +20,15 @@ fail() {
 
 require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "missing required command: $1"
+}
+
+run_build_host_preflight() {
+  case "${PROFILE_FILE}" in
+    /*) profile_arg="${PROFILE_FILE}" ;;
+    *) profile_arg="$(pwd)/${PROFILE_FILE}" ;;
+  esac
+
+  (cd "${REPO_ROOT}" && OBOS_IMAGE_PROFILE_FILE="${profile_arg}" sh "${CHECK_AMD64_BUILD_HOST}")
 }
 
 repo_revision() {
@@ -113,6 +123,8 @@ EOF
 
 [ -f "${PROFILE_FILE}" ] || fail "missing image profile: ${PROFILE_FILE}"
 [ -f "${VALIDATE_IMAGE_PROFILES}" ] || fail "missing image profile validator: ${VALIDATE_IMAGE_PROFILES}"
+[ -f "${CHECK_AMD64_BUILD_HOST}" ] || fail "missing build host preflight: ${CHECK_AMD64_BUILD_HOST}"
+run_build_host_preflight
 sh "${VALIDATE_IMAGE_PROFILES}" "${PROFILE_FILE}" >/dev/null
 verify_release_build_inputs
 
