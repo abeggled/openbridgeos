@@ -59,6 +59,8 @@ grep -q '"logs-tail"' "${BRIDGE}" \
   || fail "logs-tail is not exposed by the read-only HTTP bridge"
 grep -q '"update-rollback-plan"' "${BRIDGE}" \
   || fail "update-rollback-plan is not exposed by the read-only HTTP bridge"
+grep -q '"mvp-readiness-summary"' "${BRIDGE}" \
+  || fail "mvp-readiness-summary is not exposed by the read-only HTTP bridge"
 grep -q 'OBOS_AGENT_PATH' "${BRIDGE}" \
   || fail "agent path is not configurable"
 grep -q '127.0.0.1' "${BRIDGE}" \

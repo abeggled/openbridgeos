@@ -44,6 +44,7 @@ READ_ONLY_ACTIONS = {
     "mqtt-summary",
     "tls-summary",
     "security-summary",
+    "mvp-readiness-summary",
     "agent-audit-summary",
 }
 MUTATING_ACTIONS = {

@@ -77,6 +77,9 @@ Current implementation status:
   and network basics beyond hostname/timezone controls are still future UI work.
 - The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
   criteria for test devices.
+- Runtime test devices can run `/usr/lib/obos/mvp-runtime-readiness.sh` for a
+  non-destructive summary across services, security baseline, TLS, MQTT,
+  backup, migration, restore planning, and the local agent boundary.
 
 ## Milestone 4: Hardened Release
 

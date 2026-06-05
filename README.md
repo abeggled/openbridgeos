@@ -74,6 +74,7 @@ After provisioning and reboot, validate the appliance with:
 
 ```sh
 sudo /usr/lib/obos/security-baseline.sh
+sudo /usr/lib/obos/mvp-runtime-readiness.sh
 ```
 
 See [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).

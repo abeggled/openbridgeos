@@ -54,15 +54,18 @@ After reboot, run:
 
 ```sh
 sudo /usr/lib/obos/security-baseline.sh
+sudo /usr/lib/obos/mvp-runtime-readiness.sh
 ```
 
 Expected result:
 
 ```text
 security baseline: PASS
+mvp runtime readiness: PASS
 ```
 
-Any `FAIL` line should be treated as a blocking issue for the baseline.
+Any `FAIL` line should be treated as a blocking issue for the baseline or the
+technical MVP test-device criteria.
 
 ## Manual Checks
 
@@ -288,6 +291,7 @@ Expected:
 The baseline passes when:
 
 - `sudo /usr/lib/obos/security-baseline.sh` exits `0`
+- `sudo /usr/lib/obos/mvp-runtime-readiness.sh` exits `0`
 - manual port scan matches the expected default exposure
 - MQTT LAN opt-in and disable workflow behaves as expected
 - open bridge server health endpoint passes through localhost and verified HTTPS proxy

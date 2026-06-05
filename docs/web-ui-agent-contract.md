@@ -40,6 +40,7 @@ directly.
 | MQTT exposure | `sudo obosctl mqtt-summary` | `obos-mqtt-summary-v1` |
 | TLS trust | `obosctl tls-summary` | `obos-tls-summary-v1` |
 | Security baseline | `sudo obosctl security-summary` | `obos-security-baseline-summary-v1` |
+| MVP runtime readiness | `sudo obosctl mvp-readiness-summary` | `obos-mvp-runtime-readiness-v1` |
 | Agent mutation audit | `sudo obosctl agent-audit-summary` | `obos-agent-audit-summary-v1` |
 
 These commands print key-value records. The agent should reject unknown format
@@ -161,6 +162,7 @@ obos-agent restore-apply-plan <stage-dir>
 obos-agent mqtt-summary
 obos-agent tls-summary
 obos-agent security-summary
+obos-agent mvp-readiness-summary
 obos-agent agent-audit-summary
 ```
 
@@ -210,8 +212,8 @@ The first implementation should start with read-only endpoints for `actions`,
 `status-summary`, `system-summary`, `update-summary`, `update-rollback-plan`,
 `backup-summary`, `backup-list`, `backup-prune-plan`, `logs-summary`,
 `logs-tail`,
-`restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`, and
-`agent-audit-summary`.
+`restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`,
+`mvp-readiness-summary`, and `agent-audit-summary`.
 
 The first confirmed HTTP mutations are `start`, `stop`, `restart`, `update`,
 `backup`, and `restore-stage`. Every mutation requires
