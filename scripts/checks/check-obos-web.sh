@@ -168,6 +168,18 @@ grep -q 'data-agent-field="security-summary:' "${INDEX}" \
 grep -q 'data-agent-field="agent-audit-summary:' "${INDEX}" \
   || fail "web UI does not expose agent audit summary placeholders"
 
+grep -q 'data-mutation-action="web-auth-rotate"' "${INDEX}" \
+  || fail "web UI does not expose web auth rotation control"
+
+grep -q 'data-confirm="web-auth-rotate"' "${INDEX}" \
+  || fail "web UI web auth rotation control does not carry confirmation token"
+
+grep -q 'data-mutation-status="web-auth"' "${INDEX}" \
+  || fail "web UI does not expose web auth rotation status"
+
+grep -q 'data-web-auth-password' "${INDEX}" \
+  || fail "web UI does not expose one-time rotated password output"
+
 grep -q 'data-agent-field="logs-summary:raw_logs_exposed"' "${INDEX}" \
   || fail "web UI does not expose log exposure status"
 
@@ -273,8 +285,17 @@ grep -q 'body.hostname = hostname' "${JS}" \
 grep -q 'body.timezone = timezone' "${JS}" \
   || fail "web UI does not send timezone mutation payload"
 
+grep -q 'setWebAuthPassword' "${JS}" \
+  || fail "web UI does not render rotated web auth password"
+
+grep -q 'action === "web-auth-rotate"' "${JS}" \
+  || fail "web UI does not handle web auth rotation response"
+
 grep -q 'grid-template-columns' "${CSS}" \
   || fail "web UI CSS does not define stable grid layout"
+
+grep -q '.secret-value' "${CSS}" \
+  || fail "web UI CSS does not style secret output"
 
 grep -q '.button-row' "${CSS}" \
   || fail "web UI CSS does not define action button row layout"

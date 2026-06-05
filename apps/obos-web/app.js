@@ -8,6 +8,7 @@
   const logOutput = document.querySelector("[data-log-output]");
   const portableDownloadLink = document.querySelector("[data-portable-download]");
   const portableUploadButton = document.querySelector("[data-upload-portable]");
+  const webAuthPassword = document.querySelector("[data-web-auth-password]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
@@ -223,6 +224,14 @@
     portableDownloadLink.hidden = false;
   }
 
+  function setWebAuthPassword(values) {
+    if (!webAuthPassword) {
+      return;
+    }
+    webAuthPassword.textContent = values.password || "unavailable";
+    webAuthPassword.dataset.state = values.password ? "ok" : "error";
+  }
+
   async function runMutation(button) {
     const action = button.dataset.mutationAction;
     const confirmToken = button.dataset.confirm;
@@ -309,6 +318,9 @@
       }
       if (action === "portable-export") {
         setPortableDownload(parseAgentResponse(text));
+      }
+      if (action === "web-auth-rotate") {
+        setWebAuthPassword(parseAgentResponse(text));
       }
       setMutationStatus(statusTarget, "completed", "ok");
       await refresh();
