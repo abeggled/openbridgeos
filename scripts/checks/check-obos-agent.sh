@@ -60,6 +60,12 @@ grep -q 'restore-stage-summary)' "${AGENT}" \
   || fail "restore-stage-summary action missing"
 grep -q 'action=restore-stage-summary|mutating=false' "${AGENT}" \
   || fail "restore-stage-summary action is not listed as read-only"
+grep -q 'restore-stage-inspect)' "${AGENT}" \
+  || fail "restore-stage-inspect action missing"
+grep -q 'action=restore-stage-inspect|mutating=false|required_arg=stage-dir' "${AGENT}" \
+  || fail "restore-stage-inspect action is not listed as read-only with stage dir"
+grep -q 'validate_restore_stage_path' "${AGENT}" \
+  || fail "restore-stage-inspect stage path is not validated before sudo"
 grep -q 'backup-prune)' "${AGENT}" \
   || fail "backup-prune action missing"
 grep -q 'action=backup-prune|mutating=true|confirm=backup-prune' "${AGENT}" \
@@ -107,6 +113,8 @@ grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup prune planning"
 grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow restore stage summary"
+grep -q '/usr/bin/obosctl restore-stage-inspect \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow checked restore stage inspection"
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow confirmed backup pruning"
 grep -q '/usr/bin/obosctl restore-stage \*' packaging/sudoers/obos-agent \
@@ -144,6 +152,10 @@ case "$1" in
     ;;
   restore-stage-summary)
     echo "format=obos-restore-stage-summary-v1"
+    exit 0
+    ;;
+  restore-stage-inspect)
+    echo "restore-stage-inspected:${2:-missing}"
     exit 0
     ;;
   backup-prune)
@@ -198,6 +210,18 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune-plan |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage-summary |
   grep -q 'stdout=format=obos-restore-stage-summary-v1' \
   || fail "agent did not expose restore stage summary"
+
+OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage-inspect /srv/obos/state/restore-staging/restore.20260605 |
+  grep -q 'stdout=restore-stage-inspected:/srv/obos/state/restore-staging/restore.20260605' \
+  || fail "agent did not expose restore stage inspection"
+
+if OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage-inspect /tmp/restore.20260605 >/dev/null 2>&1; then
+  fail "agent accepted restore stage inspection path outside staging dir"
+fi
+
+if OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage-inspect /srv/obos/state/restore-staging/../restore-staging/restore.20260605 >/dev/null 2>&1; then
+  fail "agent accepted restore stage inspection path with parent traversal"
+fi
 
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" agent-audit-summary |
   grep -q 'stdout=format=obos-agent-audit-summary-v1' \

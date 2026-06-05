@@ -33,6 +33,7 @@ require_contract_line 'obos-agent backup-prune --confirm backup-prune'
 require_contract_line 'obos-agent restore-stage <backup.tar.gz> --confirm restore-stage'
 require_contract_line 'sudo obosctl restore-stage-summary'
 require_contract_line 'obos-restore-stage-summary-v1'
+require_contract_line 'obos-agent restore-stage-inspect <stage-dir>'
 require_contract_line 'sudo obosctl mqtt-summary'
 require_contract_line 'obos-mqtt-summary-v1'
 require_contract_line 'obosctl tls-summary'
@@ -57,6 +58,7 @@ require_contract_line 'obos-agent-audit-v1'
 require_contract_line 'rotated by logrotate'
 require_contract_line 'Optional MQTT source CIDR input is validated by the agent'
 require_contract_line 'Restore staging accepts only appliance backup archives below the configured'
+require_contract_line 'Restore stage inspection accepts only private restore staging directories'
 
 grep -q 'status-summary)' scripts/obosctl \
   || fail "obosctl status-summary command missing"
