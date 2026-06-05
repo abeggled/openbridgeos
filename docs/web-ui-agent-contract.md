@@ -33,6 +33,9 @@ directly.
 These commands print key-value records. The agent should reject unknown format
 versions instead of guessing.
 
+`obos-backup-summary-v1` includes latest-backup inspection status and whether the
+latest backup manifest records secrets, logs, and TLS private key material.
+
 ## Mutating Commands
 
 | UI action | Command |

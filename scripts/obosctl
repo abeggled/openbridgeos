@@ -335,6 +335,26 @@ backup_summary() {
   echo "latest_backup_mtime=${latest_mtime}"
   echo "latest_backup_size_bytes=${size_bytes}"
   echo "latest_backup_mode=${mode}"
+
+  if restore_inspect "${latest_backup}" >/dev/null; then
+    echo "latest_backup_inspection=pass"
+  else
+    echo "latest_backup_inspection=fail"
+    return 0
+  fi
+
+  if tar -xOzf "${latest_backup}" obos-backup-manifest.txt >/dev/null 2>&1; then
+    contains_secrets="$(tar -xOzf "${latest_backup}" obos-backup-manifest.txt | sed -n 's/^contains_secrets=//p' | head -n 1)"
+    includes_logs="$(tar -xOzf "${latest_backup}" obos-backup-manifest.txt | sed -n 's/^includes_logs=//p' | head -n 1)"
+    tls_private_keys="$(tar -xOzf "${latest_backup}" obos-backup-manifest.txt | sed -n 's/^tls_private_keys=//p' | head -n 1)"
+  else
+    contains_secrets=unknown
+    includes_logs=unknown
+    tls_private_keys=unknown
+  fi
+  echo "latest_backup_contains_secrets=${contains_secrets:-unknown}"
+  echo "latest_backup_includes_logs=${includes_logs:-unknown}"
+  echo "latest_backup_tls_private_keys=${tls_private_keys:-unknown}"
 }
 
 restore_inspect() {

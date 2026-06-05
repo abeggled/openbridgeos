@@ -134,9 +134,11 @@ Mosquitto logs are excluded by default. The backup manifest records this with
 `includes_logs=false`.
 
 `backup-summary` prints the latest backup state for agents and the future web
-UI. `backup-list` prints a stable key-value inventory with one line per matching
-backup. Backup archives contain secrets, so UI download flows must still treat
-every listed file as sensitive.
+UI, including whether the latest archive passes backup inspection and whether
+its manifest records secrets, logs, and TLS private keys. `backup-list` prints a
+stable key-value inventory with one line per matching backup. Backup archives
+contain secrets, so UI download flows must still treat every listed file as
+sensitive.
 
 ## Restore Inspection
 
