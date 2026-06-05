@@ -85,6 +85,19 @@ grep -q 'Remove it from the boot-accessible partition after onboarding' scripts/
 grep -Fq 'uuid > "${APPLIANCE_ID_FILE}"' scripts/bootstrap/first-boot.sh \
   || fail "appliance identifier is not generated on first boot"
 
+grep -q 'format=obos-first-boot-v1' scripts/bootstrap/first-boot.sh \
+  || fail "first boot marker does not declare a machine-readable format"
+
+# shellcheck disable=SC2016
+grep -q 'install -m 0640 "${marker_tmp}" "${FIRST_BOOT_MARKER}"' scripts/bootstrap/first-boot.sh \
+  || fail "first boot marker is not installed with restrictive permissions"
+
+grep -q 'check_first_boot_marker' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit first boot marker"
+
+grep -q 'format=obos-first-boot-v1' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not verify first boot marker format"
+
 grep -q 'APPLIANCE_ID_FILE=' scripts/obosctl \
   || fail "obosctl backup does not know the appliance identifier path"
 

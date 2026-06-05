@@ -75,4 +75,12 @@ if [ -x "${BOOT_TRUST_SCRIPT}" ]; then
   "${BOOT_TRUST_SCRIPT}"
 fi
 
-touch "${FIRST_BOOT_MARKER}"
+marker_tmp="${FIRST_BOOT_MARKER}.$$"
+cat > "${marker_tmp}" <<EOF
+format=obos-first-boot-v1
+completed_at=$(date -u +%Y%m%dT%H%M%SZ)
+appliance_id=$(sed -n '1p' "${APPLIANCE_ID_FILE}")
+app=openbridgeserver
+EOF
+install -m 0640 "${marker_tmp}" "${FIRST_BOOT_MARKER}"
+rm -f "${marker_tmp}"
