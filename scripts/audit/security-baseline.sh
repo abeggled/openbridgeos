@@ -13,6 +13,7 @@ APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
 PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
 PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
+AGENT_HTTP_URL="${OBOS_AGENT_HTTP_URL:-http://127.0.0.1:8091/obos/api/v1/actions/status-summary}"
 TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 NGINX_PROXY_CONF="${OBOS_NGINX_PROXY_CONF:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
 AGENT_AUDIT_DIR="${OBOS_AGENT_AUDIT_DIR:-${STATE_DIR}/agent}"
@@ -138,6 +139,20 @@ check_obos_systemd_hardening() {
   check_systemd_property "${service}" SystemCallArchitectures native "native system call architecture"
 }
 
+check_agent_http_systemd_hardening() {
+  service="obos-agent-http.service"
+  check_systemd_property "${service}" User obos-agent "service user"
+  check_systemd_property "${service}" UMask 0077 "restrictive umask"
+  check_systemd_property "${service}" NoNewPrivileges no "sudo-compatible NoNewPrivileges disabled"
+  check_systemd_property "${service}" PrivateTmp yes "PrivateTmp"
+  check_systemd_property "${service}" ProtectHome yes "ProtectHome"
+  check_systemd_property "${service}" ProtectSystem strict "ProtectSystem"
+  check_systemd_property "${service}" LockPersonality yes "LockPersonality"
+  check_systemd_property "${service}" MemoryDenyWriteExecute yes "MemoryDenyWriteExecute"
+  check_systemd_property "${service}" RestrictRealtime yes "RestrictRealtime"
+  check_systemd_property "${service}" SystemCallArchitectures native "native system call architecture"
+}
+
 check_systemd_not_active() {
   service="$1"
   if ! command -v systemctl >/dev/null 2>&1; then
@@ -204,6 +219,7 @@ check_command nginx
 check_command obosctl
 check_command obos-agent
 check_command openssl
+check_command python3
 
 check_user obos-agent
 
@@ -232,8 +248,11 @@ check_systemd_enabled nginx.service
 check_systemd_active nftables.service
 check_systemd_enabled nftables.service
 check_systemd_enabled obos-first-boot.service
+check_systemd_active obos-agent-http.service
+check_systemd_enabled obos-agent-http.service
 check_systemd_enabled obos-openbridgeserver.service
 check_obos_systemd_hardening obos-first-boot.service
+check_agent_http_systemd_hardening
 check_obos_systemd_hardening obos-openbridgeserver.service
 check_systemd_not_active ssh.service
 
@@ -268,6 +287,8 @@ check_grep '^OBS_JWT_SECRET=.' "${ENV_FILE}" 'OBS JWT secret exists'
 check_grep '^OBS_MQTT_PASSWORD=.' "${ENV_FILE}" 'OBS MQTT password exists'
 check_grep 'ssl_certificate /etc/obos/tls/obos.local.crt;' "${NGINX_PROXY_CONF}" 'nginx uses obos TLS certificate'
 check_grep 'proxy_pass http://127.0.0.1:8080;' "${NGINX_PROXY_CONF}" 'nginx proxies to localhost open bridge server'
+check_grep 'location /obos/api/' "${NGINX_PROXY_CONF}" 'nginx exposes obos agent HTTP bridge path'
+check_grep 'proxy_pass http://127.0.0.1:8091;' "${NGINX_PROXY_CONF}" 'nginx proxies obos agent HTTP bridge to localhost'
 check_grep 'server_tokens off;' "${NGINX_PROXY_CONF}" 'nginx server token disclosure disabled'
 check_grep 'client_body_timeout 30s;' "${NGINX_PROXY_CONF}" 'nginx client body timeout bounded'
 check_grep 'client_header_timeout 30s;' "${NGINX_PROXY_CONF}" 'nginx client header timeout bounded'
@@ -292,6 +313,13 @@ else
 fi
 
 check_proxy_health
+
+if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 "${AGENT_HTTP_URL}" |
+  grep -q 'format=obos-agent-response-v1'; then
+  pass 'obos-agent HTTP bridge status endpoint reachable on localhost'
+else
+  fail 'obos-agent HTTP bridge status endpoint unreachable on localhost'
+fi
 
 if [ -d "${APP_DIR}/data" ]; then
   pass 'open bridge server data directory exists'

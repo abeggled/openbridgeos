@@ -383,6 +383,9 @@ grep -q 'AGENT_AUDIT_LOG=' scripts/audit/security-baseline.sh \
 grep -q 'check_command obos-agent' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit obos-agent installation"
 
+grep -q 'check_command python3' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit Python runtime for agent HTTP bridge"
+
 grep -q 'check_user obos-agent' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit obos-agent user"
 
@@ -425,6 +428,15 @@ grep -q 'check_obos_systemd_hardening obos-first-boot.service' scripts/audit/sec
 
 grep -q 'check_obos_systemd_hardening obos-openbridgeserver.service' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit open bridge server systemd hardening"
+
+grep -q 'check_agent_http_systemd_hardening' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit obos-agent-http systemd hardening"
+
+grep -q 'check_systemd_active obos-agent-http.service' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit active obos-agent-http service"
+
+grep -q 'NoNewPrivileges no' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not preserve sudo-compatible agent HTTP hardening"
 
 grep -q 'NoNewPrivileges yes' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit systemd NoNewPrivileges"
@@ -584,6 +596,12 @@ grep -q 'proxy_pass http://127.0.0.1:8080;' packaging/nginx/openbridgeserver.con
 
 grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not expose obos-web path"
+
+grep -q 'location /obos/api/' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not expose obos agent API path"
+
+grep -q 'proxy_pass http://127.0.0.1:8091;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not target localhost obos agent HTTP bridge"
 
 grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not serve obos-web assets"
