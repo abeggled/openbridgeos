@@ -21,6 +21,7 @@ require_file README.md
 require_file README.de.md
 require_file docs/roadmap.md
 require_file docs/image-build.md
+require_file docs/client-ca-trust.md
 require_file docs/security-baseline-testplan.md
 require_file scripts/obosctl
 require_file scripts/agent/obos-agent.sh
@@ -118,6 +119,8 @@ require_line "action=web-auth-rotate|mutating=true|confirm=web-auth-rotate" scri
 require_line '"web-auth-rotate": "web-auth-rotate"' scripts/agent/obos-agent-http.py
 require_line "OBOS-ONBOARDING.txt" scripts/tls/export-boot-trust-summary.sh
 require_line "initial web console password" scripts/tls/export-boot-trust-summary.sh
+require_line "Validation Matrix" docs/client-ca-trust.md
+require_line "fingerprint_verified=yes|no" docs/client-ca-trust.md
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html

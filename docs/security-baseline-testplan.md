@@ -315,7 +315,8 @@ The baseline passes when:
 
 ## Known Follow-Up Tests
 
-- platform-specific CA import validation
+- platform-specific CA import validation using
+  [client-ca-trust.md](client-ca-trust.md)
 - full disk encryption feasibility
 - Docker user namespace remapping compatibility
 - live update recovery drill
