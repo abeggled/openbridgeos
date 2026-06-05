@@ -15,6 +15,7 @@ Read-only actions:
   status-summary
   update-summary
   update-rollback-plan
+  backup-summary
   backup-list
   mqtt-summary
   tls-summary
@@ -115,6 +116,7 @@ action=actions|mutating=false
 action=status-summary|mutating=false
 action=update-summary|mutating=false
 action=update-rollback-plan|mutating=false
+action=backup-summary|mutating=false
 action=backup-list|mutating=false
 action=mqtt-summary|mutating=false
 action=tls-summary|mutating=false
@@ -219,6 +221,10 @@ case "${1:-}" in
   update-rollback-plan)
     require_no_extra_args "$@"
     run_obosctl update-rollback-plan "${TIMEOUT_SECONDS}" false update-rollback-plan
+    ;;
+  backup-summary)
+    require_no_extra_args "$@"
+    run_obosctl backup-summary "${TIMEOUT_SECONDS}" false backup-summary
     ;;
   backup-list)
     require_no_extra_args "$@"

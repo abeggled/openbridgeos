@@ -32,11 +32,20 @@ grep -q 'contains_secrets=true' scripts/obosctl \
 grep -q 'backup-list)' scripts/obosctl \
   || fail "obosctl does not expose machine-readable backup inventory"
 
+grep -q 'backup-summary)' scripts/obosctl \
+  || fail "obosctl does not expose machine-readable backup summary"
+
 grep -q 'format=obos-backup-list-v1' scripts/obosctl \
   || fail "obosctl backup list does not declare a format"
 
+grep -q 'format=obos-backup-summary-v1' scripts/obosctl \
+  || fail "obosctl backup summary does not declare a format"
+
 grep -q 'backup_count=' scripts/obosctl \
   || fail "obosctl backup list does not report backup count"
+
+grep -q 'latest_backup_present=' scripts/obosctl \
+  || fail "obosctl backup summary does not report latest backup presence"
 
 grep -q 'includes_logs=false' scripts/obosctl \
   || fail "obosctl backup manifest does not record log exclusion"
@@ -217,11 +226,17 @@ grep -q 'action=status-summary|mutating=false' scripts/agent/obos-agent.sh \
 grep -q 'action=update-rollback-plan|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark update rollback planning as read-only"
 
+grep -q 'action=backup-summary|mutating=false' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark backup summary as read-only"
+
 grep -q 'action=start|mutating=true|confirm=start' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark confirmed mutations"
 
 grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow update rollback planning"
+
+grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow backup summary"
 
 grep -q 'require_no_extra_args' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not reject extra arguments"

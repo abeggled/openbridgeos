@@ -40,6 +40,7 @@ Commands:
                     Print the non-destructive rollback plan for the last update
   logs              Follow open bridge server stack logs
   backup            Create a timestamped appliance backup
+  backup-summary    Print machine-readable latest backup status
   backup-list       Print machine-readable appliance backup inventory
   restore-inspect   Inspect an appliance backup before restore
   restore-plan      Print the non-destructive restore plan for a backup
@@ -294,6 +295,46 @@ backup_list() {
   done
 
   echo "backup_count=${count}"
+}
+
+backup_summary() {
+  count=0
+  latest_backup=
+  latest_mtime=0
+  echo "format=obos-backup-summary-v1"
+  echo "backup_dir=${BACKUP_DIR}"
+
+  for backup_file in "${BACKUP_DIR}"/obos-"${APP_NAME}"-*.tar.gz; do
+    [ -f "${backup_file}" ] || continue
+    count=$((count + 1))
+    if command -v stat >/dev/null 2>&1; then
+      mtime="$(stat -c '%Y' "${backup_file}" 2>/dev/null || echo 0)"
+    else
+      mtime=0
+    fi
+    if [ "${mtime}" -ge "${latest_mtime}" ]; then
+      latest_mtime="${mtime}"
+      latest_backup="${backup_file}"
+    fi
+  done
+
+  echo "backup_count=${count}"
+  if [ -z "${latest_backup}" ]; then
+    echo "latest_backup_present=false"
+    return 0
+  fi
+
+  size_bytes=unknown
+  mode=unknown
+  if command -v stat >/dev/null 2>&1; then
+    size_bytes="$(stat -c '%s' "${latest_backup}" 2>/dev/null || echo unknown)"
+    mode="$(stat -c '%a' "${latest_backup}" 2>/dev/null || echo unknown)"
+  fi
+  echo "latest_backup_present=true"
+  echo "latest_backup=${latest_backup}"
+  echo "latest_backup_mtime=${latest_mtime}"
+  echo "latest_backup_size_bytes=${size_bytes}"
+  echo "latest_backup_mode=${mode}"
 }
 
 restore_inspect() {
@@ -716,6 +757,9 @@ case "${1:-}" in
     ;;
   backup)
     backup
+    ;;
+  backup-summary)
+    backup_summary
     ;;
   backup-list)
     backup_list

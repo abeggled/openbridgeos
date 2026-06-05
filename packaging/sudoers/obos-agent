@@ -4,6 +4,7 @@ Cmnd_Alias OBOS_AGENT_READONLY = \
   /usr/bin/obosctl status-summary, \
   /usr/bin/obosctl update-summary, \
   /usr/bin/obosctl update-rollback-plan, \
+  /usr/bin/obosctl backup-summary, \
   /usr/bin/obosctl backup-list, \
   /usr/bin/obosctl mqtt-summary, \
   /usr/bin/obosctl tls-summary, \
