@@ -7,6 +7,7 @@ Cmnd_Alias OBOS_AGENT_READONLY = \
   /usr/bin/obosctl backup-summary, \
   /usr/bin/obosctl backup-list, \
   /usr/bin/obosctl backup-prune-plan, \
+  /usr/bin/obosctl logs-summary, \
   /usr/bin/obosctl restore-stage-summary, \
   /usr/bin/obosctl restore-stage-inspect *, \
   /usr/bin/obosctl restore-apply-plan *, \

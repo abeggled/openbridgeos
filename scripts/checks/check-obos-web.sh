@@ -57,6 +57,12 @@ grep -q 'data-agent-field="security-summary:' "${INDEX}" \
 grep -q 'data-agent-field="agent-audit-summary:' "${INDEX}" \
   || fail "web UI does not expose agent audit summary placeholders"
 
+grep -q 'data-agent-field="logs-summary:raw_logs_exposed"' "${INDEX}" \
+  || fail "web UI does not expose log exposure status"
+
+grep -q 'data-agent-field="logs-summary:journal_entry_count_last_hour"' "${INDEX}" \
+  || fail "web UI does not expose recent journal entry count"
+
 grep -q '<script src="./app.js" defer></script>' "${INDEX}" \
   || fail "web UI does not load app.js"
 

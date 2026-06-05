@@ -27,6 +27,7 @@ obosctl update-summary
 sudo obosctl backup
 obosctl backup-list
 obosctl logs
+sudo obosctl logs-summary
 sudo obosctl tls-generate
 obosctl tls-status
 obosctl tls-summary
@@ -76,6 +77,21 @@ obosctl proxy-health
 
 `health` checks the internal localhost open bridge server endpoint.
 `proxy-health` checks the nginx HTTPS boundary with local CA verification.
+
+## Logs
+
+```sh
+obosctl logs
+sudo obosctl logs-summary
+```
+
+`logs` follows the open bridge server Docker Compose logs for an interactive
+administrator.
+
+`logs-summary` prints the stable `obos-logs-summary-v1` format for agents and
+the web UI. It is metadata-only and reports whether raw logs are exposed,
+whether `journalctl` and Docker are available, and how many journal entries were
+seen for the service in the last hour. It does not print raw log lines.
 
 ## Update
 

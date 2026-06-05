@@ -31,9 +31,13 @@ Initial read-only panels:
 - TLS trust
 - security baseline
 - agent mutation audit
+- logs metadata
 
 The TLS trust panel surfaces certificate presence, SHA-256 fingerprints, expiry
 warning state, and trust bundle availability for onboarding and support.
+
+The logs panel starts with metadata only. Raw log viewing remains disabled
+because service logs can contain sensitive operational data.
 
 Confirmed mutations will be wired only after an HTTP boundary for `obos-agent`
 exists and keeps the same confirmation and audit rules.

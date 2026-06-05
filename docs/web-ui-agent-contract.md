@@ -13,6 +13,8 @@ directly.
   `obosctl` commands.
 - The UI must treat backups, app environment files, TLS private keys, and
   restore staging directories as sensitive.
+- Raw service logs are sensitive by default; read-only log views should start
+  with metadata-only availability summaries.
 - MQTT LAN exposure must remain opt-in and visible whenever it is enabled.
 - Restore apply must not be implemented in the UI until the CLI has an explicit
   apply command with confirmation gates.
@@ -27,6 +29,7 @@ directly.
 | Latest backup | `obosctl backup-summary` | `obos-backup-summary-v1` |
 | Backup inventory | `obosctl backup-list` | `obos-backup-list-v1` |
 | Backup retention plan | `obosctl backup-prune-plan` | `obos-backup-prune-plan-v1` |
+| Logs metadata | `sudo obosctl logs-summary` | `obos-logs-summary-v1` |
 | Restore staging inventory | `sudo obosctl restore-stage-summary` | `obos-restore-stage-summary-v1` |
 | MQTT exposure | `sudo obosctl mqtt-summary` | `obos-mqtt-summary-v1` |
 | TLS trust | `obosctl tls-summary` | `obos-tls-summary-v1` |
@@ -38,6 +41,9 @@ versions instead of guessing.
 
 `obos-backup-summary-v1` includes latest-backup inspection status and whether the
 latest backup manifest records secrets, logs, and TLS private key material.
+
+`obos-logs-summary-v1` is metadata-only. It reports log tooling availability and
+recent journal volume, but it deliberately does not return raw log lines.
 
 ## Mutating Commands
 
@@ -125,6 +131,7 @@ obos-agent update-rollback-plan
 obos-agent backup-summary
 obos-agent backup-list
 obos-agent backup-prune-plan
+obos-agent logs-summary
 obos-agent restore-stage-summary
 obos-agent restore-stage-inspect <stage-dir>
 obos-agent restore-apply-plan <stage-dir>
@@ -178,8 +185,8 @@ appliance boundary:
 
 The first implementation should start with read-only endpoints for `actions`,
 `status-summary`, `update-summary`, `update-rollback-plan`, `backup-summary`,
-`backup-list`, `backup-prune-plan`, `restore-stage-summary`, `mqtt-summary`,
-`tls-summary`, `security-summary`, and `agent-audit-summary`. Confirmed
+`backup-list`, `backup-prune-plan`, `logs-summary`, `restore-stage-summary`,
+`mqtt-summary`, `tls-summary`, `security-summary`, and `agent-audit-summary`. Confirmed
 mutations should remain unavailable over HTTP until the read-only bridge, nginx
 path, and service hardening are validated in CI.
 

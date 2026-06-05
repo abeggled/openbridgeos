@@ -20,6 +20,7 @@ Read-only actions:
   backup-summary
   backup-list
   backup-prune-plan
+  logs-summary
   restore-stage-summary
   restore-stage-inspect <stage-dir>
   restore-apply-plan <stage-dir>
@@ -176,6 +177,7 @@ action=update-rollback-plan|mutating=false
 action=backup-summary|mutating=false
 action=backup-list|mutating=false
 action=backup-prune-plan|mutating=false
+action=logs-summary|mutating=false
 action=restore-stage-summary|mutating=false
 action=restore-stage-inspect|mutating=false|required_arg=stage-dir
 action=restore-apply-plan|mutating=false|required_arg=stage-dir
@@ -297,6 +299,10 @@ case "${1:-}" in
   backup-prune-plan)
     require_no_extra_args "$@"
     run_obosctl backup-prune-plan "${TIMEOUT_SECONDS}" false backup-prune-plan
+    ;;
+  logs-summary)
+    require_no_extra_args "$@"
+    run_obosctl logs-summary "${TIMEOUT_SECONDS}" false logs-summary
     ;;
   restore-stage-summary)
     require_no_extra_args "$@"
