@@ -168,6 +168,9 @@ grep -q 'data-agent-field="security-summary:' "${INDEX}" \
 grep -q 'data-agent-field="agent-audit-summary:' "${INDEX}" \
   || fail "web UI does not expose agent audit summary placeholders"
 
+grep -q 'data-run-security-audit' "${INDEX}" \
+  || fail "web UI does not expose security audit refresh control"
+
 grep -q 'data-mutation-action="web-auth-rotate"' "${INDEX}" \
   || fail "web UI does not expose web auth rotation control"
 
@@ -284,6 +287,12 @@ grep -q 'body.hostname = hostname' "${JS}" \
 
 grep -q 'body.timezone = timezone' "${JS}" \
   || fail "web UI does not send timezone mutation payload"
+
+grep -q 'runSecurityAudit' "${JS}" \
+  || fail "web UI does not handle security audit refresh"
+
+grep -q 'security-summary", "agent-audit-summary' "${JS}" \
+  || fail "web UI security audit refresh does not target security fields"
 
 grep -q 'setWebAuthPassword' "${JS}" \
   || fail "web UI does not render rotated web auth password"
