@@ -64,6 +64,8 @@ require_line "check_web_auth" scripts/audit/security-baseline.sh
 require_line "format=obos-mvp-runtime-readiness-v1" scripts/audit/mvp-runtime-readiness.sh
 require_line "check_systemd_active obos-agent-http.service" scripts/audit/mvp-runtime-readiness.sh
 require_line "check_output_contains \"security baseline passes\" \"result=PASS\"" scripts/audit/mvp-runtime-readiness.sh
+require_line "check_update_rollback_plan_if_available" scripts/audit/mvp-runtime-readiness.sh
+require_line "update rollback plan available for last update" scripts/audit/mvp-runtime-readiness.sh
 require_line "check_http_agent_status" scripts/audit/mvp-runtime-readiness.sh
 require_line "agent does not expose restore apply mutation" scripts/audit/mvp-runtime-readiness.sh
 # shellcheck disable=SC2016
