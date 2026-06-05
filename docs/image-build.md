@@ -88,7 +88,9 @@ Every image builder must follow the same contract:
 6. Enable `obos-first-boot.service` for target appliance initialization.
 7. Keep first boot and managed container startup ordered after
    `network-online.target`.
-8. Emit the image artifact plus checksum and manifest.
+8. Keep the managed open bridge server service retrying failed starts so
+   temporary first-boot image pull failures can recover.
+9. Emit the image artifact plus checksum and manifest.
 
 Raspberry Pi image builders must additionally:
 

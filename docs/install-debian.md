@@ -142,6 +142,9 @@ See [admin-cli.md](admin-cli.md).
 - First boot and the managed open bridge server service wait for
   `network-online.target` so slow DHCP or Raspberry Pi network setup does not
   race initial TLS material generation or container image pulls.
+- The managed open bridge server service retries failed starts with
+  `Restart=on-failure`, which helps temporary first-boot image pull failures
+  recover once networking or the registry becomes available.
 - open bridge server is exposed externally through HTTPS on TCP `443`.
 - obos web is served below `/obos/` on the same HTTPS origin.
 - Direct open bridge server HTTP is localhost-only on `127.0.0.1:8080`.
