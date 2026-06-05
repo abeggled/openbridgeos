@@ -128,6 +128,7 @@ accept paths, queries, or a custom shell command.
 sudo obosctl update
 obosctl update-summary
 sudo obosctl update-rollback-plan
+sudo obosctl update-rollback-stage
 ```
 
 The update command performs the first conservative update flow:
@@ -142,7 +143,9 @@ If the pre-update backup is not created or cannot be found, the update is
 blocked before images are pulled or services are restarted.
 
 If either health check fails, the command exits non-zero and does not update the
-last successful update record. Automatic rollback is not implemented yet.
+last successful update record. Automatic rollback is not implemented yet; the
+last successful update backup can be staged explicitly for confirmed CLI
+rollback.
 
 The update record is a small key-value file with format `obos-update-v1`. It
 includes the completion timestamp, app name, systemd service name, pre-update
@@ -156,6 +159,12 @@ present, and the last update record fields when present.
 successful update record, verifies that the recorded backup still exists and
 passes backup inspection, then prints the restore planning commands to use before
 confirmed CLI apply.
+
+`update-rollback-stage` uses the backup recorded in the last successful update
+state and extracts it into private restore staging. It prints the stable
+`obos-update-rollback-stage-v1` format, the staging directory, and the next
+`restore-apply-plan` command. It does not apply the restore and does not expose
+live rollback through the web UI.
 
 ## Backup
 
