@@ -13,7 +13,7 @@ require_file() {
 require_line() {
   expected="$1"
   file="$2"
-  grep -Fq "${expected}" "${file}" \
+  grep -Fq -- "${expected}" "${file}" \
     || fail "missing '${expected}' in ${file}"
 }
 
@@ -51,6 +51,7 @@ require_line "format=obos-set-timezone-v1" scripts/obosctl
 require_line "format=obos-update-summary-v1" scripts/obosctl
 require_line "format=obos-backup-summary-v1" scripts/obosctl
 require_line "format=obos-restore-stage-summary-v1" scripts/obosctl
+require_line "format=obos-restore-apply-v1" scripts/obosctl
 require_line "format=obos-logs-tail-v1" scripts/obosctl
 require_line "format=obos-mqtt-summary-v1" scripts/hardening/set-mqtt-lan-access.sh
 require_line "format=obos-tls-summary-v1" scripts/tls/check-tls-status.sh
@@ -60,6 +61,7 @@ require_line "format=obos-portable-backup-export-v1" scripts/obosctl
 require_line "format=obos-portable-backup-import-plan-v1" scripts/obosctl
 require_line "format=obos-portable-import-stage-v1" scripts/obosctl
 require_line "gpg --batch --yes --pinentry-mode loopback" scripts/obosctl
+require_line "--confirm restore-apply" scripts/obosctl
 
 require_line "action=start|mutating=true|confirm=start" scripts/agent/obos-agent.sh
 require_line "action=stop|mutating=true|confirm=stop" scripts/agent/obos-agent.sh

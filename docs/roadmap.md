@@ -72,8 +72,9 @@ Current implementation status:
   and the web UI; encrypted portable backup upload and private import staging
   exist in `obosctl`, `obos-agent`, and the web UI; non-destructive import
   planning exists in `obosctl` and `obos-agent`.
-- Restore apply and network basics beyond hostname/timezone
-  controls are still future UI work.
+- Restore apply exists as a CLI-only confirmed command with pre-restore backup,
+  post-restore health checks, and security baseline audit. Web restore apply
+  and network basics beyond hostname/timezone controls are still future UI work.
 - The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
   criteria for test devices.
 
