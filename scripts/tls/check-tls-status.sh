@@ -2,6 +2,7 @@
 set -eu
 
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
+EXPORT_DIR="${OBOS_TRUST_EXPORT_DIR:-/srv/obos/state/trust}"
 CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 LEAF_CERT="${OBOS_TLS_LEAF_CERT:-${TLS_DIR}/obos.local.crt}"
 WARN_DAYS="${OBOS_TLS_EXPIRY_WARN_DAYS:-30}"
@@ -84,10 +85,19 @@ summary() {
   cat <<EOF
 format=obos-tls-summary-v1
 tls_dir=${TLS_DIR}
+trust_export_dir=${EXPORT_DIR}
 warn_days=${WARN_DAYS}
 EOF
   cert_summary "${CA_CERT}" local_ca || failed=1
   cert_summary "${LEAF_CERT}" leaf || failed=1
+
+  if [ -f "${EXPORT_DIR}/obos-local-ca.crt" ] &&
+    [ -f "${EXPORT_DIR}/obos.local.crt" ] &&
+    [ -f "${EXPORT_DIR}/trust-info.txt" ]; then
+    echo "trust_export_present=true"
+  else
+    echo "trust_export_present=false"
+  fi
   return "${failed}"
 }
 

@@ -678,6 +678,12 @@ grep -q 'tls-summary)' scripts/obosctl \
 grep -q 'format=obos-tls-summary-v1' scripts/tls/check-tls-status.sh \
   || fail "TLS status helper does not expose a summary format"
 
+grep -q 'trust_export_present=' scripts/tls/check-tls-status.sh \
+  || fail "TLS summary does not report trust export presence"
+
+grep -q 'trust_export_dir=' scripts/tls/check-tls-status.sh \
+  || fail "TLS summary does not report trust export directory"
+
 grep -q '_sha256_fingerprint=' scripts/tls/check-tls-status.sh \
   || fail "TLS summary does not report certificate fingerprints"
 
