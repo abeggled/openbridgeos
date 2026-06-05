@@ -147,3 +147,7 @@ hardening are validated. Because `obos-agent` currently crosses the privilege
 boundary with `sudo -n`, the HTTP bridge must not use `NoNewPrivileges=true`
 until that sudo dependency is removed. The detailed contract is in
 [web-ui-agent-contract.md](web-ui-agent-contract.md).
+
+The first bridge implementation is read-only and installed as
+`obos-agent-http.service`. It binds to `127.0.0.1:8091`, is exposed by nginx
+below `/obos/api/`, and rejects HTTP mutations.

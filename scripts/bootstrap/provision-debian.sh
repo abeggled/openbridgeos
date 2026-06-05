@@ -24,6 +24,7 @@ apt-get install -y --no-install-recommends \
   nftables \
   nginx-light \
   openssl \
+  python3-minimal \
   sudo \
   unattended-upgrades
 
@@ -64,7 +65,9 @@ install -m 0755 "${REPO_ROOT}/scripts/tls/export-trust-bundle.sh" "${OBOS_LIB_DI
 install -m 0755 "${REPO_ROOT}/scripts/tls/export-boot-trust-summary.sh" "${OBOS_LIB_DIR}/export-boot-trust-summary.sh"
 install -m 0755 "${REPO_ROOT}/scripts/obosctl" /usr/bin/obosctl
 install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent
+install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent-http.py" "${OBOS_LIB_DIR}/obos-agent-http.py"
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-first-boot.service" /etc/systemd/system/obos-first-boot.service
+install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-agent-http.service" /etc/systemd/system/obos-agent-http.service
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-openbridgeserver.service" /etc/systemd/system/obos-openbridgeserver.service
 
 rm -f /etc/nginx/sites-enabled/default
@@ -77,6 +80,7 @@ systemctl daemon-reload
 systemctl restart docker.service
 systemctl enable docker.service
 systemctl enable nginx.service
+systemctl enable obos-agent-http.service
 systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
 systemctl enable apt-daily.timer

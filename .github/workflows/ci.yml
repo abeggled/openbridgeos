@@ -64,6 +64,9 @@ jobs:
       - name: obos-agent
         run: sh scripts/checks/check-obos-agent.sh
 
+      - name: obos-agent-http
+        run: sh scripts/checks/check-obos-agent-http.sh
+
       - name: obos-web
         run: sh scripts/checks/check-obos-web.sh
 
