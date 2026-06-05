@@ -141,6 +141,23 @@ check_http_agent_status() {
   fi
 }
 
+check_update_rollback_plan_if_available() {
+  output="$("${OBOSCTL}" update-summary 2>/dev/null)"
+  exit_code=$?
+  if [ "${exit_code}" -ne 0 ]; then
+    fail "update summary available for rollback gating"
+    return
+  fi
+
+  if printf '%s\n' "${output}" | grep -Fq 'last_update_present=true'; then
+    check_summary_format "update rollback plan available for last update" obos-update-rollback-plan-v1 "${OBOSCTL}" update-rollback-plan
+  elif printf '%s\n' "${output}" | grep -Fq 'last_update_present=false'; then
+    pass "update rollback plan skipped until first successful update"
+  else
+    fail "update summary last update marker present"
+  fi
+}
+
 check_root
 
 check_command docker
@@ -170,6 +187,7 @@ check_output_contains "localhost open bridge server health passes" "health_local
 check_output_contains "verified HTTPS proxy health passes" "health_https_proxy=ok" "${OBOSCTL}" status-summary
 check_summary_format "system summary format available" obos-system-summary-v1 "${OBOSCTL}" system-summary
 check_summary_format "update summary format available" obos-update-summary-v1 "${OBOSCTL}" update-summary
+check_update_rollback_plan_if_available
 check_summary_format "backup summary format available" obos-backup-summary-v1 "${OBOSCTL}" backup-summary
 check_summary_format "backup inventory format available" obos-backup-list-v1 "${OBOSCTL}" backup-list
 check_summary_format "logs summary format available" obos-logs-summary-v1 "${OBOSCTL}" logs-summary

@@ -298,6 +298,8 @@ The baseline passes when:
 
 - `sudo /usr/lib/obos/security-baseline.sh` exits `0`
 - `sudo /usr/lib/obos/mvp-runtime-readiness.sh` exits `0`
+- MVP readiness requires `update-rollback-plan` to pass when a successful
+  update record exists
 - manual port scan matches the expected default exposure
 - MQTT LAN opt-in and disable workflow behaves as expected
 - open bridge server health endpoint passes through localhost and verified HTTPS proxy
@@ -316,5 +318,5 @@ The baseline passes when:
 - platform-specific CA import validation
 - full disk encryption feasibility
 - Docker user namespace remapping compatibility
-- update rollback and recovery drill
+- live update recovery drill
 - Raspberry Pi 4+ boot and network behavior
