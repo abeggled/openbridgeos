@@ -151,8 +151,9 @@ require_contract_line 'sudo -n'
 require_contract_line 'becomes mandatory only after'
 require_contract_line 'ProtectSystem=strict'
 require_contract_line 'MemoryDenyWriteExecute=true'
-require_contract_line 'backup, and restore staging mutations'
-require_contract_line 'POST requests return'
+require_contract_line 'allows only documented confirmed mutations'
+require_contract_line 'Unknown'
+require_contract_line 'obos-agent-http-error-v1'
 
 grep -q 'status-summary)' scripts/obosctl \
   || fail "obosctl status-summary command missing"

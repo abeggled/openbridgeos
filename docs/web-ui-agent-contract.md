@@ -1,8 +1,7 @@
 # Web UI Agent Contract
 
-The future open bridge operating system web UI should use a small local agent
-instead of parsing human-oriented command output or writing appliance files
-directly.
+The open bridge operating system web UI uses a small local agent instead of
+parsing human-oriented command output or writing appliance files directly.
 
 ## Principles
 
@@ -179,9 +178,8 @@ audit log entries.
 
 ## HTTP Bridge Boundary
 
-The web UI should not execute `obos-agent` directly in the browser. A future
-HTTP bridge may sit between nginx and `obos-agent`, but it must stay a local
-appliance boundary:
+The web UI does not execute `obos-agent` directly in the browser. The HTTP
+bridge sits between nginx and `obos-agent` and stays a local appliance boundary:
 
 - Bind only to `127.0.0.1` or to a Unix domain socket.
 - Be reachable through nginx only below `/obos/api/` on the existing HTTPS
@@ -212,17 +210,15 @@ appliance boundary:
 - Use a narrow `ReadWritePaths=` entry only for agent state if the bridge itself
   needs state.
 
-The first implementation should start with read-only endpoints for `actions`,
+The bridge exposes read-only endpoints for `actions`,
 `status-summary`, `system-summary`, `update-summary`, `update-rollback-plan`,
 `backup-summary`, `backup-list`, `backup-prune-plan`, `logs-summary`,
 `logs-tail`,
 `restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`,
 `mvp-readiness-summary`, and `agent-audit-summary`.
 
-The first confirmed HTTP mutations are `start`, `stop`, `restart`, `update`,
-`backup`, and `restore-stage`. Every mutation requires
-`Content-Type: application/json` and a body containing only the expected fields,
-for example:
+Confirmed HTTP mutations require `Content-Type: application/json` and a body
+containing only the expected fields, for example:
 
 ```text
 POST /obos/api/v1/actions/backup
@@ -392,7 +388,7 @@ encrypted portable backups into private staging, decrypts after explicit
 confirmation, runs backup inspection, and then uses the existing restore staging
 and apply planning gates.
 
-The first executable contracts for that future workflow are
+The executable portable backup contracts are
 `obos-portable-backup-export-plan-v1`, `obos-portable-backup-export-v1`,
 `obos-portable-backup-import-plan-v1`, and
 `obos-portable-import-stage-v1`. The web UI must still not download raw backups;
@@ -400,8 +396,7 @@ download support exposes only encrypted portable export artifacts after
 encryption. Import staging decrypts only into private staging and still does not
 apply restores to the live appliance.
 
-The initial bridge is installed as `obos-agent-http.service`. It binds to
-`127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the first
-read-only endpoint set, and allows only the confirmed service lifecycle, update,
-backup, and restore staging mutations. Other POST requests return
-`obos-agent-http-error-v1` with `mutations-disabled` or `unknown-action`.
+The bridge is installed as `obos-agent-http.service`. It binds to
+`127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the documented
+read-only endpoint set, and allows only documented confirmed mutations. Unknown
+or structurally invalid requests return `obos-agent-http-error-v1`.
