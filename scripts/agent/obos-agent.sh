@@ -47,6 +47,7 @@ Mutating actions:
   restore-stage <backup.tar.gz> --confirm restore-stage
   tls-generate --confirm tls-generate
   tls-export --confirm tls-export
+  web-auth-rotate --confirm web-auth-rotate
   mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
   mqtt-disable-lan --confirm mqtt-disable-lan
   set-hostname <hostname> --confirm set-hostname
@@ -331,6 +332,7 @@ action=portable-import-stage|mutating=true|confirm=portable-import-stage|require
 action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path
 action=tls-generate|mutating=true|confirm=tls-generate
 action=tls-export|mutating=true|confirm=tls-export
+action=web-auth-rotate|mutating=true|confirm=web-auth-rotate
 action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_arg=source-cidr
 action=mqtt-disable-lan|mutating=true|confirm=mqtt-disable-lan
 action=set-hostname|mutating=true|confirm=set-hostname|required_arg=hostname
@@ -534,6 +536,10 @@ case "${1:-}" in
   tls-export)
     require_confirm_args "$@"
     run_obosctl tls-export "${MUTATION_TIMEOUT_SECONDS}" true tls-export
+    ;;
+  web-auth-rotate)
+    require_confirm_args "$@"
+    run_obosctl web-auth-rotate "${MUTATION_TIMEOUT_SECONDS}" true web-auth-rotate
     ;;
   mqtt-enable-lan)
     require_mqtt_enable_args "$@"

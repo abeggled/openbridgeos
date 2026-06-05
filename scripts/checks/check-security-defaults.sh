@@ -28,6 +28,17 @@ grep -q 'WEB_AUTH_INFO_FILE=' scripts/auth/generate-web-auth.sh \
 grep -q 'openssl passwd -apr1 -stdin' scripts/auth/generate-web-auth.sh \
   || fail "web console auth helper does not hash passwords for nginx basic auth"
 
+# shellcheck disable=SC2016
+grep -q 'MODE="${1:-generate}"' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth helper does not default to generate mode"
+
+grep -q 'generate|rotate' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth helper does not support rotation"
+
+# shellcheck disable=SC2016
+grep -q 'password=${password}' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth rotation does not print the new password intentionally"
+
 grep -q 'install -m 0640' scripts/auth/generate-web-auth.sh \
   || fail "web console auth password file is not installed with restrictive permissions"
 
@@ -39,6 +50,21 @@ grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridges
 
 grep -q 'auth_basic_user_file /etc/obos/web.htpasswd;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not use generated obos web credentials"
+
+grep -q 'web-auth-rotate)' scripts/obosctl \
+  || fail "obosctl does not expose web auth rotation"
+
+grep -q 'WEB_AUTH_SCRIPT=' scripts/obosctl \
+  || fail "obosctl does not define web auth helper"
+
+grep -q 'action=web-auth-rotate|mutating=true|confirm=web-auth-rotate' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not expose confirmed web auth rotation"
+
+grep -q '"web-auth-rotate": "web-auth-rotate"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not expose confirmed web auth rotation"
+
+grep -q '/usr/bin/obosctl web-auth-rotate' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow web auth rotation"
 
 grep -q 'WEB_AUTH_INFO_FILE=' scripts/tls/export-boot-trust-summary.sh \
   || fail "boot onboarding summary does not read web console credentials"

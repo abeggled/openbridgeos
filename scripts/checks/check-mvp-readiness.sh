@@ -110,6 +110,9 @@ require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.
 require_line "auth_basic \"open bridge operating system\";" packaging/nginx/openbridgeserver.conf
 require_line "auth_basic_user_file /etc/obos/web.htpasswd;" packaging/nginx/openbridgeserver.conf
 require_line "openssl passwd -apr1 -stdin" scripts/auth/generate-web-auth.sh
+require_line "web-auth-rotate)" scripts/obosctl
+require_line "action=web-auth-rotate|mutating=true|confirm=web-auth-rotate" scripts/agent/obos-agent.sh
+require_line '"web-auth-rotate": "web-auth-rotate"' scripts/agent/obos-agent-http.py
 require_line "OBOS-ONBOARDING.txt" scripts/tls/export-boot-trust-summary.sh
 require_line "initial web console password" scripts/tls/export-boot-trust-summary.sh
 

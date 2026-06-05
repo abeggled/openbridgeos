@@ -5,11 +5,24 @@ OBOS_ETC_DIR="${OBOS_ETC_DIR:-/etc/obos}"
 WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-${OBOS_ETC_DIR}/web.htpasswd}"
 WEB_AUTH_INFO_FILE="${OBOS_WEB_AUTH_INFO_FILE:-${OBOS_ETC_DIR}/web-admin.env}"
 WEB_AUTH_USER="${OBOS_WEB_AUTH_USER:-admin}"
+MODE="${1:-generate}"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "generate-web-auth.sh must run as root" >&2
   exit 1
 fi
+
+case "${MODE}" in
+  generate|rotate) ;;
+  -h|--help|help)
+    echo "usage: generate-web-auth.sh [generate|rotate]" >&2
+    exit 2
+    ;;
+  *)
+    echo "generate-web-auth.sh: unsupported mode: ${MODE}" >&2
+    exit 2
+    ;;
+esac
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -26,7 +39,7 @@ hash_password() {
 
 install -d -m 0750 "${OBOS_ETC_DIR}"
 
-if [ -f "${WEB_AUTH_FILE}" ] && [ -f "${WEB_AUTH_INFO_FILE}" ]; then
+if [ "${MODE}" = generate ] && [ -f "${WEB_AUTH_FILE}" ] && [ -f "${WEB_AUTH_INFO_FILE}" ]; then
   chmod 0640 "${WEB_AUTH_FILE}"
   chmod 0600 "${WEB_AUTH_INFO_FILE}"
   echo "web auth already exists: ${WEB_AUTH_FILE}"
@@ -55,7 +68,16 @@ rm -f "${tmp_auth}" "${tmp_info}"
 cat <<EOF
 Web console authentication generated.
 
+format=obos-web-auth-v1
+mode=${MODE}
 User: ${WEB_AUTH_USER}
 Password file: ${WEB_AUTH_FILE}
 Credential record: ${WEB_AUTH_INFO_FILE}
 EOF
+
+if [ "${MODE}" = rotate ]; then
+  cat <<EOF
+password=${password}
+web auth rotate: PASS
+EOF
+fi

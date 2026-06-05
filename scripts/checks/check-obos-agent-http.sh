@@ -47,6 +47,8 @@ grep -q '"tls-generate": "tls-generate"' "${BRIDGE}" \
   || fail "tls-generate mutation is not exposed with a matching confirmation token"
 grep -q '"tls-export": "tls-export"' "${BRIDGE}" \
   || fail "tls-export mutation is not exposed with a matching confirmation token"
+grep -q '"web-auth-rotate": "web-auth-rotate"' "${BRIDGE}" \
+  || fail "web-auth-rotate mutation is not exposed with a matching confirmation token"
 grep -q '"update": "update"' "${BRIDGE}" \
   || fail "update mutation is not exposed with a matching confirmation token"
 grep -q '"system-summary"' "${BRIDGE}" \
@@ -351,6 +353,22 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  web-auth-rotate)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "web-auth-rotate" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=web-auth-rotate
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-web-auth-v1
+stdout=mode=rotate
+stdout=password=rotated-test-password
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   set-hostname)
     [ "${2:-}" = "obos-test" ] || exit 2
     [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "set-hostname" ] || exit 2
@@ -526,6 +544,13 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/tls-export |
   grep -q 'stdout=tls-export:ok' \
   || fail "HTTP bridge did not run confirmed TLS export mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"web-auth-rotate"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/web-auth-rotate |
+  grep -q 'stdout=password=rotated-test-password' \
+  || fail "HTTP bridge did not run confirmed web auth rotation"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

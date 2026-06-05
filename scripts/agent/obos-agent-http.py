@@ -62,6 +62,7 @@ MUTATING_ACTIONS = {
     "tls-export": "tls-export",
     "tls-generate": "tls-generate",
     "update": "update",
+    "web-auth-rotate": "web-auth-rotate",
 }
 
 

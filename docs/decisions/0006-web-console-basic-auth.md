@@ -39,8 +39,8 @@ password and must be removed after onboarding.
 - The web console and local agent API have a real access gate for test devices.
 - Basic Auth is not the final long-term user/session model, but it is simple,
   auditable, and supported by stock Debian nginx.
-- Password rotation should become an explicit `obosctl` and web UI workflow
-  before public release.
+- Password rotation is an explicit confirmed workflow through `obosctl` and
+  `obos-agent`; the web UI can add a polished display later.
 - The boot-accessible onboarding file is sensitive. It is acceptable for the
   technical MVP only because it solves headless first access without requiring
   SSH, but it must be clearly documented.

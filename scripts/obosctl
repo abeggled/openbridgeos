@@ -27,6 +27,7 @@ TLS_STATUS_SCRIPT="${OBOS_TLS_STATUS_SCRIPT:-/usr/lib/obos/check-tls-status.sh}"
 MQTT_LAN_SCRIPT="${OBOS_MQTT_LAN_SCRIPT:-/usr/lib/obos/set-mqtt-lan-access.sh}"
 SECURITY_BASELINE_SCRIPT="${OBOS_SECURITY_BASELINE_SCRIPT:-/usr/lib/obos/security-baseline.sh}"
 MVP_READINESS_SCRIPT="${OBOS_MVP_READINESS_SCRIPT:-/usr/lib/obos/mvp-runtime-readiness.sh}"
+WEB_AUTH_SCRIPT="${OBOS_WEB_AUTH_SCRIPT:-/usr/lib/obos/generate-web-auth.sh}"
 
 usage() {
   cat <<'EOF'
@@ -41,6 +42,7 @@ Commands:
   security-summary  Print machine-readable security baseline status
   mvp-readiness-summary
                     Print machine-readable technical MVP runtime readiness
+  web-auth-rotate  Rotate generated web console Basic Auth credentials
   agent-audit-summary
                     Print machine-readable agent mutation audit status
   start             Start open bridge server
@@ -1543,6 +1545,10 @@ case "${1:-}" in
   mvp-readiness-summary)
     require_root mvp-readiness-summary
     run_helper "${MVP_READINESS_SCRIPT}" summary
+    ;;
+  web-auth-rotate)
+    require_root web-auth-rotate
+    run_helper "${WEB_AUTH_SCRIPT}" rotate
     ;;
   agent-audit-summary)
     shift

@@ -140,6 +140,8 @@ grep -q 'action=set-hostname|mutating=true|confirm=set-hostname|required_arg=hos
   || fail "set-hostname action is not listed as a confirmed mutation"
 grep -q 'action=set-timezone|mutating=true|confirm=set-timezone|required_arg=timezone' "${AGENT}" \
   || fail "set-timezone action is not listed as a confirmed mutation"
+grep -q 'action=web-auth-rotate|mutating=true|confirm=web-auth-rotate' "${AGENT}" \
+  || fail "web-auth-rotate action is not listed as a confirmed mutation"
 # shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "agent is not installed during provisioning"
@@ -193,6 +195,8 @@ grep -q '/usr/bin/obosctl set-hostname \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow checked hostname changes"
 grep -q '/usr/bin/obosctl set-timezone \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow checked timezone changes"
+grep -q '/usr/bin/obosctl web-auth-rotate' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow web auth rotation"
 grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
   || fail "agent audit logrotate policy does not target the audit log"
 grep -q 'create 0640 obos-agent obos-agent' packaging/logrotate/obos-agent \
@@ -297,6 +301,12 @@ case "$1" in
     ;;
   set-timezone)
     echo "timezone-set:${2:-missing}"
+    exit 0
+    ;;
+  web-auth-rotate)
+    echo "format=obos-web-auth-v1"
+    echo "mode=rotate"
+    echo "password=rotated-test-password"
     exit 0
     ;;
   mqtt-enable-lan)
@@ -484,5 +494,12 @@ OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}
 if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-timezone '../etc/passwd' --confirm set-timezone >/dev/null 2>&1; then
   fail "agent accepted invalid timezone"
 fi
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" web-auth-rotate --confirm web-auth-rotate |
+  grep -q 'stdout=password=rotated-test-password' \
+  || fail "agent did not run confirmed web auth rotation"
+
+grep -q 'format=obos-agent-audit-v1|.*|action=web-auth-rotate|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not audit confirmed web auth rotation"
 
 echo "obos-agent: PASS"

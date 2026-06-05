@@ -33,6 +33,7 @@ Cmnd_Alias OBOS_AGENT_MUTATIONS = \
   /usr/bin/obosctl restore-stage *, \
   /usr/bin/obosctl tls-generate, \
   /usr/bin/obosctl tls-export, \
+  /usr/bin/obosctl web-auth-rotate, \
   /usr/bin/obosctl mqtt-enable-lan, \
   /usr/bin/obosctl mqtt-enable-lan *, \
   /usr/bin/obosctl mqtt-disable-lan, \
