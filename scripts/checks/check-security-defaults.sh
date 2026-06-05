@@ -230,6 +230,32 @@ grep -q 'restore-stage-summary)' scripts/obosctl \
 grep -q 'restore-apply-plan)' scripts/obosctl \
   || fail "obosctl does not expose restore apply planning"
 
+grep -q 'restore-apply)' scripts/obosctl \
+  || fail "obosctl does not expose confirmed restore apply"
+
+grep -q -- '--confirm restore-apply' scripts/obosctl \
+  || fail "restore apply does not require explicit confirmation"
+
+grep -q 'pre_restore_backup=' scripts/obosctl \
+  || fail "restore apply does not record a pre-restore backup"
+
+grep -q 'format=obos-restore-apply-v1' scripts/obosctl \
+  || fail "restore apply does not declare a machine-readable format"
+
+grep -q 'require_restore_apply_targets_safe' scripts/obosctl \
+  || fail "restore apply does not validate live target paths"
+
+grep -q 'stage directory must be below' scripts/obosctl \
+  || fail "restore apply does not validate stage directory scope"
+
+if grep -q '"restore-apply": "restore-apply"' scripts/agent/obos-agent-http.py; then
+  fail "HTTP bridge must not expose restore apply"
+fi
+
+if grep -q 'data-mutation-action="restore-apply"' apps/obos-web/index.html; then
+  fail "web UI must not expose restore apply"
+fi
+
 grep -q 'RESTORE_STAGE_DIR=' scripts/obosctl \
   || fail "restore staging does not use a dedicated staging directory"
 
@@ -254,8 +280,8 @@ grep -q 'format=obos-restore-apply-plan-v1' scripts/obosctl \
 grep -q 'restore apply plan: blocked; restore stage inspection failed' scripts/obosctl \
   || fail "restore apply plan does not require stage inspection"
 
-grep -q 'require an explicit future apply confirmation flag' scripts/obosctl \
-  || fail "restore apply plan does not require explicit confirmation"
+grep -q 'sudo obosctl restore-apply' scripts/obosctl \
+  || fail "restore apply plan does not point to the confirmed apply command"
 
 # shellcheck disable=SC2016
 grep -q 'chmod 0600 "${stage_manifest}"' scripts/obosctl \

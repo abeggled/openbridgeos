@@ -71,6 +71,7 @@ Commands:
                     Print machine-readable restore staging inventory
   restore-apply-plan
                     Print the non-destructive apply plan for a staged restore
+  restore-apply    Apply a staged restore after explicit confirmation
   health            Check open bridge server localhost health endpoint
   proxy-health      Check HTTPS reverse proxy health with local CA trust
   tls-generate      Generate local CA and leaf certificate material
@@ -1246,13 +1247,13 @@ restore_apply_plan() {
   echo "required_gates:"
   echo "  - restore-stage-inspect must pass for ${stage_dir}"
   echo "  - create a fresh pre-restore backup with: sudo obosctl backup"
-  echo "  - require an explicit future apply confirmation flag"
+  echo "  - require: sudo obosctl restore-apply ${stage_dir} --confirm restore-apply"
   echo "  - stop ${SERVICE_NAME} before replacing live files"
   echo "  - normalize restored file permissions before restart"
   echo "  - verify localhost and HTTPS proxy health after restart"
   echo "  - run the security baseline audit after restart"
   echo
-  echo "future_apply_steps:"
+  echo "apply_steps:"
   echo "  1. copy staged app environment to ${ENV_FILE}"
   echo "  2. copy staged appliance identifier to ${APPLIANCE_ID_FILE}"
   echo "  3. replace ${APP_DIR}/data with staged open bridge server data"
@@ -1262,6 +1263,152 @@ restore_apply_plan() {
   echo "  7. start ${SERVICE_NAME}"
   echo
   echo "restore apply plan: PASS"
+}
+
+require_restore_apply_targets_safe() {
+  case "${APP_DIR}" in
+    /srv/obos/apps/*) ;;
+    *) echo "restore apply: unsafe app directory: ${APP_DIR}" >&2; return 2 ;;
+  esac
+  case "${ENV_FILE}" in
+    /etc/obos/apps/*.env) ;;
+    *) echo "restore apply: unsafe environment file: ${ENV_FILE}" >&2; return 2 ;;
+  esac
+  case "${APPLIANCE_ID_FILE}" in
+    /etc/obos/appliance-id) ;;
+    *) echo "restore apply: unsafe appliance id file: ${APPLIANCE_ID_FILE}" >&2; return 2 ;;
+  esac
+  case "${TLS_DIR}" in
+    /etc/obos/tls) ;;
+    *) echo "restore apply: unsafe TLS directory: ${TLS_DIR}" >&2; return 2 ;;
+  esac
+}
+
+restore_apply() {
+  require_root restore-apply
+  stage_dir="${1:-}"
+  confirm_flag="${2:-}"
+  confirm_value="${3:-}"
+  [ -n "${stage_dir}" ] || {
+    echo "usage: obosctl restore-apply <stage-dir> --confirm restore-apply" >&2
+    return 2
+  }
+  if [ "${confirm_flag}" != "--confirm" ] || [ "${confirm_value}" != "restore-apply" ]; then
+    echo "restore apply: explicit confirmation required: --confirm restore-apply" >&2
+    return 2
+  fi
+  case "${stage_dir}" in
+    "${RESTORE_STAGE_DIR}"/restore.*) ;;
+    *) echo "restore apply: stage directory must be below ${RESTORE_STAGE_DIR}" >&2; return 2 ;;
+  esac
+  case "${stage_dir}" in
+    *'/../'*|*'/..'|'../'*|..)
+      echo "restore apply: stage directory must not contain parent traversal" >&2
+      return 2
+      ;;
+  esac
+  require_restore_apply_targets_safe
+  if ! restore_stage_inspect "${stage_dir}" >/dev/null; then
+    echo "restore apply: blocked; restore stage inspection failed" >&2
+    return 1
+  fi
+
+  env_name="$(basename -- "${ENV_FILE}")"
+  pre_restore_backup_output="$(backup)"
+  pre_restore_backup="$(printf '%s\n' "${pre_restore_backup_output}" | sed -n 's/^backup: //p')"
+  if [ -z "${pre_restore_backup}" ] || [ ! -f "${pre_restore_backup}" ]; then
+    echo "restore apply: blocked; pre-restore backup was not created" >&2
+    return 1
+  fi
+
+  restore_state_dir="${STATE_DIR}/restore-apply"
+  install -d -m 0750 "${restore_state_dir}"
+  applied_at="$(date -u +%Y%m%dT%H%M%SZ)"
+  state_file="${restore_state_dir}/last-restore-apply"
+  tmp_state="${state_file}.$$"
+
+  systemctl stop "${SERVICE_NAME}"
+
+  install -d -m 0750 "$(dirname -- "${ENV_FILE}")" "${APP_DIR}" "$(dirname -- "${APPLIANCE_ID_FILE}")"
+  install -m 0600 "${stage_dir}/${env_name}" "${ENV_FILE}"
+  install -m 0600 "${stage_dir}/appliance-id" "${APPLIANCE_ID_FILE}"
+
+  rm -rf -- "${APP_DIR}/data" "${APP_DIR}/mqtt"
+  cp -a "${stage_dir}/data" "${APP_DIR}/data"
+  cp -a "${stage_dir}/mqtt" "${APP_DIR}/mqtt"
+  install -m 0644 "${stage_dir}/compose.yaml" "${APP_DIR}/compose.yaml"
+  install -m 0644 "${stage_dir}/mosquitto.conf" "${APP_DIR}/mosquitto.conf"
+  if [ -f "${stage_dir}/obos-app.yaml" ]; then
+    install -m 0644 "${stage_dir}/obos-app.yaml" "${APP_DIR}/obos-app.yaml"
+  fi
+
+  tls_restore=skipped
+  if [ -d "${stage_dir}/tls" ]; then
+    rm -rf -- "${TLS_DIR}"
+    install -d -m 0700 "$(dirname -- "${TLS_DIR}")"
+    cp -a "${stage_dir}/tls" "${TLS_DIR}"
+    tls_restore=restored
+  fi
+
+  chmod 0750 "${APP_DIR}" "${APP_DIR}/data" "${APP_DIR}/mqtt" 2>/dev/null || true
+  chmod 0600 "${ENV_FILE}" "${APPLIANCE_ID_FILE}"
+  if [ -d "${TLS_DIR}" ]; then
+    chmod 0700 "${TLS_DIR}"
+    find "${TLS_DIR}" -type f -name '*.key' -exec chmod 0600 {} \;
+    find "${TLS_DIR}" -type f ! -name '*.key' -exec chmod 0644 {} \;
+  fi
+
+  systemctl start "${SERVICE_NAME}"
+
+  health_local=failed
+  if health; then
+    health_local=ok
+  fi
+  health_https_proxy=failed
+  if proxy_health; then
+    health_https_proxy=ok
+  fi
+  security_baseline=not-run
+  if [ -x "${SECURITY_BASELINE_SCRIPT}" ]; then
+    if "${SECURITY_BASELINE_SCRIPT}" summary >/dev/null; then
+      security_baseline=pass
+    else
+      security_baseline=fail
+    fi
+  fi
+
+  cat > "${tmp_state}" <<EOF
+format=obos-restore-apply-v1
+applied_at=${applied_at}
+stage_dir=${stage_dir}
+pre_restore_backup=${pre_restore_backup}
+app=${APP_NAME}
+service=${SERVICE_NAME}
+app_dir=${APP_DIR}
+env_file=${ENV_FILE}
+appliance_id_file=${APPLIANCE_ID_FILE}
+tls_restore=${tls_restore}
+health_local=${health_local}
+health_https_proxy=${health_https_proxy}
+security_baseline=${security_baseline}
+EOF
+  chmod 0640 "${tmp_state}"
+  mv -f "${tmp_state}" "${state_file}"
+
+  echo "format=obos-restore-apply-v1"
+  echo "stage_dir=${stage_dir}"
+  echo "pre_restore_backup=${pre_restore_backup}"
+  echo "tls_restore=${tls_restore}"
+  echo "health_local=${health_local}"
+  echo "health_https_proxy=${health_https_proxy}"
+  echo "security_baseline=${security_baseline}"
+  echo "state_file=${state_file}"
+
+  if [ "${health_local}" != ok ] || [ "${health_https_proxy}" != ok ] || [ "${security_baseline}" != pass ]; then
+    echo "restore apply: completed with failed post-restore checks" >&2
+    return 1
+  fi
+  echo "restore apply: PASS"
 }
 
 write_update_state() {
@@ -1483,6 +1630,10 @@ case "${1:-}" in
     require_root restore-apply-plan
     shift
     restore_apply_plan "${1:-}"
+    ;;
+  restore-apply)
+    shift
+    restore_apply "${1:-}" "${2:-}" "${3:-}"
     ;;
   health)
     health

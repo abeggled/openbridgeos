@@ -119,10 +119,12 @@ The UI may expose the current non-destructive restore workflow:
 4. `sudo obosctl restore-stage-inspect <stage-dir>`
 5. `sudo obosctl restore-apply-plan <stage-dir>`
 
-The UI must not replace live appliance files. A future apply workflow needs a
-separate CLI command, explicit confirmation, a fresh pre-restore backup, service
-stop/start ordering, permission normalization, health checks, and a security
-baseline audit.
+The UI must not replace live appliance files. `obosctl restore-apply` exists as
+a CLI-only command with explicit confirmation, a fresh pre-restore backup,
+service stop/start ordering, permission normalization, health checks, and a
+security baseline audit. The HTTP bridge and web UI must not expose restore
+apply until a separate review adds an additional browser-safe confirmation and
+rollback UX.
 
 ## Agent Notes
 

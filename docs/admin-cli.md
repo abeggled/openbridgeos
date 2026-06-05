@@ -324,8 +324,8 @@ sudo obosctl restore-stage-inspect /srv/obos/state/restore-staging/restore.XXXXX
 obos-agent restore-stage-inspect /srv/obos/state/restore-staging/restore.XXXXXXXX
 ```
 
-`restore-stage-inspect` verifies an already extracted staging directory before a
-future apply step is allowed to use it. It checks the stage manifest format,
+`restore-stage-inspect` verifies an already extracted staging directory before
+`restore-apply` is allowed to use it. It checks the stage manifest format,
 staged-only mode, expected app name, required restore inputs, and confirms that
 Mosquitto logs were not staged. The command does not stop services and does not
 replace live appliance files.
@@ -341,13 +341,31 @@ obos-agent restore-apply-plan /srv/obos/state/restore-staging/restore.XXXXXXXX
 ```
 
 `restore-apply-plan` first requires restore stage inspection to pass. It then
-prints the future live target paths, required pre-restore backup gate, explicit
-confirmation requirement, service stop/restart order, permission normalization,
-health checks, and security baseline audit step. It is still non-destructive and
-does not replace live appliance files.
+prints the live target paths, required pre-restore backup gate, explicit
+confirmation command, service stop/restart order, permission normalization,
+health checks, and security baseline audit step. It is still non-destructive.
 
 Through `obos-agent`, restore apply planning uses the same private staging path
 validation as restore stage inspection.
+
+## Restore Apply
+
+```sh
+sudo obosctl restore-apply /srv/obos/state/restore-staging/restore.XXXXXXXX --confirm restore-apply
+```
+
+`restore-apply` is intentionally CLI-only. It requires root, a passing
+`restore-stage-inspect`, and the exact `--confirm restore-apply` token. Before
+it replaces any live file, it creates a fresh pre-restore backup. It then stops
+the open bridge server service, restores the app environment, appliance
+identifier, app data, Mosquitto data, Compose metadata, and TLS material when it
+was present in the staged backup, normalizes permissions, starts the service,
+and records `obos-restore-apply-v1` state below
+`/srv/obos/state/restore-apply`.
+
+The command returns failure if localhost health, HTTPS proxy health, or the
+security baseline audit fails after restart. The web UI and HTTP bridge still do
+not expose restore apply.
 
 ## MQTT LAN Access
 
