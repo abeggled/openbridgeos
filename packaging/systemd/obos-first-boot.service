@@ -1,7 +1,8 @@
 [Unit]
 Description=open bridge operating system first boot provisioning
 ConditionPathExists=!/srv/obos/state/first-boot.done
-After=local-fs.target
+Wants=network-online.target
+After=local-fs.target network-online.target
 Before=docker.service nginx.service
 
 [Service]

@@ -86,7 +86,9 @@ Every image builder must follow the same contract:
 4. Run `scripts/bootstrap/provision-debian.sh` inside the target filesystem or VM.
 5. Do not run first boot during image creation.
 6. Enable `obos-first-boot.service` for target appliance initialization.
-7. Emit the image artifact plus checksum and manifest.
+7. Keep first boot and managed container startup ordered after
+   `network-online.target`.
+8. Emit the image artifact plus checksum and manifest.
 
 Raspberry Pi image builders must additionally:
 

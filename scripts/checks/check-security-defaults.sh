@@ -918,11 +918,23 @@ grep -Fq 'DISABLE_SSH="${OBOS_DISABLE_SSH:-1}"' scripts/hardening/apply-host-har
 grep -q 'NoNewPrivileges=true' packaging/systemd/obos-first-boot.service \
   || fail "first boot systemd unit is missing NoNewPrivileges"
 
+grep -q 'Wants=network-online.target' packaging/systemd/obos-first-boot.service \
+  || fail "first boot systemd unit does not wait for network-online"
+
+grep -q 'After=local-fs.target network-online.target' packaging/systemd/obos-first-boot.service \
+  || fail "first boot systemd unit ordering does not include network-online"
+
 grep -q 'ProtectSystem=full' packaging/systemd/obos-first-boot.service \
   || fail "first boot systemd unit is missing filesystem protection"
 
 grep -q 'NoNewPrivileges=true' packaging/systemd/obos-openbridgeserver.service \
   || fail "open bridge server systemd unit is missing NoNewPrivileges"
+
+grep -q 'Wants=network-online.target' packaging/systemd/obos-openbridgeserver.service \
+  || fail "open bridge server systemd unit does not wait for network-online"
+
+grep -q 'After=network-online.target docker.service obos-first-boot.service' packaging/systemd/obos-openbridgeserver.service \
+  || fail "open bridge server systemd unit ordering does not include network-online"
 
 grep -q 'ProtectSystem=full' packaging/systemd/obos-openbridgeserver.service \
   || fail "open bridge server systemd unit is missing filesystem protection"
