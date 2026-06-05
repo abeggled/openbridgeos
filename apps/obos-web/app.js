@@ -2,6 +2,7 @@
   const apiBase = "/obos/api/v1/actions/";
   const fields = Array.from(document.querySelectorAll("[data-agent-field]"));
   const refreshButton = document.querySelector("[data-refresh-status]");
+  const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const unsupportedActions = new Set(["restore-apply-plan"]);
 
   function parseAgentResponse(text) {
@@ -90,6 +91,50 @@
 
   if (refreshButton) {
     refreshButton.addEventListener("click", refresh);
+  }
+
+  function setMutationStatus(action, value, state) {
+    const status = document.querySelector(`[data-mutation-status="${action}"]`);
+    if (status) {
+      status.textContent = value;
+      status.dataset.state = state;
+    }
+  }
+
+  async function runMutation(button) {
+    const action = button.dataset.mutationAction;
+    const confirmToken = button.dataset.confirm;
+    if (!action || !confirmToken || !window.confirm(`Confirm ${action}?`)) {
+      return;
+    }
+
+    button.disabled = true;
+    setMutationStatus(action, "running", "loading");
+    try {
+      const response = await fetch(`${apiBase}${action}`, {
+        method: "POST",
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ confirm: confirmToken }),
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      setMutationStatus(action, "completed", "ok");
+      await refresh();
+    } catch (error) {
+      setMutationStatus(action, "failed", "error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  for (const button of mutationButtons) {
+    button.addEventListener("click", () => runMutation(button));
   }
 
   refresh();

@@ -7,14 +7,13 @@ screen structure and the data-contract placeholders that will later be filled by
 the local `obos-agent`. It must not write appliance files directly and must not
 call arbitrary shell commands.
 
-`app.js` reads the first read-only HTTP bridge endpoints below `/obos/api/` and
-fills matching `data-agent-field` placeholders. It keeps restore apply and all
-mutating workflows unavailable until the confirmation flow is implemented.
+`app.js` reads the first read-only HTTP bridge endpoints below `/obos/api/`,
+fills matching `data-agent-field` placeholders, and can run the confirmed backup
+mutation. It keeps restore apply and other mutating workflows unavailable until
+their confirmation flows are implemented.
 
-The future HTTP bridge should live below `/obos/api/` on the same HTTPS origin,
-bind only locally or to a Unix socket, and call `obos-agent` rather than
-`obosctl` or a shell directly. Confirmed mutations stay unavailable over HTTP
-until the read-only bridge and service hardening are validated.
+The HTTP bridge lives below `/obos/api/` on the same HTTPS origin, binds only
+locally, and calls `obos-agent` rather than `obosctl` or a shell directly.
 
 ## Contract
 
@@ -40,8 +39,9 @@ warning state, and trust bundle availability for onboarding and support.
 The logs panel starts with metadata only. Raw log viewing remains disabled
 because service logs can contain sensitive operational data.
 
-Confirmed mutations will be wired only after an HTTP boundary for `obos-agent`
-exists and keeps the same confirmation and audit rules.
+Backup creation is the first confirmed mutation exposed through the HTTP bridge.
+It uses the same `obos-agent backup --confirm backup` contract and audit rules.
+Backup archive download remains disabled because appliance backups contain
+secret-bearing configuration.
 
-Current mutation controls are intentionally disabled in HTML. The first HTTP
-bridge only exposes read-only endpoints.
+Other mutation controls are intentionally disabled in HTML.

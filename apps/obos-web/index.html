@@ -72,13 +72,14 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>Backups</h2>
-            <button type="button" disabled>Create Backup</button>
+            <button type="button" data-mutation-action="backup" data-confirm="backup">Create Backup</button>
           </div>
           <dl>
             <div><dt>Latest backup</dt><dd data-agent-field="backup-summary:latest_backup_present">pending</dd></div>
             <div><dt>Backup count</dt><dd data-agent-field="backup-list:backup_count">pending</dd></div>
             <div><dt>Inspection</dt><dd data-agent-field="backup-summary:latest_backup_inspection">pending</dd></div>
             <div><dt>Retention candidates</dt><dd data-agent-field="backup-prune-plan:delete_candidate_count">pending</dd></div>
+            <div><dt>Backup action</dt><dd data-mutation-status="backup">ready</dd></div>
           </dl>
         </article>
 

@@ -18,6 +18,10 @@ python3 -m py_compile "${BRIDGE}" \
 
 grep -q 'READ_ONLY_ACTIONS' "${BRIDGE}" \
   || fail "read-only action allowlist missing"
+grep -q 'MUTATING_ACTIONS' "${BRIDGE}" \
+  || fail "mutating action allowlist missing"
+grep -q '"backup": "backup"' "${BRIDGE}" \
+  || fail "backup mutation is not exposed with a matching confirmation token"
 grep -q '"system-summary"' "${BRIDGE}" \
   || fail "system-summary is not exposed by the read-only HTTP bridge"
 grep -q '"backup-list"' "${BRIDGE}" \
@@ -32,12 +36,18 @@ grep -q '127.0.0.1' "${BRIDGE}" \
   || fail "bridge does not enforce loopback binding"
 grep -q 'subprocess.run' "${BRIDGE}" \
   || fail "bridge does not call obos-agent as a subprocess"
-grep -q '\[AGENT_PATH, action\]' "${BRIDGE}" \
+grep -q '\[AGENT_PATH, \*args\]' "${BRIDGE}" \
   || fail "bridge does not avoid shell command construction"
 grep -q 'do_POST' "${BRIDGE}" \
   || fail "bridge does not explicitly handle POST"
 grep -q 'mutations-disabled' "${BRIDGE}" \
   || fail "bridge does not reject HTTP mutations"
+grep -q 'application/json' "${BRIDGE}" \
+  || fail "bridge does not require JSON for mutations"
+grep -q 'MAX_POST_BYTES = 1024' "${BRIDGE}" \
+  || fail "bridge does not limit mutation body size"
+grep -q 'set(payload) != {"confirm"}' "${BRIDGE}" \
+  || fail "bridge does not reject unexpected mutation body fields"
 grep -q 'obos-agent-http-error-v1' "${BRIDGE}" \
   || fail "HTTP error envelope missing"
 if grep -q 'Access-Control-Allow-Origin' "${BRIDGE}"; then
@@ -147,6 +157,21 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  backup)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "backup" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=backup
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-backup-v1
+stdout=backup_path=/srv/obos/backups/obos-openbridgeserver-test.tar.gz
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -182,6 +207,31 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/update-rollback-
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/logs-summary |
   grep -q 'stdout=raw_logs_exposed=false' \
   || fail "HTTP bridge did not expose metadata-only logs summary"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"backup"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/backup |
+  grep -q 'stdout=format=obos-backup-v1' \
+  || fail "HTTP bridge did not run confirmed backup mutation"
+
+curl --silent --output "${tmp_dir}/backup-bad-confirm.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"wrong"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/backup |
+  grep -q '^403$' \
+  || fail "HTTP bridge did not reject wrong backup confirmation"
+grep -q 'confirmation-mismatch' "${tmp_dir}/backup-bad-confirm.out" \
+  || fail "HTTP bridge wrong confirmation rejection missing marker"
+
+curl --silent --output "${tmp_dir}/backup-extra-field.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"backup","extra":true}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/backup |
+  grep -q '^400$' \
+  || fail "HTTP bridge did not reject unexpected mutation body fields"
+grep -q 'invalid-body' "${tmp_dir}/backup-extra-field.out" \
+  || fail "HTTP bridge unexpected body rejection missing marker"
 
 curl --silent --output "${tmp_dir}/unknown.out" --write-out '%{http_code}' \
   http://127.0.0.1:18091/obos/api/v1/actions/unknown |

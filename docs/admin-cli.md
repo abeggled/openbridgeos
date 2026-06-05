@@ -165,6 +165,11 @@ new local CA.
 Mosquitto logs are excluded by default. The backup manifest records this with
 `includes_logs=false`.
 
+The web UI can trigger the same operation through
+`obos-agent backup --confirm backup` via the local HTTP bridge. Backup archive
+download is intentionally not exposed through the web UI yet because backups
+contain secret-bearing appliance configuration.
+
 `backup-summary` prints the latest backup state for agents and the future web
 UI, including whether the latest archive passes backup inspection and whether
 its manifest records secrets, logs, and TLS private keys. `backup-list` prints a

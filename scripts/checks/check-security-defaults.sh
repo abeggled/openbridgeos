@@ -343,6 +343,24 @@ grep -q 'action=agent-audit-summary|mutating=false' scripts/agent/obos-agent.sh 
 grep -q 'action=start|mutating=true|confirm=start' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark confirmed mutations"
 
+grep -q 'MUTATING_ACTIONS' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not keep a mutation allowlist"
+
+grep -q '"backup": "backup"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not restrict backup mutation confirmation"
+
+grep -q 'application/json' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge mutations do not require JSON"
+
+grep -q 'MAX_POST_BYTES = 1024' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge mutation body size is not bounded"
+
+grep -q 'set(payload) != {"confirm"}' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not reject unexpected mutation body fields"
+
+grep -q 'data-mutation-action="backup"' apps/obos-web/index.html \
+  || fail "web UI does not expose confirmed backup mutation"
+
 grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow update rollback planning"
 
