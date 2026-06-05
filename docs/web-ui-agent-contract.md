@@ -46,6 +46,7 @@ latest backup manifest records secrets, logs, and TLS private key material.
 | Restart open bridge server | `sudo obosctl restart` |
 | Update appliance app stack | `sudo obosctl update` |
 | Create backup | `sudo obosctl backup` |
+| Prune old backups | `sudo obosctl backup-prune --confirm backup-prune` |
 | Generate TLS material | `sudo obosctl tls-generate` |
 | Export TLS trust bundle | `sudo obosctl tls-export` |
 | Enable MQTT LAN access | `sudo obosctl mqtt-enable-lan [source-cidr]` |
@@ -63,6 +64,7 @@ obos-agent stop --confirm stop
 obos-agent restart --confirm restart
 obos-agent update --confirm update
 obos-agent backup --confirm backup
+obos-agent backup-prune --confirm backup-prune
 obos-agent tls-generate --confirm tls-generate
 obos-agent tls-export --confirm tls-export
 obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan

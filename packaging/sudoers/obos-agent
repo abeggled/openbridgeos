@@ -17,6 +17,7 @@ Cmnd_Alias OBOS_AGENT_MUTATIONS = \
   /usr/bin/obosctl restart, \
   /usr/bin/obosctl update, \
   /usr/bin/obosctl backup, \
+  /usr/bin/obosctl backup-prune --confirm backup-prune, \
   /usr/bin/obosctl tls-generate, \
   /usr/bin/obosctl tls-export, \
   /usr/bin/obosctl mqtt-enable-lan, \
