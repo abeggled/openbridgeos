@@ -182,3 +182,8 @@ The first implementation should start with read-only endpoints for `actions`,
 `agent-audit-summary`. Confirmed mutations should remain unavailable over HTTP
 until the read-only bridge, nginx path, and service hardening are validated in
 CI.
+
+The initial read-only bridge is installed as `obos-agent-http.service`. It binds
+to `127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, and exposes only
+the first read-only endpoint set. POST requests return
+`obos-agent-http-error-v1` with `mutations-disabled`.

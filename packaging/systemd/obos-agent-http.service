@@ -1,0 +1,24 @@
+[Unit]
+Description=open bridge operating system read-only agent HTTP bridge
+After=network.target obos-first-boot.service
+
+[Service]
+Type=simple
+User=obos-agent
+Group=obos-agent
+Environment=OBOS_AGENT_HTTP_BIND=127.0.0.1
+Environment=OBOS_AGENT_HTTP_PORT=8091
+ExecStart=/usr/bin/python3 /usr/lib/obos/obos-agent-http.py
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
