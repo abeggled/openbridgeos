@@ -219,6 +219,20 @@ Backups should not include:
 
 Backup export should warn when secrets and TLS private key material are included.
 
+## Encrypted Portable Backups
+
+Raw appliance backups contain secrets and must not be exposed as browser
+downloads. Downloadable backups use the separate encrypted portable backup
+direction documented in
+[0005-encrypted-portable-backups.md](decisions/0005-encrypted-portable-backups.md).
+
+The intended portable format is `obos-portable-backup-v1`. It wraps a validated
+local backup in an authenticated encryption envelope and records only non-secret
+metadata next to the encrypted payload. Imports must decrypt into private
+staging, verify metadata and hashes, run backup inspection, and then move through
+restore staging. Uploading an encrypted portable backup must not directly apply
+files to the live appliance.
+
 ## Open Questions
 
 - Should obos use full disk encryption on x86_64 installations, and what is

@@ -107,6 +107,24 @@ grep -q 'includes_logs=false' scripts/obosctl \
 grep -q -- '--exclude=mqtt/log' scripts/obosctl \
   || fail "obosctl backup does not exclude Mosquitto logs by default"
 
+[ -f docs/decisions/0005-encrypted-portable-backups.md ] \
+  || fail "encrypted portable backup decision is missing"
+
+grep -q 'obos-portable-backup-v1' docs/decisions/0005-encrypted-portable-backups.md \
+  || fail "encrypted portable backup decision does not define a format"
+
+grep -q 'must not download raw appliance backup archives' docs/decisions/0005-encrypted-portable-backups.md \
+  || fail "encrypted portable backup decision allows raw web downloads"
+
+grep -q 'authenticated encryption envelope' docs/decisions/0005-encrypted-portable-backups.md \
+  || fail "encrypted portable backup decision does not require authenticated encryption"
+
+grep -q 'private import staging' docs/decisions/0005-encrypted-portable-backups.md \
+  || fail "encrypted portable backup decision does not require private import staging"
+
+grep -q 'obos-portable-backup-v1' docs/security.md \
+  || fail "security model does not reference encrypted portable backups"
+
 grep -q 'restore-inspect)' scripts/obosctl \
   || fail "obosctl does not expose restore inspection"
 

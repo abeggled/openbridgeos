@@ -166,9 +166,15 @@ Mosquitto logs are excluded by default. The backup manifest records this with
 `includes_logs=false`.
 
 The web UI can trigger the same operation through
-`obos-agent backup --confirm backup` via the local HTTP bridge. Backup archive
-download is intentionally not exposed through the web UI yet because backups
+`obos-agent backup --confirm backup` via the local HTTP bridge. Raw backup
+archive download is intentionally not exposed through the web UI because backups
 contain secret-bearing appliance configuration.
+
+Downloadable backups should use the future encrypted portable backup format
+`obos-portable-backup-v1`. This export format is intended for browser download,
+offline storage, and migration to another open bridge operating system
+appliance. Import must decrypt into private staging, run backup inspection, and
+then use the existing restore staging and apply planning gates.
 
 `backup-summary` prints the latest backup state for agents and the future web
 UI, including whether the latest archive passes backup inspection and whether
