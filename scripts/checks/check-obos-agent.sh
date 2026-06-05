@@ -56,6 +56,10 @@ grep -q 'backup-prune-plan)' "${AGENT}" \
   || fail "backup-prune-plan action missing"
 grep -q 'action=backup-prune-plan|mutating=false' "${AGENT}" \
   || fail "backup-prune-plan action is not listed as read-only"
+grep -q 'restore-stage-summary)' "${AGENT}" \
+  || fail "restore-stage-summary action missing"
+grep -q 'action=restore-stage-summary|mutating=false' "${AGENT}" \
+  || fail "restore-stage-summary action is not listed as read-only"
 grep -q 'backup-prune)' "${AGENT}" \
   || fail "backup-prune action missing"
 grep -q 'action=backup-prune|mutating=true|confirm=backup-prune' "${AGENT}" \
@@ -95,6 +99,8 @@ grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup summary"
 grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup prune planning"
+grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow restore stage summary"
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow confirmed backup pruning"
 grep -q '/usr/bin/obosctl agent-audit-summary' packaging/sudoers/obos-agent \
@@ -126,6 +132,10 @@ case "$1" in
     ;;
   backup-prune-plan)
     echo "format=obos-backup-prune-plan-v1"
+    exit 0
+    ;;
+  restore-stage-summary)
+    echo "format=obos-restore-stage-summary-v1"
     exit 0
     ;;
   backup-prune)
@@ -172,6 +182,10 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-summary |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune-plan |
   grep -q 'stdout=format=obos-backup-prune-plan-v1' \
   || fail "agent did not expose backup prune plan"
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage-summary |
+  grep -q 'stdout=format=obos-restore-stage-summary-v1' \
+  || fail "agent did not expose restore stage summary"
 
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" agent-audit-summary |
   grep -q 'stdout=format=obos-agent-audit-summary-v1' \

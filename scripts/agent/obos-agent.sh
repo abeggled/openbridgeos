@@ -18,6 +18,7 @@ Read-only actions:
   backup-summary
   backup-list
   backup-prune-plan
+  restore-stage-summary
   mqtt-summary
   tls-summary
   security-summary
@@ -122,6 +123,7 @@ action=update-rollback-plan|mutating=false
 action=backup-summary|mutating=false
 action=backup-list|mutating=false
 action=backup-prune-plan|mutating=false
+action=restore-stage-summary|mutating=false
 action=backup-prune|mutating=true|confirm=backup-prune
 action=mqtt-summary|mutating=false
 action=tls-summary|mutating=false
@@ -239,6 +241,10 @@ case "${1:-}" in
   backup-prune-plan)
     require_no_extra_args "$@"
     run_obosctl backup-prune-plan "${TIMEOUT_SECONDS}" false backup-prune-plan
+    ;;
+  restore-stage-summary)
+    require_no_extra_args "$@"
+    run_obosctl restore-stage-summary "${TIMEOUT_SECONDS}" false restore-stage-summary
     ;;
   backup-prune)
     require_confirm_args "$@"

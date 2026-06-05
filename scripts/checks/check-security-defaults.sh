@@ -104,6 +104,9 @@ grep -q 'restore-stage)' scripts/obosctl \
 grep -q 'restore-stage-inspect)' scripts/obosctl \
   || fail "obosctl does not expose restore stage inspection"
 
+grep -q 'restore-stage-summary)' scripts/obosctl \
+  || fail "obosctl does not expose restore stage summary"
+
 grep -q 'restore-apply-plan)' scripts/obosctl \
   || fail "obosctl does not expose restore apply planning"
 
@@ -115,6 +118,9 @@ grep -q 'mode=staged-only' scripts/obosctl \
 
 grep -q 'format=obos-restore-stage-v1' scripts/obosctl \
   || fail "restore staging does not write a stage manifest"
+
+grep -q 'format=obos-restore-stage-summary-v1' scripts/obosctl \
+  || fail "restore stage summary does not declare a format"
 
 grep -q 'restore stage inspect: PASS' scripts/obosctl \
   || fail "restore stage inspection does not report success"
@@ -271,6 +277,9 @@ grep -q 'action=backup-summary|mutating=false' scripts/agent/obos-agent.sh \
 grep -q 'action=backup-prune-plan|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark backup pruning plan as read-only"
 
+grep -q 'action=restore-stage-summary|mutating=false' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark restore stage summary as read-only"
+
 grep -q 'action=backup-prune|mutating=true|confirm=backup-prune' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark backup pruning as a confirmed mutation"
 
@@ -288,6 +297,9 @@ grep -q '/usr/bin/obosctl backup-summary' packaging/sudoers/obos-agent \
 
 grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow backup prune planning"
+
+grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow restore stage summary"
 
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow confirmed backup pruning"
