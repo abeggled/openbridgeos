@@ -109,6 +109,7 @@ any future apply workflow.
 
 ```sh
 sudo obosctl backup
+obosctl backup-summary
 obosctl backup-list
 ```
 
@@ -132,10 +133,10 @@ new local CA.
 Mosquitto logs are excluded by default. The backup manifest records this with
 `includes_logs=false`.
 
-`backup-list` prints a stable key-value inventory for agents and the future web
-UI. It includes a format version, backup directory, one line per matching backup
-with path, size, and mode, plus a final backup count. Backup archives contain
-secrets, so UI download flows must still treat every listed file as sensitive.
+`backup-summary` prints the latest backup state for agents and the future web
+UI. `backup-list` prints a stable key-value inventory with one line per matching
+backup. Backup archives contain secrets, so UI download flows must still treat
+every listed file as sensitive.
 
 ## Restore Inspection
 

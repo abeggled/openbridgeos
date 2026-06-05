@@ -22,6 +22,8 @@ require_contract_line 'obosctl update-summary'
 require_contract_line 'obos-update-summary-v1'
 require_contract_line 'sudo obosctl update-rollback-plan'
 require_contract_line 'obos-update-rollback-plan-v1'
+require_contract_line 'obosctl backup-summary'
+require_contract_line 'obos-backup-summary-v1'
 require_contract_line 'obosctl backup-list'
 require_contract_line 'obos-backup-list-v1'
 require_contract_line 'sudo obosctl mqtt-summary'
@@ -33,6 +35,7 @@ require_contract_line 'obos-security-baseline-summary-v1'
 require_contract_line 'obos-agent actions'
 require_contract_line 'obos-agent-actions-v1'
 require_contract_line 'obos-agent update-rollback-plan'
+require_contract_line 'obos-agent backup-summary'
 require_contract_line 'obos-agent start --confirm start'
 require_contract_line 'obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan'
 require_contract_line '/etc/sudoers.d/obos-agent'
@@ -47,6 +50,8 @@ grep -q 'update-summary)' scripts/obosctl \
   || fail "obosctl update-summary command missing"
 grep -q 'update-rollback-plan)' scripts/obosctl \
   || fail "obosctl update-rollback-plan command missing"
+grep -q 'backup-summary)' scripts/obosctl \
+  || fail "obosctl backup-summary command missing"
 grep -q 'backup-list)' scripts/obosctl \
   || fail "obosctl backup-list command missing"
 grep -q 'mqtt-summary)' scripts/obosctl \

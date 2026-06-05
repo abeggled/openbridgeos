@@ -24,6 +24,7 @@ directly.
 | Appliance status | `obosctl status-summary` | `obos-status-summary-v1` |
 | Last update | `obosctl update-summary` | `obos-update-summary-v1` |
 | Last update rollback plan | `sudo obosctl update-rollback-plan` | `obos-update-rollback-plan-v1` |
+| Latest backup | `obosctl backup-summary` | `obos-backup-summary-v1` |
 | Backup inventory | `obosctl backup-list` | `obos-backup-list-v1` |
 | MQTT exposure | `sudo obosctl mqtt-summary` | `obos-mqtt-summary-v1` |
 | TLS trust | `obosctl tls-summary` | `obos-tls-summary-v1` |
@@ -106,6 +107,7 @@ obos-agent actions
 obos-agent status-summary
 obos-agent update-summary
 obos-agent update-rollback-plan
+obos-agent backup-summary
 obos-agent backup-list
 obos-agent mqtt-summary
 obos-agent tls-summary
