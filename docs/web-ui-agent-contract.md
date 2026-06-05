@@ -84,6 +84,7 @@ obos-agent update --confirm update
 obos-agent backup --confirm backup
 obos-agent backup-prune --confirm backup-prune
 obos-agent portable-export <backup.tar.gz> <passphrase-file> --confirm portable-export
+obos-agent portable-import-stage <portable-backup> <passphrase-file> --confirm portable-import-stage
 obos-agent restore-stage <backup.tar.gz> --confirm restore-stage
 obos-agent set-hostname <hostname> --confirm set-hostname
 obos-agent set-timezone <timezone> --confirm set-timezone
@@ -252,6 +253,33 @@ The download endpoint must serve only encrypted portable export artifacts below
 the configured portable export directory. It must reject raw backup archives,
 parent traversal, non-portable filenames, and paths outside that directory.
 
+Portable import upload is available only for encrypted portable backup archives.
+The upload endpoint accepts an `application/octet-stream` body and a safe
+`X-Obos-Filename` ending in `.tar`, stores the file below
+`/srv/obos/state/portable-imports`, and returns
+`obos-portable-import-upload-v1`:
+
+```text
+POST /obos/api/v1/uploads/portable-import
+```
+
+After upload, the browser may request private import staging with an explicit
+passphrase:
+
+```text
+POST /obos/api/v1/actions/portable-import-stage
+```
+
+```json
+{"confirm":"portable-import-stage","portable_backup":"/srv/obos/state/portable-imports/obos-portable-upload-20260605T080000Z-backup.tar","passphrase":"example passphrase"}
+```
+
+The bridge forwards it to `obos-agent portable-import-stage <portable-backup>
+<passphrase-file> --confirm portable-import-stage`. The agent validates that the
+portable backup is below the configured import directory before crossing the
+sudo boundary. This decrypts only into private staging and still does not apply
+restores to the live appliance.
+
 The service lifecycle and update buttons use the same bridge contract:
 
 ```sh
@@ -338,10 +366,10 @@ POST /obos/api/v1/actions/set-timezone
 ```
 
 Backup download support uses an encrypted portable export, not the raw appliance
-backup archive. The format is `obos-portable-backup-v1`. Future import support
-must upload encrypted portable backups into private
-staging, decrypt after explicit confirmation, run backup inspection, and then use
-the existing restore staging and apply planning gates.
+backup archive. The format is `obos-portable-backup-v1`. Import support uploads
+encrypted portable backups into private staging, decrypts after explicit
+confirmation, runs backup inspection, and then uses the existing restore staging
+and apply planning gates.
 
 The first executable contracts for that future workflow are
 `obos-portable-backup-export-plan-v1`, `obos-portable-backup-export-v1`,

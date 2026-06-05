@@ -28,6 +28,7 @@ Cmnd_Alias OBOS_AGENT_MUTATIONS = \
   /usr/bin/obosctl backup, \
   /usr/bin/obosctl backup-prune --confirm backup-prune, \
   /usr/bin/obosctl portable-export *, \
+  /usr/bin/obosctl portable-import-stage *, \
   /usr/bin/obosctl restore-stage *, \
   /usr/bin/obosctl tls-generate, \
   /usr/bin/obosctl tls-export, \

@@ -39,6 +39,7 @@ install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos /e
 install -d -m 0750 /srv/obos /srv/obos/apps /srv/obos/backups /srv/obos/state
 install -d -m 0755 "${OBOS_WEB_DIR}"
 install -d -m 0750 -o obos-agent -g obos-agent /srv/obos/state/agent
+install -d -m 0700 -o obos-agent -g obos-agent /srv/obos/state/portable-imports
 
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/compose.yaml" "${OBOS_APP_SOURCE}/compose.yaml"
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/mosquitto.conf" "${OBOS_APP_SOURCE}/mosquitto.conf"

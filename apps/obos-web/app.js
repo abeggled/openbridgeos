@@ -1,11 +1,13 @@
 (function () {
   const apiBase = "/obos/api/v1/actions/";
   const downloadBase = "/obos/api/v1/downloads/";
+  const uploadBase = "/obos/api/v1/uploads/";
   const fields = Array.from(document.querySelectorAll("[data-agent-field]"));
   const refreshButton = document.querySelector("[data-refresh-status]");
   const logsButton = document.querySelector("[data-load-logs]");
   const logOutput = document.querySelector("[data-log-output]");
   const portableDownloadLink = document.querySelector("[data-portable-download]");
+  const portableUploadButton = document.querySelector("[data-upload-portable]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
@@ -41,6 +43,18 @@
       values[payload.slice(0, separator)] = payload.slice(separator + 1);
     }
 
+    return values;
+  }
+
+  function parseKeyValueText(text) {
+    const values = {};
+    for (const line of text.split(/\r?\n/)) {
+      const separator = line.indexOf("=");
+      if (separator === -1) {
+        continue;
+      }
+      values[line.slice(0, separator)] = line.slice(separator + 1);
+    }
     return values;
   }
 
@@ -146,6 +160,47 @@
     logsButton.addEventListener("click", loadLogs);
   }
 
+  async function uploadPortableImport() {
+    if (!portableUploadButton) {
+      return;
+    }
+    const input = document.querySelector("#portable-import-file");
+    const file = input?.files?.[0];
+    if (!file) {
+      setMutationStatus("portable-import", "missing file", "error");
+      return;
+    }
+
+    portableUploadButton.disabled = true;
+    setMutationStatus("portable-import", "uploading", "loading");
+    try {
+      const response = await fetch(`${uploadBase}portable-import`, {
+        method: "POST",
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "X-Obos-Filename": file.name,
+        },
+        body: file,
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      latestValues.set("portable-import-upload", parseKeyValueText(text));
+      setMutationStatus("portable-import", "uploaded", "ok");
+    } catch (error) {
+      setMutationStatus("portable-import", "upload failed", "error");
+    } finally {
+      portableUploadButton.disabled = false;
+    }
+  }
+
+  if (portableUploadButton) {
+    portableUploadButton.addEventListener("click", uploadPortableImport);
+  }
+
   function setMutationStatus(statusTarget, value, state) {
     const statuses = Array.from(document.querySelectorAll(`[data-mutation-status="${statusTarget}"]`));
     for (const status of statuses) {
@@ -173,6 +228,7 @@
     const confirmToken = button.dataset.confirm;
     const statusTarget = button.dataset.mutationStatusTarget || action;
     const backupSource = button.dataset.mutationBackupFrom;
+    const portableSource = button.dataset.mutationPortableFrom;
     if (!action || !confirmToken || !window.confirm(`Confirm ${action}?`)) {
       return;
     }
@@ -186,6 +242,15 @@
         return;
       }
       body.backup_path = backupPath;
+    }
+    if (portableSource) {
+      const [sourceAction, sourceKey] = portableSource.split(":");
+      const portablePath = latestValues.get(sourceAction)?.[sourceKey];
+      if (!portablePath) {
+        setMutationStatus(statusTarget, "missing upload", "error");
+        return;
+      }
+      body.portable_backup = portablePath;
     }
     if (action === "mqtt-enable-lan") {
       const cidr = document.querySelector("#mqtt-source-cidr")?.value.trim();
@@ -211,6 +276,14 @@
     }
     if (action === "portable-export") {
       const passphrase = document.querySelector("#portable-passphrase")?.value;
+      if (!passphrase) {
+        setMutationStatus(statusTarget, "missing passphrase", "error");
+        return;
+      }
+      body.passphrase = passphrase;
+    }
+    if (action === "portable-import-stage") {
+      const passphrase = document.querySelector("#portable-import-passphrase")?.value;
       if (!passphrase) {
         setMutationStatus(statusTarget, "missing passphrase", "error");
         return;

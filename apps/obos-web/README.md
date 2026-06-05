@@ -47,8 +47,8 @@ non-destructive.
 Raw backup archive download remains disabled because appliance backups contain
 secret-bearing configuration. Download and migration support uses the encrypted
 portable backup format `obos-portable-backup-v1`. The web UI can create and
-download encrypted portable exports from the latest listed backup, while
-portable backup upload, import decryption, and restore apply remain outside the
-HTML controls.
+download encrypted portable exports from the latest listed backup, upload
+encrypted portable backups, and decrypt them into private import staging.
+Restore apply remains outside the HTML controls.
 
 Restore apply and other mutation controls are intentionally disabled in HTML.

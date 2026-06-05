@@ -25,6 +25,8 @@ grep -q '"backup": "backup"' "${BRIDGE}" \
   || fail "backup mutation is not exposed with a matching confirmation token"
 grep -q '"portable-export": "portable-export"' "${BRIDGE}" \
   || fail "portable-export mutation is not exposed with a matching confirmation token"
+grep -q '"portable-import-stage": "portable-import-stage"' "${BRIDGE}" \
+  || fail "portable-import-stage mutation is not exposed with a matching confirmation token"
 grep -q '"mqtt-enable-lan": "mqtt-enable-lan"' "${BRIDGE}" \
   || fail "mqtt-enable-lan mutation is not exposed with a matching confirmation token"
 grep -q '"mqtt-disable-lan": "mqtt-disable-lan"' "${BRIDGE}" \
@@ -81,6 +83,8 @@ grep -q 'passphrase' "${BRIDGE}" \
   || fail "bridge does not support portable export passphrase payload"
 grep -q 'DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"' "${BRIDGE}" \
   || fail "bridge does not define the portable export download endpoint"
+grep -q 'UPLOAD_PREFIX = "/obos/api/v1/uploads/portable-import"' "${BRIDGE}" \
+  || fail "bridge does not define the portable import upload endpoint"
 grep -q 'PORTABLE_EXPORT_DIR' "${BRIDGE}" \
   || fail "bridge does not restrict portable export downloads to an export directory"
 grep -q 'Content-Disposition' "${BRIDGE}" \
@@ -123,7 +127,8 @@ grep -q 'obos-agent-http.service' scripts/bootstrap/provision-debian.sh \
 
 tmp_dir="$(mktemp -d)"
 portable_export_dir="/tmp/obos-portable-exports"
-trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}"' EXIT
+portable_import_dir="/tmp/obos-portable-imports"
+trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}"' EXIT
 
 cat > "${tmp_dir}/obos-agent" <<'EOF'
 #!/usr/bin/env sh
@@ -242,6 +247,23 @@ timed_out=false
 stdout_begin
 stdout=format=obos-portable-backup-export-v1
 stdout=portable_backup=/tmp/obos-portable-exports/obos-portable-test.tar
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  portable-import-stage)
+    [ "${2:-}" = "/tmp/obos-portable-imports/obos-portable-upload-test.tar" ] || exit 2
+    [ -n "${3:-}" ] && [ -f "${3:-}" ] || exit 2
+    [ "${4:-}" = "--confirm" ] && [ "${5:-}" = "portable-import-stage" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=portable-import-stage
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-portable-import-stage-v1
+stdout=restore_inspection=pass
 stdout_end
 stderr_begin
 stderr_end
@@ -368,11 +390,13 @@ EOF
 chmod 0755 "${tmp_dir}/obos-agent"
 mkdir -p "${portable_export_dir}"
 printf 'encrypted portable fixture\n' > "${portable_export_dir}/obos-portable-test.tar"
+mkdir -p "${portable_import_dir}"
 
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
 OBOS_AGENT_HTTP_BIND=127.0.0.1 \
 OBOS_AGENT_HTTP_PORT=18091 \
 OBOS_PORTABLE_EXPORT_DIR=/tmp/obos-portable-exports \
+OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 "${PYTHON_BIN}" "${BRIDGE}" &
 server_pid="$!"
 
@@ -427,6 +451,23 @@ curl --silent --output "${tmp_dir}/raw-backup-download.out" --write-out '%{http_
   || fail "HTTP bridge did not reject raw backup download"
 grep -q 'download-forbidden' "${tmp_dir}/raw-backup-download.out" \
   || fail "HTTP bridge raw backup download rejection missing marker"
+
+curl --fail --silent \
+  --header 'Content-Type: application/octet-stream' \
+  --header 'X-Obos-Filename: obos-portable-upload-test.tar' \
+  --data-binary 'encrypted portable upload fixture' \
+  http://127.0.0.1:18091/obos/api/v1/uploads/portable-import |
+  grep -q 'portable_backup=/tmp/obos-portable-imports/obos-portable-upload-' \
+  || fail "HTTP bridge did not accept portable import upload"
+
+cp "${portable_import_dir}"/obos-portable-upload-*.tar "${portable_import_dir}/obos-portable-upload-test.tar"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"portable-import-stage","portable_backup":"/tmp/obos-portable-imports/obos-portable-upload-test.tar","passphrase":"test-passphrase"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/portable-import-stage |
+  grep -q 'stdout=format=obos-portable-import-stage-v1' \
+  || fail "HTTP bridge did not run confirmed portable import staging"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

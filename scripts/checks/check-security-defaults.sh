@@ -137,6 +137,21 @@ grep -q 'chmod 0640' scripts/obosctl \
 grep -q 'DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not expose a dedicated portable export download endpoint"
 
+grep -q 'UPLOAD_PREFIX = "/obos/api/v1/uploads/portable-import"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not expose a dedicated portable import upload endpoint"
+
+grep -q 'application/octet-stream' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not require octet-stream for portable imports"
+
+grep -q 'MAX_UPLOAD_BYTES' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not bound portable import uploads"
+
+grep -q 'ReadWritePaths=/srv/obos/state/portable-imports' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge service does not restrict write access to portable imports"
+
+grep -q 'install -d -m 0700 -o obos-agent -g obos-agent /srv/obos/state/portable-imports' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not create private portable import upload directory"
+
 grep -q 'only encrypted portable export artifacts are downloadable' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not reject non-portable download artifacts"
 
@@ -151,6 +166,9 @@ grep -q 'portable-import-plan)' scripts/obosctl \
 
 grep -q 'portable-import-stage)' scripts/obosctl \
   || fail "obosctl does not expose private portable import staging"
+
+grep -q 'portable-import-stage)' scripts/agent/obos-agent.sh \
+  || fail "agent does not expose confirmed private portable import staging"
 
 grep -q 'format=obos-portable-backup-import-plan-v1' scripts/obosctl \
   || fail "portable import plan does not declare a format"
