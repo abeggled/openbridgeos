@@ -21,6 +21,7 @@ Read-only actions:
   mqtt-summary
   tls-summary
   security-summary
+  agent-audit-summary
 
 Mutating actions:
   start --confirm start
@@ -125,6 +126,7 @@ action=backup-prune|mutating=true|confirm=backup-prune
 action=mqtt-summary|mutating=false
 action=tls-summary|mutating=false
 action=security-summary|mutating=false
+action=agent-audit-summary|mutating=false
 action=start|mutating=true|confirm=start
 action=stop|mutating=true|confirm=stop
 action=restart|mutating=true|confirm=restart
@@ -253,6 +255,10 @@ case "${1:-}" in
   security-summary)
     require_no_extra_args "$@"
     run_obosctl security-summary "${TIMEOUT_SECONDS}" false security-summary
+    ;;
+  agent-audit-summary)
+    require_no_extra_args "$@"
+    run_obosctl agent-audit-summary "${TIMEOUT_SECONDS}" false agent-audit-summary
     ;;
   start)
     require_confirm_args "$@"

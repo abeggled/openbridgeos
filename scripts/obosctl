@@ -7,6 +7,7 @@ ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 BACKUP_DIR="${OBOS_BACKUP_DIR:-/srv/obos/backups}"
 BACKUP_RETENTION_KEEP="${OBOS_BACKUP_RETENTION_KEEP:-10}"
 STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
+AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-${STATE_DIR}/agent/obos-agent-audit.log}"
 LAST_UPDATE_FILE="${OBOS_LAST_UPDATE_FILE:-${STATE_DIR}/last-update}"
 RESTORE_STAGE_DIR="${OBOS_RESTORE_STAGE_DIR:-${STATE_DIR}/restore-staging}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
@@ -32,6 +33,8 @@ Commands:
   status            Show systemd, container, and health status
   status-summary    Print machine-readable appliance status
   security-summary  Print machine-readable security baseline status
+  agent-audit-summary
+                    Print machine-readable agent mutation audit status
   start             Start open bridge server
   stop              Stop open bridge server
   restart           Restart open bridge server
@@ -461,6 +464,41 @@ backup_prune() {
   return "${prune_exit}"
 }
 
+agent_audit_summary() {
+  limit="${1:-20}"
+  case "${limit}" in
+    ''|*[!0-9]*) echo "agent audit summary: limit must be a positive integer" >&2; return 2 ;;
+    0) echo "agent audit summary: limit must be greater than zero" >&2; return 2 ;;
+  esac
+  if [ "${limit}" -gt 100 ]; then
+    echo "agent audit summary: limit must be 100 or less" >&2
+    return 2
+  fi
+
+  echo "format=obos-agent-audit-summary-v1"
+  echo "audit_log=${AGENT_AUDIT_LOG}"
+  echo "recent_limit=${limit}"
+
+  if [ ! -f "${AGENT_AUDIT_LOG}" ]; then
+    echo "log_present=false"
+    echo "entry_count=0"
+    return 0
+  fi
+
+  echo "log_present=true"
+  entry_count="$(grep -Fc 'format=obos-agent-audit-v1|' "${AGENT_AUDIT_LOG}" 2>/dev/null || true)"
+  echo "entry_count=${entry_count:-0}"
+
+  tail -n "${limit}" "${AGENT_AUDIT_LOG}" |
+    while IFS= read -r audit_line; do
+      case "${audit_line}" in
+        format=obos-agent-audit-v1\|*)
+          echo "event=${audit_line#format=obos-agent-audit-v1|}"
+          ;;
+      esac
+    done
+}
+
 restore_inspect() {
   archive="${1:-}"
   [ -n "${archive}" ] || {
@@ -854,6 +892,10 @@ case "${1:-}" in
   security-summary)
     require_root security-summary
     run_helper "${SECURITY_BASELINE_SCRIPT}" summary
+    ;;
+  agent-audit-summary)
+    shift
+    agent_audit_summary "${1:-}"
     ;;
   start)
     require_root start
