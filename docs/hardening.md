@@ -101,6 +101,9 @@ The first boot unit also declares explicit write access to `/etc/obos` and
 
 The security baseline audit verifies the enabled state and the shared sandboxing
 properties for both obos-managed units on provisioned systems.
+It also checks the local agent boundary: the `obos-agent` system user, sudoers
+allowlist, logrotate policy, and restrictive permissions on existing mutation
+audit logs.
 
 More aggressive options such as `ProtectSystem=strict`, capability bounding, and
 system call filtering should be tested against Docker Compose and the first boot
