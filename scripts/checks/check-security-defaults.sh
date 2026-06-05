@@ -47,6 +47,18 @@ grep -q 'backup_count=' scripts/obosctl \
 grep -q 'latest_backup_present=' scripts/obosctl \
   || fail "obosctl backup summary does not report latest backup presence"
 
+grep -q 'latest_backup_inspection=' scripts/obosctl \
+  || fail "obosctl backup summary does not report latest backup inspection status"
+
+grep -q 'latest_backup_contains_secrets=' scripts/obosctl \
+  || fail "obosctl backup summary does not report secret-bearing status"
+
+grep -q 'latest_backup_includes_logs=' scripts/obosctl \
+  || fail "obosctl backup summary does not report log inclusion status"
+
+grep -q 'latest_backup_tls_private_keys=' scripts/obosctl \
+  || fail "obosctl backup summary does not report TLS private key status"
+
 grep -q 'includes_logs=false' scripts/obosctl \
   || fail "obosctl backup manifest does not record log exclusion"
 
