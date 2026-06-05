@@ -123,6 +123,7 @@ Minimum trust checks:
 Record every release validation run:
 
 ```text
+format=obos-image-release-validation-v1
 release_candidate=
 profile=
 artifact=
@@ -140,6 +141,12 @@ mvp_readiness_result=PASS|FAIL
 tls_trust_exported=yes|no
 rollback_stage_result=PASS|FAIL|not_run
 notes=
+```
+
+Validate a completed record before attaching it to a release:
+
+```sh
+sh scripts/images/check-image-release-validation-record.sh validation.record
 ```
 
 ## Release Gate
