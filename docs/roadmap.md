@@ -97,6 +97,7 @@ Current implementation status:
 - Per-appliance-instance local CA generation and trust onboarding.
 - Certificate replacement/rotation workflow.
 - Explicit MQTT external access opt-in workflow.
-- Signed release artifacts and checksums.
-- Update rollback notes.
+- Signed release artifact manifests and checksum verification.
+- Release key custody and publication policy.
+- Update rollback staging and recovery drills.
 - Security hardening checklist in CI.
