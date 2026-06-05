@@ -60,8 +60,11 @@ Current implementation status:
   `obos-agent`.
 - Backup download is intentionally limited to the future encrypted portable
   backup format.
-- Encrypted portable backup export/import, log viewing, hostname, timezone,
-  network basics, and MQTT/TLS mutation controls are still future UI work.
+- Non-destructive encrypted portable backup export/import planning exists in
+  `obosctl` and `obos-agent`.
+- Encrypted portable backup creation/download/upload/decryption, log viewing,
+  hostname, timezone, network basics, and MQTT/TLS mutation controls are still
+  future UI work.
 
 ## Milestone 4: Hardened Release
 

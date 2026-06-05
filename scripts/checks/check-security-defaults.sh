@@ -98,6 +98,27 @@ grep -q 'format=obos-logs-summary-v1' scripts/obosctl \
 grep -q 'raw_logs_exposed=false' scripts/obosctl \
   || fail "obosctl log summary must not expose raw log contents"
 
+grep -q 'portable-export-plan)' scripts/obosctl \
+  || fail "obosctl does not expose non-destructive portable export planning"
+
+grep -q 'format=obos-portable-backup-export-plan-v1' scripts/obosctl \
+  || fail "portable export plan does not declare a format"
+
+grep -q 'raw_backup_download_allowed=false' scripts/obosctl \
+  || fail "portable export plan does not block raw backup downloads"
+
+grep -q 'authenticated_encryption_required=true' scripts/obosctl \
+  || fail "portable export plan does not require authenticated encryption"
+
+grep -q 'portable-import-plan)' scripts/obosctl \
+  || fail "obosctl does not expose non-destructive portable import planning"
+
+grep -q 'format=obos-portable-backup-import-plan-v1' scripts/obosctl \
+  || fail "portable import plan does not declare a format"
+
+grep -q 'live_apply_allowed=false' scripts/obosctl \
+  || fail "portable import plan must not allow live apply"
+
 grep -q 'latest_backup_tls_private_keys=' scripts/obosctl \
   || fail "obosctl backup summary does not report TLS private key status"
 
@@ -334,6 +355,15 @@ grep -q 'action=backup-prune-plan|mutating=false' scripts/agent/obos-agent.sh \
 grep -q 'action=logs-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark log summary as read-only"
 
+grep -q 'action=portable-export-plan|mutating=false|required_arg=backup-path' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark portable export planning as read-only"
+
+grep -q 'action=portable-import-plan|mutating=false|required_arg=portable-backup' scripts/agent/obos-agent.sh \
+  || fail "obos-agent action inventory does not mark portable import planning as read-only"
+
+grep -q 'validate_portable_import_path' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not validate portable import paths before sudo"
+
 grep -q 'action=restore-stage-summary|mutating=false' scripts/agent/obos-agent.sh \
   || fail "obos-agent action inventory does not mark restore stage summary as read-only"
 
@@ -393,6 +423,12 @@ grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
 
 grep -q '/usr/bin/obosctl logs-summary' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow log summary"
+
+grep -q '/usr/bin/obosctl portable-export-plan \*' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow portable export planning"
+
+grep -q '/usr/bin/obosctl portable-import-plan \*' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow portable import planning"
 
 grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow restore stage summary"

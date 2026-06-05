@@ -64,6 +64,16 @@ grep -q 'logs-summary)' "${AGENT}" \
   || fail "logs-summary action missing"
 grep -q 'action=logs-summary|mutating=false' "${AGENT}" \
   || fail "logs-summary action is not listed as read-only"
+grep -q 'portable-export-plan)' "${AGENT}" \
+  || fail "portable-export-plan action missing"
+grep -q 'action=portable-export-plan|mutating=false|required_arg=backup-path' "${AGENT}" \
+  || fail "portable-export-plan action is not listed as read-only with backup path"
+grep -q 'portable-import-plan)' "${AGENT}" \
+  || fail "portable-import-plan action missing"
+grep -q 'action=portable-import-plan|mutating=false|required_arg=portable-backup' "${AGENT}" \
+  || fail "portable-import-plan action is not listed as read-only with portable backup"
+grep -q 'validate_portable_import_path' "${AGENT}" \
+  || fail "portable import path is not validated before sudo"
 grep -q 'restore-stage-summary)' "${AGENT}" \
   || fail "restore-stage-summary action missing"
 grep -q 'action=restore-stage-summary|mutating=false' "${AGENT}" \
@@ -127,6 +137,10 @@ grep -q '/usr/bin/obosctl backup-prune-plan' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow backup prune planning"
 grep -q '/usr/bin/obosctl logs-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow log summary"
+grep -q '/usr/bin/obosctl portable-export-plan \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow portable export planning"
+grep -q '/usr/bin/obosctl portable-import-plan \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow portable import planning"
 grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow restore stage summary"
 grep -q '/usr/bin/obosctl restore-stage-inspect \*' packaging/sudoers/obos-agent \
@@ -176,6 +190,16 @@ case "$1" in
   logs-summary)
     echo "format=obos-logs-summary-v1"
     echo "raw_logs_exposed=false"
+    exit 0
+    ;;
+  portable-export-plan)
+    echo "portable-export-planned:${2:-missing}"
+    echo "format=obos-portable-backup-export-plan-v1"
+    exit 0
+    ;;
+  portable-import-plan)
+    echo "portable-import-planned:${2:-missing}"
+    echo "format=obos-portable-backup-import-plan-v1"
     exit 0
     ;;
   restore-stage-summary)
@@ -246,6 +270,22 @@ OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" backup-prune-plan |
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" logs-summary |
   grep -q 'stdout=raw_logs_exposed=false' \
   || fail "agent did not expose metadata-only log summary"
+
+OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-export-plan /srv/obos/backups/obos-openbridgeserver-20260605T080000Z.tar.gz |
+  grep -q 'stdout=format=obos-portable-backup-export-plan-v1' \
+  || fail "agent did not expose portable export plan"
+
+if OBOS_AGENT_BACKUP_DIR="/srv/obos/backups" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-export-plan /tmp/evil.tar.gz >/dev/null 2>&1; then
+  fail "agent accepted portable export backup path outside backup dir"
+fi
+
+OBOS_AGENT_PORTABLE_IMPORT_DIR="/srv/obos/state/portable-imports" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-import-plan /srv/obos/state/portable-imports/import.20260605/backup.obos-portable |
+  grep -q 'stdout=format=obos-portable-backup-import-plan-v1' \
+  || fail "agent did not expose portable import plan"
+
+if OBOS_AGENT_PORTABLE_IMPORT_DIR="/srv/obos/state/portable-imports" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" portable-import-plan /tmp/backup.obos-portable >/dev/null 2>&1; then
+  fail "agent accepted portable import path outside import dir"
+fi
 
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage-summary |
   grep -q 'stdout=format=obos-restore-stage-summary-v1' \

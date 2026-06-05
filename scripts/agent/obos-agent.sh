@@ -4,6 +4,7 @@ set -eu
 OBOSCTL="${OBOS_AGENT_OBOSCTL:-/usr/bin/obosctl}"
 BACKUP_DIR="${OBOS_AGENT_BACKUP_DIR:-/srv/obos/backups}"
 RESTORE_STAGE_DIR="${OBOS_AGENT_RESTORE_STAGE_DIR:-/srv/obos/state/restore-staging}"
+PORTABLE_IMPORT_DIR="${OBOS_AGENT_PORTABLE_IMPORT_DIR:-/srv/obos/state/portable-imports}"
 TIMEOUT_SECONDS="${OBOS_AGENT_TIMEOUT_SECONDS:-30}"
 MUTATION_TIMEOUT_SECONDS="${OBOS_AGENT_MUTATION_TIMEOUT_SECONDS:-600}"
 AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-/srv/obos/state/agent/obos-agent-audit.log}"
@@ -22,6 +23,8 @@ Read-only actions:
   backup-list
   backup-prune-plan
   logs-summary
+  portable-export-plan <backup.tar.gz>
+  portable-import-plan <portable-backup>
   restore-stage-summary
   restore-stage-inspect <stage-dir>
   restore-apply-plan <stage-dir>
@@ -123,6 +126,19 @@ validate_restore_stage_path() {
   esac
 }
 
+validate_portable_import_path() {
+  portable_path="$1"
+  case "${portable_path}" in
+    "${PORTABLE_IMPORT_DIR}"/*) ;;
+    *) fail "portable-import-plan path must be below ${PORTABLE_IMPORT_DIR}" ;;
+  esac
+  case "${portable_path}" in
+    *'/../'*|*'/..'|'../'*|..)
+      fail "portable-import-plan path must not contain parent traversal"
+      ;;
+  esac
+}
+
 require_restore_stage_inspect_args() {
   action="$1"
   [ "$#" -eq 2 ] || fail "${action} requires: <stage-dir>"
@@ -131,6 +147,26 @@ require_restore_stage_inspect_args() {
     ""|-*) fail "${action} stage path is invalid" ;;
   esac
   validate_restore_stage_path "${RESTORE_STAGE_PATH}"
+}
+
+require_backup_path_arg() {
+  action="$1"
+  [ "$#" -eq 2 ] || fail "${action} requires: <backup.tar.gz>"
+  BACKUP_PATH="${2:-}"
+  case "${BACKUP_PATH}" in
+    ""|-*) fail "${action} backup path is invalid" ;;
+  esac
+  validate_backup_path "${BACKUP_PATH}"
+}
+
+require_portable_import_arg() {
+  action="$1"
+  [ "$#" -eq 2 ] || fail "${action} requires: <portable-backup>"
+  PORTABLE_IMPORT_PATH="${2:-}"
+  case "${PORTABLE_IMPORT_PATH}" in
+    ""|-*) fail "${action} portable backup path is invalid" ;;
+  esac
+  validate_portable_import_path "${PORTABLE_IMPORT_PATH}"
 }
 
 require_restore_stage_args() {
@@ -180,6 +216,8 @@ action=backup-summary|mutating=false
 action=backup-list|mutating=false
 action=backup-prune-plan|mutating=false
 action=logs-summary|mutating=false
+action=portable-export-plan|mutating=false|required_arg=backup-path
+action=portable-import-plan|mutating=false|required_arg=portable-backup
 action=restore-stage-summary|mutating=false
 action=restore-stage-inspect|mutating=false|required_arg=stage-dir
 action=restore-apply-plan|mutating=false|required_arg=stage-dir
@@ -309,6 +347,14 @@ case "${1:-}" in
   logs-summary)
     require_no_extra_args "$@"
     run_obosctl logs-summary "${TIMEOUT_SECONDS}" false logs-summary
+    ;;
+  portable-export-plan)
+    require_backup_path_arg "$@"
+    run_obosctl portable-export-plan "${TIMEOUT_SECONDS}" false portable-export-plan "${BACKUP_PATH}"
+    ;;
+  portable-import-plan)
+    require_portable_import_arg "$@"
+    run_obosctl portable-import-plan "${TIMEOUT_SECONDS}" false portable-import-plan "${PORTABLE_IMPORT_PATH}"
     ;;
   restore-stage-summary)
     require_no_extra_args "$@"

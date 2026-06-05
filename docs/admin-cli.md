@@ -29,6 +29,8 @@ sudo obosctl backup
 obosctl backup-list
 obosctl logs
 sudo obosctl logs-summary
+sudo obosctl portable-export-plan <backup.tar.gz>
+sudo obosctl portable-import-plan <portable-backup>
 sudo obosctl tls-generate
 obosctl tls-status
 obosctl tls-summary
@@ -143,6 +145,8 @@ obosctl backup-list
 obosctl backup-prune-plan
 obosctl backup-prune
 sudo obosctl backup-prune --confirm backup-prune
+sudo obosctl portable-export-plan <backup.tar.gz>
+sudo obosctl portable-import-plan <portable-backup>
 ```
 
 Backups are written to `/srv/obos/backups` by default and are mode `0600`.
@@ -175,6 +179,18 @@ Downloadable backups should use the future encrypted portable backup format
 offline storage, and migration to another open bridge operating system
 appliance. Import must decrypt into private staging, run backup inspection, and
 then use the existing restore staging and apply planning gates.
+
+`portable-export-plan` is read-only and non-destructive. It first verifies the
+selected local backup with `restore-inspect`, then prints the stable
+`obos-portable-backup-export-plan-v1` format. The plan records that raw backup
+download is not allowed, authenticated encryption is required, and download may
+only happen after encryption.
+
+`portable-import-plan` is read-only and non-destructive. It accepts only paths
+below `/srv/obos/state/portable-imports`, prints
+`obos-portable-backup-import-plan-v1`, and records that import must decrypt into
+private staging, verify hashes, run backup inspection, require restore staging,
+and disallow live apply.
 
 `backup-summary` prints the latest backup state for agents and the future web
 UI, including whether the latest archive passes backup inspection and whether
