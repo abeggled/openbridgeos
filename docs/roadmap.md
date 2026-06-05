@@ -65,6 +65,8 @@ Current implementation status:
 - Restore apply, encrypted portable backup creation/download/upload/decryption,
   log viewing, hostname, timezone, network basics, and MQTT/TLS mutation
   controls are still future UI work.
+- The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
+  criteria for test devices.
 
 ## Milestone 4: Hardened Release
 
