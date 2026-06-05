@@ -22,6 +22,7 @@ Read-only actions:
   backup-prune-plan
   restore-stage-summary
   restore-stage-inspect <stage-dir>
+  restore-apply-plan <stage-dir>
   mqtt-summary
   tls-summary
   security-summary
@@ -177,6 +178,7 @@ action=backup-list|mutating=false
 action=backup-prune-plan|mutating=false
 action=restore-stage-summary|mutating=false
 action=restore-stage-inspect|mutating=false|required_arg=stage-dir
+action=restore-apply-plan|mutating=false|required_arg=stage-dir
 action=backup-prune|mutating=true|confirm=backup-prune
 action=mqtt-summary|mutating=false
 action=tls-summary|mutating=false
@@ -303,6 +305,10 @@ case "${1:-}" in
   restore-stage-inspect)
     require_restore_stage_inspect_args "$@"
     run_obosctl restore-stage-inspect "${TIMEOUT_SECONDS}" false restore-stage-inspect "${RESTORE_STAGE_PATH}"
+    ;;
+  restore-apply-plan)
+    require_restore_stage_inspect_args "$@"
+    run_obosctl restore-apply-plan "${TIMEOUT_SECONDS}" false restore-apply-plan "${RESTORE_STAGE_PATH}"
     ;;
   backup-prune)
     require_confirm_args "$@"

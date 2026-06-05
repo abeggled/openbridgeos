@@ -64,6 +64,10 @@ grep -q 'restore-stage-inspect)' "${AGENT}" \
   || fail "restore-stage-inspect action missing"
 grep -q 'action=restore-stage-inspect|mutating=false|required_arg=stage-dir' "${AGENT}" \
   || fail "restore-stage-inspect action is not listed as read-only with stage dir"
+grep -q 'restore-apply-plan)' "${AGENT}" \
+  || fail "restore-apply-plan action missing"
+grep -q 'action=restore-apply-plan|mutating=false|required_arg=stage-dir' "${AGENT}" \
+  || fail "restore-apply-plan action is not listed as read-only with stage dir"
 grep -q 'validate_restore_stage_path' "${AGENT}" \
   || fail "restore-stage-inspect stage path is not validated before sudo"
 grep -q 'backup-prune)' "${AGENT}" \
@@ -115,6 +119,8 @@ grep -q '/usr/bin/obosctl restore-stage-summary' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow restore stage summary"
 grep -q '/usr/bin/obosctl restore-stage-inspect \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow checked restore stage inspection"
+grep -q '/usr/bin/obosctl restore-apply-plan \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow checked restore apply planning"
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow confirmed backup pruning"
 grep -q '/usr/bin/obosctl restore-stage \*' packaging/sudoers/obos-agent \
@@ -156,6 +162,10 @@ case "$1" in
     ;;
   restore-stage-inspect)
     echo "restore-stage-inspected:${2:-missing}"
+    exit 0
+    ;;
+  restore-apply-plan)
+    echo "restore-apply-planned:${2:-missing}"
     exit 0
     ;;
   backup-prune)
@@ -221,6 +231,14 @@ fi
 
 if OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-stage-inspect /srv/obos/state/restore-staging/../restore-staging/restore.20260605 >/dev/null 2>&1; then
   fail "agent accepted restore stage inspection path with parent traversal"
+fi
+
+OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-apply-plan /srv/obos/state/restore-staging/restore.20260605 |
+  grep -q 'stdout=restore-apply-planned:/srv/obos/state/restore-staging/restore.20260605' \
+  || fail "agent did not expose restore apply planning"
+
+if OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-apply-plan /tmp/restore.20260605 >/dev/null 2>&1; then
+  fail "agent accepted restore apply planning path outside staging dir"
 fi
 
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" agent-audit-summary |
