@@ -5,6 +5,7 @@ APP_NAME="openbridgeserver"
 APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 BACKUP_DIR="${OBOS_BACKUP_DIR:-/srv/obos/backups}"
+BACKUP_RETENTION_KEEP="${OBOS_BACKUP_RETENTION_KEEP:-10}"
 STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
 LAST_UPDATE_FILE="${OBOS_LAST_UPDATE_FILE:-${STATE_DIR}/last-update}"
 RESTORE_STAGE_DIR="${OBOS_RESTORE_STAGE_DIR:-${STATE_DIR}/restore-staging}"
@@ -42,6 +43,7 @@ Commands:
   backup            Create a timestamped appliance backup
   backup-summary    Print machine-readable latest backup status
   backup-list       Print machine-readable appliance backup inventory
+  backup-prune-plan Print a non-destructive backup retention plan
   restore-inspect   Inspect an appliance backup before restore
   restore-plan      Print the non-destructive restore plan for a backup
   restore-stage     Extract a backup into private restore staging
@@ -355,6 +357,57 @@ backup_summary() {
   echo "latest_backup_contains_secrets=${contains_secrets:-unknown}"
   echo "latest_backup_includes_logs=${includes_logs:-unknown}"
   echo "latest_backup_tls_private_keys=${tls_private_keys:-unknown}"
+}
+
+backup_prune_plan() {
+  keep_count="${1:-${BACKUP_RETENTION_KEEP}}"
+  case "${keep_count}" in
+    ''|*[!0-9]*) echo "backup prune plan: keep count must be a positive integer" >&2; return 2 ;;
+    0) echo "backup prune plan: keep count must be greater than zero" >&2; return 2 ;;
+  esac
+
+  list_file="$(mktemp)"
+  sorted_file="$(mktemp)"
+  trap 'rm -f "${list_file}" "${sorted_file}"' EXIT INT TERM
+
+  for backup_file in "${BACKUP_DIR}"/obos-"${APP_NAME}"-*.tar.gz; do
+    [ -f "${backup_file}" ] || continue
+    if command -v stat >/dev/null 2>&1; then
+      mtime="$(stat -c '%Y' "${backup_file}" 2>/dev/null || echo 0)"
+      size_bytes="$(stat -c '%s' "${backup_file}" 2>/dev/null || echo unknown)"
+    else
+      mtime=0
+      size_bytes=unknown
+    fi
+    printf '%s\t%s\t%s\n' "${mtime}" "${size_bytes}" "${backup_file}" >> "${list_file}"
+  done
+
+  sort -r -n "${list_file}" > "${sorted_file}" 2>/dev/null || true
+
+  total_count=0
+  keep_seen=0
+  delete_count=0
+  echo "format=obos-backup-prune-plan-v1"
+  echo "mode=non-destructive"
+  echo "backup_dir=${BACKUP_DIR}"
+  echo "keep_count=${keep_count}"
+
+  while IFS="$(printf '\t')" read -r mtime size_bytes backup_file; do
+    [ -n "${backup_file}" ] || continue
+    total_count=$((total_count + 1))
+    if [ "${keep_seen}" -lt "${keep_count}" ]; then
+      keep_seen=$((keep_seen + 1))
+      echo "keep=${backup_file}|mtime=${mtime}|size_bytes=${size_bytes}"
+    else
+      delete_count=$((delete_count + 1))
+      echo "delete_candidate=${backup_file}|mtime=${mtime}|size_bytes=${size_bytes}"
+    fi
+  done < "${sorted_file}"
+
+  echo "backup_count=${total_count}"
+  echo "delete_candidate_count=${delete_count}"
+  rm -f "${list_file}" "${sorted_file}"
+  trap - EXIT INT TERM
 }
 
 restore_inspect() {
@@ -783,6 +836,10 @@ case "${1:-}" in
     ;;
   backup-list)
     backup_list
+    ;;
+  backup-prune-plan)
+    shift
+    backup_prune_plan "${1:-}"
     ;;
   restore-inspect)
     shift
