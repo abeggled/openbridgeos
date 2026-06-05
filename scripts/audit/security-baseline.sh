@@ -9,6 +9,7 @@ APP_NAME="openbridgeserver"
 ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/${APP_NAME}.env}"
 APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
+FIRST_BOOT_MARKER="${OBOS_FIRST_BOOT_MARKER:-${STATE_DIR}/first-boot.done}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-/etc/obos/web.htpasswd}"
@@ -201,6 +202,17 @@ check_uuid_file() {
   fi
 }
 
+check_first_boot_marker() {
+  if [ ! -f "${FIRST_BOOT_MARKER}" ]; then
+    fail "first boot marker missing"
+    return
+  fi
+  check_file_mode "${FIRST_BOOT_MARKER}" 640
+  check_grep '^format=obos-first-boot-v1$' "${FIRST_BOOT_MARKER}" 'first boot marker format'
+  check_grep '^completed_at=' "${FIRST_BOOT_MARKER}" 'first boot marker completion time'
+  check_grep '^appliance_id=' "${FIRST_BOOT_MARKER}" 'first boot marker appliance id'
+}
+
 check_proxy_health() {
   if [ ! -f "${TLS_CA_CERT}" ]; then
     fail "HTTPS reverse proxy local CA missing"
@@ -275,6 +287,7 @@ check_file_mode /etc/obos 750
 check_file_mode "${ENV_FILE}" 600
 check_file_mode "${APPLIANCE_ID_FILE}" 644
 check_uuid_file "${APPLIANCE_ID_FILE}" 'appliance identifier'
+check_first_boot_marker
 check_file_mode "${WEB_AUTH_FILE}" 640
 check_file_mode "${WEB_AUTH_INFO_FILE}" 600
 check_file_mode /srv/obos 750
