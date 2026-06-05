@@ -109,12 +109,17 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>MQTT Exposure</h2>
-            <button type="button" disabled>Configure</button>
+            <div class="button-row">
+              <input id="mqtt-source-cidr" type="text" inputmode="text" autocomplete="off" placeholder="source CIDR">
+              <button type="button" data-mutation-action="mqtt-enable-lan" data-confirm="mqtt-enable-lan" data-mutation-status-target="mqtt">Enable LAN</button>
+              <button type="button" data-mutation-action="mqtt-disable-lan" data-confirm="mqtt-disable-lan" data-mutation-status-target="mqtt">Disable LAN</button>
+            </div>
           </div>
           <dl>
             <div><dt>Plain listener</dt><dd data-agent-field="mqtt-summary:plain_bind">pending</dd></div>
             <div><dt>WebSocket listener</dt><dd data-agent-field="mqtt-summary:websocket_bind">pending</dd></div>
             <div><dt>Firewall source</dt><dd data-agent-field="mqtt-summary:source_cidr">pending</dd></div>
+            <div><dt>MQTT action</dt><dd data-mutation-status="mqtt">ready</dd></div>
           </dl>
         </article>
 

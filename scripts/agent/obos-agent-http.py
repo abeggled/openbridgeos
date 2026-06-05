@@ -38,6 +38,8 @@ READ_ONLY_ACTIONS = {
 }
 MUTATING_ACTIONS = {
     "backup": "backup",
+    "mqtt-disable-lan": "mqtt-disable-lan",
+    "mqtt-enable-lan": "mqtt-enable-lan",
     "restart": "restart",
     "restore-stage": "restore-stage",
     "start": "start",
@@ -110,8 +112,12 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             return None, (400, error_envelope("invalid-json", "POST body must be valid JSON"))
 
         expected_fields = {"confirm"}
+        if action == "mqtt-enable-lan":
+            expected_fields.add("source_cidr")
         if action == "restore-stage":
             expected_fields.add("backup_path")
+        if action == "mqtt-enable-lan" and isinstance(payload, dict) and set(payload) == {"confirm"}:
+            expected_fields = {"confirm"}
         if not isinstance(payload, dict) or set(payload) != expected_fields:
             return None, (400, error_envelope("invalid-body", "POST body contains unexpected fields"))
         if payload["confirm"] != MUTATING_ACTIONS[action]:
@@ -120,6 +126,10 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             backup_path = payload.get("backup_path")
             if not isinstance(backup_path, str) or not backup_path or backup_path.startswith("-"):
                 return None, (400, error_envelope("invalid-backup-path", "backup_path is invalid"))
+        if action == "mqtt-enable-lan" and "source_cidr" in payload:
+            source_cidr = payload.get("source_cidr")
+            if not isinstance(source_cidr, str) or not source_cidr or source_cidr.startswith("-"):
+                return None, (400, error_envelope("invalid-source-cidr", "source_cidr is invalid"))
         return payload, None
 
     def do_GET(self):
@@ -163,6 +173,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         args = [action, "--confirm", payload["confirm"]]
         if action == "restore-stage":
             args = [action, payload["backup_path"], "--confirm", payload["confirm"]]
+        if action == "mqtt-enable-lan" and "source_cidr" in payload:
+            args = [action, payload["source_cidr"], "--confirm", payload["confirm"]]
 
         try:
             completed = self.run_agent(args, AGENT_MUTATION_TIMEOUT_SECONDS)

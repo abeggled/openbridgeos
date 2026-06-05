@@ -245,6 +245,26 @@ restore-stage`. The agent validates that the backup path is below the appliance
 backup directory before crossing the sudo boundary. Restore apply remains
 unavailable over HTTP.
 
+MQTT LAN exposure is available over HTTP only as an explicit confirmed opt-in
+or opt-out. Optional CIDR input is forwarded as `source_cidr` and is still
+validated by `obos-agent` before crossing the sudo boundary:
+
+```text
+POST /obos/api/v1/actions/mqtt-enable-lan
+```
+
+```json
+{"confirm":"mqtt-enable-lan","source_cidr":"192.168.1.0/24"}
+```
+
+```text
+POST /obos/api/v1/actions/mqtt-disable-lan
+```
+
+```json
+{"confirm":"mqtt-disable-lan"}
+```
+
 Future backup download support must use an encrypted portable export, not the
 raw appliance backup archive. The intended format is `obos-portable-backup-v1`.
 Future import support must upload encrypted portable backups into private

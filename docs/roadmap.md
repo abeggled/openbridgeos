@@ -60,12 +60,14 @@ Current implementation status:
   without accepting arbitrary paths, queries, or shell commands.
 - Start, stop, restart, update, backup creation, and restore staging are exposed
   as the first confirmed HTTP mutations through `obos-agent`.
+- MQTT LAN enablement and disablement are exposed as explicit confirmed HTTP
+  mutations, with optional CIDR input validated by `obos-agent`.
 - Backup download is intentionally limited to the future encrypted portable
   backup format.
 - Non-destructive encrypted portable backup export/import planning exists in
   `obosctl` and `obos-agent`.
 - Restore apply, encrypted portable backup creation/download/upload/decryption,
-  hostname, timezone, network basics, and MQTT/TLS mutation
+  hostname, timezone, network basics, and TLS mutation
   controls are still future UI work.
 - The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
   criteria for test devices.
