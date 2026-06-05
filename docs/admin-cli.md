@@ -17,6 +17,7 @@ obosctl restore-inspect <backup.tar.gz>
 obosctl restore-plan <backup.tar.gz>
 sudo obosctl restore-stage <backup.tar.gz>
 sudo obosctl restore-stage-inspect <stage-dir>
+sudo obosctl restore-stage-summary
 sudo obosctl restore-apply-plan <stage-dir>
 sudo obosctl start
 sudo obosctl stop
@@ -196,6 +197,7 @@ extract files.
 
 ```sh
 sudo obosctl restore-stage /srv/obos/backups/obos-openbridgeserver-20260604T103000Z.tar.gz
+sudo obosctl restore-stage-summary
 ```
 
 `restore-stage` first runs the same backup inspection and then extracts the
@@ -205,6 +207,10 @@ live appliance files. It also writes a mode `0600` `obos-restore-stage.txt`
 manifest that records the source backup, stage path, app, service, staged-only
 mode, and TLS private key presence. The staging directory contains sensitive data
 and should be treated like the original backup.
+
+`restore-stage-summary` prints a machine-readable inventory of existing private
+restore staging directories. It reports whether each stage manifest exists and
+whether `restore-stage-inspect` passes for that staging directory.
 
 ## Restore Stage Inspection
 

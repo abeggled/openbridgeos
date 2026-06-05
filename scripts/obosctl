@@ -53,6 +53,8 @@ Commands:
   restore-stage     Extract a backup into private restore staging
   restore-stage-inspect
                     Inspect a private restore staging directory
+  restore-stage-summary
+                    Print machine-readable restore staging inventory
   restore-apply-plan
                     Print the non-destructive apply plan for a staged restore
   health            Check open bridge server localhost health endpoint
@@ -733,6 +735,43 @@ restore_stage_inspect() {
   return "${failed}"
 }
 
+restore_stage_summary() {
+  echo "format=obos-restore-stage-summary-v1"
+  echo "restore_stage_dir=${RESTORE_STAGE_DIR}"
+
+  if [ ! -d "${RESTORE_STAGE_DIR}" ]; then
+    echo "stage_dir_present=false"
+    echo "stage_count=0"
+    return 0
+  fi
+
+  echo "stage_dir_present=true"
+  stage_count=0
+  for stage_dir in "${RESTORE_STAGE_DIR}"/restore.*; do
+    [ -d "${stage_dir}" ] || continue
+    stage_count=$((stage_count + 1))
+    stage_manifest="${stage_dir}/obos-restore-stage.txt"
+    if [ -f "${stage_manifest}" ]; then
+      manifest_present=true
+      source_backup="$(sed -n 's/^source_backup=//p' "${stage_manifest}" | head -n 1)"
+      staged_at="$(sed -n 's/^staged_at=//p' "${stage_manifest}" | head -n 1)"
+      tls_private_keys="$(sed -n 's/^tls_private_keys=//p' "${stage_manifest}" | head -n 1)"
+    else
+      manifest_present=false
+      source_backup=unknown
+      staged_at=unknown
+      tls_private_keys=unknown
+    fi
+    if restore_stage_inspect "${stage_dir}" >/dev/null 2>&1; then
+      inspection=pass
+    else
+      inspection=fail
+    fi
+    echo "stage=${stage_dir}|manifest_present=${manifest_present}|inspection=${inspection}|staged_at=${staged_at:-unknown}|source_backup=${source_backup:-unknown}|tls_private_keys=${tls_private_keys:-unknown}"
+  done
+  echo "stage_count=${stage_count}"
+}
+
 restore_apply_plan() {
   stage_dir="${1:-}"
   [ -n "${stage_dir}" ] || {
@@ -955,6 +994,10 @@ case "${1:-}" in
     require_root restore-stage-inspect
     shift
     restore_stage_inspect "${1:-}"
+    ;;
+  restore-stage-summary)
+    require_root restore-stage-summary
+    restore_stage_summary
     ;;
   restore-apply-plan)
     require_root restore-apply-plan

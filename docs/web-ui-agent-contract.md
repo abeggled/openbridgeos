@@ -27,6 +27,7 @@ directly.
 | Latest backup | `obosctl backup-summary` | `obos-backup-summary-v1` |
 | Backup inventory | `obosctl backup-list` | `obos-backup-list-v1` |
 | Backup retention plan | `obosctl backup-prune-plan` | `obos-backup-prune-plan-v1` |
+| Restore staging inventory | `sudo obosctl restore-stage-summary` | `obos-restore-stage-summary-v1` |
 | MQTT exposure | `sudo obosctl mqtt-summary` | `obos-mqtt-summary-v1` |
 | TLS trust | `obosctl tls-summary` | `obos-tls-summary-v1` |
 | Security baseline | `sudo obosctl security-summary` | `obos-security-baseline-summary-v1` |
@@ -117,6 +118,7 @@ obos-agent update-rollback-plan
 obos-agent backup-summary
 obos-agent backup-list
 obos-agent backup-prune-plan
+obos-agent restore-stage-summary
 obos-agent mqtt-summary
 obos-agent tls-summary
 obos-agent security-summary
