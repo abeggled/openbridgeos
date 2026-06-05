@@ -45,10 +45,10 @@ confirmed mutations exposed through the HTTP bridge. They use the same
 staging uses the latest backup path from `backup-summary` and remains
 non-destructive.
 Raw backup archive download remains disabled because appliance backups contain
-secret-bearing configuration. Future download and migration support should use
-the encrypted portable backup format `obos-portable-backup-v1`. The current CLI
-can create encrypted portable exports and decrypt them into private import
-staging, while the web UI still does not create, download, upload, or decrypt
-portable backup files.
+secret-bearing configuration. Download and migration support uses the encrypted
+portable backup format `obos-portable-backup-v1`. The web UI can create and
+download encrypted portable exports from the latest listed backup, while
+portable backup upload, import decryption, and restore apply remain outside the
+HTML controls.
 
 Restore apply and other mutation controls are intentionally disabled in HTML.

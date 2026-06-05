@@ -4,6 +4,7 @@ set -eu
 BRIDGE="scripts/agent/obos-agent-http.py"
 SERVICE="packaging/systemd/obos-agent-http.service"
 NGINX_CONF="packaging/nginx/openbridgeserver.conf"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 fail() {
   echo "obos-agent-http check failed: $1" >&2
@@ -13,7 +14,7 @@ fail() {
 [ -f "${BRIDGE}" ] || fail "HTTP bridge script missing"
 [ -f "${SERVICE}" ] || fail "HTTP bridge systemd unit missing"
 
-python3 -m py_compile "${BRIDGE}" \
+"${PYTHON_BIN}" -m py_compile "${BRIDGE}" \
   || fail "HTTP bridge Python syntax failed"
 
 grep -q 'READ_ONLY_ACTIONS' "${BRIDGE}" \
@@ -22,6 +23,8 @@ grep -q 'MUTATING_ACTIONS' "${BRIDGE}" \
   || fail "mutating action allowlist missing"
 grep -q '"backup": "backup"' "${BRIDGE}" \
   || fail "backup mutation is not exposed with a matching confirmation token"
+grep -q '"portable-export": "portable-export"' "${BRIDGE}" \
+  || fail "portable-export mutation is not exposed with a matching confirmation token"
 grep -q '"mqtt-enable-lan": "mqtt-enable-lan"' "${BRIDGE}" \
   || fail "mqtt-enable-lan mutation is not exposed with a matching confirmation token"
 grep -q '"mqtt-disable-lan": "mqtt-disable-lan"' "${BRIDGE}" \
@@ -74,6 +77,14 @@ grep -q 'expected_fields = {"confirm"}' "${BRIDGE}" \
   || fail "bridge does not reject unexpected mutation body fields"
 grep -q 'backup_path' "${BRIDGE}" \
   || fail "bridge does not support checked restore-stage backup path payload"
+grep -q 'passphrase' "${BRIDGE}" \
+  || fail "bridge does not support portable export passphrase payload"
+grep -q 'DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"' "${BRIDGE}" \
+  || fail "bridge does not define the portable export download endpoint"
+grep -q 'PORTABLE_EXPORT_DIR' "${BRIDGE}" \
+  || fail "bridge does not restrict portable export downloads to an export directory"
+grep -q 'Content-Disposition' "${BRIDGE}" \
+  || fail "bridge does not send portable exports as attachments"
 grep -q 'source_cidr' "${BRIDGE}" \
   || fail "bridge does not support optional MQTT source CIDR payload"
 grep -q 'hostname' "${BRIDGE}" \
@@ -111,7 +122,8 @@ grep -q 'obos-agent-http.service' scripts/bootstrap/provision-debian.sh \
   || fail "HTTP bridge service is not provisioned"
 
 tmp_dir="$(mktemp -d)"
-trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}"' EXIT
+portable_export_dir="/tmp/obos-portable-exports"
+trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}"' EXIT
 
 cat > "${tmp_dir}/obos-agent" <<'EOF'
 #!/usr/bin/env sh
@@ -213,6 +225,23 @@ timed_out=false
 stdout_begin
 stdout=format=obos-backup-v1
 stdout=backup_path=/srv/obos/backups/obos-openbridgeserver-test.tar.gz
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  portable-export)
+    [ "${2:-}" = "/srv/obos/backups/obos-openbridgeserver-test.tar.gz" ] || exit 2
+    [ -n "${3:-}" ] && [ -f "${3:-}" ] || exit 2
+    [ "${4:-}" = "--confirm" ] && [ "${5:-}" = "portable-export" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=portable-export
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-portable-backup-export-v1
+stdout=portable_backup=/tmp/obos-portable-exports/obos-portable-test.tar
 stdout_end
 stderr_begin
 stderr_end
@@ -337,11 +366,14 @@ RESPONSE
 esac
 EOF
 chmod 0755 "${tmp_dir}/obos-agent"
+mkdir -p "${portable_export_dir}"
+printf 'encrypted portable fixture\n' > "${portable_export_dir}/obos-portable-test.tar"
 
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
 OBOS_AGENT_HTTP_BIND=127.0.0.1 \
 OBOS_AGENT_HTTP_PORT=18091 \
-python3 "${BRIDGE}" &
+OBOS_PORTABLE_EXPORT_DIR=/tmp/obos-portable-exports \
+"${PYTHON_BIN}" "${BRIDGE}" &
 server_pid="$!"
 
 sleep 1
@@ -376,6 +408,25 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/backup |
   grep -q 'stdout=format=obos-backup-v1' \
   || fail "HTTP bridge did not run confirmed backup mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"portable-export","backup_path":"/srv/obos/backups/obos-openbridgeserver-test.tar.gz","passphrase":"test-passphrase"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/portable-export |
+  grep -q 'stdout=portable_backup=/tmp/obos-portable-exports/obos-portable-test.tar' \
+  || fail "HTTP bridge did not run confirmed portable export mutation"
+
+curl --fail --silent \
+  'http://127.0.0.1:18091/obos/api/v1/downloads/portable-export?path=/tmp/obos-portable-exports/obos-portable-test.tar' |
+  grep -q 'encrypted portable fixture' \
+  || fail "HTTP bridge did not download encrypted portable export artifact"
+
+curl --silent --output "${tmp_dir}/raw-backup-download.out" --write-out '%{http_code}' \
+  'http://127.0.0.1:18091/obos/api/v1/downloads/portable-export?path=/srv/obos/backups/obos-openbridgeserver-test.tar.gz' |
+  grep -q '^403$' \
+  || fail "HTTP bridge did not reject raw backup download"
+grep -q 'download-forbidden' "${tmp_dir}/raw-backup-download.out" \
+  || fail "HTTP bridge raw backup download rejection missing marker"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

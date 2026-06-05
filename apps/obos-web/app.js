@@ -1,9 +1,11 @@
 (function () {
   const apiBase = "/obos/api/v1/actions/";
+  const downloadBase = "/obos/api/v1/downloads/";
   const fields = Array.from(document.querySelectorAll("[data-agent-field]"));
   const refreshButton = document.querySelector("[data-refresh-status]");
   const logsButton = document.querySelector("[data-load-logs]");
   const logOutput = document.querySelector("[data-log-output]");
+  const portableDownloadLink = document.querySelector("[data-portable-download]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
@@ -152,6 +154,20 @@
     }
   }
 
+  function setPortableDownload(values) {
+    if (!portableDownloadLink) {
+      return;
+    }
+    const portablePath = values.portable_backup;
+    if (!portablePath) {
+      portableDownloadLink.hidden = true;
+      portableDownloadLink.removeAttribute("href");
+      return;
+    }
+    portableDownloadLink.href = `${downloadBase}portable-export?path=${encodeURIComponent(portablePath)}`;
+    portableDownloadLink.hidden = false;
+  }
+
   async function runMutation(button) {
     const action = button.dataset.mutationAction;
     const confirmToken = button.dataset.confirm;
@@ -193,6 +209,14 @@
       }
       body.timezone = timezone;
     }
+    if (action === "portable-export") {
+      const passphrase = document.querySelector("#portable-passphrase")?.value;
+      if (!passphrase) {
+        setMutationStatus(statusTarget, "missing passphrase", "error");
+        return;
+      }
+      body.passphrase = passphrase;
+    }
 
     button.disabled = true;
     setMutationStatus(statusTarget, "running", "loading");
@@ -209,6 +233,9 @@
       const text = await response.text();
       if (!response.ok) {
         throw new Error(text || `HTTP ${response.status}`);
+      }
+      if (action === "portable-export") {
+        setPortableDownload(parseAgentResponse(text));
       }
       setMutationStatus(statusTarget, "completed", "ok");
       await refresh();

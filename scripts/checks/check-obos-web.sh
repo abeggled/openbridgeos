@@ -72,6 +72,18 @@ grep -q 'data-confirm="backup"' "${INDEX}" \
 grep -q 'data-mutation-status="backup"' "${INDEX}" \
   || fail "web UI does not expose backup mutation status"
 
+grep -q 'id="portable-passphrase"' "${INDEX}" \
+  || fail "web UI does not expose portable export passphrase input"
+
+grep -q 'data-mutation-action="portable-export"' "${INDEX}" \
+  || fail "web UI does not expose portable export mutation control"
+
+grep -q 'data-confirm="portable-export"' "${INDEX}" \
+  || fail "web UI portable export mutation control does not carry confirmation token"
+
+grep -q 'data-portable-download' "${INDEX}" \
+  || fail "web UI does not expose portable export download link"
+
 grep -q 'data-agent-field="restore-stage-summary:' "${INDEX}" \
   || fail "web UI does not expose restore staging placeholders"
 
@@ -216,6 +228,15 @@ grep -q 'mutationBackupFrom' "${JS}" \
 grep -q 'body.backup_path = backupPath' "${JS}" \
   || fail "web UI restore-stage mutation does not send backup path"
 
+grep -q 'downloadBase = "/obos/api/v1/downloads/"' "${JS}" \
+  || fail "web UI does not know the portable export download base"
+
+grep -q 'setPortableDownload' "${JS}" \
+  || fail "web UI does not prepare portable export downloads"
+
+grep -q 'body.passphrase = passphrase' "${JS}" \
+  || fail "web UI portable export mutation does not send passphrase"
+
 grep -q 'mqtt-enable-lan' "${JS}" \
   || fail "web UI does not handle MQTT enable mutation body"
 
@@ -233,6 +254,9 @@ grep -q 'grid-template-columns' "${CSS}" \
 
 grep -q '.button-row' "${CSS}" \
   || fail "web UI CSS does not define action button row layout"
+
+grep -q '.download-link' "${CSS}" \
+  || fail "web UI CSS does not style portable download link"
 
 grep -q '^input {' "${CSS}" \
   || fail "web UI CSS does not style input controls"

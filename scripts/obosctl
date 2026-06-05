@@ -694,7 +694,11 @@ portable_export() {
     return 1
   fi
 
-  install -d -m 0700 "${PORTABLE_EXPORT_DIR}"
+  install -d -m 0750 "${PORTABLE_EXPORT_DIR}"
+  if getent group obos-agent >/dev/null 2>&1; then
+    chgrp obos-agent "${PORTABLE_EXPORT_DIR}"
+    chmod 0750 "${PORTABLE_EXPORT_DIR}"
+  fi
   work_dir="$(mktemp -d "${PORTABLE_EXPORT_DIR}/export.XXXXXXXX")"
   chmod 0700 "${work_dir}"
   trap 'rm -rf "${work_dir}"' EXIT INT TERM
@@ -736,6 +740,10 @@ EOF
 
   tar -cf "${target}" -C "${work_dir}" metadata.txt payload.tar.gz.gpg
   chmod 0600 "${target}"
+  if getent group obos-agent >/dev/null 2>&1; then
+    chgrp obos-agent "${target}"
+    chmod 0640 "${target}"
+  fi
   rm -rf "${work_dir}"
   trap - EXIT INT TERM
 

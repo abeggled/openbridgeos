@@ -36,6 +36,19 @@ button {
   padding: 0 12px;
 }
 
+.download-link {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  color: var(--accent-strong);
+  font-weight: 700;
+  padding: 0 12px;
+  text-decoration: none;
+}
+
 button:disabled {
   color: var(--muted);
   cursor: not-allowed;

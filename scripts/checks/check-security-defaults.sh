@@ -128,6 +128,21 @@ grep -q 'payload_sha256=' scripts/obosctl \
 grep -q 'backup_manifest_sha256=' scripts/obosctl \
   || fail "portable export does not record backup manifest hash"
 
+grep -q 'chgrp obos-agent' scripts/obosctl \
+  || fail "portable export artifact is not made readable by the agent group"
+
+grep -q 'chmod 0640' scripts/obosctl \
+  || fail "portable export artifact is not kept group-readable and private"
+
+grep -q 'DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not expose a dedicated portable export download endpoint"
+
+grep -q 'only encrypted portable export artifacts are downloadable' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not reject non-portable download artifacts"
+
+grep -q 'download-forbidden' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not reject forbidden portable download paths"
+
 grep -q 'gnupg' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install GnuPG for portable exports"
 

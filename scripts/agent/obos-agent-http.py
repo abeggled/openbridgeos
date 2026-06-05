@@ -7,7 +7,9 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from urllib.parse import urlparse
+from urllib.parse import parse_qs
 
 
 AGENT_PATH = os.environ.get("OBOS_AGENT_PATH", "/usr/bin/obos-agent")
@@ -16,9 +18,12 @@ BIND_PORT = int(os.environ.get("OBOS_AGENT_HTTP_PORT", "8091"))
 AGENT_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_TIMEOUT_SECONDS", "45"))
 AGENT_MUTATION_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_MUTATION_TIMEOUT_SECONDS", "600"))
 MAX_POST_BYTES = 1024
+PORTABLE_EXPORT_DIR = os.environ.get("OBOS_PORTABLE_EXPORT_DIR", "/srv/obos/state/portable-backups")
 
 API_PREFIX = "/obos/api/v1/actions/"
+DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"
 ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+PORTABLE_EXPORT_FILENAME_RE = re.compile(r"^obos-portable-[A-Za-z0-9T._-]+\.tar$")
 READ_ONLY_ACTIONS = {
     "actions",
     "status-summary",
@@ -40,6 +45,7 @@ MUTATING_ACTIONS = {
     "backup": "backup",
     "mqtt-disable-lan": "mqtt-disable-lan",
     "mqtt-enable-lan": "mqtt-enable-lan",
+    "portable-export": "portable-export",
     "restart": "restart",
     "restore-stage": "restore-stage",
     "set-hostname": "set-hostname",
@@ -74,6 +80,21 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(encoded)
+
+    def send_file(self, status, path, filename):
+        file_size = os.path.getsize(path)
+        self.send_response(status)
+        self.send_header("Content-Type", "application/x-tar")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(file_size))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        with open(path, "rb") as handle:
+            while True:
+                chunk = handle.read(1024 * 1024)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
 
     def parse_action_path(self):
         parsed = urlparse(self.path)
@@ -118,6 +139,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         expected_fields = {"confirm"}
         if action == "mqtt-enable-lan":
             expected_fields.add("source_cidr")
+        if action == "portable-export":
+            expected_fields.update({"backup_path", "passphrase"})
         if action == "restore-stage":
             expected_fields.add("backup_path")
         if action == "set-hostname":
@@ -134,6 +157,13 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             backup_path = payload.get("backup_path")
             if not isinstance(backup_path, str) or not backup_path or backup_path.startswith("-"):
                 return None, (400, error_envelope("invalid-backup-path", "backup_path is invalid"))
+        if action == "portable-export":
+            backup_path = payload.get("backup_path")
+            passphrase = payload.get("passphrase")
+            if not isinstance(backup_path, str) or not backup_path or backup_path.startswith("-"):
+                return None, (400, error_envelope("invalid-backup-path", "backup_path is invalid"))
+            if not isinstance(passphrase, str) or not passphrase:
+                return None, (400, error_envelope("invalid-passphrase", "passphrase is invalid"))
         if action == "mqtt-enable-lan" and "source_cidr" in payload:
             source_cidr = payload.get("source_cidr")
             if not isinstance(source_cidr, str) or not source_cidr or source_cidr.startswith("-"):
@@ -148,7 +178,48 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
                 return None, (400, error_envelope("invalid-timezone", "timezone is invalid"))
         return payload, None
 
+    def portable_download_error(self, status, error, detail):
+        self.send_text(status, error_envelope(error, detail))
+
+    def handle_portable_download(self, parsed):
+        query = parse_qs(parsed.query, keep_blank_values=False)
+        if set(query) != {"path"} or len(query["path"]) != 1:
+            self.portable_download_error(400, "invalid-download-request", "exactly one path query parameter is required")
+            return
+
+        artifact_path = query["path"][0]
+        if not artifact_path.startswith(f"{PORTABLE_EXPORT_DIR}/"):
+            self.portable_download_error(403, "download-forbidden", "portable export path is outside the export directory")
+            return
+        if "/../" in artifact_path or artifact_path.endswith("/..") or artifact_path.startswith("../") or artifact_path == "..":
+            self.portable_download_error(400, "invalid-download-path", "portable export path contains parent traversal")
+            return
+
+        filename = os.path.basename(artifact_path)
+        if not PORTABLE_EXPORT_FILENAME_RE.match(filename):
+            self.portable_download_error(403, "download-forbidden", "only encrypted portable export artifacts are downloadable")
+            return
+
+        export_root = os.path.realpath(PORTABLE_EXPORT_DIR)
+        real_artifact = os.path.realpath(artifact_path)
+        if not real_artifact.startswith(f"{export_root}{os.sep}"):
+            self.portable_download_error(403, "download-forbidden", "portable export path escapes the export directory")
+            return
+        if not os.path.isfile(real_artifact):
+            self.portable_download_error(404, "download-not-found", "portable export artifact was not found")
+            return
+
+        try:
+            self.send_file(200, real_artifact, filename)
+        except OSError as exc:
+            self.portable_download_error(502, "download-failed", str(exc))
+
     def do_GET(self):
+        parsed = urlparse(self.path)
+        if parsed.path == DOWNLOAD_PREFIX:
+            self.handle_portable_download(parsed)
+            return
+
         action, error = self.parse_action_path()
         if error:
             self.send_text(*error)
@@ -186,7 +257,27 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             self.send_text(*body_error)
             return
 
+        temp_passphrase_file = None
         args = [action, "--confirm", payload["confirm"]]
+        if action == "portable-export":
+            try:
+                handle = tempfile.NamedTemporaryFile(
+                    mode="w",
+                    encoding="utf-8",
+                    prefix="obos-agent-passphrase-",
+                    dir="/tmp",
+                    delete=False,
+                )
+                temp_passphrase_file = handle.name
+                try:
+                    os.chmod(temp_passphrase_file, 0o600)
+                    handle.write(payload["passphrase"])
+                finally:
+                    handle.close()
+            except OSError as exc:
+                self.send_text(502, error_envelope("passphrase-file-failed", str(exc)))
+                return
+            args = [action, payload["backup_path"], temp_passphrase_file, "--confirm", payload["confirm"]]
         if action == "restore-stage":
             args = [action, payload["backup_path"], "--confirm", payload["confirm"]]
         if action == "mqtt-enable-lan" and "source_cidr" in payload:
@@ -204,6 +295,12 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         except OSError as exc:
             self.send_text(502, error_envelope("agent-exec-failed", str(exc)))
             return
+        finally:
+            if temp_passphrase_file:
+                try:
+                    os.unlink(temp_passphrase_file)
+                except FileNotFoundError:
+                    pass
 
         status = 200 if completed.returncode == 0 else 502
         self.send_text(status, completed.stdout)

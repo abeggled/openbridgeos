@@ -82,7 +82,12 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>Backups</h2>
-            <button type="button" data-mutation-action="backup" data-confirm="backup" data-mutation-status-target="backup">Create Backup</button>
+            <div class="button-row">
+              <button type="button" data-mutation-action="backup" data-confirm="backup" data-mutation-status-target="backup">Create Backup</button>
+              <input id="portable-passphrase" type="password" autocomplete="new-password" placeholder="export passphrase">
+              <button type="button" data-mutation-action="portable-export" data-confirm="portable-export" data-mutation-status-target="portable-export" data-mutation-backup-from="backup-summary:latest_backup">Portable Export</button>
+              <a class="download-link" href="#" data-portable-download hidden>Download</a>
+            </div>
           </div>
           <dl>
             <div><dt>Latest backup</dt><dd data-agent-field="backup-summary:latest_backup_present">pending</dd></div>
@@ -90,6 +95,7 @@
             <div><dt>Inspection</dt><dd data-agent-field="backup-summary:latest_backup_inspection">pending</dd></div>
             <div><dt>Retention candidates</dt><dd data-agent-field="backup-prune-plan:delete_candidate_count">pending</dd></div>
             <div><dt>Backup action</dt><dd data-mutation-status="backup">ready</dd></div>
+            <div><dt>Portable export</dt><dd data-mutation-status="portable-export">ready</dd></div>
           </dl>
         </article>
 
