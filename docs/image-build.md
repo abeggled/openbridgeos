@@ -375,6 +375,20 @@ OBOS_MANIFEST_STRICT_FILES=1 \
   sh scripts/images/check-release-manifest.sh dist/images/obos-release.manifest
 ```
 
+If the release public key is available, verify the detached Minisign signature
+cryptographically:
+
+```sh
+OBOS_MANIFEST_STRICT_FILES=1 \
+  OBOS_RELEASE_SIGNATURE_STRICT=1 \
+  OBOS_RELEASE_MINISIGN_PUBLIC_KEY='<minisign-public-key>' \
+  sh scripts/images/check-release-manifest.sh dist/images/obos-release.manifest
+```
+
+When `OBOS_RELEASE_MINISIGN_PUBLIC_KEY` is set, `minisign` must be installed and
+the check runs `minisign -Vm` against the release manifest and detached
+signature.
+
 The builder host must provide the profile tools: `debootstrap`,
 `qemu-aarch64-static`, `sfdisk`, `mkfs.vfat`, `mkfs.ext4`, `losetup`, `mount`,
 `umount`, `partprobe`, `tar`, `xz`, and `sha256sum`.

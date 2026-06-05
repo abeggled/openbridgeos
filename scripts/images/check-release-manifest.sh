@@ -3,6 +3,7 @@ set -eu
 
 STRICT_FILES="${OBOS_MANIFEST_STRICT_FILES:-0}"
 STRICT_SIGNATURE="${OBOS_RELEASE_SIGNATURE_STRICT:-0}"
+MINISIGN_PUBLIC_KEY="${OBOS_RELEASE_MINISIGN_PUBLIC_KEY:-}"
 SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 CHECK_QCOW2_MANIFEST="${SCRIPT_DIR}/check-qcow2-manifest.sh"
 CHECK_RPI_IMAGE_MANIFEST="${SCRIPT_DIR}/check-rpi-image-manifest.sh"
@@ -67,15 +68,22 @@ check_checksum_file() {
 
 check_signature_file() {
   signature_file="$1"
+  manifest_file="$2"
 
   if [ ! -f "${signature_file}" ]; then
-    if [ "${STRICT_SIGNATURE}" = "1" ]; then
+    if [ "${STRICT_SIGNATURE}" = "1" ] || [ -n "${MINISIGN_PUBLIC_KEY}" ]; then
       fail "signature file missing: ${signature_file}"
     fi
     return 0
   fi
 
   [ -s "${signature_file}" ] || fail "signature file is empty: ${signature_file}"
+
+  if [ -n "${MINISIGN_PUBLIC_KEY}" ]; then
+    require_command minisign
+    minisign -Vm "${manifest_file}" -x "${signature_file}" -P "${MINISIGN_PUBLIC_KEY}" >/dev/null \
+      || fail "minisign verification failed for ${manifest_file}"
+  fi
 }
 
 check_image_file() {
@@ -138,7 +146,7 @@ expect_value signature_type minisign "${MANIFEST_FILE}"
 [ -n "$(manifest_value repo_revision "${MANIFEST_FILE}")" ] || fail "repo_revision must not be empty"
 signature_file="$(manifest_value signature_file "${MANIFEST_FILE}")"
 [ -n "${signature_file}" ] || fail "signature_file must not be empty"
-check_signature_file "${signature_file}"
+check_signature_file "${signature_file}" "${MANIFEST_FILE}"
 
 artifact_count="$(manifest_value artifact_count "${MANIFEST_FILE}")"
 case "${artifact_count}" in
