@@ -44,6 +44,7 @@ install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/mosquitto.conf" "${OBOS_APP_
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/obos-app.yaml" "${OBOS_APP_SOURCE}/obos-app.yaml"
 install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR}/index.html"
 install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR}/styles.css"
+install -m 0644 "${REPO_ROOT}/apps/obos-web/app.js" "${OBOS_WEB_DIR}/app.js"
 install -m 0644 "${REPO_ROOT}/packaging/apt/20auto-upgrades" /etc/apt/apt.conf.d/20auto-upgrades
 install -m 0644 "${REPO_ROOT}/packaging/apt/50unattended-upgrades" /etc/apt/apt.conf.d/50unattended-upgrades
 install -m 0644 "${REPO_ROOT}/packaging/docker/daemon.json" /etc/docker/daemon.json

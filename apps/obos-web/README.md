@@ -7,6 +7,10 @@ screen structure and the data-contract placeholders that will later be filled by
 the local `obos-agent`. It must not write appliance files directly and must not
 call arbitrary shell commands.
 
+`app.js` reads the first read-only HTTP bridge endpoints below `/obos/api/` and
+fills matching `data-agent-field` placeholders. It keeps restore apply and all
+mutating workflows unavailable until the confirmation flow is implemented.
+
 The future HTTP bridge should live below `/obos/api/` on the same HTTPS origin,
 bind only locally or to a Unix socket, and call `obos-agent` rather than
 `obosctl` or a shell directly. Confirmed mutations stay unavailable over HTTP
