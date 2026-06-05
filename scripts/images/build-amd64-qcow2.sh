@@ -172,7 +172,7 @@ virt-customize -a "${OUTPUT_IMAGE}" \
   --copy-in "${REPO_ROOT}:/opt/openbridgeos" \
   --run-command "cd ${IMAGE_REPO_DIR} && OBOS_DISABLE_SSH=1 ${OBOS_PROVISION_SCRIPT} ${IMAGE_REPO_DIR}" \
   --run-command "systemctl enable ${OBOS_FIRST_BOOT_SERVICE}" \
-  --run-command "rm -f /etc/obos/first-boot.done" \
+  --run-command "rm -f /srv/obos/state/first-boot.done" \
   --run-command "truncate -s 0 /etc/machine-id" \
   --run-command "rm -f /var/lib/dbus/machine-id" \
   --run-command "apt-get clean"

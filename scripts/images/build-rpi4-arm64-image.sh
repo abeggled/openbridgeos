@@ -279,7 +279,7 @@ chroot "${BUILD_ROOT}" /bin/sh -c "cd /opt/openbridgeos/${REPO_NAME} && OBOS_DIS
 umount "${BUILD_ROOT}/proc"
 umount "${BUILD_ROOT}/sys"
 umount "${BUILD_ROOT}/dev"
-rm -f "${BUILD_ROOT}/etc/obos/first-boot.done"
+rm -f "${BUILD_ROOT}/srv/obos/state/first-boot.done"
 truncate -s 0 "${BUILD_ROOT}/etc/machine-id"
 rm -f "${BUILD_ROOT}/var/lib/dbus/machine-id"
 write_fstab "${BUILD_ROOT}"

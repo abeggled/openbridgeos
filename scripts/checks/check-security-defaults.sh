@@ -98,6 +98,16 @@ grep -q 'check_first_boot_marker' scripts/audit/security-baseline.sh \
 grep -q 'format=obos-first-boot-v1' scripts/audit/security-baseline.sh \
   || fail "security baseline does not verify first boot marker format"
 
+grep -q 'rm -f /srv/obos/state/first-boot.done' scripts/images/build-amd64-qcow2.sh \
+  || fail "qcow2 builder does not leave first boot pending with the correct marker path"
+
+# shellcheck disable=SC2016
+grep -q 'rm -f "${BUILD_ROOT}/srv/obos/state/first-boot.done"' scripts/images/build-rpi4-arm64-image.sh \
+  || fail "Raspberry Pi builder does not leave first boot pending with the correct marker path"
+
+! grep -q '/etc/obos/first-boot.done' scripts/images/build-amd64-qcow2.sh scripts/images/build-rpi4-arm64-image.sh \
+  || fail "image builders still reference the old first boot marker path"
+
 grep -q 'APPLIANCE_ID_FILE=' scripts/obosctl \
   || fail "obosctl backup does not know the appliance identifier path"
 
