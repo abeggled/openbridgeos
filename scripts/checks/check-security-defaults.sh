@@ -936,6 +936,12 @@ grep -q 'Wants=network-online.target' packaging/systemd/obos-openbridgeserver.se
 grep -q 'After=network-online.target docker.service obos-first-boot.service' packaging/systemd/obos-openbridgeserver.service \
   || fail "open bridge server systemd unit ordering does not include network-online"
 
+grep -q 'Restart=on-failure' packaging/systemd/obos-openbridgeserver.service \
+  || fail "open bridge server systemd unit does not retry failed starts"
+
+grep -q 'RestartSec=30s' packaging/systemd/obos-openbridgeserver.service \
+  || fail "open bridge server systemd unit restart delay is not bounded"
+
 grep -q 'ProtectSystem=full' packaging/systemd/obos-openbridgeserver.service \
   || fail "open bridge server systemd unit is missing filesystem protection"
 
