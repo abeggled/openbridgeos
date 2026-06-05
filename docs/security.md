@@ -194,32 +194,37 @@ Backups should include:
 Each backup archive should include a root-level `obos-backup-manifest.txt` that
 records the creation time, app name, appliance identifier, and whether the
 archive contains secrets and TLS material. The manifest is metadata for humans,
-future restore tooling, and support triage; it does not make the backup less
+restore tooling, and support triage; it does not make the backup less
 sensitive.
 
-Restore handling should start with a non-destructive inspection step. The
-inspection must reject unsafe archive paths, verify required restore inputs, and
-report whether TLS private key material is present before any future destructive
-restore operation extracts files.
+Restore handling starts with a non-destructive inspection step. The inspection
+must reject unsafe archive paths, verify required restore inputs, and report
+whether TLS private key material is present before any live appliance files are
+replaced.
 
 The next recovery step is a non-destructive restore plan that prints target
 paths, service order, health checks, security audit expectations, and TLS
-identity impact before any future restore command modifies the appliance.
+identity impact before any restore command modifies the appliance.
 
 Restore staging may extract a validated backup into a private staging directory
-for review, but it must not replace live files until a future explicit apply
-step is implemented.
+for review, but it must not replace live files.
 
-Staged restores should be inspected before any future apply step. The stage
-inspection verifies the restore stage manifest, staged-only mode, expected app
-name, required restore inputs, and confirms that excluded Mosquitto logs were
-not staged.
+Staged restores must be inspected before any apply step. The stage inspection
+verifies the restore stage manifest, staged-only mode, expected app name,
+required restore inputs, and confirms that excluded Mosquitto logs were not
+staged.
 
-Restore apply planning should remain non-destructive until explicit apply
-support is implemented. The apply plan must require a passing stage inspection,
-a fresh pre-restore backup, an explicit future confirmation flag, service
-stop/restart ordering, permission normalization, post-restore health checks, and
-a security baseline audit.
+Restore apply planning remains non-destructive. The apply plan must require a
+passing stage inspection, a fresh pre-restore backup, explicit CLI confirmation,
+service stop/start ordering, permission normalization, post-restore health
+checks, and a security baseline audit.
+
+`obosctl restore-apply <stage-dir> --confirm restore-apply` is intentionally
+CLI-only for the technical MVP. It creates a fresh pre-restore backup, replaces
+only validated live appliance paths, normalizes permissions, restarts open
+bridge server, verifies localhost and HTTPS proxy health, and records the
+security baseline result. The web UI and HTTP bridge must not expose restore
+apply until a separate browser-safe confirmation and rollback UX exists.
 
 Backups should not include:
 
