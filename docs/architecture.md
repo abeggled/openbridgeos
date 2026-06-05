@@ -136,3 +136,5 @@ It defines the operational panels and `data-agent-field` placeholders for the
 future local agent bridge, but it does not yet call the agent or perform
 mutating actions.
 Provisioning installs this static shell below `/srv/obos/web`.
+nginx serves it below `/obos/` on the same HTTPS origin while leaving `/` for
+open bridge server.

@@ -61,4 +61,13 @@ grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR
 grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR}/styles.css"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web styles"
 
+grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not expose obos-web under /obos/"
+
+grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve obos-web from /srv/obos/web"
+
+grep -q 'try_files .* /obos/index.html;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not fall back to obos-web index"
+
 echo "obos-web: PASS"
