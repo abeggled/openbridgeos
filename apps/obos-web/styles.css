@@ -178,6 +178,19 @@ dd,
   color: #f9b4aa;
 }
 
+.secret-value {
+  font-family: Consolas, "Liberation Mono", monospace;
+  overflow-wrap: anywhere;
+}
+
+.secret-value[data-state="ok"] {
+  color: var(--accent-strong);
+}
+
+.secret-value[data-state="error"] {
+  color: var(--danger);
+}
+
 .panel {
   border: 1px solid var(--line);
   border-radius: var(--radius);
