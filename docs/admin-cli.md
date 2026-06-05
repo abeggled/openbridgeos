@@ -13,6 +13,7 @@ obosctl system-summary
 sudo obosctl set-hostname obos-test
 sudo obosctl set-timezone Europe/Zurich
 sudo obosctl security-summary
+sudo obosctl mvp-readiness-summary
 sudo obosctl agent-audit-summary
 obosctl health
 obosctl proxy-health
@@ -56,6 +57,7 @@ obosctl system-summary
 sudo obosctl set-hostname obos-test
 sudo obosctl set-timezone Europe/Zurich
 sudo obosctl security-summary
+sudo obosctl mvp-readiness-summary
 sudo obosctl agent-audit-summary
 ```
 
@@ -82,6 +84,10 @@ mutations.
 `security-summary` runs the security baseline audit in machine-readable mode. It
 prints the summary format, PASS/FAIL result, pass count, and fail count for
 agents and the future web UI.
+
+`mvp-readiness-summary` runs the non-destructive technical MVP runtime readiness
+audit in machine-readable mode. It checks services, health summaries, TLS, MQTT
+defaults, backup and restore planning surfaces, and the local agent boundary.
 
 `agent-audit-summary` prints metadata-only mutation audit status for the local
 agent. It reports whether the audit log exists, how many agent mutation entries

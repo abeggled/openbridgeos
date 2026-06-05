@@ -55,6 +55,8 @@ require_contract_line 'obosctl tls-summary'
 require_contract_line 'obos-tls-summary-v1'
 require_contract_line 'sudo obosctl security-summary'
 require_contract_line 'obos-security-baseline-summary-v1'
+require_contract_line 'sudo obosctl mvp-readiness-summary'
+require_contract_line 'obos-mvp-runtime-readiness-v1'
 require_contract_line 'sudo obosctl agent-audit-summary'
 require_contract_line 'obos-agent-audit-summary-v1'
 require_contract_line 'obos-agent actions'
@@ -69,6 +71,7 @@ require_contract_line 'obos-agent logs-tail'
 require_contract_line 'obos-agent portable-export-plan <backup.tar.gz>'
 require_contract_line 'obos-agent portable-import-plan <portable-backup>'
 require_contract_line 'obos-agent restore-stage-summary'
+require_contract_line 'obos-agent mvp-readiness-summary'
 require_contract_line 'obos-agent agent-audit-summary'
 require_contract_line 'latest-backup inspection status'
 require_contract_line 'obos-agent start --confirm start'
@@ -104,6 +107,7 @@ require_contract_line 'update-rollback-plan'
 require_contract_line 'backup-list'
 require_contract_line 'logs-summary'
 require_contract_line 'logs-tail'
+require_contract_line 'mvp-readiness-summary'
 require_contract_line 'POST /obos/api/v1/actions/<action>'
 require_contract_line 'same confirmation token required by'
 require_contract_line 'POST /obos/api/v1/actions/backup'
@@ -184,6 +188,8 @@ grep -q 'tls-summary)' scripts/obosctl \
   || fail "obosctl tls-summary command missing"
 grep -q 'security-summary)' scripts/obosctl \
   || fail "obosctl security-summary command missing"
+grep -q 'mvp-readiness-summary)' scripts/obosctl \
+  || fail "obosctl mvp-readiness-summary command missing"
 grep -q 'agent-audit-summary)' scripts/obosctl \
   || fail "obosctl agent-audit-summary command missing"
 

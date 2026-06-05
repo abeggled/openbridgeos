@@ -122,6 +122,10 @@ grep -q 'tls-summary)' "${AGENT}" \
   || fail "tls-summary action missing"
 grep -q 'security-summary)' "${AGENT}" \
   || fail "security-summary action missing"
+grep -q 'mvp-readiness-summary)' "${AGENT}" \
+  || fail "mvp-readiness-summary action missing"
+grep -q 'action=mvp-readiness-summary|mutating=false' "${AGENT}" \
+  || fail "mvp-readiness-summary action is not listed as read-only"
 grep -q 'agent-audit-summary)' "${AGENT}" \
   || fail "agent-audit-summary action missing"
 grep -q 'action=agent-audit-summary|mutating=false' "${AGENT}" \
@@ -171,6 +175,8 @@ grep -q '/usr/bin/obosctl restore-stage-inspect \*' packaging/sudoers/obos-agent
   || fail "agent sudoers policy does not allow checked restore stage inspection"
 grep -q '/usr/bin/obosctl restore-apply-plan \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow checked restore apply planning"
+grep -q '/usr/bin/obosctl mvp-readiness-summary' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow MVP readiness summary"
 grep -q '/usr/bin/obosctl backup-prune --confirm backup-prune' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow confirmed backup pruning"
 grep -q '/usr/bin/obosctl portable-export \*' packaging/sudoers/obos-agent \
@@ -262,6 +268,10 @@ case "$1" in
     ;;
   restore-apply-plan)
     echo "restore-apply-planned:${2:-missing}"
+    exit 0
+    ;;
+  mvp-readiness-summary)
+    echo "format=obos-mvp-runtime-readiness-v1"
     exit 0
     ;;
   backup-prune)
@@ -372,6 +382,10 @@ OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCT
 if OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-apply-plan /tmp/restore.20260605 >/dev/null 2>&1; then
   fail "agent accepted restore apply planning path outside staging dir"
 fi
+
+OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mvp-readiness-summary |
+  grep -q 'stdout=format=obos-mvp-runtime-readiness-v1' \
+  || fail "agent did not expose MVP readiness summary"
 
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" agent-audit-summary |
   grep -q 'stdout=format=obos-agent-audit-summary-v1' \

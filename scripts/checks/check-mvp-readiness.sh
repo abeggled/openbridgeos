@@ -25,6 +25,7 @@ require_file docs/security-baseline-testplan.md
 require_file scripts/obosctl
 require_file scripts/agent/obos-agent.sh
 require_file scripts/agent/obos-agent-http.py
+require_file scripts/audit/mvp-runtime-readiness.sh
 require_file apps/obos-web/index.html
 require_file apps/obos-web/app.js
 require_file packaging/images/profiles/amd64-vm.env
@@ -56,6 +57,16 @@ require_line "format=obos-logs-tail-v1" scripts/obosctl
 require_line "format=obos-mqtt-summary-v1" scripts/hardening/set-mqtt-lan-access.sh
 require_line "format=obos-tls-summary-v1" scripts/tls/check-tls-status.sh
 require_line "format=obos-security-baseline-summary-v1" scripts/audit/security-baseline.sh
+require_line "STATE_DIR=" scripts/audit/security-baseline.sh
+require_line "format=obos-mvp-runtime-readiness-v1" scripts/audit/mvp-runtime-readiness.sh
+require_line "check_systemd_active obos-agent-http.service" scripts/audit/mvp-runtime-readiness.sh
+require_line "check_output_contains \"security baseline passes\" \"result=PASS\"" scripts/audit/mvp-runtime-readiness.sh
+require_line "check_http_agent_status" scripts/audit/mvp-runtime-readiness.sh
+require_line "agent does not expose restore apply mutation" scripts/audit/mvp-runtime-readiness.sh
+# shellcheck disable=SC2016
+require_line 'install -m 0755 "${REPO_ROOT}/scripts/audit/mvp-runtime-readiness.sh" "${OBOS_LIB_DIR}/mvp-runtime-readiness.sh"' scripts/bootstrap/provision-debian.sh
+require_line "MVP_READINESS_SCRIPT=" scripts/obosctl
+require_line "mvp-readiness-summary)" scripts/obosctl
 require_line "format=obos-portable-backup-export-plan-v1" scripts/obosctl
 require_line "format=obos-portable-backup-export-v1" scripts/obosctl
 require_line "format=obos-portable-backup-import-plan-v1" scripts/obosctl
@@ -74,6 +85,7 @@ require_line "action=portable-import-stage|mutating=true|confirm=portable-import
 require_line "action=portable-export-plan|mutating=false|required_arg=backup-path" scripts/agent/obos-agent.sh
 require_line "action=portable-import-plan|mutating=false|required_arg=portable-backup" scripts/agent/obos-agent.sh
 require_line "action=logs-tail|mutating=false" scripts/agent/obos-agent.sh
+require_line "action=mvp-readiness-summary|mutating=false" scripts/agent/obos-agent.sh
 require_line "action=set-hostname|mutating=true|confirm=set-hostname|required_arg=hostname" scripts/agent/obos-agent.sh
 require_line "action=set-timezone|mutating=true|confirm=set-timezone|required_arg=timezone" scripts/agent/obos-agent.sh
 
@@ -83,6 +95,7 @@ require_line '"portable-import-stage": "portable-import-stage"' scripts/agent/ob
 require_line '"restore-stage": "restore-stage"' scripts/agent/obos-agent-http.py
 require_line '"update": "update"' scripts/agent/obos-agent-http.py
 require_line '"logs-tail"' scripts/agent/obos-agent-http.py
+require_line '"mvp-readiness-summary"' scripts/agent/obos-agent-http.py
 require_line '"mqtt-enable-lan": "mqtt-enable-lan"' scripts/agent/obos-agent-http.py
 require_line '"mqtt-disable-lan": "mqtt-disable-lan"' scripts/agent/obos-agent-http.py
 require_line '"tls-generate": "tls-generate"' scripts/agent/obos-agent-http.py

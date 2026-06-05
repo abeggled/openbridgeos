@@ -26,6 +26,7 @@ BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-sum
 TLS_STATUS_SCRIPT="${OBOS_TLS_STATUS_SCRIPT:-/usr/lib/obos/check-tls-status.sh}"
 MQTT_LAN_SCRIPT="${OBOS_MQTT_LAN_SCRIPT:-/usr/lib/obos/set-mqtt-lan-access.sh}"
 SECURITY_BASELINE_SCRIPT="${OBOS_SECURITY_BASELINE_SCRIPT:-/usr/lib/obos/security-baseline.sh}"
+MVP_READINESS_SCRIPT="${OBOS_MVP_READINESS_SCRIPT:-/usr/lib/obos/mvp-runtime-readiness.sh}"
 
 usage() {
   cat <<'EOF'
@@ -38,6 +39,8 @@ Commands:
   set-hostname      Set appliance hostname after validation
   set-timezone      Set appliance timezone after validation
   security-summary  Print machine-readable security baseline status
+  mvp-readiness-summary
+                    Print machine-readable technical MVP runtime readiness
   agent-audit-summary
                     Print machine-readable agent mutation audit status
   start             Start open bridge server
@@ -1536,6 +1539,10 @@ case "${1:-}" in
   security-summary)
     require_root security-summary
     run_helper "${SECURITY_BASELINE_SCRIPT}" summary
+    ;;
+  mvp-readiness-summary)
+    require_root mvp-readiness-summary
+    run_helper "${MVP_READINESS_SCRIPT}" summary
     ;;
   agent-audit-summary)
     shift

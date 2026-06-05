@@ -75,6 +75,7 @@ Nach Provisionierung und Neustart wird die Appliance so validiert:
 
 ```sh
 sudo /usr/lib/obos/security-baseline.sh
+sudo /usr/lib/obos/mvp-runtime-readiness.sh
 ```
 
 Siehe [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).
