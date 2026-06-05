@@ -2,12 +2,14 @@
   const apiBase = "/obos/api/v1/actions/";
   const fields = Array.from(document.querySelectorAll("[data-agent-field]"));
   const refreshButton = document.querySelector("[data-refresh-status]");
+  const logsButton = document.querySelector("[data-load-logs]");
+  const logOutput = document.querySelector("[data-log-output]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
 
-  function parseAgentResponse(text) {
-    const values = {};
+  function agentStdoutLines(text) {
+    const lines = [];
     let inStdout = false;
 
     for (const line of text.split(/\r?\n/)) {
@@ -19,11 +21,17 @@
         inStdout = false;
         continue;
       }
-      if (!inStdout || !line.startsWith("stdout=")) {
-        continue;
+      if (inStdout && line.startsWith("stdout=")) {
+        lines.push(line.slice("stdout=".length));
       }
+    }
 
-      const payload = line.slice("stdout=".length);
+    return lines;
+  }
+
+  function parseAgentResponse(text) {
+    const values = {};
+    for (const payload of agentStdoutLines(text)) {
       const separator = payload.indexOf("=");
       if (separator === -1) {
         continue;
@@ -32,6 +40,18 @@
     }
 
     return values;
+  }
+
+  function renderLogs(lines) {
+    if (!logOutput) {
+      return;
+    }
+    const rendered = lines
+      .filter((line) => line.startsWith("log="))
+      .map((line) => line.slice("log=".length))
+      .join("\n");
+    logOutput.textContent = rendered || "no recent log lines";
+    logOutput.dataset.state = "ok";
   }
 
   function fieldsByAction() {
@@ -93,6 +113,35 @@
 
   if (refreshButton) {
     refreshButton.addEventListener("click", refresh);
+  }
+
+  async function loadLogs() {
+    if (!logsButton || !logOutput) {
+      return;
+    }
+    logsButton.disabled = true;
+    logOutput.textContent = "loading";
+    logOutput.dataset.state = "loading";
+    try {
+      const response = await fetch(`${apiBase}logs-tail`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      renderLogs(agentStdoutLines(text));
+    } catch (error) {
+      logOutput.textContent = "unavailable";
+      logOutput.dataset.state = "error";
+    } finally {
+      logsButton.disabled = false;
+    }
+  }
+
+  if (logsButton) {
+    logsButton.addEventListener("click", loadLogs);
   }
 
   function setMutationStatus(statusTarget, value, state) {

@@ -49,6 +49,7 @@ require_line "format=obos-system-summary-v1" scripts/obosctl
 require_line "format=obos-update-summary-v1" scripts/obosctl
 require_line "format=obos-backup-summary-v1" scripts/obosctl
 require_line "format=obos-restore-stage-summary-v1" scripts/obosctl
+require_line "format=obos-logs-tail-v1" scripts/obosctl
 require_line "format=obos-mqtt-summary-v1" scripts/hardening/set-mqtt-lan-access.sh
 require_line "format=obos-tls-summary-v1" scripts/tls/check-tls-status.sh
 require_line "format=obos-security-baseline-summary-v1" scripts/audit/security-baseline.sh
@@ -63,10 +64,12 @@ require_line "action=backup|mutating=true|confirm=backup" scripts/agent/obos-age
 require_line "action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path" scripts/agent/obos-agent.sh
 require_line "action=portable-export-plan|mutating=false|required_arg=backup-path" scripts/agent/obos-agent.sh
 require_line "action=portable-import-plan|mutating=false|required_arg=portable-backup" scripts/agent/obos-agent.sh
+require_line "action=logs-tail|mutating=false" scripts/agent/obos-agent.sh
 
 require_line '"backup": "backup"' scripts/agent/obos-agent-http.py
 require_line '"restore-stage": "restore-stage"' scripts/agent/obos-agent-http.py
 require_line '"update": "update"' scripts/agent/obos-agent-http.py
+require_line '"logs-tail"' scripts/agent/obos-agent-http.py
 require_line "MAX_POST_BYTES = 1024" scripts/agent/obos-agent-http.py
 require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.sh
 
@@ -79,6 +82,7 @@ require_line 'data-mutation-action="restore-stage"' apps/obos-web/index.html
 require_line 'data-agent-field="security-summary:result"' apps/obos-web/index.html
 require_line 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' apps/obos-web/index.html
 require_line 'data-agent-field="mqtt-summary:source_cidr"' apps/obos-web/index.html
+require_line 'data-load-logs' apps/obos-web/index.html
 
 require_line "OBOS_IMAGE_PROFILE=amd64-vm" packaging/images/profiles/amd64-vm.env
 require_line "OBOS_IMAGE_KIND=vm-image" packaging/images/profiles/amd64-vm.env

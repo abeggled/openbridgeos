@@ -15,6 +15,8 @@ directly.
   restore staging directories as sensitive.
 - Raw service logs are sensitive by default; read-only log views should start
   with metadata-only availability summaries.
+- Bounded log tails may be exposed after authentication, but only through a
+  fixed allowlisted command with a conservative line limit.
 - MQTT LAN exposure must remain opt-in and visible whenever it is enabled.
 - Restore apply must not be implemented in the UI until the CLI has an explicit
   apply command with confirmation gates.
@@ -33,6 +35,7 @@ directly.
 | Portable backup export plan | `sudo obosctl portable-export-plan <backup.tar.gz>` | `obos-portable-backup-export-plan-v1` |
 | Portable backup import plan | `sudo obosctl portable-import-plan <portable-backup>` | `obos-portable-backup-import-plan-v1` |
 | Logs metadata | `sudo obosctl logs-summary` | `obos-logs-summary-v1` |
+| Bounded logs | `sudo obosctl logs-tail` | `obos-logs-tail-v1` |
 | Restore staging inventory | `sudo obosctl restore-stage-summary` | `obos-restore-stage-summary-v1` |
 | MQTT exposure | `sudo obosctl mqtt-summary` | `obos-mqtt-summary-v1` |
 | TLS trust | `obosctl tls-summary` | `obos-tls-summary-v1` |
@@ -46,7 +49,9 @@ versions instead of guessing.
 latest backup manifest records secrets, logs, and TLS private key material.
 
 `obos-logs-summary-v1` is metadata-only. It reports log tooling availability and
-recent journal volume, but it deliberately does not return raw log lines.
+recent journal volume, but it deliberately does not return raw log lines. The
+separate `obos-logs-tail-v1` output returns only a bounded recent tail from the
+open bridge server systemd unit and Compose stack.
 
 ## Mutating Commands
 
@@ -136,6 +141,7 @@ obos-agent backup-summary
 obos-agent backup-list
 obos-agent backup-prune-plan
 obos-agent logs-summary
+obos-agent logs-tail
 obos-agent portable-export-plan <backup.tar.gz>
 obos-agent portable-import-plan <portable-backup>
 obos-agent restore-stage-summary
@@ -192,6 +198,7 @@ appliance boundary:
 The first implementation should start with read-only endpoints for `actions`,
 `status-summary`, `system-summary`, `update-summary`, `update-rollback-plan`,
 `backup-summary`, `backup-list`, `backup-prune-plan`, `logs-summary`,
+`logs-tail`,
 `restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`, and
 `agent-audit-summary`.
 

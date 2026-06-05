@@ -131,6 +131,29 @@ dd,
   color: var(--danger);
 }
 
+.log-viewer {
+  min-height: 180px;
+  max-height: 360px;
+  margin: 14px 0 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #101820;
+  color: #e7eef2;
+  font: 13px/1.45 Consolas, "Liberation Mono", monospace;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+.log-viewer[data-state="loading"] {
+  color: #a9b8c0;
+}
+
+.log-viewer[data-state="error"] {
+  color: #f9b4aa;
+}
+
 .panel {
   border: 1px solid var(--line);
   border-radius: var(--radius);

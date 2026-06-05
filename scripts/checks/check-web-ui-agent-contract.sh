@@ -36,6 +36,8 @@ require_contract_line 'sudo obosctl portable-import-plan <portable-backup>'
 require_contract_line 'obos-portable-backup-import-plan-v1'
 require_contract_line 'sudo obosctl logs-summary'
 require_contract_line 'obos-logs-summary-v1'
+require_contract_line 'sudo obosctl logs-tail'
+require_contract_line 'obos-logs-tail-v1'
 require_contract_line 'sudo obosctl backup-prune --confirm backup-prune'
 require_contract_line 'obos-agent backup-prune --confirm backup-prune'
 require_contract_line 'obos-agent restore-stage <backup.tar.gz> --confirm restore-stage'
@@ -59,6 +61,7 @@ require_contract_line 'obos-agent backup-summary'
 require_contract_line 'obos-agent backup-list'
 require_contract_line 'obos-agent backup-prune-plan'
 require_contract_line 'obos-agent logs-summary'
+require_contract_line 'obos-agent logs-tail'
 require_contract_line 'obos-agent portable-export-plan <backup.tar.gz>'
 require_contract_line 'obos-agent portable-import-plan <portable-backup>'
 require_contract_line 'obos-agent restore-stage-summary'
@@ -84,6 +87,7 @@ require_contract_line 'GET /obos/api/v1/actions/<action>'
 require_contract_line 'update-rollback-plan'
 require_contract_line 'backup-list'
 require_contract_line 'logs-summary'
+require_contract_line 'logs-tail'
 require_contract_line 'POST /obos/api/v1/actions/<action>'
 require_contract_line 'same confirmation token required by'
 require_contract_line 'POST /obos/api/v1/actions/backup'
@@ -132,6 +136,8 @@ grep -q 'backup-prune-plan)' scripts/obosctl \
   || fail "obosctl backup-prune-plan command missing"
 grep -q 'logs-summary)' scripts/obosctl \
   || fail "obosctl logs-summary command missing"
+grep -q 'logs-tail)' scripts/obosctl \
+  || fail "obosctl logs-tail command missing"
 grep -q 'portable-export-plan)' scripts/obosctl \
   || fail "obosctl portable-export-plan command missing"
 grep -q 'portable-import-plan)' scripts/obosctl \

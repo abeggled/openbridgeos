@@ -23,6 +23,7 @@ Read-only actions:
   backup-list
   backup-prune-plan
   logs-summary
+  logs-tail
   portable-export-plan <backup.tar.gz>
   portable-import-plan <portable-backup>
   restore-stage-summary
@@ -216,6 +217,7 @@ action=backup-summary|mutating=false
 action=backup-list|mutating=false
 action=backup-prune-plan|mutating=false
 action=logs-summary|mutating=false
+action=logs-tail|mutating=false
 action=portable-export-plan|mutating=false|required_arg=backup-path
 action=portable-import-plan|mutating=false|required_arg=portable-backup
 action=restore-stage-summary|mutating=false
@@ -347,6 +349,10 @@ case "${1:-}" in
   logs-summary)
     require_no_extra_args "$@"
     run_obosctl logs-summary "${TIMEOUT_SECONDS}" false logs-summary
+    ;;
+  logs-tail)
+    require_no_extra_args "$@"
+    run_obosctl logs-tail "${TIMEOUT_SECONDS}" false logs-tail
     ;;
   portable-export-plan)
     require_backup_path_arg "$@"

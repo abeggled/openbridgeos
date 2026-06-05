@@ -161,13 +161,15 @@
         <article class="panel wide">
           <div class="panel-heading">
             <h2>Logs</h2>
-            <button type="button" disabled>View Logs</button>
+            <button type="button" data-load-logs>View Logs</button>
           </div>
           <dl class="inline-list">
             <div><dt>Raw logs exposed</dt><dd data-agent-field="logs-summary:raw_logs_exposed">pending</dd></div>
+            <div><dt>Bounded logs</dt><dd data-agent-field="logs-summary:bounded_logs_exposed">pending</dd></div>
             <div><dt>Journal entries last hour</dt><dd data-agent-field="logs-summary:journal_entry_count_last_hour">pending</dd></div>
             <div><dt>Docker available</dt><dd data-agent-field="logs-summary:docker_present">pending</dd></div>
           </dl>
+          <pre class="log-viewer" data-log-output>not loaded</pre>
         </article>
       </section>
     </main>
