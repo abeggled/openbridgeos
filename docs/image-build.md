@@ -398,20 +398,21 @@ sudo OBOS_SMOKE_HOST_HTTPS_PORT=9443 \
   scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.qcow2
 ```
 
-## First Implementation Direction
+## Current Implementation Direction
 
-Validate the `amd64-vm` qcow2 image in a VM first. The smoke test should confirm
-that first boot generates appliance identity, TLS material, app secrets, and that
+Validate the `amd64-vm` qcow2 image in a VM first. The smoke test confirms that
+first boot generates appliance identity, TLS material, app secrets, and that
 `obosctl status` passes through localhost and verified HTTPS proxy health.
 
-After the amd64 VM path is repeatable, add the Raspberry Pi image builder using
-the Network Installer compatible `rpi4-arm64` profile.
+Keep the Raspberry Pi builder aligned with the Network Installer compatible
+`rpi4-arm64` profile, including the NVMe kernel config requirement and disabled
+SSH default.
 
 ## Open Questions
 
 - Should the qcow2 builder move from local script to GitHub Actions once artifact size and runner privileges are understood?
-- Should Raspberry Pi images use pure Debian or Raspberry Pi OS Lite 64-bit as
-  the base while keeping the userland aligned with Debian 13?
+- Should Raspberry Pi images continue with pure Debian or use Raspberry Pi OS
+  Lite 64-bit while keeping the userland aligned with Debian 13?
 - Should development builds have an explicit opt-in SSH profile separate from release images?
 - How should users recover if first boot cannot reach the network to pull the
   open bridge server image?

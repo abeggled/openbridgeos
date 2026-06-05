@@ -3,8 +3,9 @@
 This document describes the first development installation path for open bridge
 operating system on a fresh Debian 13 Trixie system.
 
-The goal is not yet a polished image build. The goal is a reproducible path
-from a minimal Debian install to an appliance-like open bridge server host.
+The goal is a reproducible path from a minimal Debian install to an
+appliance-like open bridge server host. It remains useful for development and
+manual recovery even as qcow2 and Raspberry Pi image builders mature.
 
 ## Target
 
@@ -147,7 +148,8 @@ See [admin-cli.md](admin-cli.md).
 
 ## Known Gaps
 
-- No ISO or Raspberry Pi image builder yet.
-- obos web is a static shell only; no agent HTTP bridge yet.
-- No rollback path for failed app updates yet.
+- No ISO builder yet.
+- Image builders still need real hardware and VM release validation.
+- No automatic rollback for failed app updates yet; rollback planning and
+  confirmed CLI restore apply are available.
 - No tested platform-specific CA import guide yet.

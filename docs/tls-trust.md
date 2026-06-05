@@ -89,8 +89,8 @@ This writes public trust artifacts to:
 /srv/obos/state/trust/trust-info.txt
 ```
 
-The bundle intentionally excludes private keys. It is suitable as a source for a
-future onboarding UI, boot-accessible trust summary, or manual support workflow.
+The bundle intentionally excludes private keys. It is suitable as a source for
+the web UI, boot-accessible trust summary, or manual support workflow.
 The CA certificate can be copied to client devices after the fingerprint has
 been verified through an out-of-band path.
 
