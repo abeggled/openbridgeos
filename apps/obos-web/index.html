@@ -178,6 +178,7 @@
             <h2>Security Baseline</h2>
             <div class="button-row">
               <button type="button" data-run-security-audit>Run Audit</button>
+              <button type="button" data-run-mvp-readiness>Check Readiness</button>
               <button type="button" data-mutation-action="web-auth-rotate" data-confirm="web-auth-rotate" data-mutation-status-target="web-auth">Rotate Console Password</button>
             </div>
           </div>
@@ -185,6 +186,9 @@
             <div><dt>Result</dt><dd data-agent-field="security-summary:result">pending</dd></div>
             <div><dt>Pass</dt><dd data-agent-field="security-summary:pass_count">pending</dd></div>
             <div><dt>Fail</dt><dd data-agent-field="security-summary:fail_count">pending</dd></div>
+            <div><dt>MVP readiness</dt><dd data-agent-field="mvp-readiness-summary:result">pending</dd></div>
+            <div><dt>MVP pass</dt><dd data-agent-field="mvp-readiness-summary:pass_count">pending</dd></div>
+            <div><dt>MVP fail</dt><dd data-agent-field="mvp-readiness-summary:fail_count">pending</dd></div>
             <div><dt>Agent audit entries</dt><dd data-agent-field="agent-audit-summary:entry_count">pending</dd></div>
             <div><dt>Console password</dt><dd data-mutation-status="web-auth">ready</dd></div>
             <div><dt>New password</dt><dd class="secret-value" data-web-auth-password>not rotated</dd></div>
