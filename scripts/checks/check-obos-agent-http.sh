@@ -34,6 +34,10 @@ grep -q '"restart": "restart"' "${BRIDGE}" \
   || fail "restart mutation is not exposed with a matching confirmation token"
 grep -q '"restore-stage": "restore-stage"' "${BRIDGE}" \
   || fail "restore-stage mutation is not exposed with a matching confirmation token"
+grep -q '"set-hostname": "set-hostname"' "${BRIDGE}" \
+  || fail "set-hostname mutation is not exposed with a matching confirmation token"
+grep -q '"set-timezone": "set-timezone"' "${BRIDGE}" \
+  || fail "set-timezone mutation is not exposed with a matching confirmation token"
 grep -q '"tls-generate": "tls-generate"' "${BRIDGE}" \
   || fail "tls-generate mutation is not exposed with a matching confirmation token"
 grep -q '"tls-export": "tls-export"' "${BRIDGE}" \
@@ -72,6 +76,10 @@ grep -q 'backup_path' "${BRIDGE}" \
   || fail "bridge does not support checked restore-stage backup path payload"
 grep -q 'source_cidr' "${BRIDGE}" \
   || fail "bridge does not support optional MQTT source CIDR payload"
+grep -q 'hostname' "${BRIDGE}" \
+  || fail "bridge does not support hostname mutation payload"
+grep -q 'timezone' "${BRIDGE}" \
+  || fail "bridge does not support timezone mutation payload"
 grep -q 'obos-agent-http-error-v1' "${BRIDGE}" \
   || fail "HTTP error envelope missing"
 if grep -q 'Access-Control-Allow-Origin' "${BRIDGE}"; then
@@ -290,6 +298,38 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  set-hostname)
+    [ "${2:-}" = "obos-test" ] || exit 2
+    [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "set-hostname" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=set-hostname
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-set-hostname-v1
+stdout=hostname=obos-test
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  set-timezone)
+    [ "${2:-}" = "Europe/Zurich" ] || exit 2
+    [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "set-timezone" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=set-timezone
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-set-timezone-v1
+stdout=timezone=Europe/Zurich
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -392,6 +432,29 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/tls-export |
   grep -q 'stdout=tls-export:ok' \
   || fail "HTTP bridge did not run confirmed TLS export mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"set-hostname","hostname":"obos-test"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/set-hostname |
+  grep -q 'stdout=hostname=obos-test' \
+  || fail "HTTP bridge did not run confirmed hostname mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"set-timezone","timezone":"Europe/Zurich"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/set-timezone |
+  grep -q 'stdout=timezone=Europe/Zurich' \
+  || fail "HTTP bridge did not run confirmed timezone mutation"
+
+curl --silent --output "${tmp_dir}/hostname-extra-field.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"set-hostname","hostname":"obos-test","timezone":"Europe/Zurich"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/set-hostname |
+  grep -q '^400$' \
+  || fail "HTTP bridge did not reject unexpected hostname mutation body fields"
+grep -q 'invalid-body' "${tmp_dir}/hostname-extra-field.out" \
+  || fail "HTTP bridge hostname unexpected body rejection missing marker"
 
 curl --silent --output "${tmp_dir}/mqtt-extra-field.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \

@@ -10,6 +10,8 @@ and agent will need as well.
 obosctl status
 obosctl status-summary
 obosctl system-summary
+sudo obosctl set-hostname obos-test
+sudo obosctl set-timezone Europe/Zurich
 sudo obosctl security-summary
 sudo obosctl agent-audit-summary
 obosctl health
@@ -51,6 +53,8 @@ sudo obosctl mqtt-disable-lan
 obosctl status
 obosctl status-summary
 obosctl system-summary
+sudo obosctl set-hostname obos-test
+sudo obosctl set-timezone Europe/Zurich
 sudo obosctl security-summary
 sudo obosctl agent-audit-summary
 ```
@@ -70,6 +74,10 @@ localhost health, HTTPS proxy health, and whether a last update record exists.
 `system-summary` prints the stable `obos-system-summary-v1` format for agents
 and the web UI. It includes hostname, timezone, whether a default route is
 present, and the primary interface name. It does not print IP addresses.
+
+`set-hostname` and `set-timezone` update appliance host basics after validating
+their input. The web UI uses the same commands through confirmed `obos-agent`
+mutations.
 
 `security-summary` runs the security baseline audit in machine-readable mode. It
 prints the summary format, PASS/FAIL result, pass count, and fail count for

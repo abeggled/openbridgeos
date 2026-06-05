@@ -42,6 +42,8 @@ MUTATING_ACTIONS = {
     "mqtt-enable-lan": "mqtt-enable-lan",
     "restart": "restart",
     "restore-stage": "restore-stage",
+    "set-hostname": "set-hostname",
+    "set-timezone": "set-timezone",
     "start": "start",
     "stop": "stop",
     "tls-export": "tls-export",
@@ -118,6 +120,10 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             expected_fields.add("source_cidr")
         if action == "restore-stage":
             expected_fields.add("backup_path")
+        if action == "set-hostname":
+            expected_fields.add("hostname")
+        if action == "set-timezone":
+            expected_fields.add("timezone")
         if action == "mqtt-enable-lan" and isinstance(payload, dict) and set(payload) == {"confirm"}:
             expected_fields = {"confirm"}
         if not isinstance(payload, dict) or set(payload) != expected_fields:
@@ -132,6 +138,14 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             source_cidr = payload.get("source_cidr")
             if not isinstance(source_cidr, str) or not source_cidr or source_cidr.startswith("-"):
                 return None, (400, error_envelope("invalid-source-cidr", "source_cidr is invalid"))
+        if action == "set-hostname":
+            hostname = payload.get("hostname")
+            if not isinstance(hostname, str) or not hostname or hostname.startswith("-"):
+                return None, (400, error_envelope("invalid-hostname", "hostname is invalid"))
+        if action == "set-timezone":
+            timezone = payload.get("timezone")
+            if not isinstance(timezone, str) or not timezone or timezone.startswith("-"):
+                return None, (400, error_envelope("invalid-timezone", "timezone is invalid"))
         return payload, None
 
     def do_GET(self):
@@ -177,6 +191,10 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             args = [action, payload["backup_path"], "--confirm", payload["confirm"]]
         if action == "mqtt-enable-lan" and "source_cidr" in payload:
             args = [action, payload["source_cidr"], "--confirm", payload["confirm"]]
+        if action == "set-hostname":
+            args = [action, payload["hostname"], "--confirm", payload["confirm"]]
+        if action == "set-timezone":
+            args = [action, payload["timezone"], "--confirm", payload["confirm"]]
 
         try:
             completed = self.run_agent(args, AGENT_MUTATION_TIMEOUT_SECONDS)

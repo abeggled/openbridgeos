@@ -46,6 +46,8 @@ Mutating actions:
   tls-export --confirm tls-export
   mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
   mqtt-disable-lan --confirm mqtt-disable-lan
+  set-hostname <hostname> --confirm set-hostname
+  set-timezone <timezone> --confirm set-timezone
 EOF
 }
 
@@ -99,6 +101,31 @@ validate_source_cidr() {
   fi
 
   fail "mqtt-enable-lan source CIDR is invalid"
+}
+
+validate_hostname() {
+  hostname_value="$1"
+  case "${hostname_value}" in
+    ""|.*|*-|*_)
+      fail "set-hostname hostname is invalid"
+      ;;
+  esac
+  [ "${#hostname_value}" -le 63 ] || fail "set-hostname hostname is too long"
+  printf '%s\n' "${hostname_value}" |
+    grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' \
+    || fail "set-hostname hostname contains unsupported characters"
+}
+
+validate_timezone() {
+  timezone_value="$1"
+  case "${timezone_value}" in
+    ""|/*|*"/../"*|*".."*|*\\*|*" "*)
+      fail "set-timezone timezone is invalid"
+      ;;
+  esac
+  printf '%s\n' "${timezone_value}" |
+    grep -Eq '^(UTC|[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)+)$' \
+    || fail "set-timezone timezone contains unsupported characters"
 }
 
 validate_backup_path() {
@@ -205,6 +232,24 @@ require_mqtt_enable_args() {
   esac
 }
 
+require_set_hostname_args() {
+  action="$1"
+  [ "$#" -eq 4 ] || fail "${action} requires: <hostname> --confirm ${action}"
+  [ "${3:-}" = "--confirm" ] || fail "${action} requires: <hostname> --confirm ${action}"
+  [ "${4:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
+  HOSTNAME_VALUE="${2:-}"
+  validate_hostname "${HOSTNAME_VALUE}"
+}
+
+require_set_timezone_args() {
+  action="$1"
+  [ "$#" -eq 4 ] || fail "${action} requires: <timezone> --confirm ${action}"
+  [ "${3:-}" = "--confirm" ] || fail "${action} requires: <timezone> --confirm ${action}"
+  [ "${4:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
+  TIMEZONE_VALUE="${2:-}"
+  validate_timezone "${TIMEZONE_VALUE}"
+}
+
 print_actions() {
   cat <<'EOF'
 format=obos-agent-actions-v1
@@ -238,6 +283,8 @@ action=tls-generate|mutating=true|confirm=tls-generate
 action=tls-export|mutating=true|confirm=tls-export
 action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_arg=source-cidr
 action=mqtt-disable-lan|mutating=true|confirm=mqtt-disable-lan
+action=set-hostname|mutating=true|confirm=set-hostname|required_arg=hostname
+action=set-timezone|mutating=true|confirm=set-timezone|required_arg=timezone
 EOF
 }
 
@@ -437,6 +484,14 @@ case "${1:-}" in
   mqtt-disable-lan)
     require_confirm_args "$@"
     run_obosctl mqtt-disable-lan "${MUTATION_TIMEOUT_SECONDS}" true mqtt-disable-lan
+    ;;
+  set-hostname)
+    require_set_hostname_args "$@"
+    run_obosctl set-hostname "${MUTATION_TIMEOUT_SECONDS}" true set-hostname "${HOSTNAME_VALUE}"
+    ;;
+  set-timezone)
+    require_set_timezone_args "$@"
+    run_obosctl set-timezone "${MUTATION_TIMEOUT_SECONDS}" true set-timezone "${TIMEZONE_VALUE}"
     ;;
   -h|--help|help|"")
     usage

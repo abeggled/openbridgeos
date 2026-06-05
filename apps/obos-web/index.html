@@ -126,12 +126,18 @@
         <article class="panel">
           <div class="panel-heading">
             <h2>Host Basics</h2>
-            <button type="button" disabled>Configure</button>
+            <div class="button-row">
+              <input id="host-name" type="text" inputmode="text" autocomplete="off" placeholder="hostname">
+              <button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Set Hostname</button>
+              <input id="host-timezone" type="text" inputmode="text" autocomplete="off" placeholder="Europe/Zurich">
+              <button type="button" data-mutation-action="set-timezone" data-confirm="set-timezone" data-mutation-status-target="host">Set Timezone</button>
+            </div>
           </div>
           <dl>
             <div><dt>Hostname</dt><dd data-agent-field="system-summary:hostname">pending</dd></div>
             <div><dt>Timezone</dt><dd data-agent-field="system-summary:timezone">pending</dd></div>
             <div><dt>Primary interface</dt><dd data-agent-field="system-summary:primary_interface">pending</dd></div>
+            <div><dt>Host action</dt><dd data-mutation-status="host">ready</dd></div>
           </dl>
         </article>
 
