@@ -20,6 +20,7 @@ READ_ONLY_ACTIONS = {
     "actions",
     "status-summary",
     "update-summary",
+    "update-rollback-plan",
     "backup-summary",
     "backup-list",
     "backup-prune-plan",

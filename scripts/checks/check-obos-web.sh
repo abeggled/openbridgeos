@@ -24,6 +24,9 @@ grep -q 'open bridge operating system' "${INDEX}" \
 grep -q 'data-agent-field="status-summary:' "${INDEX}" \
   || fail "web UI does not expose status summary placeholders"
 
+grep -q 'data-agent-field="update-rollback-plan:backup_present"' "${INDEX}" \
+  || fail "web UI does not expose update rollback planning state"
+
 grep -q 'data-agent-field="backup-summary:' "${INDEX}" \
   || fail "web UI does not expose backup summary placeholders"
 

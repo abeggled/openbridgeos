@@ -69,6 +69,7 @@ require_contract_line 'Unix domain socket'
 require_contract_line '/obos/api/'
 require_contract_line 'no CORS wildcard is allowed'
 require_contract_line 'GET /obos/api/v1/actions/<action>'
+require_contract_line 'update-rollback-plan'
 require_contract_line 'backup-list'
 require_contract_line 'POST /obos/api/v1/actions/<action>'
 require_contract_line 'same confirmation token required by'
@@ -83,8 +84,8 @@ require_contract_line 'sudo -n'
 require_contract_line 'becomes mandatory only after'
 require_contract_line 'ProtectSystem=strict'
 require_contract_line 'MemoryDenyWriteExecute=true'
-require_contract_line 'Confirmed mutations should'
-require_contract_line 'remain unavailable over HTTP'
+require_contract_line 'Confirmed'
+require_contract_line 'mutations should remain unavailable over HTTP'
 
 grep -q 'status-summary)' scripts/obosctl \
   || fail "obosctl status-summary command missing"
