@@ -313,6 +313,12 @@ grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/app.js" "${OBOS_WEB_DIR}/ap
 grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not expose obos-web under /obos/"
 
+grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not protect obos-web with basic auth"
+
+grep -q 'auth_basic_user_file /etc/obos/web.htpasswd;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not use generated obos-web credentials"
+
 grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web from /srv/obos/web"
 

@@ -10,6 +10,7 @@ FIRST_BOOT_MARKER="${OBOS_STATE_DIR}/first-boot.done"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
+WEB_AUTH_SCRIPT="${OBOS_WEB_AUTH_SCRIPT:-/usr/lib/obos/generate-web-auth.sh}"
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -57,6 +58,10 @@ EOF
 fi
 
 chmod 0600 "${ENV_FILE}"
+
+if [ -x "${WEB_AUTH_SCRIPT}" ]; then
+  "${WEB_AUTH_SCRIPT}"
+fi
 
 if [ -x "${TLS_GENERATE_SCRIPT}" ]; then
   "${TLS_GENERATE_SCRIPT}"

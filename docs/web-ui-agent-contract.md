@@ -13,6 +13,8 @@ directly.
   `obosctl` commands.
 - The UI must treat backups, app environment files, TLS private keys, and
   restore staging directories as sensitive.
+- The UI and `/obos/api/` bridge must sit behind appliance-level authentication
+  before test-device use.
 - Raw service logs are sensitive by default; read-only log views should start
   with metadata-only availability summaries.
 - Bounded log tails may be exposed after authentication, but only through a

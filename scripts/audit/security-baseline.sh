@@ -11,9 +11,12 @@ APP_DIR="${OBOS_APP_DIR:-/srv/obos/apps/${APP_NAME}}"
 STATE_DIR="${OBOS_STATE_DIR:-/srv/obos/state}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
+WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-/etc/obos/web.htpasswd}"
+WEB_AUTH_INFO_FILE="${OBOS_WEB_AUTH_INFO_FILE:-/etc/obos/web-admin.env}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
 PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
 PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
+WEB_AUTH_URL="${OBOS_WEB_AUTH_URL:-https://${PROXY_HEALTH_HOST}/obos/}"
 AGENT_HTTP_URL="${OBOS_AGENT_HTTP_URL:-http://127.0.0.1:8091/obos/api/v1/actions/status-summary}"
 TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 NGINX_PROXY_CONF="${OBOS_NGINX_PROXY_CONF:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
@@ -214,6 +217,50 @@ check_proxy_health() {
   fi
 }
 
+web_auth_info_value() {
+  key="$1"
+  sed -n "s/^${key}=//p" "${WEB_AUTH_INFO_FILE}" 2>/dev/null | head -n 1
+}
+
+check_web_auth() {
+  if [ ! -f "${TLS_CA_CERT}" ]; then
+    fail "web console auth not checked because local CA is missing"
+    return
+  fi
+  if ! command -v curl >/dev/null 2>&1; then
+    fail "web console auth not checked because curl is missing"
+    return
+  fi
+
+  status_code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 5 \
+    --cacert "${TLS_CA_CERT}" \
+    --resolve "${PROXY_HEALTH_HOST}:443:127.0.0.1" \
+    "${WEB_AUTH_URL}" 2>/dev/null || true)"
+
+  if [ "${status_code}" = 401 ]; then
+    pass 'obos web console requires authentication'
+  else
+    fail "obos web console authentication challenge expected 401, got ${status_code:-missing}"
+  fi
+
+  web_user="$(web_auth_info_value OBOS_WEB_ADMIN_USER)"
+  web_password="$(web_auth_info_value OBOS_WEB_ADMIN_PASSWORD)"
+  if [ -z "${web_user}" ] || [ -z "${web_password}" ]; then
+    fail 'web console generated credentials missing'
+    return
+  fi
+
+  if curl --fail --silent --show-error --max-time 5 \
+    --cacert "${TLS_CA_CERT}" \
+    --resolve "${PROXY_HEALTH_HOST}:443:127.0.0.1" \
+    --user "${web_user}:${web_password}" \
+    "${WEB_AUTH_URL}" >/dev/null; then
+    pass 'obos web console accepts generated credentials'
+  else
+    fail 'obos web console rejects generated credentials'
+  fi
+}
+
 check_command docker
 check_command nft
 check_command nginx
@@ -228,6 +275,8 @@ check_file_mode /etc/obos 750
 check_file_mode "${ENV_FILE}" 600
 check_file_mode "${APPLIANCE_ID_FILE}" 644
 check_uuid_file "${APPLIANCE_ID_FILE}" 'appliance identifier'
+check_file_mode "${WEB_AUTH_FILE}" 640
+check_file_mode "${WEB_AUTH_INFO_FILE}" 600
 check_file_mode /srv/obos 750
 check_file_mode "${TLS_DIR}" 700
 check_file_mode "${TLS_DIR}/obos-local-ca.key" 600
@@ -290,6 +339,8 @@ check_grep 'ssl_certificate /etc/obos/tls/obos.local.crt;' "${NGINX_PROXY_CONF}"
 check_grep 'proxy_pass http://127.0.0.1:8080;' "${NGINX_PROXY_CONF}" 'nginx proxies to localhost open bridge server'
 check_grep 'location /obos/api/' "${NGINX_PROXY_CONF}" 'nginx exposes obos agent HTTP bridge path'
 check_grep 'proxy_pass http://127.0.0.1:8091;' "${NGINX_PROXY_CONF}" 'nginx proxies obos agent HTTP bridge to localhost'
+check_grep 'auth_basic "open bridge operating system";' "${NGINX_PROXY_CONF}" 'nginx protects obos web and API with basic auth'
+check_grep 'auth_basic_user_file /etc/obos/web.htpasswd;' "${NGINX_PROXY_CONF}" 'nginx uses generated obos web credentials'
 check_grep 'server_tokens off;' "${NGINX_PROXY_CONF}" 'nginx server token disclosure disabled'
 check_grep 'client_body_timeout 30s;' "${NGINX_PROXY_CONF}" 'nginx client body timeout bounded'
 check_grep 'client_header_timeout 30s;' "${NGINX_PROXY_CONF}" 'nginx client header timeout bounded'
@@ -314,6 +365,7 @@ else
 fi
 
 check_proxy_health
+check_web_auth
 
 if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 "${AGENT_HTTP_URL}" |
   grep -q 'format=obos-agent-response-v1'; then

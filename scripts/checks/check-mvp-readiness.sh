@@ -25,6 +25,7 @@ require_file docs/security-baseline-testplan.md
 require_file scripts/obosctl
 require_file scripts/agent/obos-agent.sh
 require_file scripts/agent/obos-agent-http.py
+require_file scripts/auth/generate-web-auth.sh
 require_file scripts/audit/mvp-runtime-readiness.sh
 require_file apps/obos-web/index.html
 require_file apps/obos-web/app.js
@@ -58,6 +59,8 @@ require_line "format=obos-mqtt-summary-v1" scripts/hardening/set-mqtt-lan-access
 require_line "format=obos-tls-summary-v1" scripts/tls/check-tls-status.sh
 require_line "format=obos-security-baseline-summary-v1" scripts/audit/security-baseline.sh
 require_line "STATE_DIR=" scripts/audit/security-baseline.sh
+require_line "WEB_AUTH_FILE=" scripts/audit/security-baseline.sh
+require_line "check_web_auth" scripts/audit/security-baseline.sh
 require_line "format=obos-mvp-runtime-readiness-v1" scripts/audit/mvp-runtime-readiness.sh
 require_line "check_systemd_active obos-agent-http.service" scripts/audit/mvp-runtime-readiness.sh
 require_line "check_output_contains \"security baseline passes\" \"result=PASS\"" scripts/audit/mvp-runtime-readiness.sh
@@ -104,6 +107,11 @@ require_line '"set-hostname": "set-hostname"' scripts/agent/obos-agent-http.py
 require_line '"set-timezone": "set-timezone"' scripts/agent/obos-agent-http.py
 require_line "MAX_POST_BYTES = 1024" scripts/agent/obos-agent-http.py
 require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.sh
+require_line "auth_basic \"open bridge operating system\";" packaging/nginx/openbridgeserver.conf
+require_line "auth_basic_user_file /etc/obos/web.htpasswd;" packaging/nginx/openbridgeserver.conf
+require_line "openssl passwd -apr1 -stdin" scripts/auth/generate-web-auth.sh
+require_line "OBOS-ONBOARDING.txt" scripts/tls/export-boot-trust-summary.sh
+require_line "initial web console password" scripts/tls/export-boot-trust-summary.sh
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html
