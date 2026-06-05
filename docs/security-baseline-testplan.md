@@ -309,7 +309,7 @@ The baseline passes when:
 - `obosctl restore-plan` passes for the latest backup
 - `sudo obosctl restore-stage` creates a private staging directory for the latest backup
 - `sudo obosctl restore-stage-inspect` passes for the latest staging directory
-- `sudo obosctl restore-apply-plan` prints the gated future apply plan
+- `sudo obosctl restore-apply-plan` prints the gated confirmed CLI apply plan
 
 ## Known Follow-Up Tests
 
