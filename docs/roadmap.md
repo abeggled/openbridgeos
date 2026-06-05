@@ -45,6 +45,18 @@
 - Provide explicit opt-in controls for LAN MQTT exposure.
 - Consume stable `obosctl mqtt-summary` key-value output for MQTT exposure state.
 
+Current implementation status:
+
+- Static obos web shell is installed below `/srv/obos/web` and served below
+  `/obos/`.
+- Read-only `obos-agent-http.service` exposes selected `obos-agent` actions
+  below `/obos/api/` on the same HTTPS origin.
+- The web shell consumes read-only status, update, backup, restore staging,
+  MQTT, TLS, security baseline, and agent audit summary fields.
+- Confirmed mutations remain disabled over HTTP.
+- Backup creation/download, log viewing, hostname, timezone, network basics,
+  and MQTT/TLS mutation controls are still future UI work.
+
 ## Milestone 4: Hardened Release
 
 - First boot onboarding flow.

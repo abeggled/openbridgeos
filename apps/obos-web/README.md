@@ -37,3 +37,6 @@ warning state, and trust bundle availability for onboarding and support.
 
 Confirmed mutations will be wired only after an HTTP boundary for `obos-agent`
 exists and keeps the same confirmation and audit rules.
+
+Current mutation controls are intentionally disabled in HTML. The first HTTP
+bridge only exposes read-only endpoints.
