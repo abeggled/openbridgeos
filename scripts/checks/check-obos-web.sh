@@ -54,6 +54,18 @@ grep -q 'data-mutation-status="backup"' "${INDEX}" \
 grep -q 'data-agent-field="restore-stage-summary:' "${INDEX}" \
   || fail "web UI does not expose restore staging placeholders"
 
+grep -q 'data-mutation-action="restore-stage"' "${INDEX}" \
+  || fail "web UI does not expose restore-stage mutation control"
+
+grep -q 'data-confirm="restore-stage"' "${INDEX}" \
+  || fail "web UI restore-stage mutation control does not carry confirmation token"
+
+grep -q 'data-mutation-backup-from="backup-summary:latest_backup"' "${INDEX}" \
+  || fail "web UI restore-stage mutation does not use latest backup source"
+
+grep -q 'data-mutation-status="restore-stage"' "${INDEX}" \
+  || fail "web UI does not expose restore-stage mutation status"
+
 grep -q 'data-agent-field="mqtt-summary:' "${INDEX}" \
   || fail "web UI does not expose MQTT summary placeholders"
 
@@ -120,11 +132,17 @@ grep -q 'runMutation' "${JS}" \
 grep -q 'Content-Type": "application/json"' "${JS}" \
   || fail "web UI mutations do not use JSON requests"
 
-grep -q 'JSON.stringify({ confirm: confirmToken })' "${JS}" \
+grep -q 'JSON.stringify(body)' "${JS}" \
   || fail "web UI mutations do not send confirmation token"
 
 grep -q 'mutationStatusTarget' "${JS}" \
   || fail "web UI mutations do not route status to explicit targets"
+
+grep -q 'mutationBackupFrom' "${JS}" \
+  || fail "web UI restore-stage mutation does not read backup source"
+
+grep -q 'body.backup_path = backupPath' "${JS}" \
+  || fail "web UI restore-stage mutation does not send backup path"
 
 grep -q 'grid-template-columns' "${CSS}" \
   || fail "web UI CSS does not define stable grid layout"

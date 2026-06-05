@@ -179,6 +179,10 @@ same local HTTP bridge confirmation model. These operations still cross the
 `obos-agent` audit boundary and use the same confirmation token as the agent
 command.
 
+The web UI can stage the latest listed backup through `obos-agent restore-stage
+<backup.tar.gz> --confirm restore-stage`. This extracts into private restore
+staging only; restore apply remains unavailable through the web UI.
+
 Downloadable backups should use the future encrypted portable backup format
 `obos-portable-backup-v1`. This export format is intended for browser download,
 offline storage, and migration to another open bridge operating system

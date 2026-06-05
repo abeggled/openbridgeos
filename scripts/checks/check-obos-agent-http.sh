@@ -28,6 +28,8 @@ grep -q '"stop": "stop"' "${BRIDGE}" \
   || fail "stop mutation is not exposed with a matching confirmation token"
 grep -q '"restart": "restart"' "${BRIDGE}" \
   || fail "restart mutation is not exposed with a matching confirmation token"
+grep -q '"restore-stage": "restore-stage"' "${BRIDGE}" \
+  || fail "restore-stage mutation is not exposed with a matching confirmation token"
 grep -q '"update": "update"' "${BRIDGE}" \
   || fail "update mutation is not exposed with a matching confirmation token"
 grep -q '"system-summary"' "${BRIDGE}" \
@@ -54,8 +56,10 @@ grep -q 'application/json' "${BRIDGE}" \
   || fail "bridge does not require JSON for mutations"
 grep -q 'MAX_POST_BYTES = 1024' "${BRIDGE}" \
   || fail "bridge does not limit mutation body size"
-grep -q 'set(payload) != {"confirm"}' "${BRIDGE}" \
+grep -q 'expected_fields = {"confirm"}' "${BRIDGE}" \
   || fail "bridge does not reject unexpected mutation body fields"
+grep -q 'backup_path' "${BRIDGE}" \
+  || fail "bridge does not support checked restore-stage backup path payload"
 grep -q 'obos-agent-http-error-v1' "${BRIDGE}" \
   || fail "HTTP error envelope missing"
 if grep -q 'Access-Control-Allow-Origin' "${BRIDGE}"; then
@@ -194,6 +198,22 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  restore-stage)
+    [ "${2:-}" = "/srv/obos/backups/obos-openbridgeserver-test.tar.gz" ] || exit 2
+    [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "restore-stage" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=restore-stage
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-restore-stage-v1
+stdout=stage_dir=/srv/obos/state/restore-staging/restore.test
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -250,6 +270,22 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/update |
   grep -q 'stdout=update:ok' \
   || fail "HTTP bridge did not run confirmed update mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"restore-stage","backup_path":"/srv/obos/backups/obos-openbridgeserver-test.tar.gz"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/restore-stage |
+  grep -q 'stdout=format=obos-restore-stage-v1' \
+  || fail "HTTP bridge did not run confirmed restore-stage mutation"
+
+curl --silent --output "${tmp_dir}/restore-stage-extra-field.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"restore-stage","backup_path":"/srv/obos/backups/obos-openbridgeserver-test.tar.gz","extra":true}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/restore-stage |
+  grep -q '^400$' \
+  || fail "HTTP bridge did not reject unexpected restore-stage mutation body fields"
+grep -q 'invalid-body' "${tmp_dir}/restore-stage-extra-field.out" \
+  || fail "HTTP bridge restore-stage unexpected body rejection missing marker"
 
 curl --silent --output "${tmp_dir}/backup-bad-confirm.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \

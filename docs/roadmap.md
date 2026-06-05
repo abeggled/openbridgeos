@@ -56,15 +56,15 @@ Current implementation status:
 - The web shell consumes read-only status, update, backup, restore staging,
   host basics, logs metadata, MQTT, TLS, security baseline, and agent audit
   summary fields.
-- Start, stop, restart, update, and backup creation are exposed as the first
-  confirmed HTTP mutations through `obos-agent`.
+- Start, stop, restart, update, backup creation, and restore staging are exposed
+  as the first confirmed HTTP mutations through `obos-agent`.
 - Backup download is intentionally limited to the future encrypted portable
   backup format.
 - Non-destructive encrypted portable backup export/import planning exists in
   `obosctl` and `obos-agent`.
-- Encrypted portable backup creation/download/upload/decryption, log viewing,
-  hostname, timezone, network basics, and MQTT/TLS mutation controls are still
-  future UI work.
+- Restore apply, encrypted portable backup creation/download/upload/decryption,
+  log viewing, hostname, timezone, network basics, and MQTT/TLS mutation
+  controls are still future UI work.
 
 ## Milestone 4: Hardened Release
 
