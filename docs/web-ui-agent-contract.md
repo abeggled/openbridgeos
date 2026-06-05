@@ -81,6 +81,8 @@ written to the audit log. The provisioned audit log is rotated by logrotate and
 new log files are created as `0640 obos-agent:obos-agent`.
 Restore staging accepts only appliance backup archives below the configured
 backup directory before crossing the sudo boundary.
+Restore stage inspection accepts only private restore staging directories below
+the configured restore staging directory.
 
 ## Restore Workflow
 
@@ -122,6 +124,7 @@ obos-agent backup-summary
 obos-agent backup-list
 obos-agent backup-prune-plan
 obos-agent restore-stage-summary
+obos-agent restore-stage-inspect <stage-dir>
 obos-agent mqtt-summary
 obos-agent tls-summary
 obos-agent security-summary

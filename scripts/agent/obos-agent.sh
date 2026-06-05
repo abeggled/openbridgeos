@@ -3,6 +3,7 @@ set -eu
 
 OBOSCTL="${OBOS_AGENT_OBOSCTL:-/usr/bin/obosctl}"
 BACKUP_DIR="${OBOS_AGENT_BACKUP_DIR:-/srv/obos/backups}"
+RESTORE_STAGE_DIR="${OBOS_AGENT_RESTORE_STAGE_DIR:-/srv/obos/state/restore-staging}"
 TIMEOUT_SECONDS="${OBOS_AGENT_TIMEOUT_SECONDS:-30}"
 MUTATION_TIMEOUT_SECONDS="${OBOS_AGENT_MUTATION_TIMEOUT_SECONDS:-600}"
 AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-/srv/obos/state/agent/obos-agent-audit.log}"
@@ -20,6 +21,7 @@ Read-only actions:
   backup-list
   backup-prune-plan
   restore-stage-summary
+  restore-stage-inspect <stage-dir>
   mqtt-summary
   tls-summary
   security-summary
@@ -105,6 +107,29 @@ validate_backup_path() {
   esac
 }
 
+validate_restore_stage_path() {
+  stage_path="$1"
+  case "${stage_path}" in
+    "${RESTORE_STAGE_DIR}"/restore.*) ;;
+    *) fail "restore-stage-inspect stage path must be below ${RESTORE_STAGE_DIR}" ;;
+  esac
+  case "${stage_path}" in
+    *'/../'*|*'/..'|'../'*|..)
+      fail "restore-stage-inspect stage path must not contain parent traversal"
+      ;;
+  esac
+}
+
+require_restore_stage_inspect_args() {
+  action="$1"
+  [ "$#" -eq 2 ] || fail "${action} requires: <stage-dir>"
+  RESTORE_STAGE_PATH="${2:-}"
+  case "${RESTORE_STAGE_PATH}" in
+    ""|-*) fail "${action} stage path is invalid" ;;
+  esac
+  validate_restore_stage_path "${RESTORE_STAGE_PATH}"
+}
+
 require_restore_stage_args() {
   action="$1"
   [ "$#" -eq 4 ] || fail "${action} requires: <backup.tar.gz> --confirm ${action}"
@@ -151,6 +176,7 @@ action=backup-summary|mutating=false
 action=backup-list|mutating=false
 action=backup-prune-plan|mutating=false
 action=restore-stage-summary|mutating=false
+action=restore-stage-inspect|mutating=false|required_arg=stage-dir
 action=backup-prune|mutating=true|confirm=backup-prune
 action=mqtt-summary|mutating=false
 action=tls-summary|mutating=false
@@ -273,6 +299,10 @@ case "${1:-}" in
   restore-stage-summary)
     require_no_extra_args "$@"
     run_obosctl restore-stage-summary "${TIMEOUT_SECONDS}" false restore-stage-summary
+    ;;
+  restore-stage-inspect)
+    require_restore_stage_inspect_args "$@"
+    run_obosctl restore-stage-inspect "${TIMEOUT_SECONDS}" false restore-stage-inspect "${RESTORE_STAGE_PATH}"
     ;;
   backup-prune)
     require_confirm_args "$@"

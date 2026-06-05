@@ -221,6 +221,7 @@ calling `sudo obosctl restore-stage`.
 
 ```sh
 sudo obosctl restore-stage-inspect /srv/obos/state/restore-staging/restore.XXXXXXXX
+obos-agent restore-stage-inspect /srv/obos/state/restore-staging/restore.XXXXXXXX
 ```
 
 `restore-stage-inspect` verifies an already extracted staging directory before a
@@ -228,6 +229,9 @@ future apply step is allowed to use it. It checks the stage manifest format,
 staged-only mode, expected app name, required restore inputs, and confirms that
 Mosquitto logs were not staged. The command does not stop services and does not
 replace live appliance files.
+
+Through `obos-agent`, restore stage inspection accepts only staging directories
+below the configured private restore staging directory.
 
 ## Restore Apply Plan
 
