@@ -15,6 +15,10 @@ PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
 PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
 TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 NGINX_PROXY_CONF="${OBOS_NGINX_PROXY_CONF:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
+AGENT_AUDIT_DIR="${OBOS_AGENT_AUDIT_DIR:-${STATE_DIR}/agent}"
+AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-${AGENT_AUDIT_DIR}/obos-agent-audit.log}"
+AGENT_SUDOERS="${OBOS_AGENT_SUDOERS:-/etc/sudoers.d/obos-agent}"
+AGENT_LOGROTATE="${OBOS_AGENT_LOGROTATE:-/etc/logrotate.d/obos-agent}"
 
 pass() {
   PASS_COUNT=$((PASS_COUNT + 1))
@@ -52,11 +56,29 @@ check_file_mode() {
   fi
 }
 
+check_optional_file_mode() {
+  path="$1"
+  expected="$2"
+  if [ -e "${path}" ]; then
+    check_file_mode "${path}" "${expected}"
+  else
+    pass "${path} absent"
+  fi
+}
+
 check_command() {
   if command -v "$1" >/dev/null 2>&1; then
     pass "$1 installed"
   else
     fail "$1 missing"
+  fi
+}
+
+check_user() {
+  if id -u "$1" >/dev/null 2>&1; then
+    pass "$1 user exists"
+  else
+    fail "$1 user missing"
   fi
 }
 
@@ -180,7 +202,10 @@ check_command docker
 check_command nft
 check_command nginx
 check_command obosctl
+check_command obos-agent
 check_command openssl
+
+check_user obos-agent
 
 check_file_mode /etc/obos 750
 check_file_mode "${ENV_FILE}" 600
@@ -192,6 +217,13 @@ check_file_mode "${TLS_DIR}/obos-local-ca.key" 600
 check_file_mode "${TLS_DIR}/obos.local.key" 600
 check_certificate "${TLS_DIR}/obos-local-ca.crt" 'local CA'
 check_certificate "${TLS_DIR}/obos.local.crt" 'leaf'
+check_file_mode "${AGENT_SUDOERS}" 440
+check_file_mode "${AGENT_LOGROTATE}" 644
+check_optional_file_mode "${AGENT_AUDIT_DIR}" 750
+check_optional_file_mode "${AGENT_AUDIT_LOG}" 640
+check_grep 'obos-agent ALL=(root) NOPASSWD:' "${AGENT_SUDOERS}" 'obos-agent sudoers allowlisted root boundary'
+check_grep '/usr/bin/obosctl agent-audit-summary' "${AGENT_SUDOERS}" 'obos-agent sudoers audit summary command'
+check_grep 'create 0640 obos-agent obos-agent' "${AGENT_LOGROTATE}" 'obos-agent audit logrotate permissions'
 
 check_systemd_active docker.service
 check_systemd_enabled docker.service

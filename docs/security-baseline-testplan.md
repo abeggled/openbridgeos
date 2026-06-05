@@ -29,6 +29,7 @@ intended host security posture:
 - private restore staging
 - private restore stage inspection
 - non-destructive restore apply planning
+- local agent sudoers, logrotate, and mutation audit boundary
 
 ## Test Setup
 
@@ -82,6 +83,22 @@ Expected:
 - nftables active
 - obos first boot enabled
 - open bridge server service enabled
+
+### Local Agent Boundary
+
+```sh
+id obos-agent
+test -f /etc/sudoers.d/obos-agent
+test -f /etc/logrotate.d/obos-agent
+sudo obosctl agent-audit-summary
+```
+
+Expected:
+
+- `obos-agent` system user exists
+- sudoers policy and logrotate policy are installed
+- `agent-audit-summary` reports `format=obos-agent-audit-summary-v1`
+- existing mutation audit logs are mode `0640`
 
 ### SSH
 

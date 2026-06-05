@@ -124,6 +124,10 @@ Provisioned systems should pass:
 sudo /usr/lib/obos/security-baseline.sh
 ```
 
+The audit also verifies the local agent privilege boundary, including the
+`obos-agent` system user, sudoers allowlist, logrotate policy, and restrictive
+permissions for existing mutation audit logs.
+
 The manual validation plan is documented in
 [security-baseline-testplan.md](security-baseline-testplan.md).
 

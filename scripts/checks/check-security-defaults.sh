@@ -323,6 +323,25 @@ grep -q -- '--resolve' scripts/obosctl \
 grep -q 'APPLIANCE_ID_FILE=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit appliance identifier"
 
+grep -q 'AGENT_AUDIT_LOG=' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit agent audit log"
+
+grep -q 'check_command obos-agent' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit obos-agent installation"
+
+grep -q 'check_user obos-agent' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit obos-agent user"
+
+grep -q 'AGENT_SUDOERS=' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit obos-agent sudoers policy"
+
+grep -q 'AGENT_LOGROTATE=' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit obos-agent logrotate policy"
+
+# shellcheck disable=SC2016
+grep -q 'check_optional_file_mode "${AGENT_AUDIT_LOG}" 640' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not audit agent audit log permissions"
+
 grep -q 'security-summary)' scripts/obosctl \
   || fail "obosctl does not expose machine-readable security baseline status"
 
