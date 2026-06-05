@@ -422,11 +422,15 @@ Keep the Raspberry Pi builder aligned with the Network Installer compatible
 `rpi4-arm64` profile, including the NVMe kernel config requirement and disabled
 SSH default.
 
+Use [image-release-validation.md](image-release-validation.md) as the technical
+MVP release validation runbook for qcow2, Raspberry Pi Network Installer,
+artifact integrity, trust onboarding, and rollback staging checks.
+
 ## Open Questions
 
 - Should the qcow2 builder move from local script to GitHub Actions once artifact size and runner privileges are understood?
 - Should Raspberry Pi images continue with pure Debian or use Raspberry Pi OS
   Lite 64-bit while keeping the userland aligned with Debian 13?
 - Should development builds have an explicit opt-in SSH profile separate from release images?
-- Which hardware-specific recovery drills should be documented after the first
+- Which hardware-specific recovery drills should be added after the first
   Raspberry Pi and VM release validation runs?

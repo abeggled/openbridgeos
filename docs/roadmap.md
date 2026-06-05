@@ -83,6 +83,10 @@ Current implementation status:
   non-destructive summary across services, security baseline, TLS, MQTT,
   backup, migration, restore planning, update rollback planning when a last
   update exists, and the local agent boundary.
+- Image release validation is tracked in
+  [image-release-validation.md](image-release-validation.md), including qcow2,
+  Raspberry Pi Network Installer, artifact integrity, trust onboarding, and
+  rollback staging checks.
 
 ## Milestone 4: Hardened Release
 
