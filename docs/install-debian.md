@@ -13,6 +13,7 @@ manual recovery even as qcow2 and Raspberry Pi image builders mature.
 - `amd64` or `arm64`
 - root shell during provisioning
 - network access for Debian packages and container image pulls
+- working `network-online.target` behavior from the Debian network stack
 
 ## Provisioning
 
@@ -138,6 +139,9 @@ See [admin-cli.md](admin-cli.md).
 - `OBS_JWT_SECRET` is generated on first boot.
 - `OBS_MQTT_PASSWORD` is generated on first boot.
 - TLS trust material is generated on first boot.
+- First boot and the managed open bridge server service wait for
+  `network-online.target` so slow DHCP or Raspberry Pi network setup does not
+  race initial TLS material generation or container image pulls.
 - open bridge server is exposed externally through HTTPS on TCP `443`.
 - obos web is served below `/obos/` on the same HTTPS origin.
 - Direct open bridge server HTTP is localhost-only on `127.0.0.1:8080`.
