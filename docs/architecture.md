@@ -138,3 +138,10 @@ mutating actions.
 Provisioning installs this static shell below `/srv/obos/web`.
 nginx serves it below `/obos/` on the same HTTPS origin while leaving `/` for
 open bridge server.
+
+The future HTTP bridge for that web UI is intentionally a separate local
+boundary. It should be exposed only below `/obos/api/` on the same HTTPS origin,
+bind locally or to a Unix socket, call the installed `obos-agent` binary, and
+keep confirmed mutations disabled until the read-only bridge and systemd
+hardening are validated. The detailed contract is in
+[web-ui-agent-contract.md](web-ui-agent-contract.md).

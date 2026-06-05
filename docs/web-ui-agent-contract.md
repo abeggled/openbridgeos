@@ -140,3 +140,39 @@ The action inventory uses format `obos-agent-actions-v1` and marks every current
 action as `mutating=false` or `mutating=true`. Mutating entries include the
 required confirmation token. Mutating responses are paired with metadata-only
 audit log entries.
+
+## HTTP Bridge Boundary
+
+The web UI should not execute `obos-agent` directly in the browser. A future
+HTTP bridge may sit between nginx and `obos-agent`, but it must stay a local
+appliance boundary:
+
+- Bind only to `127.0.0.1` or to a Unix domain socket.
+- Be reachable through nginx only below `/obos/api/` on the existing HTTPS
+  origin.
+- Disable cross-origin browser access; no CORS wildcard is allowed.
+- Serve read-only actions as explicit `GET /obos/api/v1/actions/<action>`
+  endpoints that map one-to-one to documented non-mutating `obos-agent`
+  actions.
+- Serve mutations as `POST /obos/api/v1/actions/<action>` endpoints with a JSON
+  body containing the same confirmation token required by `obos-agent`.
+- Reject unknown actions, unknown arguments, missing confirmation tokens, and
+  unexpected request body fields.
+- Return the existing `obos-agent-response-v1` envelope, or a documented
+  `obos-agent-http-error-v1` error envelope for HTTP-layer validation failures.
+- Never return backup archive contents, app environment files, TLS private keys,
+  restore staged file contents, or raw command stderr without the existing agent
+  envelope.
+- Run under a dedicated unprivileged service account and call only the installed
+  `obos-agent` binary, never `obosctl` or a shell directly.
+- Use systemd hardening at least as strict as the local agent boundary:
+  `NoNewPrivileges=true`, `PrivateTmp=true`, `ProtectSystem=strict`,
+  `ProtectHome=true`, and a narrow `ReadWritePaths=` entry only for agent state
+  if the bridge itself needs state.
+
+The first implementation should start with read-only endpoints for `actions`,
+`status-summary`, `update-summary`, `backup-summary`, `backup-prune-plan`,
+`restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`, and
+`agent-audit-summary`. Confirmed mutations should remain unavailable over HTTP
+until the read-only bridge, nginx path, and service hardening are validated in
+CI.

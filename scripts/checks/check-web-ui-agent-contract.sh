@@ -61,6 +61,22 @@ require_contract_line 'Optional MQTT source CIDR input is validated by the agent
 require_contract_line 'Restore staging accepts only appliance backup archives below the configured'
 require_contract_line 'Restore stage inspection accepts only private restore staging directories'
 require_contract_line 'Restore apply planning uses the same stage path validation'
+require_contract_line 'HTTP Bridge Boundary'
+require_contract_line 'Bind only to'
+require_contract_line '127.0.0.1'
+require_contract_line 'Unix domain socket'
+require_contract_line '/obos/api/'
+require_contract_line 'no CORS wildcard is allowed'
+require_contract_line 'GET /obos/api/v1/actions/<action>'
+require_contract_line 'POST /obos/api/v1/actions/<action>'
+require_contract_line 'same confirmation token required by'
+require_contract_line 'obos-agent-http-error-v1'
+require_contract_line 'dedicated unprivileged service account'
+require_contract_line 'never'
+require_contract_line 'or a shell directly'
+require_contract_line 'NoNewPrivileges=true'
+require_contract_line 'ProtectSystem=strict'
+require_contract_line 'Confirmed mutations should remain unavailable over HTTP'
 
 grep -q 'status-summary)' scripts/obosctl \
   || fail "obosctl status-summary command missing"

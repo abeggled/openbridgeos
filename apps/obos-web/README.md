@@ -7,6 +7,11 @@ screen structure and the data-contract placeholders that will later be filled by
 the local `obos-agent`. It must not write appliance files directly and must not
 call arbitrary shell commands.
 
+The future HTTP bridge should live below `/obos/api/` on the same HTTPS origin,
+bind only locally or to a Unix socket, and call `obos-agent` rather than
+`obosctl` or a shell directly. Confirmed mutations stay unavailable over HTTP
+until the read-only bridge and service hardening are validated.
+
 ## Contract
 
 The UI is expected to consume the allowlisted commands documented in
