@@ -33,4 +33,20 @@ if sh scripts/images/check-rpi-boot-files.sh "${BAD_ROOT}" >/dev/null 2>&1; then
   exit 1
 fi
 
+cp -a "${GOOD_ROOT}" "${BAD_ROOT}"
+sed 's/root=LABEL=OBOSROOT/root=LABEL=WRONGROOT/' "${GOOD_ROOT}/boot/cmdline.txt" > "${BAD_ROOT}/boot/cmdline.txt"
+
+if sh scripts/images/check-rpi-boot-files.sh "${BAD_ROOT}" >/dev/null 2>&1; then
+  echo "Raspberry Pi boot files fixture failed: wrong root label was accepted" >&2
+  exit 1
+fi
+
+cp -a "${GOOD_ROOT}" "${BAD_ROOT}"
+sed '/^arm_64bit=1$/d' "${GOOD_ROOT}/boot/config.txt" > "${BAD_ROOT}/boot/config.txt"
+
+if sh scripts/images/check-rpi-boot-files.sh "${BAD_ROOT}" >/dev/null 2>&1; then
+  echo "Raspberry Pi boot files fixture failed: missing 64-bit boot mode was accepted" >&2
+  exit 1
+fi
+
 echo "Raspberry Pi boot files fixture: PASS"
