@@ -146,6 +146,13 @@ rollback_stage_result=PASS|FAIL|not_run
 notes=
 ```
 
+Print a profile-specific validation record template:
+
+```sh
+sh scripts/images/print-image-validation-record-template.sh amd64-vm > validation-amd64-vm.record
+sh scripts/images/print-image-validation-record-template.sh rpi4-arm64 > validation-rpi4-arm64.record
+```
+
 Validate a completed record before attaching it to a release:
 
 ```sh
