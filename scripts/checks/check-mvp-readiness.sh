@@ -144,6 +144,7 @@ require_line "initial web console password" scripts/tls/export-boot-trust-summar
 require_line "Validation Matrix" docs/client-ca-trust.md
 require_line "fingerprint_verified=yes|no" docs/client-ca-trust.md
 require_line "tls-certificate-lifecycle.md" docs/tls-trust.md
+require_line "confirmed CLI leaf" docs/admin-cli.md
 require_line "Leaf Renewal" docs/tls-certificate-lifecycle.md
 require_line "tls-renew-leaf-plan" docs/tls-certificate-lifecycle.md
 require_line "Local CA Rotation" docs/tls-certificate-lifecycle.md
