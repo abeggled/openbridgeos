@@ -115,8 +115,9 @@ List any accepted technical MVP limitations:
 
 - Web restore apply remains CLI-only.
 - Network basics beyond hostname and timezone remain future UI work.
-- Certificate replacement and rotation workflow is still a follow-up unless
-  explicitly implemented for this release.
+- Certificate lifecycle policy is documented, but automated replacement and
+  rotation workflows remain follow-up work unless explicitly implemented for
+  this release.
 - Full disk encryption is not yet part of the technical MVP image baseline.
 
 ## Upgrade And Migration Notes

@@ -149,12 +149,29 @@ Important:
 The underlying helper scripts are installed below `/usr/lib/obos` for packaging
 and automation, but administrators should use `obosctl` as the stable interface.
 
+## Certificate Lifecycle
+
+Certificate lifecycle rules are defined in
+[tls-certificate-lifecycle.md](tls-certificate-lifecycle.md).
+
+Summary:
+
+- `obosctl tls-generate` is idempotent and does not rotate existing trust
+  material implicitly.
+- Leaf renewal keeps the existing appliance local CA and should not require
+  client devices to trust a new CA.
+- Local CA rotation creates a new trust identity and requires explicit client
+  re-onboarding.
+- Imported public certificates are a future advanced workflow, not a technical
+  MVP baseline requirement.
+
 ## Current Limitations
 
 - IP SANs are generated from the current network state and are not renewed yet
   when DHCP addresses change.
 - Client CA import guidance still needs screenshots and tested release
   instructions for each supported platform.
-- Certificate replacement and rotation are not implemented yet.
+- Certificate replacement and rotation policy is documented, but automated
+  lifecycle commands are not implemented yet.
 - Plain HTTP redirect/onboarding behavior is still undecided; TCP `80` is closed
   for now.

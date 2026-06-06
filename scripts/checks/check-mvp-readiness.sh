@@ -25,6 +25,7 @@ require_file docs/image-release-validation.md
 require_file docs/release-signing.md
 require_file docs/release-notes-template.md
 require_file docs/technical-mvp-handoff.md
+require_file docs/tls-certificate-lifecycle.md
 require_file docs/client-ca-trust.md
 require_file docs/security-baseline-testplan.md
 require_file scripts/obosctl
@@ -60,6 +61,7 @@ require_line "image-release-validation.md" docs/roadmap.md
 require_line "release-signing.md" docs/roadmap.md
 require_line "release-notes-template.md" docs/roadmap.md
 require_line "technical-mvp-handoff.md" docs/roadmap.md
+require_line "tls-certificate-lifecycle.md" docs/roadmap.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
@@ -134,6 +136,11 @@ require_line "OBOS-ONBOARDING.txt" scripts/tls/export-boot-trust-summary.sh
 require_line "initial web console password" scripts/tls/export-boot-trust-summary.sh
 require_line "Validation Matrix" docs/client-ca-trust.md
 require_line "fingerprint_verified=yes|no" docs/client-ca-trust.md
+require_line "tls-certificate-lifecycle.md" docs/tls-trust.md
+require_line "Leaf Renewal" docs/tls-certificate-lifecycle.md
+require_line "Local CA Rotation" docs/tls-certificate-lifecycle.md
+require_line "Imported Public Certificate" docs/tls-certificate-lifecycle.md
+require_line "client_reonboarding_required=yes|no" docs/tls-certificate-lifecycle.md
 require_line "Raspberry Pi Network Installer" docs/image-release-validation.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/image-release-validation.md
 require_line "update-rollback-stage" docs/image-release-validation.md
