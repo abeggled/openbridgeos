@@ -144,6 +144,13 @@ if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${AMD64_RECORD}" >/dev/null 2>&1; then
   fail "release candidate without rpi validation was accepted"
 fi
 
+BAD_RECORD="${TMP_DIR}/bad-artifact.record"
+cp "${AMD64_RECORD}" "${BAD_RECORD}"
+sed -i 's#^artifact=.*$#artifact=/tmp/not-in-release.qcow2#' "${BAD_RECORD}"
+if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${BAD_RECORD}" "${RPI_RECORD}" >/dev/null 2>&1; then
+  fail "validation record for artifact outside release manifest was accepted"
+fi
+
 rm -f "${RELEASE_MANIFEST}.minisig"
 if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${AMD64_RECORD}" "${RPI_RECORD}" >/dev/null 2>&1; then
   fail "release candidate without signature was accepted"

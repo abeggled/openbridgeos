@@ -143,6 +143,7 @@ require_line "OBOS_RELEASE_MINISIGN_PUBLIC_KEY" docs/release-signing.md
 require_line "format=obos-release-candidate-check-v1" scripts/images/check-release-candidate.sh
 require_line "amd64-vm validation record missing" scripts/images/check-release-candidate.sh
 require_line "rpi4-arm64 validation record missing" scripts/images/check-release-candidate.sh
+require_line "validation record does not match release manifest artifact" scripts/images/check-release-candidate.sh
 require_line "format=obos-compose-image-pinning-v1" scripts/images/check-compose-image-pinning.sh
 require_line "OBOS_REQUIRE_PINNED_IMAGES" scripts/images/check-compose-image-pinning.sh
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1" docs/hardening.md
