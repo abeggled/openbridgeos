@@ -91,6 +91,22 @@ Leaf renewal preserves the appliance local CA and therefore does not require
 client devices to trust a new CA. It still requires a fresh trust export so UI
 and support surfaces can show the new leaf fingerprint after renewal.
 
+## Renew Leaf Certificate
+
+```sh
+sudo obosctl tls-renew-leaf --confirm tls-renew-leaf
+```
+
+The renewal command is CLI-only for the technical MVP. It creates a private
+backup of the current leaf key, leaf certificate, and leaf extension file below
+`/etc/obos/tls/backups`, generates a new leaf key and certificate signed by the
+existing appliance local CA, verifies the new certificate against that CA,
+refreshes the public trust export, and reloads nginx when it is active.
+
+The command preserves the local CA fingerprint. Client devices do not need to
+trust a new CA after leaf-only renewal, but administrators should refresh any
+displayed trust bundle so the new leaf fingerprint is visible.
+
 ## Export Trust Bundle
 
 ```sh
@@ -175,6 +191,8 @@ Summary:
 - `obosctl tls-generate` is idempotent and does not rotate existing trust
   material implicitly.
 - `obosctl tls-renew-leaf-plan` is non-destructive and preserves the local CA.
+- `sudo obosctl tls-renew-leaf --confirm tls-renew-leaf` renews the leaf
+  certificate only and remains CLI-only for the technical MVP.
 - Leaf renewal keeps the existing appliance local CA and should not require
   client devices to trust a new CA.
 - Local CA rotation creates a new trust identity and requires explicit client
@@ -188,7 +206,7 @@ Summary:
   when DHCP addresses change.
 - Client CA import guidance still needs screenshots and tested release
   instructions for each supported platform.
-- Certificate replacement and rotation policy is documented, but automated
-  lifecycle commands are not implemented yet.
+- Leaf certificate renewal is implemented as a CLI-only command. Local CA
+  rotation and imported public certificates are not implemented yet.
 - Plain HTTP redirect/onboarding behavior is still undecided; TCP `80` is closed
   for now.

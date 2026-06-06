@@ -28,7 +28,8 @@ Security impact:
 Technical MVP status:
 
 - non-destructive planning is available through `obosctl tls-renew-leaf-plan`
-- should be available through `obosctl` before it is exposed in the web UI
+- confirmed CLI renewal is available through
+  `sudo obosctl tls-renew-leaf --confirm tls-renew-leaf`
 - must preserve the existing local CA key and certificate
 
 ### Local CA Rotation
@@ -110,8 +111,6 @@ client_reonboarding_required=yes|no
 notes=
 ```
 
-For the technical MVP, only the lifecycle policy is required. Automated
-certificate replacement remains a follow-up unless a release explicitly includes
-the command, tests, and recovery documentation. The non-destructive
-`tls-renew-leaf-plan` command may be used to verify that the existing appliance
-CA and leaf material are present before such a command is introduced.
+For the technical MVP, leaf renewal is CLI-only. Local CA rotation and imported
+public certificate workflows remain follow-up work unless a release explicitly
+includes the command, tests, and recovery documentation.
