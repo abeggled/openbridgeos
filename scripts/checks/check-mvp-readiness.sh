@@ -43,6 +43,7 @@ require_file scripts/images/smoke-test-amd64-qcow2.sh
 require_file scripts/images/check-rpi-boot-files.sh
 require_file scripts/images/check-image-release-validation-record.sh
 require_file scripts/images/check-release-candidate.sh
+require_file scripts/images/check-release-evidence-bundle.sh
 require_file scripts/images/check-compose-image-pinning.sh
 
 require_line "Debian 13 Trixie" README.md
@@ -160,6 +161,12 @@ require_line "OBOS_RELEASE_BUILD=1" docs/technical-mvp-handoff.md
 require_line "check-release-candidate.sh" docs/technical-mvp-handoff.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/technical-mvp-handoff.md
 require_line "release-notes-template.md" docs/technical-mvp-handoff.md
+require_line "check-release-evidence-bundle.sh" docs/technical-mvp-handoff.md
+require_line "format=obos-release-evidence-bundle-check-v1" scripts/images/check-release-evidence-bundle.sh
+require_line "release-notes.md" scripts/images/check-release-evidence-bundle.sh
+require_line "validation-amd64-vm.record" scripts/images/check-release-evidence-bundle.sh
+require_line "validation-rpi4-arm64.record" scripts/images/check-release-evidence-bundle.sh
+require_line "check-release-evidence-bundle.sh dist/images" docs/release-notes-template.md
 require_line "minisign_public_key_fingerprint" docs/release-notes-template.md
 require_line "compose_image_pinning=PASS|FAIL|not_run" docs/release-notes-template.md
 require_line "network_installer_used=yes|no" docs/release-notes-template.md

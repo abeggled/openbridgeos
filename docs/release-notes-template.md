@@ -7,6 +7,13 @@ The release notes are part of the release evidence. They must be published
 together with the images, checksum files, image manifests, release manifest,
 detached signature, release public key, and validation records.
 
+Before publication, place the completed notes in the release evidence directory
+as `release-notes.md` and run:
+
+```sh
+sh scripts/images/check-release-evidence-bundle.sh dist/images
+```
+
 ## Release
 
 - Release candidate:
