@@ -191,6 +191,7 @@ The current hardening layer is host-focused. It does not yet implement:
 - advanced Docker isolation such as user namespace remapping
 
 Release bundle signing is implemented through detached Minisign signatures and
-strict manifest validation. Release key custody, publication policy, and image
-digest pinning remain separate release operations to finalize before broad
-distribution.
+strict manifest validation. Release key custody and publication rules are
+documented in [release-signing.md](release-signing.md). The concrete production
+release key and image digest pinning remain separate release operations to
+finalize before broad distribution.

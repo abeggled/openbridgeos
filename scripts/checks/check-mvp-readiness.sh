@@ -22,6 +22,7 @@ require_file README.de.md
 require_file docs/roadmap.md
 require_file docs/image-build.md
 require_file docs/image-release-validation.md
+require_file docs/release-signing.md
 require_file docs/client-ca-trust.md
 require_file docs/security-baseline-testplan.md
 require_file scripts/obosctl
@@ -51,6 +52,7 @@ require_line "Static obos web shell is installed" docs/roadmap.md
 require_line "Start, stop, restart, update, backup creation, and restore staging" docs/roadmap.md
 require_line "Encrypted portable backup export creation exists in" docs/roadmap.md
 require_line "image-release-validation.md" docs/roadmap.md
+require_line "release-signing.md" docs/roadmap.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
@@ -133,6 +135,9 @@ require_line "signature_verified=yes|no" docs/image-release-validation.md
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
 require_line "MINISIGN_PUBLIC_KEY=" scripts/images/check-release-manifest.sh
 require_line "minisign -Vm" scripts/images/check-release-manifest.sh
+require_line "Release private key" docs/release-signing.md
+require_line "Do not inject the private key into CI" docs/release-signing.md
+require_line "OBOS_RELEASE_MINISIGN_PUBLIC_KEY" docs/release-signing.md
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html
