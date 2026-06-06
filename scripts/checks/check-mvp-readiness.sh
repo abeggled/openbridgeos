@@ -64,6 +64,7 @@ require_line "release-signing.md" docs/roadmap.md
 require_line "release-notes-template.md" docs/roadmap.md
 require_line "technical-mvp-handoff.md" docs/roadmap.md
 require_line "tls-certificate-lifecycle.md" docs/roadmap.md
+require_line "implemented as a confirmed CLI-only workflow" docs/roadmap.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
@@ -77,6 +78,7 @@ require_line "format=obos-logs-tail-v1" scripts/obosctl
 require_line "format=obos-mqtt-summary-v1" scripts/hardening/set-mqtt-lan-access.sh
 require_line "format=obos-tls-summary-v1" scripts/tls/check-tls-status.sh
 require_line "format=obos-tls-leaf-renewal-plan-v1" scripts/tls/plan-leaf-renewal.sh
+require_line "confirmed_command=sudo obosctl tls-renew-leaf --confirm tls-renew-leaf" scripts/tls/plan-leaf-renewal.sh
 require_line "format=obos-tls-leaf-renewal-v1" scripts/tls/renew-leaf-certificate.sh
 require_line "format=obos-security-baseline-summary-v1" scripts/audit/security-baseline.sh
 require_line "STATE_DIR=" scripts/audit/security-baseline.sh

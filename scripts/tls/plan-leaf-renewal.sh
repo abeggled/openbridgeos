@@ -72,7 +72,7 @@ trust_export_refresh_required=true
 post_tls_summary_required=true
 post_proxy_health_required=true
 live_change_allowed=false
-future_command=sudo obosctl tls-renew-leaf --confirm tls-renew-leaf
-next=future_confirmed_command_not_implemented
+confirmed_command=sudo obosctl tls-renew-leaf --confirm tls-renew-leaf
+next=run_confirmed_command_from_local_cli_after_reviewing_this_plan
 result=PASS
 EOF

@@ -67,9 +67,9 @@ Current implementation status:
 - TLS material generation and public trust bundle export are exposed as
   explicit confirmed HTTP mutations.
 - TLS certificate lifecycle policy is documented in
-  [tls-certificate-lifecycle.md](tls-certificate-lifecycle.md); automated leaf
-  renewal, local CA rotation, and imported public certificate workflows remain
-  future implementation work.
+  [tls-certificate-lifecycle.md](tls-certificate-lifecycle.md). Leaf renewal is
+  implemented as a confirmed CLI-only workflow; local CA rotation and imported
+  public certificate workflows remain future implementation work.
 - Hostname and timezone changes are exposed as explicit confirmed HTTP
   mutations after agent-side input validation.
 - Backup download is intentionally limited to encrypted portable backup
