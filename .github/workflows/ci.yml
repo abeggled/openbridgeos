@@ -97,6 +97,9 @@ jobs:
       - name: Release candidate fixture
         run: sh scripts/checks/check-release-candidate.sh
 
+      - name: Release evidence bundle fixture
+        run: sh scripts/checks/check-release-evidence-bundle.sh
+
       - name: Compose config
         run: sh scripts/checks/validate-compose.sh
 

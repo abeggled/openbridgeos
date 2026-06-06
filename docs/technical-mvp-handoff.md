@@ -112,6 +112,12 @@ Complete release notes from [release-notes-template.md](release-notes-template.m
 and attach the release public key, validation records, known gaps, and migration
 notes.
 
+Check the complete release evidence bundle:
+
+```sh
+sh scripts/images/check-release-evidence-bundle.sh dist/images
+```
+
 ## Runtime Acceptance
 
 On each test appliance, run:
