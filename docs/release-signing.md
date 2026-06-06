@@ -11,7 +11,8 @@ and publication.
 
 - Release private key: signs release manifests only.
 - Release public key: distributed through documentation and release notes so
-  users can verify release manifests.
+  users can verify release manifests. Release notes should follow
+  [release-notes-template.md](release-notes-template.md).
 - Build host: creates images, checksums, image manifests, and the release
   manifest.
 - Signing host: holds the private key and signs only validated release manifests.
@@ -79,6 +80,7 @@ Publish a technical MVP release candidate only when:
 - broad release publication runs the Compose image pinning check with
   `OBOS_REQUIRE_PINNED_IMAGES=1`
 - the release public key is included in release notes
+- release notes include the required validation records and known gaps
 
 ## Rotation
 

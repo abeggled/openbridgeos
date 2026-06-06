@@ -87,6 +87,9 @@ Current implementation status:
   [image-release-validation.md](image-release-validation.md), including qcow2,
   Raspberry Pi Network Installer, artifact integrity, trust onboarding, and
   rollback staging checks.
+- Technical MVP release notes should follow
+  [release-notes-template.md](release-notes-template.md), including public key,
+  validation records, known gaps, and migration notes.
 - The technical MVP handoff path is summarized in
   [technical-mvp-handoff.md](technical-mvp-handoff.md).
 
