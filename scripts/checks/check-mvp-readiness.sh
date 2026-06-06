@@ -23,6 +23,7 @@ require_file docs/roadmap.md
 require_file docs/image-build.md
 require_file docs/image-release-validation.md
 require_file docs/release-signing.md
+require_file docs/release-notes-template.md
 require_file docs/technical-mvp-handoff.md
 require_file docs/client-ca-trust.md
 require_file docs/security-baseline-testplan.md
@@ -56,6 +57,7 @@ require_line "Start, stop, restart, update, backup creation, and restore staging
 require_line "Encrypted portable backup export creation exists in" docs/roadmap.md
 require_line "image-release-validation.md" docs/roadmap.md
 require_line "release-signing.md" docs/roadmap.md
+require_line "release-notes-template.md" docs/roadmap.md
 require_line "technical-mvp-handoff.md" docs/roadmap.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
@@ -145,6 +147,8 @@ require_line "Release private key" docs/release-signing.md
 require_line "Do not inject the private key into CI" docs/release-signing.md
 require_line "OBOS_RELEASE_MINISIGN_PUBLIC_KEY" docs/release-signing.md
 require_line "cross-checks validation records against the" docs/release-signing.md
+require_line "release-notes-template.md" docs/release-signing.md
+require_line "release notes include the required validation records and known gaps" docs/release-signing.md
 require_line "format=obos-release-candidate-check-v1" scripts/images/check-release-candidate.sh
 require_line "amd64-vm validation record missing" scripts/images/check-release-candidate.sh
 require_line "rpi4-arm64 validation record missing" scripts/images/check-release-candidate.sh
@@ -155,6 +159,11 @@ require_line "OBOS_REQUIRE_PINNED_IMAGES=1" docs/hardening.md
 require_line "OBOS_RELEASE_BUILD=1" docs/technical-mvp-handoff.md
 require_line "check-release-candidate.sh" docs/technical-mvp-handoff.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/technical-mvp-handoff.md
+require_line "release-notes-template.md" docs/technical-mvp-handoff.md
+require_line "minisign_public_key_fingerprint" docs/release-notes-template.md
+require_line "compose_image_pinning=PASS|FAIL|not_run" docs/release-notes-template.md
+require_line "network_installer_used=yes|no" docs/release-notes-template.md
+require_line "raw unencrypted backups are offered for web download or migration" docs/release-notes-template.md
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html

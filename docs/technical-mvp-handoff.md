@@ -19,6 +19,8 @@ Required before starting:
 - one Raspberry Pi 4 or newer target
 - Raspberry Pi Network Installer path available
 - administrator client for TLS trust onboarding
+- release notes prepared from
+  [release-notes-template.md](release-notes-template.md)
 
 ## Build
 
@@ -105,6 +107,10 @@ For broad release publication, additionally require pinned Compose images:
 OBOS_REQUIRE_PINNED_IMAGES=1 \
   sh scripts/images/check-compose-image-pinning.sh apps/openbridgeserver/compose.yaml
 ```
+
+Complete release notes from [release-notes-template.md](release-notes-template.md)
+and attach the release public key, validation records, known gaps, and migration
+notes.
 
 ## Runtime Acceptance
 
