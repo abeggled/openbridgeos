@@ -85,7 +85,7 @@ The plan command is non-destructive. It verifies that the local CA certificate,
 local CA key, leaf certificate, and leaf key are present and parseable. It then
 prints `obos-tls-leaf-renewal-plan-v1`, including the current CA and leaf
 fingerprints, whether renewal is due within the configured warning window, and
-the required post-change gates for a future confirmed renewal command.
+the required post-change gates for the confirmed CLI renewal command.
 
 Leaf renewal preserves the appliance local CA and therefore does not require
 client devices to trust a new CA. It still requires a fresh trust export so UI
