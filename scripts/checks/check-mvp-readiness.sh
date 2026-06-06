@@ -134,12 +134,15 @@ require_line "CONFIG_BLK_DEV_NVME=y" docs/image-release-validation.md
 require_line "update-rollback-stage" docs/image-release-validation.md
 require_line "format=obos-image-release-validation-v1" docs/image-release-validation.md
 require_line "signature_verified=yes|no" docs/image-release-validation.md
+require_line "check-release-candidate.sh" docs/image-release-validation.md
+require_line "OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh" docs/image-release-validation.md
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
 require_line "MINISIGN_PUBLIC_KEY=" scripts/images/check-release-manifest.sh
 require_line "minisign -Vm" scripts/images/check-release-manifest.sh
 require_line "Release private key" docs/release-signing.md
 require_line "Do not inject the private key into CI" docs/release-signing.md
 require_line "OBOS_RELEASE_MINISIGN_PUBLIC_KEY" docs/release-signing.md
+require_line "cross-checks validation records against the" docs/release-signing.md
 require_line "format=obos-release-candidate-check-v1" scripts/images/check-release-candidate.sh
 require_line "amd64-vm validation record missing" scripts/images/check-release-candidate.sh
 require_line "rpi4-arm64 validation record missing" scripts/images/check-release-candidate.sh

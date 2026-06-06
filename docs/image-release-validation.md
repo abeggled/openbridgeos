@@ -168,3 +168,9 @@ A technical MVP test image is ready only when:
 - Raspberry Pi Network Installer compatibility is validated
 - the recovery drill reaches a passing restore apply plan
 - client trust onboarding is validated for at least one administrator client
+- `check-release-candidate.sh` passes with the release manifest and validation
+  records for `amd64-vm` and `rpi4-arm64`
+
+For broad release publication, also run
+`OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh` so
+Compose images must be pinned by digest.

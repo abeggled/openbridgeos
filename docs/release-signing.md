@@ -74,6 +74,10 @@ Publish a technical MVP release candidate only when:
 - image manifests record `release_build=1`
 - image manifests record `repo_dirty=false`
 - image validation records pass
+- `check-release-candidate.sh` cross-checks validation records against the
+  release manifest
+- broad release publication runs the Compose image pinning check with
+  `OBOS_REQUIRE_PINNED_IMAGES=1`
 - the release public key is included in release notes
 
 ## Rotation
