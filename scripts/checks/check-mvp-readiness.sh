@@ -23,6 +23,7 @@ require_file docs/roadmap.md
 require_file docs/image-build.md
 require_file docs/image-release-validation.md
 require_file docs/release-signing.md
+require_file docs/technical-mvp-handoff.md
 require_file docs/client-ca-trust.md
 require_file docs/security-baseline-testplan.md
 require_file scripts/obosctl
@@ -55,6 +56,7 @@ require_line "Start, stop, restart, update, backup creation, and restore staging
 require_line "Encrypted portable backup export creation exists in" docs/roadmap.md
 require_line "image-release-validation.md" docs/roadmap.md
 require_line "release-signing.md" docs/roadmap.md
+require_line "technical-mvp-handoff.md" docs/roadmap.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
@@ -150,6 +152,9 @@ require_line "validation record does not match release manifest artifact" script
 require_line "format=obos-compose-image-pinning-v1" scripts/images/check-compose-image-pinning.sh
 require_line "OBOS_REQUIRE_PINNED_IMAGES" scripts/images/check-compose-image-pinning.sh
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1" docs/hardening.md
+require_line "OBOS_RELEASE_BUILD=1" docs/technical-mvp-handoff.md
+require_line "check-release-candidate.sh" docs/technical-mvp-handoff.md
+require_line "CONFIG_BLK_DEV_NVME=y" docs/technical-mvp-handoff.md
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html
