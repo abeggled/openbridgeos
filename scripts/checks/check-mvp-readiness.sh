@@ -190,6 +190,8 @@ require_line "format=obos-release-evidence-bundle-check-v1" scripts/images/check
 require_line "release-notes.md" scripts/images/check-release-evidence-bundle.sh
 require_line "validation-amd64-vm.record" scripts/images/check-release-evidence-bundle.sh
 require_line "validation-rpi4-arm64.record" scripts/images/check-release-evidence-bundle.sh
+require_line "tls_leaf_renewal_plan_result=" scripts/images/check-release-evidence-bundle.sh
+require_line "compose_image_pinning=" scripts/images/check-release-evidence-bundle.sh
 require_line "check-release-evidence-bundle.sh dist/images" docs/release-notes-template.md
 require_line "minisign_public_key_fingerprint" docs/release-notes-template.md
 require_line "tls_leaf_renewal_plan_result=PASS|FAIL" docs/release-notes-template.md
