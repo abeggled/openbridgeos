@@ -99,3 +99,6 @@ jobs:
 
       - name: Compose config
         run: sh scripts/checks/validate-compose.sh
+
+      - name: Compose image pinning
+        run: sh scripts/checks/check-compose-image-pinning.sh

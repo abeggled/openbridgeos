@@ -41,6 +41,7 @@ require_file scripts/images/smoke-test-amd64-qcow2.sh
 require_file scripts/images/check-rpi-boot-files.sh
 require_file scripts/images/check-image-release-validation-record.sh
 require_file scripts/images/check-release-candidate.sh
+require_file scripts/images/check-compose-image-pinning.sh
 
 require_line "Debian 13 Trixie" README.md
 require_line "Raspberry Pi 4+" README.md
@@ -142,6 +143,9 @@ require_line "OBOS_RELEASE_MINISIGN_PUBLIC_KEY" docs/release-signing.md
 require_line "format=obos-release-candidate-check-v1" scripts/images/check-release-candidate.sh
 require_line "amd64-vm validation record missing" scripts/images/check-release-candidate.sh
 require_line "rpi4-arm64 validation record missing" scripts/images/check-release-candidate.sh
+require_line "format=obos-compose-image-pinning-v1" scripts/images/check-compose-image-pinning.sh
+require_line "OBOS_REQUIRE_PINNED_IMAGES" scripts/images/check-compose-image-pinning.sh
+require_line "OBOS_REQUIRE_PINNED_IMAGES=1" docs/hardening.md
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html
