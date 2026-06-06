@@ -16,6 +16,29 @@ value() {
   awk -F= -v key="${key}" '$1 == key { print substr($0, length($1) + 2); exit }' "${file}"
 }
 
+release_artifact_match() {
+  profile="$1"
+  artifact="$2"
+  manifest="$3"
+  artifact_count="$(value artifact_count "${release_manifest}")"
+  i=1
+
+  while [ "${i}" -le "${artifact_count}" ]; do
+    prefix="artifact_${i}"
+    release_profile="$(value "${prefix}_profile" "${release_manifest}")"
+    release_image="$(value "${prefix}_image" "${release_manifest}")"
+    release_manifest_path="$(value "${prefix}_manifest" "${release_manifest}")"
+    if [ "${release_profile}" = "${profile}" ] &&
+      [ "${release_image}" = "${artifact}" ] &&
+      [ "${release_manifest_path}" = "${manifest}" ]; then
+      return 0
+    fi
+    i=$((i + 1))
+  done
+
+  return 1
+}
+
 [ "$#" -ge 3 ] || fail "usage: $0 <release-manifest> <validation-record> <validation-record> [validation-record...]"
 
 release_manifest="$1"
@@ -37,6 +60,10 @@ for record in "$@"; do
   [ -f "${record}" ] || fail "validation record missing: ${record}"
   sh "${CHECK_VALIDATION_RECORD}" "${record}" >/dev/null
   profile="$(value profile "${record}")"
+  artifact="$(value artifact "${record}")"
+  manifest="$(value manifest "${record}")"
+  release_artifact_match "${profile}" "${artifact}" "${manifest}" \
+    || fail "validation record does not match release manifest artifact: ${record}"
   case "${profile}" in
     amd64-vm) amd64_validated=true ;;
     rpi4-arm64) rpi_validated=true ;;
