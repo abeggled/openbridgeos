@@ -20,6 +20,7 @@ PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
 PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
 TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
+TLS_LEAF_RENEWAL_PLAN_SCRIPT="${OBOS_TLS_LEAF_RENEWAL_PLAN_SCRIPT:-/usr/lib/obos/plan-leaf-renewal.sh}"
 TLS_INFO_SCRIPT="${OBOS_TLS_INFO_SCRIPT:-/usr/lib/obos/print-trust-info.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
@@ -82,6 +83,8 @@ Commands:
   health            Check open bridge server localhost health endpoint
   proxy-health      Check HTTPS reverse proxy health with local CA trust
   tls-generate      Generate local CA and leaf certificate material
+  tls-renew-leaf-plan
+                    Print non-destructive TLS leaf renewal plan
   tls-status        Check local CA and leaf certificate status
   tls-summary       Print machine-readable TLS trust status
   tls-info          Print TLS trust fingerprints and paths
@@ -1702,6 +1705,9 @@ case "${1:-}" in
   tls-generate)
     require_root tls-generate
     run_helper "${TLS_GENERATE_SCRIPT}"
+    ;;
+  tls-renew-leaf-plan)
+    run_helper "${TLS_LEAF_RENEWAL_PLAN_SCRIPT}"
     ;;
   tls-status)
     run_helper "${TLS_STATUS_SCRIPT}"

@@ -65,6 +65,7 @@ install -m 0755 "${REPO_ROOT}/scripts/audit/security-baseline.sh" "${OBOS_LIB_DI
 install -m 0755 "${REPO_ROOT}/scripts/audit/mvp-runtime-readiness.sh" "${OBOS_LIB_DIR}/mvp-runtime-readiness.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/generate-tls-material.sh" "${OBOS_LIB_DIR}/generate-tls-material.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/check-tls-status.sh" "${OBOS_LIB_DIR}/check-tls-status.sh"
+install -m 0755 "${REPO_ROOT}/scripts/tls/plan-leaf-renewal.sh" "${OBOS_LIB_DIR}/plan-leaf-renewal.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/print-trust-info.sh" "${OBOS_LIB_DIR}/print-trust-info.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/export-trust-bundle.sh" "${OBOS_LIB_DIR}/export-trust-bundle.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/export-boot-trust-summary.sh" "${OBOS_LIB_DIR}/export-boot-trust-summary.sh"
