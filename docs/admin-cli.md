@@ -436,7 +436,7 @@ sudo obosctl tls-export-boot
 `tls-generate` creates the per-appliance-instance local CA and leaf certificate
 material below `/etc/obos/tls`. It preserves existing TLS material instead of
 rotating appliance identity implicitly. `tls-renew-leaf-plan` is non-destructive
-and verifies the current CA and leaf material before a future confirmed leaf
+and verifies the current CA and leaf material before the confirmed CLI leaf
 renewal command is used. It reports whether renewal is due, confirms that the
 local CA is preserved, and records that client re-onboarding is not required for
 leaf-only renewal. `tls-renew-leaf` is a confirmed CLI-only command that backs
