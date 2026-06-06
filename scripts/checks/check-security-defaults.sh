@@ -1041,6 +1041,24 @@ grep -q 'TLS material already exists' scripts/tls/generate-tls-material.sh \
 grep -q 'ca_created' scripts/tls/generate-tls-material.sh \
   || fail "TLS idempotency does not account for CA regeneration"
 
+grep -q 'tls-renew-leaf-plan)' scripts/obosctl \
+  || fail "obosctl does not expose non-destructive TLS leaf renewal planning"
+
+grep -q 'format=obos-tls-leaf-renewal-plan-v1' scripts/tls/plan-leaf-renewal.sh \
+  || fail "TLS leaf renewal plan does not expose a summary format"
+
+grep -q 'mode=non-destructive' scripts/tls/plan-leaf-renewal.sh \
+  || fail "TLS leaf renewal plan must be non-destructive"
+
+grep -q 'preserves_local_ca=true' scripts/tls/plan-leaf-renewal.sh \
+  || fail "TLS leaf renewal plan must preserve the local CA"
+
+grep -q 'client_reonboarding_required=false' scripts/tls/plan-leaf-renewal.sh \
+  || fail "TLS leaf renewal plan must not require client re-onboarding"
+
+grep -q 'live_change_allowed=false' scripts/tls/plan-leaf-renewal.sh \
+  || fail "TLS leaf renewal plan must not perform a live change"
+
 grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
   || fail "TLS trust export does not state that private keys are excluded"
 

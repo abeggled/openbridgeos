@@ -27,7 +27,7 @@ Security impact:
 
 Technical MVP status:
 
-- planned as the first automated rotation command
+- non-destructive planning is available through `obosctl tls-renew-leaf-plan`
 - should be available through `obosctl` before it is exposed in the web UI
 - must preserve the existing local CA key and certificate
 
@@ -112,4 +112,6 @@ notes=
 
 For the technical MVP, only the lifecycle policy is required. Automated
 certificate replacement remains a follow-up unless a release explicitly includes
-the command, tests, and recovery documentation.
+the command, tests, and recovery documentation. The non-destructive
+`tls-renew-leaf-plan` command may be used to verify that the existing appliance
+CA and leaf material are present before such a command is introduced.
