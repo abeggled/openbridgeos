@@ -87,6 +87,8 @@ Current implementation status:
   [image-release-validation.md](image-release-validation.md), including qcow2,
   Raspberry Pi Network Installer, artifact integrity, trust onboarding, and
   rollback staging checks.
+- The technical MVP handoff path is summarized in
+  [technical-mvp-handoff.md](technical-mvp-handoff.md).
 
 ## Milestone 4: Hardened Release
 
