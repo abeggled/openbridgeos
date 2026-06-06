@@ -428,6 +428,7 @@ Useful overrides:
 ```sh
 sudo OBOS_SMOKE_HOST_HTTPS_PORT=9443 \
   OBOS_SMOKE_HOST_HTTP_PORT=19080 \
+  OBOS_SMOKE_LOG_FILE=/tmp/obos-qcow2-smoke.log \
   OBOS_SMOKE_TIMEOUT_SECONDS=1200 \
   scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.qcow2
 ```
