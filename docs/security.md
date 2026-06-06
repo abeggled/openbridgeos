@@ -165,6 +165,10 @@ Future hardening should include:
 - read-only root filesystems where compatible
 - Docker user namespace remapping compatibility testing
 
+Image pinning can be audited with
+`scripts/images/check-compose-image-pinning.sh`; set
+`OBOS_REQUIRE_PINNED_IMAGES=1` for broad release publication gates.
+
 ## Updates
 
 Host security updates and application updates are intentionally separate.
