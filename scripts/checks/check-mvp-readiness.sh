@@ -161,9 +161,11 @@ require_line "CONFIG_BLK_DEV_NVME=y" docs/image-release-validation.md
 require_line "update-rollback-stage" docs/image-release-validation.md
 require_line "format=obos-image-release-validation-v1" docs/image-release-validation.md
 require_line "signature_verified=yes|no" docs/image-release-validation.md
+require_line "tls_leaf_renewal_plan_result=PASS|FAIL" docs/image-release-validation.md
 require_line "check-release-candidate.sh" docs/image-release-validation.md
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh" docs/image-release-validation.md
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
+require_line "require_value tls_leaf_renewal_plan_result PASS" scripts/images/check-image-release-validation-record.sh
 require_line "MINISIGN_PUBLIC_KEY=" scripts/images/check-release-manifest.sh
 require_line "minisign -Vm" scripts/images/check-release-manifest.sh
 require_line "Release private key" docs/release-signing.md
@@ -190,6 +192,7 @@ require_line "validation-amd64-vm.record" scripts/images/check-release-evidence-
 require_line "validation-rpi4-arm64.record" scripts/images/check-release-evidence-bundle.sh
 require_line "check-release-evidence-bundle.sh dist/images" docs/release-notes-template.md
 require_line "minisign_public_key_fingerprint" docs/release-notes-template.md
+require_line "tls_leaf_renewal_plan_result=PASS|FAIL" docs/release-notes-template.md
 require_line "compose_image_pinning=PASS|FAIL|not_run" docs/release-notes-template.md
 require_line "network_installer_used=yes|no" docs/release-notes-template.md
 require_line "raw unencrypted backups are offered for web download or migration" docs/release-notes-template.md

@@ -126,12 +126,14 @@ On each test appliance, run:
 sudo obosctl status
 sudo obosctl security-summary
 sudo obosctl mvp-readiness-summary
+sudo obosctl tls-renew-leaf-plan
 ```
 
 The technical MVP test device is acceptable when:
 
 - `security-summary` reports `result=PASS`
 - `mvp-readiness-summary` reports `result=PASS`
+- `tls-renew-leaf-plan` reports `result=PASS`
 - HTTPS web console is reachable after trust onboarding
 - MQTT remains localhost-only unless explicitly enabled
 - backup creation, rollback staging, and restore apply planning pass

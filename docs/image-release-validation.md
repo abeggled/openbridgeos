@@ -138,6 +138,7 @@ first_boot_completed=yes|no
 ssh_default_disabled=yes|no
 security_summary_result=PASS|FAIL
 mvp_readiness_result=PASS|FAIL
+tls_leaf_renewal_plan_result=PASS|FAIL
 tls_trust_exported=yes|no
 rollback_stage_result=PASS|FAIL|not_run
 notes=
