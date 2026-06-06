@@ -185,8 +185,12 @@ validated under those constraints.
 
 The current hardening layer is host-focused. It does not yet implement:
 
-- image signing
 - automatic rollback for failed updates; explicit rollback staging and
   confirmed CLI restore apply are available
 - full disk encryption
 - advanced Docker isolation such as user namespace remapping
+
+Release bundle signing is implemented through detached Minisign signatures and
+strict manifest validation. Release key custody, publication policy, and image
+digest pinning remain separate release operations to finalize before broad
+distribution.
