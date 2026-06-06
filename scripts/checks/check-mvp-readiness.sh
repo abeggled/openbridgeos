@@ -43,6 +43,7 @@ require_file scripts/images/build-rpi4-arm64-image.sh
 require_file scripts/images/smoke-test-amd64-qcow2.sh
 require_file scripts/images/check-rpi-boot-files.sh
 require_file scripts/images/check-image-release-validation-record.sh
+require_file scripts/images/print-image-validation-record-template.sh
 require_file scripts/images/check-release-candidate.sh
 require_file scripts/images/check-release-evidence-bundle.sh
 require_file scripts/images/check-compose-image-pinning.sh
@@ -164,6 +165,7 @@ require_line "update-rollback-stage" docs/image-release-validation.md
 require_line "format=obos-image-release-validation-v1" docs/image-release-validation.md
 require_line "signature_verified=yes|no" docs/image-release-validation.md
 require_line "tls_leaf_renewal_plan_result=PASS|FAIL" docs/image-release-validation.md
+require_line "print-image-validation-record-template.sh amd64-vm" docs/image-release-validation.md
 require_line "check-release-candidate.sh" docs/image-release-validation.md
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh" docs/image-release-validation.md
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
@@ -187,6 +189,7 @@ require_line "OBOS_RELEASE_BUILD=1" docs/technical-mvp-handoff.md
 require_line "check-release-candidate.sh" docs/technical-mvp-handoff.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/technical-mvp-handoff.md
 require_line "release-notes-template.md" docs/technical-mvp-handoff.md
+require_line "print-image-validation-record-template.sh rpi4-arm64" docs/technical-mvp-handoff.md
 require_line "check-release-evidence-bundle.sh" docs/technical-mvp-handoff.md
 require_line "format=obos-release-evidence-bundle-check-v1" scripts/images/check-release-evidence-bundle.sh
 require_line "release-notes.md" scripts/images/check-release-evidence-bundle.sh

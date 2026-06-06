@@ -87,6 +87,8 @@ Run the Raspberry Pi Network Installer validation described in
 Create one validation record per profile and check each record:
 
 ```sh
+sh scripts/images/print-image-validation-record-template.sh amd64-vm > validation-amd64-vm.record
+sh scripts/images/print-image-validation-record-template.sh rpi4-arm64 > validation-rpi4-arm64.record
 sh scripts/images/check-image-release-validation-record.sh validation-amd64-vm.record
 sh scripts/images/check-image-release-validation-record.sh validation-rpi4-arm64.record
 ```
