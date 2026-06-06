@@ -160,6 +160,8 @@ minisign_public_key=RWQfixturepublickey
 minisign_public_key_fingerprint=fixture
 validation-amd64-vm.record
 validation-rpi4-arm64.record
+tls_leaf_renewal_plan_result=PASS
+compose_image_pinning=not_run
 
 ## Known Gaps
 
@@ -190,6 +192,13 @@ cp "${BUNDLE_DIR}/release-notes.md" "${BUNDLE_DIR}/release-notes.good"
 grep -v 'raw unencrypted backups' "${BUNDLE_DIR}/release-notes.good" > "${BUNDLE_DIR}/release-notes.md"
 if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; then
   fail "bundle without backup safety note was accepted"
+fi
+mv "${BUNDLE_DIR}/release-notes.good" "${BUNDLE_DIR}/release-notes.md"
+
+cp "${BUNDLE_DIR}/release-notes.md" "${BUNDLE_DIR}/release-notes.good"
+grep -v 'tls_leaf_renewal_plan_result=' "${BUNDLE_DIR}/release-notes.good" > "${BUNDLE_DIR}/release-notes.md"
+if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; then
+  fail "bundle without TLS leaf renewal plan evidence was accepted"
 fi
 mv "${BUNDLE_DIR}/release-notes.good" "${BUNDLE_DIR}/release-notes.md"
 
