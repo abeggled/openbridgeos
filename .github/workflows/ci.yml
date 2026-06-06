@@ -94,5 +94,8 @@ jobs:
       - name: Image release validation record fixture
         run: sh scripts/checks/check-image-release-validation-record.sh
 
+      - name: Release candidate fixture
+        run: sh scripts/checks/check-release-candidate.sh
+
       - name: Compose config
         run: sh scripts/checks/validate-compose.sh

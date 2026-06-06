@@ -40,6 +40,7 @@ require_file scripts/images/build-rpi4-arm64-image.sh
 require_file scripts/images/smoke-test-amd64-qcow2.sh
 require_file scripts/images/check-rpi-boot-files.sh
 require_file scripts/images/check-image-release-validation-record.sh
+require_file scripts/images/check-release-candidate.sh
 
 require_line "Debian 13 Trixie" README.md
 require_line "Raspberry Pi 4+" README.md
@@ -138,6 +139,9 @@ require_line "minisign -Vm" scripts/images/check-release-manifest.sh
 require_line "Release private key" docs/release-signing.md
 require_line "Do not inject the private key into CI" docs/release-signing.md
 require_line "OBOS_RELEASE_MINISIGN_PUBLIC_KEY" docs/release-signing.md
+require_line "format=obos-release-candidate-check-v1" scripts/images/check-release-candidate.sh
+require_line "amd64-vm validation record missing" scripts/images/check-release-candidate.sh
+require_line "rpi4-arm64 validation record missing" scripts/images/check-release-candidate.sh
 
 require_line 'data-mutation-action="start"' apps/obos-web/index.html
 require_line 'data-mutation-action="stop"' apps/obos-web/index.html
