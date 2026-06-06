@@ -8,6 +8,7 @@ TIMEOUT_SECONDS="${OBOS_SMOKE_TIMEOUT_SECONDS:-900}"
 MEMORY="${OBOS_SMOKE_MEMORY:-2048}"
 CPUS="${OBOS_SMOKE_CPUS:-2}"
 PID_FILE="${OBOS_SMOKE_PID_FILE:-}"
+LOG_FILE="${OBOS_SMOKE_LOG_FILE:-}"
 
 fail() {
   echo "amd64 qcow2 smoke test failed: $1" >&2
@@ -26,6 +27,10 @@ require_command qemu-system-x86_64
 
 if [ -z "${PID_FILE}" ]; then
   PID_FILE="$(mktemp)"
+fi
+
+if [ -z "${LOG_FILE}" ]; then
+  LOG_FILE="$(mktemp "${TMPDIR:-/tmp}/obos-qcow2-smoke.XXXXXX.log")"
 fi
 
 cleanup() {
@@ -50,13 +55,19 @@ qemu-system-x86_64 \
   -nographic \
   -serial mon:stdio \
   -display none \
-  >/tmp/obos-qcow2-smoke.log 2>&1 &
+  >"${LOG_FILE}" 2>&1 &
 
 qemu_pid="$!"
 printf '%s\n' "${qemu_pid}" > "${PID_FILE}"
 
 start_time="$(date +%s)"
 while :; do
+  if ! kill -0 "${qemu_pid}" 2>/dev/null; then
+    echo "last qemu log lines:" >&2
+    tail -n 80 "${LOG_FILE}" >&2 || true
+    fail "qemu exited before HTTPS health passed"
+  fi
+
   if curl --insecure --fail --silent --show-error --max-time 5 \
     "https://127.0.0.1:${HOST_HTTPS_PORT}/api/v1/system/health" >/dev/null; then
     if curl --fail --silent --show-error --max-time 5 \
@@ -71,7 +82,7 @@ while :; do
   elapsed=$((now - start_time))
   if [ "${elapsed}" -ge "${TIMEOUT_SECONDS}" ]; then
     echo "last qemu log lines:" >&2
-    tail -n 80 /tmp/obos-qcow2-smoke.log >&2 || true
+    tail -n 80 "${LOG_FILE}" >&2 || true
     fail "HTTPS health did not pass within ${TIMEOUT_SECONDS}s"
   fi
 

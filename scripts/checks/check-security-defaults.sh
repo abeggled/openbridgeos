@@ -896,6 +896,9 @@ grep -q 'HOST_HTTP_PORT=' scripts/images/smoke-test-amd64-qcow2.sh \
 grep -q 'direct open bridge server HTTP is reachable' scripts/images/smoke-test-amd64-qcow2.sh \
   || fail "qcow2 smoke test does not fail when direct HTTP is reachable"
 
+grep -q 'qemu exited before HTTPS health passed' scripts/images/smoke-test-amd64-qcow2.sh \
+  || fail "qcow2 smoke test does not fail when qemu exits early"
+
 ! grep -q 'tcp dport 1883 accept' packaging/nftables/obos.nft \
   || fail "MQTT plain TCP is open in the default firewall"
 
