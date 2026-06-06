@@ -202,4 +202,11 @@ if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; the
 fi
 mv "${BUNDLE_DIR}/release-notes.good" "${BUNDLE_DIR}/release-notes.md"
 
+cp "${BUNDLE_DIR}/release-notes.md" "${BUNDLE_DIR}/release-notes.good"
+grep -v 'compose_image_pinning=' "${BUNDLE_DIR}/release-notes.good" > "${BUNDLE_DIR}/release-notes.md"
+if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; then
+  fail "bundle without Compose image pinning evidence was accepted"
+fi
+mv "${BUNDLE_DIR}/release-notes.good" "${BUNDLE_DIR}/release-notes.md"
+
 echo "release evidence bundle fixture: PASS"
