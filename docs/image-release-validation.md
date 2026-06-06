@@ -149,6 +149,15 @@ Validate a completed record before attaching it to a release:
 sh scripts/images/check-image-release-validation-record.sh validation.record
 ```
 
+Validate the complete release candidate before publication:
+
+```sh
+sh scripts/images/check-release-candidate.sh \
+  dist/images/obos-release.manifest \
+  validation-amd64-vm.record \
+  validation-rpi4-arm64.record
+```
+
 ## Release Gate
 
 A technical MVP test image is ready only when:
