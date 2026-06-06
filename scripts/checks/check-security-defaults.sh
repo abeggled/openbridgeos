@@ -1083,6 +1083,21 @@ grep -q 'trust_export_refreshed=' scripts/tls/renew-leaf-certificate.sh \
 grep -q 'systemctl reload nginx.service' scripts/tls/renew-leaf-certificate.sh \
   || fail "TLS leaf renewal must reload nginx when active"
 
+if grep -q 'action=tls-renew-leaf' scripts/agent/obos-agent.sh; then
+  fail "TLS leaf renewal must remain CLI-only and not be exposed through obos-agent"
+fi
+
+if grep -q '"tls-renew-leaf"' scripts/agent/obos-agent-http.py; then
+  fail "TLS leaf renewal must remain CLI-only and not be exposed through HTTP bridge"
+fi
+
+if grep -q 'data-mutation-action="tls-renew-leaf"' apps/obos-web/index.html; then
+  fail "TLS leaf renewal must remain CLI-only and not be exposed through web UI"
+fi
+
+grep -q 'TLS leaf renewal is intentionally not exposed through the HTTP bridge or web UI' docs/web-ui-agent-contract.md \
+  || fail "web UI agent contract does not document CLI-only TLS leaf renewal"
+
 grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
   || fail "TLS trust export does not state that private keys are excluded"
 

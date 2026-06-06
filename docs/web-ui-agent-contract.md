@@ -350,6 +350,12 @@ POST /obos/api/v1/actions/tls-export
 {"confirm":"tls-export"}
 ```
 
+TLS leaf renewal is intentionally not exposed through the HTTP bridge or web UI
+for the technical MVP. It is available only on the local CLI through
+`sudo obosctl tls-renew-leaf --confirm tls-renew-leaf` because it replaces live
+nginx certificate material and needs a recovery path if post-change HTTPS checks
+fail.
+
 Web console password rotation is available as an explicit confirmed mutation.
 The response contains the new generated password in the normal
 `obos-agent-response-v1` stdout block and must be shown only to the authenticated
