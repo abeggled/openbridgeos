@@ -21,9 +21,8 @@ find_kernel_config() {
   fi
 
   for candidate in \
-    "${target}/boot/config.txt" \
-    "${target}/boot/config" \
     "${target}/boot/config-"* \
+    "${target}/boot/config" \
     "${target}/proc/config.gz"; do
     if [ -f "${candidate}" ]; then
       printf '%s\n' "${candidate}"
@@ -85,6 +84,7 @@ CONFIG_FILE="$(find_kernel_config "${TARGET}")" \
 
 case "${CONFIG_FILE}" in
   *.gz) fail "compressed kernel configs are not supported yet: ${CONFIG_FILE}" ;;
+  */boot/config.txt) fail "Raspberry Pi firmware config is not a Linux kernel config: ${CONFIG_FILE}" ;;
 esac
 
 check_required_config "${CONFIG_FILE}" "${OBOS_KERNEL_REQUIRED_CONFIG}"
