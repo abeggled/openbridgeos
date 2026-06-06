@@ -47,6 +47,7 @@ require_file scripts/images/check-release-candidate.sh
 require_file scripts/images/check-release-evidence-bundle.sh
 require_file scripts/images/check-compose-image-pinning.sh
 require_file scripts/tls/plan-leaf-renewal.sh
+require_file scripts/tls/renew-leaf-certificate.sh
 
 require_line "Debian 13 Trixie" README.md
 require_line "Raspberry Pi 4+" README.md
@@ -76,6 +77,7 @@ require_line "format=obos-logs-tail-v1" scripts/obosctl
 require_line "format=obos-mqtt-summary-v1" scripts/hardening/set-mqtt-lan-access.sh
 require_line "format=obos-tls-summary-v1" scripts/tls/check-tls-status.sh
 require_line "format=obos-tls-leaf-renewal-plan-v1" scripts/tls/plan-leaf-renewal.sh
+require_line "format=obos-tls-leaf-renewal-v1" scripts/tls/renew-leaf-certificate.sh
 require_line "format=obos-security-baseline-summary-v1" scripts/audit/security-baseline.sh
 require_line "STATE_DIR=" scripts/audit/security-baseline.sh
 require_line "WEB_AUTH_FILE=" scripts/audit/security-baseline.sh
@@ -145,8 +147,11 @@ require_line "Local CA Rotation" docs/tls-certificate-lifecycle.md
 require_line "Imported Public Certificate" docs/tls-certificate-lifecycle.md
 require_line "client_reonboarding_required=yes|no" docs/tls-certificate-lifecycle.md
 require_line "tls-renew-leaf-plan)" scripts/obosctl
+require_line "tls-renew-leaf)" scripts/obosctl
 require_line "TLS_LEAF_RENEWAL_PLAN_SCRIPT=" scripts/obosctl
+require_line "TLS_LEAF_RENEWAL_SCRIPT=" scripts/obosctl
 require_line "plan-leaf-renewal.sh" scripts/bootstrap/provision-debian.sh
+require_line "renew-leaf-certificate.sh" scripts/bootstrap/provision-debian.sh
 require_line "Raspberry Pi Network Installer" docs/image-release-validation.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/image-release-validation.md
 require_line "update-rollback-stage" docs/image-release-validation.md

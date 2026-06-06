@@ -1059,6 +1059,30 @@ grep -q 'client_reonboarding_required=false' scripts/tls/plan-leaf-renewal.sh \
 grep -q 'live_change_allowed=false' scripts/tls/plan-leaf-renewal.sh \
   || fail "TLS leaf renewal plan must not perform a live change"
 
+grep -q 'tls-renew-leaf)' scripts/obosctl \
+  || fail "obosctl does not expose confirmed TLS leaf renewal"
+
+grep -q -- '--confirm tls-renew-leaf' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal does not require explicit confirmation"
+
+grep -q 'format=obos-tls-leaf-renewal-v1' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal does not expose a summary format"
+
+grep -q 'backup_dir=' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal does not report the pre-change backup directory"
+
+grep -q 'preserves_local_ca=true' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal must preserve the local CA"
+
+grep -q 'client_reonboarding_required=false' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal must not require client re-onboarding"
+
+grep -q 'trust_export_refreshed=' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal must refresh trust export when possible"
+
+grep -q 'systemctl reload nginx.service' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal must reload nginx when active"
+
 grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
   || fail "TLS trust export does not state that private keys are excluded"
 

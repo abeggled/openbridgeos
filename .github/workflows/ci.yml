@@ -103,6 +103,9 @@ jobs:
       - name: TLS leaf renewal plan fixture
         run: sh scripts/checks/check-tls-leaf-renewal-plan.sh
 
+      - name: TLS leaf renewal fixture
+        run: sh scripts/checks/check-tls-leaf-renewal.sh
+
       - name: Compose config
         run: sh scripts/checks/validate-compose.sh
 

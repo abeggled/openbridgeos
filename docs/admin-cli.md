@@ -37,6 +37,7 @@ sudo obosctl portable-export-plan <backup.tar.gz>
 sudo obosctl portable-import-plan <portable-backup>
 sudo obosctl tls-generate
 obosctl tls-renew-leaf-plan
+sudo obosctl tls-renew-leaf --confirm tls-renew-leaf
 obosctl tls-status
 obosctl tls-summary
 sudo obosctl tls-info
@@ -424,6 +425,7 @@ firewall allow rules. MQTT authentication remains required in both modes.
 ```sh
 sudo obosctl tls-generate
 obosctl tls-renew-leaf-plan
+sudo obosctl tls-renew-leaf --confirm tls-renew-leaf
 obosctl tls-status
 obosctl tls-summary
 sudo obosctl tls-info
@@ -437,7 +439,10 @@ rotating appliance identity implicitly. `tls-renew-leaf-plan` is non-destructive
 and verifies the current CA and leaf material before a future confirmed leaf
 renewal command is used. It reports whether renewal is due, confirms that the
 local CA is preserved, and records that client re-onboarding is not required for
-leaf-only renewal. `tls-status` checks the local CA and leaf
+leaf-only renewal. `tls-renew-leaf` is a confirmed CLI-only command that backs
+up the current leaf material, creates a new leaf key and certificate with the
+existing local CA, refreshes the public trust export, and reloads nginx when it
+is active. `tls-status` checks the local CA and leaf
 certificate status, including expiry warnings. `tls-summary` prints a stable
 key-value format for agents and the web UI with certificate presence,
 paths, subjects, issuers, expiry states, expiry warnings, and SHA-256
@@ -476,6 +481,7 @@ OBOS_PROXY_HEALTH_HOST=obos.local \
 OBOS_PROXY_HEALTH_URL=https://obos.local/api/v1/system/health \
 OBOS_TLS_GENERATE_SCRIPT=/tmp/generate-tls-material.sh \
 OBOS_TLS_LEAF_RENEWAL_PLAN_SCRIPT=/tmp/plan-leaf-renewal.sh \
+OBOS_TLS_LEAF_RENEWAL_SCRIPT=/tmp/renew-leaf-certificate.sh \
 OBOS_TLS_STATUS_SCRIPT=/tmp/check-tls-status.sh \
 OBOS_TLS_INFO_SCRIPT=/tmp/print-trust-info.sh \
 OBOS_TLS_EXPORT_SCRIPT=/tmp/export-trust-bundle.sh \
