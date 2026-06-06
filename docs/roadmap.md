@@ -66,6 +66,10 @@ Current implementation status:
   mutations, with optional CIDR input validated by `obos-agent`.
 - TLS material generation and public trust bundle export are exposed as
   explicit confirmed HTTP mutations.
+- TLS certificate lifecycle policy is documented in
+  [tls-certificate-lifecycle.md](tls-certificate-lifecycle.md); automated leaf
+  renewal, local CA rotation, and imported public certificate workflows remain
+  future implementation work.
 - Hostname and timezone changes are exposed as explicit confirmed HTTP
   mutations after agent-side input validation.
 - Backup download is intentionally limited to encrypted portable backup

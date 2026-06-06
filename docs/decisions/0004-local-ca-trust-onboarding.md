@@ -80,7 +80,10 @@ The UI and documentation must be clear that:
 ## Public CA Option
 
 Administrators who own a DNS name may replace the local certificate path with a
-publicly trusted certificate later.
+publicly trusted certificate later. The lifecycle policy in
+[../tls-certificate-lifecycle.md](../tls-certificate-lifecycle.md) separates
+leaf renewal, local CA rotation, and imported public certificates so the default
+trust model does not change silently.
 
 This should be supported as an advanced path, not as the default requirement.
 Possible later modes:
@@ -119,8 +122,7 @@ violate the per-appliance-instance trust model.
 
 ## Open Questions
 
-- Should future onboarding rotate or replace the automatically generated local
-  CA during an authenticated first-run flow?
 - How should IP address SANs be renewed when DHCP leases change?
 - Should obos generate a QR code for the fingerprint and root CA download URL?
-- Should certificate rotation be available in `obosctl`, web UI, or both?
+- What exact web UI confirmation and recovery UX is required before local CA
+  rotation becomes browser-accessible?
