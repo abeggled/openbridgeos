@@ -73,6 +73,7 @@ checksums_verified=yes|no
 network_installer_used=yes|no
 security_summary_result=PASS|FAIL
 mvp_readiness_result=PASS|FAIL
+tls_leaf_renewal_plan_result=PASS|FAIL
 rollback_stage_result=PASS|FAIL|not_run
 ```
 
@@ -102,6 +103,7 @@ profile=
 boot_media=
 security_summary_result=PASS|FAIL
 mvp_readiness_result=PASS|FAIL
+tls_leaf_renewal_plan_result=PASS|FAIL
 tls_trust_onboarding=PASS|FAIL|not_run
 mqtt_default=localhost-only|changed
 backup_export=PASS|FAIL|not_run

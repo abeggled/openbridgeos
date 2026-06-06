@@ -53,6 +53,7 @@ require_value first_boot_completed yes
 require_value ssh_default_disabled yes
 require_value security_summary_result PASS
 require_value mvp_readiness_result PASS
+require_value tls_leaf_renewal_plan_result PASS
 require_value tls_trust_exported yes
 require_value rollback_stage_result PASS
 require_any network_installer_used yes no
