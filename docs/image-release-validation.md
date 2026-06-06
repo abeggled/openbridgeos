@@ -59,8 +59,9 @@ Minimum VM checks:
 6. Run `sudo obosctl proxy-health`.
 7. Run `sudo obosctl security-summary`.
 8. Run `sudo obosctl mvp-readiness-summary`.
-9. Export TLS trust material with `sudo obosctl tls-export`.
-10. Verify browser access to the web console over HTTPS.
+9. Run `sudo obosctl tls-renew-leaf-plan`.
+10. Export TLS trust material with `sudo obosctl tls-export`.
+11. Verify browser access to the web console over HTTPS.
 
 The automated qcow2 smoke test may be used as the first validation pass:
 
@@ -87,6 +88,7 @@ Minimum Raspberry Pi checks:
    appear on the boot partition.
 10. Run `sudo obosctl security-summary`.
 11. Run `sudo obosctl mvp-readiness-summary`.
+12. Run `sudo obosctl tls-renew-leaf-plan`.
 
 At least one Raspberry Pi validation run must cover NVMe-capable boot media or
 Network Installer deployment. The release is blocked if the kernel config no
