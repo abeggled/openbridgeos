@@ -195,6 +195,7 @@ check_summary_format "restore stage summary format available" obos-restore-stage
 check_summary_format "TLS summary format available" obos-tls-summary-v1 "${OBOSCTL}" tls-summary
 check_output_contains "TLS local CA present" "local_ca_present=true" "${OBOSCTL}" tls-summary
 check_output_contains "TLS leaf certificate present" "leaf_present=true" "${OBOSCTL}" tls-summary
+check_summary_format "TLS leaf renewal plan available" obos-tls-leaf-renewal-plan-v1 "${OBOSCTL}" tls-renew-leaf-plan
 check_summary_format "MQTT summary format available" obos-mqtt-summary-v1 "${OBOSCTL}" mqtt-summary
 check_output_contains "MQTT LAN access disabled by default" "lan_enabled=false" "${OBOSCTL}" mqtt-summary
 check_summary_format "security baseline summary format available" obos-security-baseline-summary-v1 "${OBOSCTL}" security-summary
