@@ -159,6 +159,7 @@ require_line "renew-leaf-certificate.sh" scripts/bootstrap/provision-debian.sh
 require_line "TLS leaf renewal is intentionally not exposed through the HTTP bridge or web UI" docs/web-ui-agent-contract.md
 require_line "Raspberry Pi Network Installer" docs/image-release-validation.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/image-release-validation.md
+require_line "sudo obosctl tls-renew-leaf-plan" docs/image-release-validation.md
 require_line "update-rollback-stage" docs/image-release-validation.md
 require_line "format=obos-image-release-validation-v1" docs/image-release-validation.md
 require_line "signature_verified=yes|no" docs/image-release-validation.md
