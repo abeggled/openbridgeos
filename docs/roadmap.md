@@ -98,6 +98,7 @@ Current implementation status:
 - Certificate replacement/rotation workflow.
 - Explicit MQTT external access opt-in workflow.
 - Signed release artifact manifests and checksum verification.
-- Release key custody and publication policy.
+- Release key custody and publication policy documented in
+  [release-signing.md](release-signing.md).
 - Update rollback staging and recovery drills.
 - Security hardening checklist in CI.

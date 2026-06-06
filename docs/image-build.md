@@ -389,6 +389,9 @@ When `OBOS_RELEASE_MINISIGN_PUBLIC_KEY` is set, `minisign` must be installed and
 the check runs `minisign -Vm` against the release manifest and detached
 signature.
 
+Release signing key handling and publication rules are documented in
+[release-signing.md](release-signing.md).
+
 The builder host must provide the profile tools: `debootstrap`,
 `qemu-aarch64-static`, `sfdisk`, `mkfs.vfat`, `mkfs.ext4`, `losetup`, `mount`,
 `umount`, `partprobe`, `tar`, `xz`, and `sha256sum`.
