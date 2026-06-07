@@ -217,6 +217,13 @@ fi
 mv "${BUNDLE_DIR}/release-notes.good" "${BUNDLE_DIR}/release-notes.md"
 
 cp "${BUNDLE_DIR}/release-notes.md" "${BUNDLE_DIR}/release-notes.good"
+sed 's/^minisign_public_key=.*/minisign_public_key=RWQdifferentpublickey/' "${BUNDLE_DIR}/release-notes.good" > "${BUNDLE_DIR}/release-notes.md"
+if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; then
+  fail "bundle with mismatched release notes public key was accepted"
+fi
+mv "${BUNDLE_DIR}/release-notes.good" "${BUNDLE_DIR}/release-notes.md"
+
+cp "${BUNDLE_DIR}/release-notes.md" "${BUNDLE_DIR}/release-notes.good"
 sed 's/^compose_image_pinning=.*/compose_image_pinning=<compose-result>/' "${BUNDLE_DIR}/release-notes.good" > "${BUNDLE_DIR}/release-notes.md"
 if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; then
   fail "bundle with release notes placeholder evidence was accepted"

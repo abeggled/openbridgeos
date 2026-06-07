@@ -26,9 +26,14 @@ require_notes_line() {
     || fail "release notes missing required evidence reference: ${expected}"
 }
 
+notes_value() {
+  key="$1"
+  awk -F= -v key="${key}" '$1 == key { print substr($0, length($1) + 2); exit }' "${release_notes}"
+}
+
 require_notes_value() {
   key="$1"
-  value="$(awk -F= -v key="${key}" '$1 == key { print substr($0, length($1) + 2); exit }' "${release_notes}")"
+  value="$(notes_value "${key}")"
   [ -n "${value}" ] || fail "release notes ${key} is missing or empty"
   case "${value}" in
     \<*\>) fail "release notes ${key} still contains a template placeholder" ;;
@@ -59,6 +64,8 @@ public_key="$(first_content_line "${release_public_key}")"
 [ -n "${public_key}" ] || fail "release public key file does not contain a public key"
 
 require_notes_value "minisign_public_key"
+[ "$(notes_value minisign_public_key)" = "${public_key}" ] \
+  || fail "release notes minisign_public_key does not match release public key file"
 require_notes_value "minisign_public_key_fingerprint"
 require_notes_line "validation-amd64-vm.record"
 require_notes_line "validation-rpi4-arm64.record"
