@@ -65,8 +65,16 @@ for record in "$@"; do
   release_artifact_match "${profile}" "${artifact}" "${manifest}" \
     || fail "validation record does not match release manifest artifact: ${record}"
   case "${profile}" in
-    amd64-vm) amd64_validated=true ;;
-    rpi4-arm64) rpi_validated=true ;;
+    amd64-vm)
+      [ "${amd64_validated}" = "false" ] \
+        || fail "duplicate amd64-vm validation record: ${record}"
+      amd64_validated=true
+      ;;
+    rpi4-arm64)
+      [ "${rpi_validated}" = "false" ] \
+        || fail "duplicate rpi4-arm64 validation record: ${record}"
+      rpi_validated=true
+      ;;
     *) fail "unsupported validation record profile: ${profile}" ;;
   esac
   record_count=$((record_count + 1))
@@ -74,6 +82,7 @@ done
 
 [ "${amd64_validated}" = "true" ] || fail "amd64-vm validation record missing"
 [ "${rpi_validated}" = "true" ] || fail "rpi4-arm64 validation record missing"
+[ "${record_count}" -eq 2 ] || fail "release candidate must have exactly two validation records"
 
 echo "format=obos-release-candidate-check-v1"
 echo "release_manifest=${release_manifest}"
