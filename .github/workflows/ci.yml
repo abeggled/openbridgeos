@@ -73,6 +73,9 @@ jobs:
       - name: MVP readiness
         run: sh scripts/checks/check-mvp-readiness.sh
 
+      - name: MVP runtime readiness fixture
+        run: sh scripts/checks/check-mvp-runtime-readiness.sh
+
       - name: Image profiles
         run: sh scripts/images/validate-image-profiles.sh
 
