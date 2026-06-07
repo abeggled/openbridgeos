@@ -209,6 +209,7 @@ require_line "print-image-build-plan.sh packaging/images/profiles/amd64-vm.env" 
 require_line "print-image-validation-record-template.sh rpi4-arm64" docs/technical-mvp-handoff.md
 require_line "Check each completed validation record" docs/technical-mvp-handoff.md
 require_line "check-release-evidence-bundle.sh" docs/technical-mvp-handoff.md
+require_line "/usr/lib/obos/mvp-runtime-readiness.sh summary" docs/technical-mvp-handoff.md
 require_line "format=obos-release-evidence-bundle-check-v1" scripts/images/check-release-evidence-bundle.sh
 require_line "release-notes.md" scripts/images/check-release-evidence-bundle.sh
 require_line "validation-amd64-vm.record" scripts/images/check-release-evidence-bundle.sh
