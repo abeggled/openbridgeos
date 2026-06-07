@@ -76,6 +76,9 @@ jobs:
       - name: Image profiles
         run: sh scripts/images/validate-image-profiles.sh
 
+      - name: Image profile fixture
+        run: sh scripts/checks/check-image-profiles.sh
+
       - name: Image build plan fixture
         run: sh scripts/checks/check-image-build-plan.sh
 
