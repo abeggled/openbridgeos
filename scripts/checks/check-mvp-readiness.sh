@@ -40,6 +40,7 @@ require_file packaging/images/profiles/rpi4-arm64.env
 require_file scripts/images/build-amd64-qcow2.sh
 require_file scripts/images/check-amd64-qcow2-build-host.sh
 require_file scripts/images/build-rpi4-arm64-image.sh
+require_file scripts/checks/check-image-profiles.sh
 require_file scripts/images/smoke-test-amd64-qcow2.sh
 require_file scripts/images/check-rpi-boot-files.sh
 require_file scripts/images/check-image-release-validation-record.sh
@@ -259,6 +260,8 @@ require_line "OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=true" packaging/images/profi
 require_line "CONFIG_BLK_DEV_NVME=y" packaging/images/profiles/rpi4-arm64.env
 require_line "Raspberry Pi Network Installer" docs/image-build.md
 require_line "rpi_contract:" scripts/images/print-image-build-plan.sh
+require_line "profile with SSH enabled was accepted" scripts/checks/check-image-profiles.sh
+require_line "Raspberry Pi profile without NVMe kernel config was accepted" scripts/checks/check-image-profiles.sh
 require_line "Raspberry Pi firmware config is not a Linux kernel config" scripts/images/check-rpi-kernel-config.sh
 require_line "CHECK_RPI_BOOT_FILES=" scripts/images/build-rpi4-arm64-image.sh
 # shellcheck disable=SC2016
