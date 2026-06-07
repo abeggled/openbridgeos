@@ -49,6 +49,7 @@ require_present manifest
 require_present platform
 require_present hardware_or_vm
 require_present boot_media
+require_present notes
 
 require_value signature_verified yes
 require_value checksums_verified yes

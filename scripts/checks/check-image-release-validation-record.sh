@@ -79,6 +79,11 @@ if sh "${CHECKER}" "${TMP_DIR}/bad-rpi-boot.record" >/dev/null 2>&1; then
   fail "rpi record with unsupported boot media was accepted"
 fi
 
+grep -v '^notes=' "${TMP_DIR}/amd64.record" > "${TMP_DIR}/missing-notes.record"
+if sh "${CHECKER}" "${TMP_DIR}/missing-notes.record" >/dev/null 2>&1; then
+  fail "record without notes was accepted"
+fi
+
 sh scripts/images/print-image-validation-record-template.sh amd64-vm > "${TMP_DIR}/amd64-template.record"
 if sh "${CHECKER}" "${TMP_DIR}/amd64-template.record" >/dev/null 2>&1; then
   fail "unfinished validation record template was accepted"
