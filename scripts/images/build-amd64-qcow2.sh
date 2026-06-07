@@ -12,6 +12,7 @@ BASE_IMAGE_SHA256="${OBOS_QCOW2_BASE_IMAGE_SHA256:-}"
 RELEASE_BUILD="${OBOS_RELEASE_BUILD:-0}"
 VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
 CHECK_AMD64_BUILD_HOST="${REPO_ROOT}/scripts/images/check-amd64-qcow2-build-host.sh"
+CHECK_QCOW2_MANIFEST="${REPO_ROOT}/scripts/images/check-qcow2-manifest.sh"
 
 fail() {
   echo "amd64 qcow2 build failed: $1" >&2
@@ -124,6 +125,7 @@ EOF
 [ -f "${PROFILE_FILE}" ] || fail "missing image profile: ${PROFILE_FILE}"
 [ -f "${VALIDATE_IMAGE_PROFILES}" ] || fail "missing image profile validator: ${VALIDATE_IMAGE_PROFILES}"
 [ -f "${CHECK_AMD64_BUILD_HOST}" ] || fail "missing build host preflight: ${CHECK_AMD64_BUILD_HOST}"
+[ -f "${CHECK_QCOW2_MANIFEST}" ] || fail "missing manifest checker: ${CHECK_QCOW2_MANIFEST}"
 run_build_host_preflight
 sh "${VALIDATE_IMAGE_PROFILES}" "${PROFILE_FILE}" >/dev/null
 verify_release_build_inputs
@@ -195,6 +197,7 @@ virt-sysprep -a "${OUTPUT_IMAGE}" \
 qemu-img info "${OUTPUT_IMAGE}"
 sha256sum "${OUTPUT_IMAGE}" > "${OUTPUT_IMAGE}.sha256"
 write_manifest "${MANIFEST}" "${OUTPUT_IMAGE}" "${OUTPUT_IMAGE}.sha256" "${BASE_IMAGE}" "${STAMP}"
+OBOS_MANIFEST_STRICT_FILES=1 sh "${CHECK_QCOW2_MANIFEST}" "${MANIFEST}" >/dev/null
 cp "${OUTPUT_IMAGE}" "${LATEST_IMAGE}"
 cp "${OUTPUT_IMAGE}.sha256" "${LATEST_IMAGE}.sha256"
 cp "${MANIFEST}" "${LATEST_MANIFEST}"
