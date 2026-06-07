@@ -153,6 +153,10 @@ sh scripts/images/print-image-validation-record-template.sh amd64-vm > validatio
 sh scripts/images/print-image-validation-record-template.sh rpi4-arm64 > validation-rpi4-arm64.record
 ```
 
+Generated templates are intentionally unfinished. Replace every `<...>`
+placeholder after the validation run; the record checker rejects unfinished
+templates.
+
 Validate a completed record before attaching it to a release:
 
 ```sh
