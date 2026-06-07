@@ -94,6 +94,9 @@ jobs:
       - name: Image release validation record fixture
         run: sh scripts/checks/check-image-release-validation-record.sh
 
+      - name: Image validation record template fixture
+        run: sh scripts/checks/check-image-validation-record-template.sh
+
       - name: Release candidate fixture
         run: sh scripts/checks/check-release-candidate.sh
 
