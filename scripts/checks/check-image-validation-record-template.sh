@@ -16,7 +16,11 @@ printf '%s\n' "${amd64_output}" | grep -q '^profile=amd64-vm$' \
 printf '%s\n' "${amd64_output}" | grep -q '^network_installer_used=no$' \
   || fail "amd64 template should not use Network Installer"
 printf '%s\n' "${amd64_output}" | grep -q '^tls_leaf_renewal_plan_result=PASS$' \
-  || fail "amd64 template missing TLS leaf renewal plan result"
+  && fail "amd64 template prefilled TLS leaf renewal plan result"
+printf '%s\n' "${amd64_output}" | grep -q '^tls_leaf_renewal_plan_result=<PASS|FAIL>$' \
+  || fail "amd64 template should require TLS leaf renewal plan result"
+printf '%s\n' "${amd64_output}" | grep -q '^signature_verified=<yes|no>$' \
+  || fail "amd64 template should require signature verification result"
 
 printf '%s\n' "${rpi_output}" | grep -q '^profile=rpi4-arm64$' \
   || fail "rpi template profile missing"
