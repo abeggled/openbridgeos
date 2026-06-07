@@ -47,6 +47,7 @@ require_file scripts/images/print-image-validation-record-template.sh
 require_file scripts/images/check-release-candidate.sh
 require_file scripts/images/check-release-evidence-bundle.sh
 require_file scripts/images/check-compose-image-pinning.sh
+require_file scripts/images/print-image-build-plan.sh
 require_file scripts/tls/plan-leaf-renewal.sh
 require_file scripts/tls/renew-leaf-certificate.sh
 
@@ -236,6 +237,7 @@ require_line "OBOS_OUTPUT_FORMAT=qcow2" packaging/images/profiles/amd64-vm.env
 require_line "gnupg" packaging/images/profiles/amd64-vm.env
 require_line "CHECK_AMD64_BUILD_HOST=" scripts/images/build-amd64-qcow2.sh
 require_line "run_build_host_preflight" scripts/images/build-amd64-qcow2.sh
+require_line "qcow2_contract:" scripts/images/print-image-build-plan.sh
 require_line "OBOS_SMOKE_LOG_FILE" scripts/images/smoke-test-amd64-qcow2.sh
 require_line "qemu exited before HTTPS health passed" scripts/images/smoke-test-amd64-qcow2.sh
 require_line "OBOS_IMAGE_PROFILE=rpi4-arm64" packaging/images/profiles/rpi4-arm64.env
@@ -247,6 +249,7 @@ require_line "gnupg" packaging/images/profiles/rpi4-arm64.env
 require_line "OBOS_RPI_NETWORK_INSTALLER_COMPATIBLE=true" packaging/images/profiles/rpi4-arm64.env
 require_line "CONFIG_BLK_DEV_NVME=y" packaging/images/profiles/rpi4-arm64.env
 require_line "Raspberry Pi Network Installer" docs/image-build.md
+require_line "rpi_contract:" scripts/images/print-image-build-plan.sh
 require_line "Raspberry Pi firmware config is not a Linux kernel config" scripts/images/check-rpi-kernel-config.sh
 require_line "CHECK_RPI_BOOT_FILES=" scripts/images/build-rpi4-arm64-image.sh
 # shellcheck disable=SC2016

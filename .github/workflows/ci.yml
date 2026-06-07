@@ -76,6 +76,9 @@ jobs:
       - name: Image profiles
         run: sh scripts/images/validate-image-profiles.sh
 
+      - name: Image build plan fixture
+        run: sh scripts/checks/check-image-build-plan.sh
+
       - name: qcow2 manifest fixture
         run: sh scripts/checks/check-qcow2-manifest.sh
 
