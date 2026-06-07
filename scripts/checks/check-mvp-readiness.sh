@@ -246,7 +246,10 @@ require_line "OBOS_IMAGE_KIND=vm-image" packaging/images/profiles/amd64-vm.env
 require_line "OBOS_OUTPUT_FORMAT=qcow2" packaging/images/profiles/amd64-vm.env
 require_line "gnupg" packaging/images/profiles/amd64-vm.env
 require_line "CHECK_AMD64_BUILD_HOST=" scripts/images/build-amd64-qcow2.sh
+require_line "CHECK_QCOW2_MANIFEST=" scripts/images/build-amd64-qcow2.sh
 require_line "run_build_host_preflight" scripts/images/build-amd64-qcow2.sh
+# shellcheck disable=SC2016
+require_line 'sh "${CHECK_QCOW2_MANIFEST}" "${MANIFEST}"' scripts/images/build-amd64-qcow2.sh
 require_line "qcow2_contract:" scripts/images/print-image-build-plan.sh
 require_line "OBOS_SMOKE_LOG_FILE" scripts/images/smoke-test-amd64-qcow2.sh
 require_line "qemu exited before HTTPS health passed" scripts/images/smoke-test-amd64-qcow2.sh
