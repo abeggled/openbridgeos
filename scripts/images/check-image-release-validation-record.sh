@@ -20,6 +20,9 @@ require_present() {
   key="$1"
   val="$(value "${key}")"
   [ -n "${val}" ] || fail "${key} is missing"
+  case "${val}" in
+    \<*\>) fail "${key} still contains a template placeholder" ;;
+  esac
 }
 
 require_value() {
