@@ -178,6 +178,9 @@ require_line "still contains a template placeholder" scripts/images/check-image-
 require_line "require_present notes" scripts/images/check-image-release-validation-record.sh
 require_line "MINISIGN_PUBLIC_KEY=" scripts/images/check-release-manifest.sh
 require_line "minisign -Vm" scripts/images/check-release-manifest.sh
+require_line "amd64-vm release artifact missing" scripts/images/check-release-manifest.sh
+require_line "rpi4-arm64 release artifact missing" scripts/images/check-release-manifest.sh
+require_line "duplicate release artifact profile" scripts/images/check-release-manifest.sh
 require_line "Release private key" docs/release-signing.md
 require_line "Do not inject the private key into CI" docs/release-signing.md
 require_line "OBOS_RELEASE_MINISIGN_PUBLIC_KEY" docs/release-signing.md

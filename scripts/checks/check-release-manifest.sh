@@ -131,6 +131,25 @@ grep -q '^artifact_1_profile=amd64-vm$' "${RELEASE_MANIFEST}" \
 grep -q '^artifact_2_profile=rpi4-arm64$' "${RELEASE_MANIFEST}" \
   || fail "rpi artifact profile missing"
 
+missing_rpi_manifest="${TMP_DIR}/missing-rpi-release.manifest"
+awk '$1 != "artifact_count=2" && $1 !~ /^artifact_2_/ { print }' "${RELEASE_MANIFEST}" > "${missing_rpi_manifest}"
+printf 'artifact_count=1\n' >> "${missing_rpi_manifest}"
+if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${missing_rpi_manifest}" >/dev/null 2>&1; then
+  fail "release manifest missing rpi4-arm64 was accepted"
+fi
+
+duplicate_amd64_manifest="${TMP_DIR}/duplicate-amd64-release.manifest"
+awk '
+  /^artifact_2_profile=/ {
+    print "artifact_2_profile=amd64-vm"
+    next
+  }
+  { print }
+' "${RELEASE_MANIFEST}" > "${duplicate_amd64_manifest}"
+if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${duplicate_amd64_manifest}" >/dev/null 2>&1; then
+  fail "release manifest duplicate amd64-vm was accepted"
+fi
+
 image_file="$(awk -F= '$1 == "artifact_1_image" { print substr($0, length($1) + 2) }' "${RELEASE_MANIFEST}")"
 mv "${image_file}" "${image_file}.missing"
 if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${RELEASE_MANIFEST}" >/dev/null 2>&1; then
