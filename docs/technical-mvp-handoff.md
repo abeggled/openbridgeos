@@ -84,17 +84,22 @@ sudo scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.q
 Run the Raspberry Pi Network Installer validation described in
 [image-release-validation.md](image-release-validation.md).
 
-Create one validation record per profile and check each record:
+Create one validation record template per profile:
 
 ```sh
 sh scripts/images/print-image-validation-record-template.sh amd64-vm > validation-amd64-vm.record
 sh scripts/images/print-image-validation-record-template.sh rpi4-arm64 > validation-rpi4-arm64.record
-sh scripts/images/check-image-release-validation-record.sh validation-amd64-vm.record
-sh scripts/images/check-image-release-validation-record.sh validation-rpi4-arm64.record
 ```
 
 Fill every generated `<...>` placeholder from the actual validation run before
 checking the records.
+
+Check each completed validation record:
+
+```sh
+sh scripts/images/check-image-release-validation-record.sh validation-amd64-vm.record
+sh scripts/images/check-image-release-validation-record.sh validation-rpi4-arm64.record
+```
 
 Check the complete release candidate:
 
