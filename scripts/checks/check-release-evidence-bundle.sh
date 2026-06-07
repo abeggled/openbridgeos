@@ -156,6 +156,11 @@ write_validation_record "${BUNDLE_DIR}/validation-rpi4-arm64.record" rpi4-arm64 
 cat > "${BUNDLE_DIR}/release-notes.md" <<'EOF'
 # Release Notes
 
+manifest=obos-release.manifest
+signature=obos-release.manifest.minisig
+release_public_key=obos-release.minisign.pub
+profile=amd64-vm
+profile=rpi4-arm64
 minisign_public_key=RWQfixturepublickey
 minisign_public_key_fingerprint=fixture
 validation-amd64-vm.record
@@ -187,6 +192,20 @@ if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; the
   fail "bundle without rpi validation record was accepted"
 fi
 mv "${BUNDLE_DIR}/validation-rpi4-arm64.missing" "${BUNDLE_DIR}/validation-rpi4-arm64.record"
+
+cp "${BUNDLE_DIR}/release-notes.md" "${BUNDLE_DIR}/release-notes.good"
+grep -v 'obos-release.manifest.minisig' "${BUNDLE_DIR}/release-notes.good" > "${BUNDLE_DIR}/release-notes.md"
+if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; then
+  fail "bundle without signature reference in release notes was accepted"
+fi
+mv "${BUNDLE_DIR}/release-notes.good" "${BUNDLE_DIR}/release-notes.md"
+
+cp "${BUNDLE_DIR}/release-notes.md" "${BUNDLE_DIR}/release-notes.good"
+grep -v 'profile=rpi4-arm64' "${BUNDLE_DIR}/release-notes.good" > "${BUNDLE_DIR}/release-notes.md"
+if PATH="${FAKE_BIN}:$PATH" sh "${CHECKER}" "${BUNDLE_DIR}" >/dev/null 2>&1; then
+  fail "bundle without rpi profile reference in release notes was accepted"
+fi
+mv "${BUNDLE_DIR}/release-notes.good" "${BUNDLE_DIR}/release-notes.md"
 
 cp "${BUNDLE_DIR}/release-notes.md" "${BUNDLE_DIR}/release-notes.good"
 grep -v 'raw unencrypted backups' "${BUNDLE_DIR}/release-notes.good" > "${BUNDLE_DIR}/release-notes.md"
