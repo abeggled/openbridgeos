@@ -393,6 +393,10 @@ if OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBO
   fail "agent accepted restore apply planning path outside staging dir"
 fi
 
+if OBOS_AGENT_RESTORE_STAGE_DIR="/srv/obos/state/restore-staging" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" restore-apply /srv/obos/state/restore-staging/restore.20260605 --confirm restore-apply >/dev/null 2>&1; then
+  fail "agent exposed restore apply mutation"
+fi
+
 OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" mvp-readiness-summary |
   grep -q 'stdout=format=obos-mvp-runtime-readiness-v1' \
   || fail "agent did not expose MVP readiness summary"

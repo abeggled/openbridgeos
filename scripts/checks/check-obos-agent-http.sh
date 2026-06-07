@@ -593,6 +593,15 @@ curl --silent --output "${tmp_dir}/restore-stage-extra-field.out" --write-out '%
 grep -q 'invalid-body' "${tmp_dir}/restore-stage-extra-field.out" \
   || fail "HTTP bridge restore-stage unexpected body rejection missing marker"
 
+curl --silent --output "${tmp_dir}/restore-apply.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"restore-apply","stage_dir":"/srv/obos/state/restore-staging/restore.test"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/restore-apply |
+  grep -q '^404$' \
+  || fail "HTTP bridge exposed restore apply mutation"
+grep -q 'unknown-action' "${tmp_dir}/restore-apply.out" \
+  || fail "HTTP bridge restore apply rejection missing marker"
+
 curl --silent --output "${tmp_dir}/backup-bad-confirm.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \
   --data '{"confirm":"wrong"}' \
