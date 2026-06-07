@@ -33,6 +33,7 @@ require_file scripts/agent/obos-agent.sh
 require_file scripts/agent/obos-agent-http.py
 require_file scripts/auth/generate-web-auth.sh
 require_file scripts/audit/mvp-runtime-readiness.sh
+require_file scripts/checks/check-mvp-runtime-readiness.sh
 require_file apps/obos-web/index.html
 require_file apps/obos-web/app.js
 require_file packaging/images/profiles/amd64-vm.env
@@ -95,6 +96,7 @@ require_line "update rollback plan available for last update" scripts/audit/mvp-
 require_line "TLS leaf renewal plan available" scripts/audit/mvp-runtime-readiness.sh
 require_line "check_http_agent_status" scripts/audit/mvp-runtime-readiness.sh
 require_line "agent does not expose restore apply mutation" scripts/audit/mvp-runtime-readiness.sh
+require_line "runtime readiness accepted restore apply mutation exposure" scripts/checks/check-mvp-runtime-readiness.sh
 # shellcheck disable=SC2016
 require_line 'install -m 0755 "${REPO_ROOT}/scripts/audit/mvp-runtime-readiness.sh" "${OBOS_LIB_DIR}/mvp-runtime-readiness.sh"' scripts/bootstrap/provision-debian.sh
 require_line "MVP_READINESS_SCRIPT=" scripts/obosctl
