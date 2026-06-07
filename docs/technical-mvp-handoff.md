@@ -93,6 +93,9 @@ sh scripts/images/check-image-release-validation-record.sh validation-amd64-vm.r
 sh scripts/images/check-image-release-validation-record.sh validation-rpi4-arm64.record
 ```
 
+Fill every generated `<...>` placeholder from the actual validation run before
+checking the records.
+
 Check the complete release candidate:
 
 ```sh

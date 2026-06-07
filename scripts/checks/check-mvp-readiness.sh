@@ -166,6 +166,7 @@ require_line "format=obos-image-release-validation-v1" docs/image-release-valida
 require_line "signature_verified=yes|no" docs/image-release-validation.md
 require_line "tls_leaf_renewal_plan_result=PASS|FAIL" docs/image-release-validation.md
 require_line "print-image-validation-record-template.sh amd64-vm" docs/image-release-validation.md
+require_line "record checker rejects unfinished" docs/image-release-validation.md
 require_line "check-release-candidate.sh" docs/image-release-validation.md
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh" docs/image-release-validation.md
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
