@@ -170,6 +170,7 @@ require_line "check-release-candidate.sh" docs/image-release-validation.md
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh" docs/image-release-validation.md
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
 require_line "require_value tls_leaf_renewal_plan_result PASS" scripts/images/check-image-release-validation-record.sh
+require_line "still contains a template placeholder" scripts/images/check-image-release-validation-record.sh
 require_line "MINISIGN_PUBLIC_KEY=" scripts/images/check-release-manifest.sh
 require_line "minisign -Vm" scripts/images/check-release-manifest.sh
 require_line "Release private key" docs/release-signing.md

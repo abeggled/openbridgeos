@@ -79,4 +79,9 @@ if sh "${CHECKER}" "${TMP_DIR}/bad-rpi-boot.record" >/dev/null 2>&1; then
   fail "rpi record with unsupported boot media was accepted"
 fi
 
+sh scripts/images/print-image-validation-record-template.sh amd64-vm > "${TMP_DIR}/amd64-template.record"
+if sh "${CHECKER}" "${TMP_DIR}/amd64-template.record" >/dev/null 2>&1; then
+  fail "unfinished validation record template was accepted"
+fi
+
 echo "image release validation record fixture: PASS"
