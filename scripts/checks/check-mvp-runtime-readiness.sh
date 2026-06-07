@@ -33,6 +33,7 @@ echo "result=PASS"
 EOF
 chmod 0755 "${SECURITY_BASELINE}"
 
+# shellcheck disable=SC2016
 write_fake_command id '[ "${1:-}" = "-u" ] && echo 0 || exit 1'
 write_fake_command docker 'exit 0'
 write_fake_command nft 'exit 0'
@@ -40,6 +41,7 @@ write_fake_command nginx 'exit 0'
 write_fake_command gpg 'exit 0'
 write_fake_command python3 'exit 0'
 
+# shellcheck disable=SC2016
 write_fake_command systemctl '
 case "${1:-} ${2:-} ${3:-}" in
   "is-active --quiet docker.service"|"is-active --quiet nginx.service"|"is-active --quiet nftables.service"|"is-active --quiet obos-openbridgeserver.service"|"is-active --quiet obos-agent-http.service") exit 0 ;;
@@ -54,6 +56,7 @@ echo "stdout=format=obos-status-summary-v1"
 exit 0
 '
 
+# shellcheck disable=SC2016
 write_fake_command obosctl '
 case "${1:-}" in
   status-summary)
@@ -90,6 +93,7 @@ case "${1:-}" in
 esac
 '
 
+# shellcheck disable=SC2016
 write_fake_command obos-agent '
 case "${1:-}" in
   actions)
@@ -118,6 +122,7 @@ grep -q '^result=PASS$' "${TMP_DIR}/pass.out" \
 grep -q '^fail_count=0$' "${TMP_DIR}/pass.out" \
   || fail "valid fake appliance reported failures"
 
+# shellcheck disable=SC2016
 write_fake_command obos-agent '
 case "${1:-}" in
   actions)
