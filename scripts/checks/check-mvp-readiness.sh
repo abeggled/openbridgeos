@@ -114,6 +114,7 @@ require_line "action=restart|mutating=true|confirm=restart" scripts/agent/obos-a
 require_line "action=update|mutating=true|confirm=update" scripts/agent/obos-agent.sh
 require_line "action=backup|mutating=true|confirm=backup" scripts/agent/obos-agent.sh
 require_line "action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path" scripts/agent/obos-agent.sh
+require_line "agent exposed restore apply mutation" scripts/checks/check-obos-agent.sh
 require_line "action=portable-export|mutating=true|confirm=portable-export|required_arg=backup-path|required_arg=passphrase-file" scripts/agent/obos-agent.sh
 require_line "action=portable-import-stage|mutating=true|confirm=portable-import-stage|required_arg=portable-backup|required_arg=passphrase-file" scripts/agent/obos-agent.sh
 require_line "action=portable-export-plan|mutating=false|required_arg=backup-path" scripts/agent/obos-agent.sh
@@ -127,6 +128,7 @@ require_line '"backup": "backup"' scripts/agent/obos-agent-http.py
 require_line '"portable-export": "portable-export"' scripts/agent/obos-agent-http.py
 require_line '"portable-import-stage": "portable-import-stage"' scripts/agent/obos-agent-http.py
 require_line '"restore-stage": "restore-stage"' scripts/agent/obos-agent-http.py
+require_line "HTTP bridge exposed restore apply mutation" scripts/checks/check-obos-agent-http.sh
 require_line '"update": "update"' scripts/agent/obos-agent-http.py
 require_line '"logs-tail"' scripts/agent/obos-agent-http.py
 require_line '"mvp-readiness-summary"' scripts/agent/obos-agent-http.py
