@@ -24,6 +24,13 @@ Required before starting:
 
 ## Build
 
+Print and inspect the image build plans:
+
+```sh
+sh scripts/images/print-image-build-plan.sh packaging/images/profiles/amd64-vm.env
+sh scripts/images/print-image-build-plan.sh packaging/images/profiles/rpi4-arm64.env
+```
+
 Run profile and build-host preflights:
 
 ```sh

@@ -193,6 +193,7 @@ require_line "OBOS_RELEASE_BUILD=1" docs/technical-mvp-handoff.md
 require_line "check-release-candidate.sh" docs/technical-mvp-handoff.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/technical-mvp-handoff.md
 require_line "release-notes-template.md" docs/technical-mvp-handoff.md
+require_line "print-image-build-plan.sh packaging/images/profiles/amd64-vm.env" docs/technical-mvp-handoff.md
 require_line "print-image-validation-record-template.sh rpi4-arm64" docs/technical-mvp-handoff.md
 require_line "Check each completed validation record" docs/technical-mvp-handoff.md
 require_line "check-release-evidence-bundle.sh" docs/technical-mvp-handoff.md
