@@ -48,6 +48,13 @@ if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-qcow2-manifest.sh "${DIR
   exit 1
 fi
 
+WRONG_DEBIAN_MANIFEST="${TMP_DIR}/obos-amd64-vm-test-wrong-debian.qcow2.manifest"
+sed 's/^debian_release=trixie$/debian_release=bookworm/' "${MANIFEST_FILE}" > "${WRONG_DEBIAN_MANIFEST}"
+if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-qcow2-manifest.sh "${WRONG_DEBIAN_MANIFEST}" >/dev/null 2>&1; then
+  echo "qcow2 manifest fixture failed: non-Trixie release manifest was accepted" >&2
+  exit 1
+fi
+
 printf '0000000000000000000000000000000000000000000000000000000000000000  %s\n' "${IMAGE_FILE}" > "${CHECKSUM_FILE}"
 if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-qcow2-manifest.sh "${MANIFEST_FILE}" >/dev/null 2>&1; then
   echo "qcow2 manifest fixture failed: checksum file mismatch was accepted" >&2
