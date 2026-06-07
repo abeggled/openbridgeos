@@ -51,6 +51,13 @@ if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-rpi-image-manifest.sh "$
   exit 1
 fi
 
+WRONG_PROVISIONER_MANIFEST="${TMP_DIR}/obos-rpi4-arm64-test-wrong-provisioner.img.xz.manifest"
+sed 's|^provision_script=scripts/bootstrap/provision-debian.sh$|provision_script=scripts/bootstrap/other.sh|' "${MANIFEST_FILE}" > "${WRONG_PROVISIONER_MANIFEST}"
+if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-rpi-image-manifest.sh "${WRONG_PROVISIONER_MANIFEST}" >/dev/null 2>&1; then
+  echo "Raspberry Pi image manifest fixture failed: wrong provisioner manifest was accepted" >&2
+  exit 1
+fi
+
 printf '0000000000000000000000000000000000000000000000000000000000000000  %s\n' "${IMAGE_FILE}" > "${CHECKSUM_FILE}"
 if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-rpi-image-manifest.sh "${MANIFEST_FILE}" >/dev/null 2>&1; then
   echo "Raspberry Pi image manifest fixture failed: checksum file mismatch was accepted" >&2
