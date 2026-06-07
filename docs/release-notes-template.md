@@ -43,8 +43,9 @@ Required profiles:
 Release manifest:
 
 ```text
-manifest=
-signature=
+manifest=obos-release.manifest
+signature=obos-release.manifest.minisig
+release_public_key=obos-release.minisign.pub
 minisign_public_key=
 minisign_public_key_fingerprint=
 signature_verified=yes|no
