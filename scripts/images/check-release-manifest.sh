@@ -154,6 +154,9 @@ case "${artifact_count}" in
   0) fail "artifact_count must be greater than zero" ;;
 esac
 
+amd64_vm_seen=0
+rpi4_arm64_seen=0
+
 i=1
 while [ "${i}" -le "${artifact_count}" ]; do
   prefix="artifact_${i}"
@@ -165,8 +168,22 @@ while [ "${i}" -le "${artifact_count}" ]; do
 
   [ -n "${image}" ] || fail "${prefix}_image must not be empty"
   [ -n "${checksum_file}" ] || fail "${prefix}_checksum_file must not be empty"
+  case "${profile}" in
+    amd64-vm)
+      [ "${amd64_vm_seen}" -eq 0 ] || fail "duplicate release artifact profile: amd64-vm"
+      amd64_vm_seen=1
+      ;;
+    rpi4-arm64)
+      [ "${rpi4_arm64_seen}" -eq 0 ] || fail "duplicate release artifact profile: rpi4-arm64"
+      rpi4_arm64_seen=1
+      ;;
+    *) fail "unsupported release artifact profile: ${profile}" ;;
+  esac
   check_image_manifest "${image_manifest}" "${profile}" "${image}" "${checksum_file}" "${image_sha256}"
   i=$((i + 1))
 done
+
+[ "${amd64_vm_seen}" -eq 1 ] || fail "amd64-vm release artifact missing"
+[ "${rpi4_arm64_seen}" -eq 1 ] || fail "rpi4-arm64 release artifact missing"
 
 echo "release manifest: PASS ${MANIFEST_FILE}"
