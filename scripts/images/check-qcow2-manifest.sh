@@ -91,6 +91,7 @@ require_command sha256sum
 expect_value format obos-qcow2-build-v1 "${MANIFEST_FILE}"
 expect_value profile amd64-vm "${MANIFEST_FILE}"
 expect_value architecture amd64 "${MANIFEST_FILE}"
+expect_value debian_release trixie "${MANIFEST_FILE}"
 expect_value output_format qcow2 "${MANIFEST_FILE}"
 expect_value provision_script scripts/bootstrap/provision-debian.sh "${MANIFEST_FILE}"
 expect_value first_boot_service obos-first-boot.service "${MANIFEST_FILE}"
@@ -119,7 +120,6 @@ base_image_path="$(manifest_value base_image "${MANIFEST_FILE}")"
 base_image_sha256="$(manifest_value base_image_sha256 "${MANIFEST_FILE}")"
 
 [ -n "$(manifest_value created_at "${MANIFEST_FILE}")" ] || fail "created_at must not be empty"
-[ -n "$(manifest_value debian_release "${MANIFEST_FILE}")" ] || fail "debian_release must not be empty"
 [ -n "$(manifest_value base_image_url "${MANIFEST_FILE}")" ] || fail "base_image_url must not be empty"
 [ -n "$(manifest_value repo_revision "${MANIFEST_FILE}")" ] || fail "repo_revision must not be empty"
 

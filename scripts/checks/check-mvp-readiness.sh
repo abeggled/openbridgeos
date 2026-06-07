@@ -170,6 +170,8 @@ require_line "print-image-validation-record-template.sh amd64-vm" docs/image-rel
 require_line "record checker rejects unfinished" docs/image-release-validation.md
 require_line "check-release-candidate.sh" docs/image-release-validation.md
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh" docs/image-release-validation.md
+require_line "expect_value debian_release trixie" scripts/images/check-qcow2-manifest.sh
+require_line "expect_value provision_script scripts/bootstrap/provision-debian.sh" scripts/images/check-rpi-image-manifest.sh
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
 require_line "require_value tls_leaf_renewal_plan_result PASS" scripts/images/check-image-release-validation-record.sh
 require_line "still contains a template placeholder" scripts/images/check-image-release-validation-record.sh
