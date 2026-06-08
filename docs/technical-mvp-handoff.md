@@ -7,6 +7,9 @@ It does not replace the detailed build, signing, security, and validation
 documents. It gives the operator one ordered path from repository state to
 validated test images.
 
+Observed validation milestones are recorded in
+[mvp-validation-log.md](mvp-validation-log.md).
+
 ## Inputs
 
 Required before starting:
@@ -87,6 +90,10 @@ Run the qcow2 smoke test:
 ```sh
 sudo scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.qcow2
 ```
+
+Record successful smoke-test evidence in
+[mvp-validation-log.md](mvp-validation-log.md) until a signed release candidate
+with completed validation records exists.
 
 Run the Raspberry Pi Network Installer validation described in
 [image-release-validation.md](image-release-validation.md).

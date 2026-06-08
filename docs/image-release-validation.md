@@ -8,6 +8,10 @@ static checks; this runbook verifies that generated images boot, initialize the
 appliance instance, keep hardening defaults, and expose the expected recovery
 paths on real or VM hardware.
 
+Pre-release technical MVP observations may be recorded in
+[mvp-validation-log.md](mvp-validation-log.md) before a signed release candidate
+and complete validation records exist.
+
 ## Scope
 
 Validate every release candidate for these profiles:

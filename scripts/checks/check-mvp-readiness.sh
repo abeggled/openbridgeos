@@ -25,6 +25,7 @@ require_file docs/image-release-validation.md
 require_file docs/release-signing.md
 require_file docs/release-notes-template.md
 require_file docs/technical-mvp-handoff.md
+require_file docs/mvp-validation-log.md
 require_file docs/tls-certificate-lifecycle.md
 require_file docs/client-ca-trust.md
 require_file docs/security-baseline-testplan.md
@@ -69,6 +70,9 @@ require_line "release-notes-template.md" docs/roadmap.md
 require_line "technical-mvp-handoff.md" docs/roadmap.md
 require_line "tls-certificate-lifecycle.md" docs/roadmap.md
 require_line "implemented as a confirmed CLI-only workflow" docs/roadmap.md
+require_line "mvp-validation-log.md" docs/technical-mvp-handoff.md
+require_line "2026-06-08 amd64 qcow2 Smoke Pass" docs/mvp-validation-log.md
+require_line "qcow2 smoke test: PASS" docs/mvp-validation-log.md
 
 require_line "format=obos-status-summary-v1" scripts/obosctl
 require_line "format=obos-system-summary-v1" scripts/obosctl
