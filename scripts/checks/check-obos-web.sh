@@ -371,6 +371,9 @@ grep -q 'OBOS_ONBOARDING_DIR="/srv/obos/onboarding"' scripts/bootstrap/provision
 grep -q 'install -d -m 0755 "${OBOS_WEB_DIR}"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not create the obos-web install directory"
 
+grep -q 'install -d -m 0750 -g www-data /srv/obos' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not allow nginx to traverse /srv/obos"
+
 # shellcheck disable=SC2016
 grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR}/index.html"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web index"
