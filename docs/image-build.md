@@ -402,9 +402,10 @@ The builder host must provide the profile tools: `debootstrap`,
 
 The smoke test boots a qcow2 image in snapshot mode, forwards host TCP `8443` to
 the guest HTTPS port, forwards host TCP `18080` to the guest direct HTTP port,
-and waits for the open bridge server health endpoint over HTTPS. After HTTPS
-health passes, the test also verifies that direct open bridge server HTTP is not
-reachable from the VM network boundary.
+first confirms that the TLS proxy is reachable, and then waits for the open
+bridge server health endpoint over HTTPS. After HTTPS health passes, the test
+also verifies that direct open bridge server HTTP is not reachable from the VM
+network boundary.
 
 Install runtime dependencies on a Linux host:
 
@@ -433,6 +434,26 @@ sudo OBOS_SMOKE_HOST_HTTPS_PORT=9443 \
   OBOS_SMOKE_LOG_FILE=/tmp/obos-qcow2-smoke.log \
   OBOS_SMOKE_TIMEOUT_SECONDS=1200 \
   scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.qcow2
+```
+
+On memory-constrained builders, reduce the guest footprint:
+
+```sh
+sudo OBOS_SMOKE_MEMORY=1024 \
+  OBOS_SMOKE_CPUS=1 \
+  OBOS_SMOKE_TIMEOUT_SECONDS=1800 \
+  OBOS_SMOKE_LOG_FILE=/tmp/obos-qcow2-smoke.log \
+  scripts/images/smoke-test-amd64-qcow2.sh dist/images/obos-amd64-vm-latest.qcow2
+```
+
+For debugging only, run against a copied image with snapshot mode disabled so
+guest-side first boot state remains on that copy after the test exits:
+
+```sh
+cp dist/images/obos-amd64-vm-latest.qcow2 /tmp/obos-amd64-vm-debug.qcow2
+sudo OBOS_SMOKE_SNAPSHOT=off \
+  OBOS_SMOKE_LOG_FILE=/tmp/obos-qcow2-smoke.log \
+  scripts/images/smoke-test-amd64-qcow2.sh /tmp/obos-amd64-vm-debug.qcow2
 ```
 
 ## Current Implementation Direction
