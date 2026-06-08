@@ -255,6 +255,10 @@ require_line "gnupg" packaging/images/profiles/amd64-vm.env
 require_line "CHECK_AMD64_BUILD_HOST=" scripts/images/build-amd64-qcow2.sh
 require_line "CHECK_QCOW2_MANIFEST=" scripts/images/build-amd64-qcow2.sh
 require_line "run_build_host_preflight" scripts/images/build-amd64-qcow2.sh
+require_line "REPO_STAGING_PARENT=" scripts/images/build-amd64-qcow2.sh
+require_line "--exclude ./dist" scripts/images/build-amd64-qcow2.sh
+# shellcheck disable=SC2016
+require_line '--copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos"' scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016
 require_line 'sh "${CHECK_QCOW2_MANIFEST}" "${MANIFEST}"' scripts/images/build-amd64-qcow2.sh
 require_line "qcow2_contract:" scripts/images/print-image-build-plan.sh

@@ -156,7 +156,9 @@ require_command cut
 require_command date
 require_command mkdir
 require_command qemu-img
+require_command rm
 require_command sha256sum
+require_command tar
 require_command virt-customize
 require_command virt-sysprep
 
@@ -177,13 +179,26 @@ OUTPUT_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-${STAMP}.qcow2"
 LATEST_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-latest.qcow2"
 MANIFEST="${OUTPUT_IMAGE}.manifest"
 LATEST_MANIFEST="${LATEST_IMAGE}.manifest"
+REPO_STAGING_PARENT="${WORK_DIR}/repo-staging-${STAMP}"
+STAGED_REPO_DIR="${REPO_STAGING_PARENT}/${REPO_NAME}"
 
 cp "${BASE_IMAGE}" "${OUTPUT_IMAGE}"
 qemu-img resize "${OUTPUT_IMAGE}" "${OBOS_QCOW2_MIN_SIZE}"
 
+rm -rf "${REPO_STAGING_PARENT}"
+mkdir -p "${STAGED_REPO_DIR}"
+tar -C "${REPO_ROOT}" \
+  --exclude ./.git \
+  --exclude ./build \
+  --exclude ./dist \
+  --exclude '*.qcow2' \
+  --exclude '*.img' \
+  --exclude '*.img.xz' \
+  -cf - . | tar -C "${STAGED_REPO_DIR}" -xf -
+
 virt-customize -a "${OUTPUT_IMAGE}" \
   --mkdir /opt/openbridgeos \
-  --copy-in "${REPO_ROOT}:/opt/openbridgeos" \
+  --copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos" \
   --run-command "cd ${IMAGE_REPO_DIR} && OBOS_DISABLE_SSH=1 ${OBOS_PROVISION_SCRIPT} ${IMAGE_REPO_DIR}" \
   --run-command "systemctl enable ${OBOS_FIRST_BOOT_SERVICE}" \
   --run-command "rm -f /srv/obos/state/first-boot.done" \
