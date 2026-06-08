@@ -291,7 +291,9 @@ require_line "Raspberry Pi profile without NVMe kernel config was accepted" scri
 require_line "Raspberry Pi firmware config is not a Linux kernel config" scripts/images/check-rpi-kernel-config.sh
 require_line "CHECK_RPI_BOOT_FILES=" scripts/images/build-rpi4-arm64-image.sh
 # shellcheck disable=SC2016
-require_line 'OBOS_DISABLE_SSH=1 sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-rpi4-arm64-image.sh
+require_line 'OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-rpi4-arm64-image.sh
+# shellcheck disable=SC2016
+require_line 'APPLY_RUNTIME="${OBOS_APPLY_RUNTIME_HARDENING:-1}"' scripts/hardening/apply-host-hardening.sh
 # shellcheck disable=SC2016
 require_line 'sh "${CHECK_RPI_BOOT_FILES}" "${BUILD_ROOT}"' scripts/images/build-rpi4-arm64-image.sh
 
