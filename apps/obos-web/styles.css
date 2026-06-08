@@ -66,6 +66,50 @@ input {
   padding: 0 10px;
 }
 
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-panel {
+  width: min(100%, 440px);
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 24px;
+}
+
+.auth-panel label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-panel h1 {
+  margin-bottom: 4px;
+}
+
+.auth-status {
+  min-height: 20px;
+  margin: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.auth-status[data-state="ok"] {
+  color: var(--accent-strong);
+}
+
+.auth-status[data-state="error"] {
+  color: var(--danger);
+}
+
 .shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;

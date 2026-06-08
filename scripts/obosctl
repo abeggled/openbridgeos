@@ -45,8 +45,8 @@ Commands:
   security-summary  Print machine-readable security baseline status
   mvp-readiness-summary
                     Print machine-readable technical MVP runtime readiness
-  web-auth-set     Set the initial web console Basic Auth password from a file
-  web-auth-rotate  Rotate generated web console Basic Auth credentials
+  web-auth-set     Set the initial web console login password from a file
+  web-auth-rotate  Rotate generated web console login credentials
   agent-audit-summary
                     Print machine-readable agent mutation audit status
   start             Start open bridge server

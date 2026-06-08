@@ -11,6 +11,7 @@ TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-mate
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
 ONBOARDING_REQUIRED_FILE="${OBOS_ONBOARDING_REQUIRED_FILE:-${OBOS_STATE_DIR}/onboarding/onboarding-required}"
+WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-${OBOS_ETC_DIR}/web.htpasswd}"
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -30,7 +31,24 @@ uuid() {
   fi
 }
 
+refresh_onboarding_window() {
+  now_epoch="$(date +%s)"
+  expires_epoch=$((now_epoch + 300))
+  install -d -m 0700 -o obos-agent -g obos-agent "${OBOS_STATE_DIR}/onboarding"
+  {
+    echo "format=obos-onboarding-required-v1"
+    echo "created_at=$(date -u +%Y%m%dT%H%M%SZ)"
+    echo "expires_at_epoch=${expires_epoch}"
+    echo "window_seconds=300"
+  } > "${ONBOARDING_REQUIRED_FILE}"
+  chown obos-agent:obos-agent "${ONBOARDING_REQUIRED_FILE}" 2>/dev/null || true
+  chmod 0600 "${ONBOARDING_REQUIRED_FILE}"
+}
+
 if [ -f "${FIRST_BOOT_MARKER}" ]; then
+  if [ ! -f "${WEB_AUTH_FILE}" ]; then
+    refresh_onboarding_window
+  fi
   exit 0
 fi
 
@@ -60,13 +78,8 @@ fi
 
 chmod 0600 "${ENV_FILE}"
 
-if [ ! -f "${OBOS_ETC_DIR}/web.htpasswd" ]; then
-  {
-    echo "format=obos-onboarding-required-v1"
-    echo "created_at=$(date -u +%Y%m%dT%H%M%SZ)"
-  } > "${ONBOARDING_REQUIRED_FILE}"
-  chown obos-agent:obos-agent "${ONBOARDING_REQUIRED_FILE}" 2>/dev/null || true
-  chmod 0600 "${ONBOARDING_REQUIRED_FILE}"
+if [ ! -f "${WEB_AUTH_FILE}" ]; then
+  refresh_onboarding_window
 fi
 
 if [ -x "${TLS_GENERATE_SCRIPT}" ]; then

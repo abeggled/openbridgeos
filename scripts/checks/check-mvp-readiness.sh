@@ -145,8 +145,12 @@ require_line '"set-timezone": "set-timezone"' scripts/agent/obos-agent-http.py
 require_line '"web-auth-set": "web-auth-set"' scripts/agent/obos-agent-http.py
 require_line "MAX_POST_BYTES = 1024" scripts/agent/obos-agent-http.py
 require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.sh
-require_line "auth_basic \"open bridge operating system\";" packaging/nginx/openbridgeserver.conf
-require_line "auth_basic_user_file /etc/obos/web.htpasswd;" packaging/nginx/openbridgeserver.conf
+require_line "SESSION_COOKIE = \"obos_session\"" scripts/agent/obos-agent-http.py
+require_line "handle_session_login" scripts/agent/obos-agent-http.py
+require_line "require_session" scripts/agent/obos-agent-http.py
+require_line "/obos/api/v1/session/" apps/obos-web/app.js
+require_line "location /visu/" packaging/nginx/openbridgeserver.conf
+require_line "proxy_pass http://127.0.0.1:8080/visu/;" packaging/nginx/openbridgeserver.conf
 require_line "openssl passwd -apr1 -stdin" scripts/auth/generate-web-auth.sh
 require_line "web-auth-rotate)" scripts/obosctl
 require_line "web-auth-set)" scripts/obosctl

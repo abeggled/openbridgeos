@@ -452,7 +452,7 @@ certificate paths, and SHA-256 fingerprints.
 `tls-export-boot` writes the public trust summary and local CA certificate to a
 mounted boot partition when one is available.
 
-`web-auth-rotate` rotates the generated web console Basic Auth password and
+`web-auth-rotate` rotates the generated web console login password and
 prints the new password once. Store it in a password manager; the command also
 updates `/etc/obos/web.htpasswd` and `/etc/obos/web-admin.env`.
 

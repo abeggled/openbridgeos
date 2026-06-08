@@ -30,7 +30,7 @@ intended host security posture:
 - private restore stage inspection
 - non-destructive restore apply planning
 - local agent sudoers, logrotate, and mutation audit boundary
-- generated web console Basic Auth boundary
+- generated web console login boundary
 
 ## Test Setup
 
@@ -305,7 +305,7 @@ The baseline passes when:
 - open bridge server health endpoint passes through localhost and verified HTTPS proxy
 - successful update records `/srv/obos/state/last-update`
 - backup file permissions are restrictive
-- web console Basic Auth files are present with restrictive permissions
+- web console login files are present with restrictive permissions
 - backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated
 - `obosctl restore-inspect` passes for the latest backup
 - `obosctl restore-plan` passes for the latest backup

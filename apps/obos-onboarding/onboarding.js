@@ -18,11 +18,18 @@ async function checkStatus() {
   if (!response.ok) {
     throw new Error(text.trim() || "onboarding status failed");
   }
-  if (text.includes("onboarding_required=false")) {
+  const webAuthConfigured = text.includes("web_auth_configured=true");
+  const onboardingRequired = text.includes("onboarding_required=true");
+  if (webAuthConfigured) {
     window.location.replace("/obos/");
     return;
   }
-  setStatus("Ready to create the local admin password.");
+  if (!onboardingRequired) {
+    setStatus("Onboarding window expired. Reboot the appliance to set the first password.", "error");
+    form.querySelector("button").disabled = true;
+    return;
+  }
+  setStatus("Ready to create the local admin password. This first-boot window is available for about 5 minutes.");
 }
 
 form.addEventListener("submit", async (event) => {

@@ -103,6 +103,12 @@ grep -q 'timezone' "${BRIDGE}" \
   || fail "bridge does not support timezone mutation payload"
 grep -q 'obos-agent-http-error-v1' "${BRIDGE}" \
   || fail "HTTP error envelope missing"
+grep -q 'SESSION_COOKIE = "obos_session"' "${BRIDGE}" \
+  || fail "HTTP bridge does not define a GUI session cookie"
+grep -q 'handle_session_login' "${BRIDGE}" \
+  || fail "HTTP bridge does not expose session login"
+grep -q 'require_session' "${BRIDGE}" \
+  || fail "HTTP bridge does not protect API endpoints with sessions"
 if grep -q 'Access-Control-Allow-Origin' "${BRIDGE}"; then
   fail "bridge must not emit CORS wildcard headers"
 fi
@@ -115,12 +121,17 @@ grep -q 'ProtectSystem=strict' "${SERVICE}" \
   || fail "HTTP bridge service lacks strict filesystem protection"
 grep -q 'MemoryDenyWriteExecute=true' "${SERVICE}" \
   || fail "HTTP bridge service lacks memory hardening"
+grep -q 'SupplementaryGroups=www-data' "${SERVICE}" \
+  || fail "HTTP bridge service cannot read the web auth hash"
 if grep -q 'NoNewPrivileges=true' "${SERVICE}"; then
   fail "HTTP bridge service must not enable NoNewPrivileges while obos-agent uses sudo"
 fi
 
 grep -q 'location /obos/api/' "${NGINX_CONF}" \
   || fail "nginx does not expose the agent API path"
+if grep -q 'auth_basic "open bridge operating system";' "${NGINX_CONF}"; then
+  fail "nginx must not use browser Basic Auth for the agent API"
+fi
 grep -q 'location /obos/api/v1/onboarding/' "${NGINX_CONF}" \
   || fail "nginx does not expose the onboarding API path"
 grep -q 'auth_basic off;' "${NGINX_CONF}" \
@@ -139,7 +150,8 @@ tmp_dir="$(mktemp -d)"
 portable_export_dir="/tmp/obos-portable-exports"
 portable_import_dir="/tmp/obos-portable-imports"
 onboarding_state_dir="/tmp/obos-onboarding-state"
-trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}" "${onboarding_state_dir}"' EXIT
+session_state_dir="/tmp/obos-session-state"
+trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}" "${onboarding_state_dir}" "${session_state_dir}"' EXIT
 
 cat > "${tmp_dir}/obos-agent" <<'EOF'
 #!/usr/bin/env sh
@@ -436,7 +448,19 @@ mkdir -p "${portable_export_dir}"
 printf 'encrypted portable fixture\n' > "${portable_export_dir}/obos-portable-test.tar"
 mkdir -p "${portable_import_dir}"
 mkdir -p "${onboarding_state_dir}"
-printf 'format=obos-onboarding-required-v1\n' > "${onboarding_state_dir}/onboarding-required"
+mkdir -p "${session_state_dir}"
+expires_at=$(( $(date +%s) + 300 ))
+{
+  echo 'format=obos-onboarding-required-v1'
+  echo "expires_at_epoch=${expires_at}"
+  echo 'window_seconds=300'
+} > "${onboarding_state_dir}/onboarding-required"
+cookie_jar="${tmp_dir}/cookies.txt"
+cat > "${tmp_dir}/.curlrc" <<EOF
+cookie = "${cookie_jar}"
+cookie-jar = "${cookie_jar}"
+EOF
+export HOME="${tmp_dir}"
 
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
 OBOS_AGENT_HTTP_BIND=127.0.0.1 \
@@ -446,6 +470,8 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
+OBOS_SESSION_DIR="${session_state_dir}" \
+OBOS_SESSION_COOKIE_SECURE=false \
 "${PYTHON_BIN}" "${BRIDGE}" &
 server_pid="$!"
 
@@ -461,6 +487,23 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth |
   grep -q 'stdout=web auth set: PASS' \
   || fail "onboarding web auth endpoint did not set the initial password"
+
+status_code="$(curl --silent --output "${tmp_dir}/unauth-status.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/actions/status-summary)"
+[ "${status_code}" = 401 ] || fail "agent API allowed unauthenticated status access"
+
+password_hash="$(printf '%s\n' 'correct horse battery staple' | openssl passwd -apr1 -stdin)"
+printf 'admin:%s\n' "${password_hash}" > "${onboarding_state_dir}/web.htpasswd"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"username":"admin","password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/session/login |
+  grep -q 'authenticated=true' \
+  || fail "session login did not authenticate"
+
+curl --fail --silent http://127.0.0.1:18091/obos/api/v1/session/status |
+  grep -q 'authenticated=true' \
+  || fail "session status did not report authenticated"
 
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/status-summary |
   grep -q 'stdout=format=obos-status-summary-v1' \

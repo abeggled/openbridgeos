@@ -19,6 +19,12 @@ grep -q 'ONBOARDING_REQUIRED_FILE=' scripts/bootstrap/first-boot.sh \
 grep -q 'format=obos-onboarding-required-v1' scripts/bootstrap/first-boot.sh \
   || fail "first boot does not create a machine-readable web onboarding marker"
 
+grep -q 'window_seconds=300' scripts/bootstrap/first-boot.sh \
+  || fail "first boot onboarding window is not limited to 300 seconds"
+
+grep -q 'refresh_onboarding_window' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not reopen onboarding after reboot when no password exists"
+
 grep -q 'generate-web-auth.sh' scripts/bootstrap/provision-debian.sh \
   || fail "web console auth helper is not installed during provisioning"
 
@@ -48,11 +54,21 @@ grep -q 'install -m 0640' scripts/auth/generate-web-auth.sh \
 grep -q 'install -m 0600' scripts/auth/generate-web-auth.sh \
   || fail "web console credential record is not installed with restrictive permissions"
 
-grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not require auth for obos web/API"
+if grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf; then
+  fail "nginx must not use browser Basic Auth for obos web/API"
+fi
 
-grep -q 'auth_basic_user_file /etc/obos/web.htpasswd;' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not use generated obos web credentials"
+grep -q 'SESSION_COOKIE = "obos_session"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not define the GUI session cookie"
+
+grep -q 'handle_session_login' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not expose GUI login handling"
+
+grep -q 'require_session' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not protect API calls with a session"
+
+grep -q 'SupplementaryGroups=www-data' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge cannot read nginx htpasswd group file"
 
 grep -q 'web-auth-rotate)' scripts/obosctl \
   || fail "obosctl does not expose web auth rotation"

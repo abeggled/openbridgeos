@@ -58,8 +58,8 @@ Default external exposure is minimal:
 - no external direct open bridge server HTTP
 - no external SSH
 - MQTT external access disabled by default
-- obos administration UI behind the same TLS boundary and protected by
-  per-appliance-instance Basic Auth
+- obos administration UI behind the same TLS boundary and protected by GUI login
+  with per-appliance-instance sessions
 
 open bridge server binds to localhost behind nginx:
 
@@ -70,10 +70,12 @@ open bridge server binds to localhost behind nginx:
 The host firewall uses nftables with inbound default-drop. It allows loopback,
 established traffic, ICMP/IPv6 ICMP, DHCP renewals, and TCP `443`.
 
-nginx protects `/obos/` and `/obos/api/` with Basic Auth after first web
-onboarding. First boot exposes only `/obos/onboarding/` and
-`/obos/api/v1/onboarding/` without Basic Auth so the administrator can set the
-initial `admin` password. The credential record is stored root-only in
+nginx serves `/obos/` as the appliance console and proxies `/obos/api/` to the
+local agent bridge. The bridge requires a server-side session cookie after GUI
+login. First boot exposes `/obos/onboarding/` and `/obos/api/v1/onboarding/` for
+about five minutes after system start so the administrator can set the initial
+`admin` password. If the setup window expires before credentials exist, rebooting
+opens a new window. The credential record is stored root-only in
 `/etc/obos/web-admin.env`. Headless images may also export `OBOS-ONBOARDING.txt`
 to a boot-accessible partition, but that file must not contain a password.
 
@@ -115,7 +117,7 @@ Provisioning applies:
 
 - nftables firewall rules from `packaging/nftables/obos.nft`
 - nginx TLS reverse proxy config from `packaging/nginx/openbridgeserver.conf`
-- generated web console authentication files and nginx Basic Auth config
+- generated web console authentication files and session protected API config
 - sysctl baseline from `packaging/sysctl/99-obos-hardening.conf`
 - unattended Debian security updates without automatic reboots
 - SSH service disablement when `ssh.service` exists

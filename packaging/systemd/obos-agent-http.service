@@ -6,6 +6,7 @@ After=network.target obos-first-boot.service
 Type=simple
 User=obos-agent
 Group=obos-agent
+SupplementaryGroups=www-data
 Environment=OBOS_AGENT_HTTP_BIND=127.0.0.1
 Environment=OBOS_AGENT_HTTP_PORT=8091
 ExecStart=/usr/bin/python3 /usr/lib/obos/obos-agent-http.py
@@ -15,7 +16,7 @@ UMask=0077
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=strict
-ReadWritePaths=/srv/obos/state/portable-imports /srv/obos/state/onboarding
+ReadWritePaths=/srv/obos/state/portable-imports /srv/obos/state/onboarding /srv/obos/state/sessions
 LockPersonality=true
 MemoryDenyWriteExecute=true
 RestrictRealtime=true

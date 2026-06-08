@@ -22,8 +22,14 @@ fail() {
 [ -f "${ONBOARDING_CSS}" ] || fail "onboarding UI styles missing"
 [ -f "${ONBOARDING_JS}" ] || fail "onboarding UI script missing"
 
-grep -q '<main class="shell">' "${INDEX}" \
+grep -q '<main class="shell" data-app-shell hidden>' "${INDEX}" \
   || fail "web UI does not define the appliance shell"
+
+grep -q 'data-login-form' "${INDEX}" \
+  || fail "web UI does not define a GUI login form"
+
+grep -q 'data-logout' "${INDEX}" \
+  || fail "web UI does not expose logout"
 
 grep -q 'open bridge operating system' "${INDEX}" \
   || fail "web UI does not use product name"
@@ -241,6 +247,12 @@ grep -q 'data-mutation-status="service-action"' "${INDEX}" \
 grep -q '/obos/api/v1/actions/' "${JS}" \
   || fail "web UI does not call the obos agent HTTP bridge"
 
+grep -q '/obos/api/v1/session/' "${JS}" \
+  || fail "web UI does not call the GUI session API"
+
+grep -q 'data-auth-screen' "${INDEX}" \
+  || fail "web UI does not define an auth screen"
+
 grep -q 'parseAgentResponse' "${JS}" \
   || fail "web UI does not parse the agent response envelope"
 
@@ -390,11 +402,9 @@ grep -q 'location /obos/onboarding/' packaging/nginx/openbridgeserver.conf \
 grep -q 'alias /srv/obos/onboarding/;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve onboarding UI from /srv/obos/onboarding"
 
-grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not protect obos-web with basic auth"
-
-grep -q 'auth_basic_user_file /etc/obos/web.htpasswd;' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not use generated obos-web credentials"
+if grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf; then
+  fail "nginx must not use browser Basic Auth for obos-web"
+fi
 
 grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web from /srv/obos/web"
