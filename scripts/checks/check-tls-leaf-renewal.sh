@@ -29,13 +29,13 @@ openssl req -x509 -new -nodes \
 openssl genrsa -out "${TLS_DIR}/obos.local.key" 2048 >/dev/null 2>&1
 openssl req -new \
   -key "${TLS_DIR}/obos.local.key" \
-  -subj "//CN=obos.local" \
+  -subj "//CN=obs.local" \
   -out "${TLS_DIR}/obos.local.csr" >/dev/null 2>&1
 cat > "${TLS_DIR}/obos.local.ext" <<'EOF'
 basicConstraints=critical,CA:FALSE
 keyUsage=critical,digitalSignature,keyEncipherment
 extendedKeyUsage=serverAuth
-subjectAltName=DNS:obos.local
+subjectAltName=DNS:obs.local
 EOF
 openssl x509 -req \
   -in "${TLS_DIR}/obos.local.csr" \
@@ -65,7 +65,7 @@ OBOS_ALLOW_NON_ROOT_TLS_RENEWAL=1 \
   OBOS_TRUST_EXPORT_DIR="${TRUST_DIR}" \
   OBOS_TLS_EXPORT_SCRIPT="${EXPORT_SCRIPT}" \
   OBOS_TLS_RELOAD_NGINX=0 \
-  OBOS_TLS_LEAF_SUBJECT="//CN=obos.local" \
+  OBOS_TLS_LEAF_SUBJECT="//CN=obs.local" \
   sh "${CHECKER}" --confirm tls-renew-leaf |
   grep -q '^result=PASS$' \
   || fail "valid leaf renewal did not pass"
@@ -92,7 +92,7 @@ mv "${TLS_DIR}/obos-local-ca.key" "${TLS_DIR}/obos-local-ca.key.missing"
 if OBOS_ALLOW_NON_ROOT_TLS_RENEWAL=1 \
   OBOS_TLS_DIR="${TLS_DIR}" \
   OBOS_TLS_RELOAD_NGINX=0 \
-  OBOS_TLS_LEAF_SUBJECT="//CN=obos.local" \
+  OBOS_TLS_LEAF_SUBJECT="//CN=obs.local" \
   sh "${CHECKER}" --confirm tls-renew-leaf >/dev/null 2>&1; then
   fail "leaf renewal accepted missing local CA key"
 fi

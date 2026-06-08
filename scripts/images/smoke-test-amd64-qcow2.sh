@@ -86,12 +86,12 @@ while :; do
   if [ "${https_proxy_ready}" -eq 0 ]; then
     http_code="$(
       curl --insecure --silent --output /dev/null --write-out '%{http_code}' --max-time 5 \
-        "https://127.0.0.1:${HOST_HTTPS_PORT}/obos/" 2>/dev/null || true
+        "https://127.0.0.1:${HOST_HTTPS_PORT}/obos/onboarding/" 2>/dev/null || true
     )"
     case "${http_code}" in
       200|301|302|401|403)
         https_proxy_ready=1
-        echo "qcow2 smoke test: HTTPS proxy is reachable with status ${http_code}"
+        echo "qcow2 smoke test: HTTPS onboarding is reachable with status ${http_code}"
         ;;
     esac
   fi

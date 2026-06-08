@@ -30,7 +30,7 @@ intended host security posture:
 - private restore stage inspection
 - non-destructive restore apply planning
 - local agent sudoers, logrotate, and mutation audit boundary
-- generated web console Basic Auth boundary
+- generated web console login boundary
 
 ## Test Setup
 
@@ -219,8 +219,8 @@ obosctl status
 obosctl health
 obosctl proxy-health
 curl --fail http://127.0.0.1:8080/api/v1/system/health
-curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obos.local:443:127.0.0.1 https://obos.local/api/v1/system/health
-curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obos.local:443:127.0.0.1 https://obos.local/obos/ && false || true
+curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obs.local:443:127.0.0.1 https://obs.local/api/v1/system/health
+curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obs.local:443:127.0.0.1 https://obs.local/obos/ && false || true
 ```
 
 Expected:
@@ -305,7 +305,7 @@ The baseline passes when:
 - open bridge server health endpoint passes through localhost and verified HTTPS proxy
 - successful update records `/srv/obos/state/last-update`
 - backup file permissions are restrictive
-- web console Basic Auth files are present with restrictive permissions
+- web console login files are present with restrictive permissions
 - backup contains manifest metadata, appliance identifier, and TLS identity material when TLS has been generated
 - `obosctl restore-inspect` passes for the latest backup
 - `obosctl restore-plan` passes for the latest backup

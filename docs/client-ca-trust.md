@@ -2,7 +2,7 @@
 
 open bridge operating system uses one local CA per appliance instance. Client
 devices may trust this CA so browsers can validate the appliance HTTPS
-certificate for `obos.local` and the appliance IP addresses.
+certificate for `obs.local` and the appliance IP addresses.
 
 This guide is a technical MVP checklist. Platform-specific steps still need
 release validation and screenshots before broad user-facing publication.
@@ -28,8 +28,8 @@ Use one of these fingerprint sources:
 - Verify the local CA SHA-256 fingerprint before importing the CA.
 - Trust only the CA for the appliance instance you are onboarding.
 - Do not copy the CA private key to client devices.
-- Remove `OBOS-ONBOARDING.txt` from the boot-accessible partition after
-  onboarding because it may contain the initial web console password.
+- `OBOS-ONBOARDING.txt` may point to the first web onboarding URL, but it must
+  not contain a password.
 - Replacing or rotating the appliance CA requires clients to trust the new CA.
 
 ## Platform Notes
@@ -38,7 +38,7 @@ Windows:
 
 - Import the CA certificate into the current user or local machine trusted root
   store.
-- Validate with a browser request to `https://obos.local/` or the appliance
+- Validate with a browser request to `https://obs.local/` or the appliance
   address after resolving the hostname to the appliance.
 
 macOS:

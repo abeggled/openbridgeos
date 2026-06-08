@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>open bridge operating system onboarding</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./onboarding.js" defer></script>
+  </head>
+  <body>
+    <main class="onboarding-shell">
+      <section class="onboarding-panel" aria-labelledby="onboarding-title">
+        <p class="eyebrow">First Setup</p>
+        <h1 id="onboarding-title">open bridge operating system</h1>
+        <p class="lede">Create the local administrator password for this appliance instance.</p>
+        <form data-onboarding-form>
+          <label>
+            Admin user
+            <input type="text" value="admin" autocomplete="username" readonly>
+          </label>
+          <label>
+            New password
+            <input name="password" type="password" autocomplete="new-password" minlength="12" required>
+          </label>
+          <label>
+            Repeat password
+            <input name="password_confirm" type="password" autocomplete="new-password" minlength="12" required>
+          </label>
+          <button type="submit">Set Password</button>
+        </form>
+        <p class="onboarding-status" data-onboarding-status>Checking onboarding state...</p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -37,9 +37,7 @@ Permissions:
 
 The leaf certificate includes SANs for:
 
-- `obos.local`
-- the current hostname
-- `<hostname>.local`
+- `obs.local`
 - current local IP addresses where detectable
 
 ## Print Trust Information

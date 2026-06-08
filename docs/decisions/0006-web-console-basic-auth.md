@@ -1,4 +1,4 @@
-# 0006: Protect the Appliance Web Console with Per-Instance Basic Auth
+# 0006: Protect the Appliance Web Console with Per-Instance Login
 
 ## Status
 
@@ -17,30 +17,42 @@ require confirmation tokens.
 
 ## Decision
 
-open bridge operating system protects both `/obos/` and `/obos/api/` with nginx
-Basic Auth by default.
+open bridge operating system protects `/obos/` with a GUI login and protects
+`/obos/api/` with a server-side session cookie issued after login.
 
-First boot generates per-appliance-instance credentials:
+First boot does not generate a reusable administrator password. Instead it
+creates a local onboarding marker and exposes these unauthenticated paths for
+about five minutes after system start:
+
+- `/obos/onboarding/`
+- `/obos/api/v1/onboarding/`
+
+The administrator sets the first web console password during this onboarding
+flow. After setup, the onboarding marker is removed and the session login
+protects the normal console and agent API. If the setup window expires before
+credentials exist, rebooting opens a new onboarding window.
+
+Per-appliance-instance credentials use:
 
 - username defaults to `admin`
-- password is randomly generated
-- nginx password hash is stored in `/etc/obos/web.htpasswd`
-- the initial credential record is stored in `/etc/obos/web-admin.env`
+- password is set by the administrator during first web onboarding
+- password hash is stored in `/etc/obos/web.htpasswd`
+- the credential record is stored in `/etc/obos/web-admin.env`
 
-The password file is readable by nginx and not world-readable. The credential
-record is root-only and treated as sensitive.
+The password file is readable by the local agent bridge and not world-readable.
+The credential record is root-only and treated as sensitive.
 
 For headless onboarding, first boot may write `OBOS-ONBOARDING.txt` to a
-writable boot-accessible partition. That file contains the initial web console
-password and must be removed after onboarding.
+writable boot-accessible partition. That file points to the onboarding URL and
+must not contain a password.
 
 ## Consequences
 
 - The web console and local agent API have a real access gate for test devices.
-- Basic Auth is not the final long-term user/session model, but it is simple,
-  auditable, and supported by stock Debian nginx.
+- The MVP uses a small local session implementation instead of browser Basic
+  Auth so the user experience matches an appliance GUI.
 - Password rotation is an explicit confirmed workflow through `obosctl` and
   `obos-agent`; the web UI can add a polished display later.
-- The boot-accessible onboarding file is sensitive. It is acceptable for the
-  technical MVP only because it solves headless first access without requiring
-  SSH, but it must be clearly documented.
+- The unauthenticated onboarding endpoint is only available before credentials
+  exist. Test appliances should be attached to a trusted setup network until
+  onboarding is complete.

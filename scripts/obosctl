@@ -12,11 +12,12 @@ LAST_UPDATE_FILE="${OBOS_LAST_UPDATE_FILE:-${STATE_DIR}/last-update}"
 RESTORE_STAGE_DIR="${OBOS_RESTORE_STAGE_DIR:-${STATE_DIR}/restore-staging}"
 PORTABLE_EXPORT_DIR="${OBOS_PORTABLE_EXPORT_DIR:-${STATE_DIR}/portable-backups}"
 PORTABLE_IMPORT_DIR="${OBOS_PORTABLE_IMPORT_DIR:-${STATE_DIR}/portable-imports}"
+ONBOARDING_STATE_DIR="${OBOS_ONBOARDING_STATE_DIR:-${STATE_DIR}/onboarding}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 SERVICE_NAME="obos-openbridgeserver.service"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
-PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
+PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obs.local}"
 PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
 TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-material.sh}"
@@ -44,7 +45,8 @@ Commands:
   security-summary  Print machine-readable security baseline status
   mvp-readiness-summary
                     Print machine-readable technical MVP runtime readiness
-  web-auth-rotate  Rotate generated web console Basic Auth credentials
+  web-auth-set     Set the initial web console login password from a file
+  web-auth-rotate  Rotate generated web console login credentials
   agent-audit-summary
                     Print machine-readable agent mutation audit status
   start             Start open bridge server
@@ -125,6 +127,18 @@ run_helper() {
     exit 1
   }
   "${helper}" "$@"
+}
+
+validate_onboarding_password_file() {
+  password_file="$1"
+  case "${password_file}" in
+    "${ONBOARDING_STATE_DIR}"/obos-web-password-*) ;;
+    *) echo "web-auth-set password file must be below ${ONBOARDING_STATE_DIR}" >&2; exit 2 ;;
+  esac
+  [ -f "${password_file}" ] || {
+    echo "web-auth-set password file missing: ${password_file}" >&2
+    exit 2
+  }
 }
 
 key_value() {
@@ -1596,6 +1610,18 @@ case "${1:-}" in
   web-auth-rotate)
     require_root web-auth-rotate
     run_helper "${WEB_AUTH_SCRIPT}" rotate
+    ;;
+  web-auth-set)
+    require_root web-auth-set
+    shift
+    password_file="${1:-}"
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "web-auth-set" ] || {
+      echo "usage: obosctl web-auth-set <password-file> --confirm web-auth-set" >&2
+      exit 2
+    }
+    validate_onboarding_password_file "${password_file}"
+    run_helper "${WEB_AUTH_SCRIPT}" set "${password_file}"
+    rm -f "${password_file}"
     ;;
   agent-audit-summary)
     shift

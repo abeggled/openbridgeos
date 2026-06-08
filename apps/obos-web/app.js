@@ -2,6 +2,12 @@
   const apiBase = "/obos/api/v1/actions/";
   const downloadBase = "/obos/api/v1/downloads/";
   const uploadBase = "/obos/api/v1/uploads/";
+  const sessionBase = "/obos/api/v1/session/";
+  const authScreen = document.querySelector("[data-auth-screen]");
+  const appShell = document.querySelector("[data-app-shell]");
+  const loginForm = document.querySelector("[data-login-form]");
+  const authStatus = document.querySelector("[data-auth-status]");
+  const logoutButton = document.querySelector("[data-logout]");
   const fields = Array.from(document.querySelectorAll("[data-agent-field]"));
   const refreshButton = document.querySelector("[data-refresh-status]");
   const logsButton = document.querySelector("[data-load-logs]");
@@ -14,6 +20,37 @@
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
+
+  function setAuthStatus(message, state = "") {
+    if (!authStatus) {
+      return;
+    }
+    authStatus.textContent = message;
+    if (state) {
+      authStatus.dataset.state = state;
+    } else {
+      delete authStatus.dataset.state;
+    }
+  }
+
+  function showLogin(message = "Login required.", state = "") {
+    if (authScreen) {
+      authScreen.hidden = false;
+    }
+    if (appShell) {
+      appShell.hidden = true;
+    }
+    setAuthStatus(message, state);
+  }
+
+  function showApp() {
+    if (authScreen) {
+      authScreen.hidden = true;
+    }
+    if (appShell) {
+      appShell.hidden = false;
+    }
+  }
 
   function agentStdoutLines(text) {
     const lines = [];
@@ -104,6 +141,10 @@
         credentials: "same-origin",
       });
       const text = await response.text();
+      if (response.status === 401) {
+        showLogin();
+        return;
+      }
       if (!response.ok) {
         throw new Error(text || `HTTP ${response.status}`);
       }
@@ -128,6 +169,89 @@
     if (refreshButton) {
       refreshButton.disabled = false;
     }
+  }
+
+  async function checkSession() {
+    try {
+      const response = await fetch(`${sessionBase}status`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      const text = await response.text();
+      if (response.status === 401) {
+        showLogin();
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      const values = parseKeyValueText(text);
+      if (values.authenticated === "true") {
+        showApp();
+        await refresh();
+        return;
+      }
+      if (values.onboarding_required === "true") {
+        window.location.replace("/obos/onboarding/");
+        return;
+      }
+      if (values.web_auth_configured !== "true") {
+        showLogin("Onboarding window expired. Reboot the appliance to set the first password.", "error");
+        return;
+      }
+      showLogin();
+    } catch (error) {
+      showLogin(error.message, "error");
+    }
+  }
+
+  async function login(event) {
+    event.preventDefault();
+    const data = new FormData(loginForm);
+    const username = String(data.get("username") || "");
+    const password = String(data.get("password") || "");
+    const button = loginForm.querySelector("button");
+    button.disabled = true;
+    setAuthStatus("Logging in...");
+    try {
+      const response = await fetch(`${sessionBase}login`, {
+        method: "POST",
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      loginForm.reset();
+      const usernameInput = loginForm.querySelector('input[name="username"]');
+      if (usernameInput) {
+        usernameInput.value = "admin";
+      }
+      showApp();
+      await refresh();
+    } catch (error) {
+      setAuthStatus("Login failed.", "error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function logout() {
+    await fetch(`${sessionBase}logout`, {
+      method: "POST",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    }).catch(() => {});
+    showLogin("Logged out.", "ok");
   }
 
   if (refreshButton) {
@@ -176,6 +300,10 @@
         credentials: "same-origin",
       });
       const text = await response.text();
+      if (response.status === 401) {
+        showLogin();
+        return;
+      }
       if (!response.ok) {
         throw new Error(text || `HTTP ${response.status}`);
       }
@@ -366,5 +494,8 @@
     button.addEventListener("click", () => runMutation(button));
   }
 
-  refresh();
+  loginForm?.addEventListener("submit", login);
+  logoutButton?.addEventListener("click", logout);
+
+  checkSession();
 })();

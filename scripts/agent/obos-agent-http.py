@@ -3,12 +3,16 @@
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from datetime import datetime
+import hmac
 import json
 import os
 import re
+import secrets
 import subprocess
 import sys
 import tempfile
+import time
+from http.cookies import SimpleCookie
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 
@@ -22,11 +26,21 @@ MAX_POST_BYTES = 1024
 MAX_UPLOAD_BYTES = int(os.environ.get("OBOS_AGENT_HTTP_MAX_UPLOAD_BYTES", str(1024 * 1024 * 1024)))
 PORTABLE_EXPORT_DIR = os.environ.get("OBOS_PORTABLE_EXPORT_DIR", "/srv/obos/state/portable-backups")
 PORTABLE_IMPORT_DIR = os.environ.get("OBOS_PORTABLE_IMPORT_DIR", "/srv/obos/state/portable-imports")
+ONBOARDING_STATE_DIR = os.environ.get("OBOS_ONBOARDING_STATE_DIR", "/srv/obos/state/onboarding")
+ONBOARDING_REQUIRED_FILE = os.environ.get("OBOS_ONBOARDING_REQUIRED_FILE", "/srv/obos/state/onboarding/onboarding-required")
+WEB_AUTH_FILE = os.environ.get("OBOS_WEB_AUTH_FILE", "/etc/obos/web.htpasswd")
+SESSION_DIR = os.environ.get("OBOS_SESSION_DIR", "/srv/obos/state/sessions")
+SESSION_COOKIE = "obos_session"
+SESSION_SECONDS = int(os.environ.get("OBOS_SESSION_SECONDS", str(8 * 60 * 60)))
+SESSION_COOKIE_SECURE = os.environ.get("OBOS_SESSION_COOKIE_SECURE", "true") == "true"
 
 API_PREFIX = "/obos/api/v1/actions/"
+ONBOARDING_PREFIX = "/obos/api/v1/onboarding/"
 DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"
 UPLOAD_PREFIX = "/obos/api/v1/uploads/portable-import"
+SESSION_PREFIX = "/obos/api/v1/session/"
 ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{32,128}$")
 PORTABLE_EXPORT_FILENAME_RE = re.compile(r"^obos-portable-[A-Za-z0-9T._-]+\.tar$")
 PORTABLE_UPLOAD_FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.tar$")
 READ_ONLY_ACTIONS = {
@@ -62,6 +76,7 @@ MUTATING_ACTIONS = {
     "tls-export": "tls-export",
     "tls-generate": "tls-generate",
     "update": "update",
+    "web-auth-set": "web-auth-set",
     "web-auth-rotate": "web-auth-rotate",
 }
 
@@ -80,12 +95,15 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         sys.stderr.write("%s - - [%s] %s\n" % (self.client_address[0], self.log_date_time_string(), fmt % args))
 
-    def send_text(self, status, body):
+    def send_text(self, status, body, headers=None):
         encoded = body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "text/plain; charset=utf-8")
         self.send_header("Content-Length", str(len(encoded)))
         self.send_header("Cache-Control", "no-store")
+        if headers:
+          for name, value in headers:
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(encoded)
 
@@ -125,11 +143,10 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             timeout=timeout_seconds,
         )
 
-    def read_confirm_body(self, action):
+    def read_json_body(self, allowed_fields):
         content_type = self.headers.get("Content-Type", "")
         if content_type.split(";", 1)[0].strip().lower() != "application/json":
             return None, (415, error_envelope("unsupported-media-type", "POST requires application/json"))
-
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
@@ -138,15 +155,192 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             return None, (400, error_envelope("empty-body", "POST body is required"))
         if content_length > MAX_POST_BYTES:
             return None, (413, error_envelope("body-too-large", "POST body is too large"))
-
         try:
             payload = json.loads(self.rfile.read(content_length).decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
             return None, (400, error_envelope("invalid-json", "POST body must be valid JSON"))
+        if isinstance(allowed_fields, list):
+            allowed = any(set(payload) == fields for fields in allowed_fields) if isinstance(payload, dict) else False
+        else:
+            allowed = isinstance(payload, dict) and set(payload) == allowed_fields
+        if not allowed:
+            return None, (400, error_envelope("invalid-body", "POST body contains unexpected fields"))
+        return payload, None
 
+    def session_token(self):
+        cookie_header = self.headers.get("Cookie", "")
+        if not cookie_header:
+            return None
+        cookie = SimpleCookie()
+        try:
+            cookie.load(cookie_header)
+        except Exception:
+            return None
+        morsel = cookie.get(SESSION_COOKIE)
+        if not morsel:
+            return None
+        token = morsel.value
+        if not SESSION_RE.match(token):
+            return None
+        return token
+
+    def session_path(self, token):
+        return os.path.join(SESSION_DIR, token)
+
+    def cleanup_sessions(self):
+        try:
+            entries = os.listdir(SESSION_DIR)
+        except FileNotFoundError:
+            return
+        now = int(time.time())
+        for entry in entries:
+            if not SESSION_RE.match(entry):
+                continue
+            path = os.path.join(SESSION_DIR, entry)
+            try:
+                with open(path, "r", encoding="utf-8") as handle:
+                    expires = int(handle.readline().strip())
+                if expires < now:
+                    os.unlink(path)
+            except (OSError, ValueError):
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
+
+    def has_session(self):
+        token = self.session_token()
+        if not token:
+            return False
+        try:
+            with open(self.session_path(token), "r", encoding="utf-8") as handle:
+                expires = int(handle.readline().strip())
+        except (OSError, ValueError):
+            return False
+        if expires < int(time.time()):
+            try:
+                os.unlink(self.session_path(token))
+            except OSError:
+                pass
+            return False
+        return True
+
+    def require_session(self):
+        if self.has_session():
+            return True
+        self.send_text(401, error_envelope("auth-required", "login required"))
+        return False
+
+    def read_web_auth_hash(self, username):
+        try:
+            with open(WEB_AUTH_FILE, "r", encoding="utf-8") as handle:
+                for line in handle:
+                    line = line.strip()
+                    if not line or ":" not in line:
+                        continue
+                    candidate_user, candidate_hash = line.split(":", 1)
+                    if candidate_user == username:
+                        return candidate_hash
+        except OSError:
+            return None
+        return None
+
+    def verify_web_password(self, username, password):
+        stored_hash = self.read_web_auth_hash(username)
+        if not stored_hash or not stored_hash.startswith("$apr1$"):
+            return False
+        parts = stored_hash.split("$")
+        if len(parts) < 4:
+            return False
+        salt = parts[2]
+        try:
+            completed = subprocess.run(
+                ["openssl", "passwd", "-apr1", "-salt", salt, "-stdin"],
+                input=f"{password}\n",
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        candidate_hash = completed.stdout.strip()
+        return completed.returncode == 0 and hmac.compare_digest(candidate_hash, stored_hash)
+
+    def create_session(self):
+        os.makedirs(SESSION_DIR, mode=0o700, exist_ok=True)
+        self.cleanup_sessions()
+        token = secrets.token_urlsafe(32)
+        expires = int(time.time()) + SESSION_SECONDS
+        path = self.session_path(token)
+        with open(path, "x", encoding="utf-8") as handle:
+            handle.write(f"{expires}\n")
+        os.chmod(path, 0o600)
+        secure = " Secure;" if SESSION_COOKIE_SECURE else ""
+        cookie = f"{SESSION_COOKIE}={token}; Path=/obos/; Max-Age={SESSION_SECONDS};{secure} HttpOnly; SameSite=Strict"
+        return expires, cookie
+
+    def clear_session(self):
+        token = self.session_token()
+        if token:
+            try:
+                os.unlink(self.session_path(token))
+            except OSError:
+                pass
+        secure = " Secure;" if SESSION_COOKIE_SECURE else ""
+        return f"{SESSION_COOKIE}=; Path=/obos/; Max-Age=0;{secure} HttpOnly; SameSite=Strict"
+
+    def handle_session_status(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        authenticated = "true" if self.has_session() else "false"
+        web_auth_configured = "true" if os.path.exists(WEB_AUTH_FILE) else "false"
+        onboarding_required = "true" if self.onboarding_required() else "false"
+        body = (
+            "format=obos-session-status-v1\n"
+            f"authenticated={authenticated}\n"
+            f"web_auth_configured={web_auth_configured}\n"
+            f"onboarding_required={onboarding_required}\n"
+            "admin_user=admin\n"
+        )
+        self.send_text(200, body)
+
+    def handle_session_login(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        payload, error = self.read_json_body({"username", "password"})
+        if error:
+            self.send_text(*error)
+            return
+        username = payload.get("username")
+        password = payload.get("password")
+        if not isinstance(username, str) or not isinstance(password, str):
+            self.send_text(400, error_envelope("invalid-login", "username and password are required"))
+            return
+        if not self.verify_web_password(username, password):
+            self.send_text(401, error_envelope("invalid-login", "invalid username or password"))
+            return
+        try:
+            expires, cookie = self.create_session()
+        except OSError as exc:
+            self.send_text(502, error_envelope("session-create-failed", str(exc)))
+            return
+        body = f"format=obos-session-login-v1\nauthenticated=true\nexpires_at_epoch={expires}\n"
+        self.send_text(200, body, [("Set-Cookie", cookie)])
+
+    def handle_session_logout(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        cookie = self.clear_session()
+        self.send_text(200, "format=obos-session-logout-v1\nauthenticated=false\n", [("Set-Cookie", cookie)])
+
+    def read_confirm_body(self, action):
         expected_fields = {"confirm"}
         if action == "mqtt-enable-lan":
-            expected_fields.add("source_cidr")
+            expected_fields = [{"confirm"}, {"confirm", "source_cidr"}]
         if action == "portable-export":
             expected_fields.update({"backup_path", "passphrase"})
         if action == "portable-import-stage":
@@ -157,10 +351,9 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             expected_fields.add("hostname")
         if action == "set-timezone":
             expected_fields.add("timezone")
-        if action == "mqtt-enable-lan" and isinstance(payload, dict) and set(payload) == {"confirm"}:
-            expected_fields = {"confirm"}
-        if not isinstance(payload, dict) or set(payload) != expected_fields:
-            return None, (400, error_envelope("invalid-body", "POST body contains unexpected fields"))
+        payload, error = self.read_json_body(expected_fields)
+        if error:
+            return None, error
         if payload["confirm"] != MUTATING_ACTIONS[action]:
             return None, (403, error_envelope("confirmation-mismatch", "confirmation token mismatch"))
         if action == "restore-stage":
@@ -291,8 +484,101 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         )
         self.send_text(200, body)
 
+    def onboarding_required(self):
+        if not os.path.exists(ONBOARDING_REQUIRED_FILE) or os.path.exists(WEB_AUTH_FILE):
+            return False
+        try:
+            with open(ONBOARDING_REQUIRED_FILE, "r", encoding="utf-8") as handle:
+                values = {}
+                for line in handle:
+                    line = line.strip()
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        values[key] = value
+            expires = int(values.get("expires_at_epoch", "0"))
+        except (OSError, ValueError):
+            return False
+        return expires >= int(time.time())
+
+    def handle_onboarding_status(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        required = "true" if self.onboarding_required() else "false"
+        web_auth_configured = "true" if os.path.exists(WEB_AUTH_FILE) else "false"
+        self.send_text(
+            200,
+            "format=obos-onboarding-status-v1\n"
+            f"onboarding_required={required}\n"
+            f"web_auth_configured={web_auth_configured}\n"
+            "window_seconds=300\n"
+            "admin_user=admin\n",
+        )
+
+    def handle_onboarding_web_auth(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        if not self.onboarding_required():
+            self.send_text(410, error_envelope("onboarding-closed", "initial web onboarding is not active"))
+            return
+
+        payload, body_error = self.read_json_body({"password"})
+        if body_error:
+            self.send_text(*body_error)
+            return
+        password = payload.get("password")
+        if not isinstance(password, str) or len(password) < 12:
+            self.send_text(400, error_envelope("invalid-password", "password must be at least 12 characters"))
+            return
+
+        password_file = None
+        try:
+            os.makedirs(ONBOARDING_STATE_DIR, mode=0o700, exist_ok=True)
+            handle = tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                prefix="obos-web-password-",
+                dir=ONBOARDING_STATE_DIR,
+                delete=False,
+            )
+            password_file = handle.name
+            try:
+                os.chmod(password_file, 0o600)
+                handle.write(password)
+                handle.write("\n")
+            finally:
+                handle.close()
+            completed = self.run_agent(
+                ["web-auth-set", password_file, "--confirm", "web-auth-set"],
+                AGENT_MUTATION_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            self.send_text(504, error_envelope("agent-timeout", "web auth setup timed out"))
+            return
+        except OSError as exc:
+            self.send_text(502, error_envelope("web-auth-setup-failed", str(exc)))
+            return
+        finally:
+            if password_file:
+                try:
+                    os.unlink(password_file)
+                except FileNotFoundError:
+                    pass
+
+        status = 200 if completed.returncode == 0 else 502
+        self.send_text(status, completed.stdout)
+
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == f"{SESSION_PREFIX}status":
+            self.handle_session_status(parsed)
+            return
+        if parsed.path == f"{ONBOARDING_PREFIX}status":
+            self.handle_onboarding_status(parsed)
+            return
+        if not self.require_session():
+            return
         if parsed.path == DOWNLOAD_PREFIX:
             self.handle_portable_download(parsed)
             return
@@ -319,6 +605,17 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path == f"{SESSION_PREFIX}login":
+            self.handle_session_login(parsed)
+            return
+        if parsed.path == f"{SESSION_PREFIX}logout":
+            self.handle_session_logout(parsed)
+            return
+        if parsed.path == f"{ONBOARDING_PREFIX}web-auth":
+            self.handle_onboarding_web_auth(parsed)
+            return
+        if not self.require_session():
+            return
         if parsed.path == UPLOAD_PREFIX:
             self.handle_portable_upload(parsed)
             return

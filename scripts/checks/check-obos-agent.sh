@@ -142,6 +142,8 @@ grep -q 'action=set-timezone|mutating=true|confirm=set-timezone|required_arg=tim
   || fail "set-timezone action is not listed as a confirmed mutation"
 grep -q 'action=web-auth-rotate|mutating=true|confirm=web-auth-rotate' "${AGENT}" \
   || fail "web-auth-rotate action is not listed as a confirmed mutation"
+grep -q 'action=web-auth-set|mutating=true|confirm=web-auth-set|required_arg=password-file' "${AGENT}" \
+  || fail "web-auth-set action is not listed as a confirmed mutation"
 # shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "agent is not installed during provisioning"
@@ -197,6 +199,8 @@ grep -q '/usr/bin/obosctl set-timezone \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow checked timezone changes"
 grep -q '/usr/bin/obosctl web-auth-rotate' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow web auth rotation"
+grep -q '/usr/bin/obosctl web-auth-set \*' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not allow initial web auth setup"
 grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
   || fail "agent audit logrotate policy does not target the audit log"
 grep -q 'create 0640 obos-agent obos-agent' packaging/logrotate/obos-agent \
@@ -307,6 +311,12 @@ case "$1" in
     echo "format=obos-web-auth-v1"
     echo "mode=rotate"
     echo "password=rotated-test-password"
+    exit 0
+    ;;
+  web-auth-set)
+    echo "format=obos-web-auth-v1"
+    echo "mode=set"
+    echo "password-file=${2:-missing}"
     exit 0
     ;;
   mqtt-enable-lan)
@@ -505,5 +515,17 @@ OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}
 
 grep -q 'format=obos-agent-audit-v1|.*|action=web-auth-rotate|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
   || fail "agent did not audit confirmed web auth rotation"
+
+password_file="/srv/obos/state/onboarding/obos-web-password-test"
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" web-auth-set "${password_file}" --confirm web-auth-set |
+  grep -q "stdout=password-file=${password_file}" \
+  || fail "agent did not run confirmed initial web auth setup"
+
+if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" web-auth-set /tmp/obos-web-password-test --confirm web-auth-set >/dev/null 2>&1; then
+  fail "agent accepted web-auth-set password file outside onboarding state"
+fi
+
+grep -q 'format=obos-agent-audit-v1|.*|action=web-auth-set|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not audit confirmed initial web auth setup"
 
 echo "obos-agent: PASS"

@@ -39,6 +39,7 @@ require_file apps/obos-web/index.html
 require_file apps/obos-web/app.js
 require_file packaging/images/profiles/amd64-vm.env
 require_file packaging/images/profiles/rpi4-arm64.env
+require_file scripts/images/pull-and-build.sh
 require_file scripts/images/build-amd64-qcow2.sh
 require_file scripts/images/check-amd64-qcow2-build-host.sh
 require_file scripts/images/build-rpi4-arm64-image.sh
@@ -142,16 +143,23 @@ require_line '"tls-generate": "tls-generate"' scripts/agent/obos-agent-http.py
 require_line '"tls-export": "tls-export"' scripts/agent/obos-agent-http.py
 require_line '"set-hostname": "set-hostname"' scripts/agent/obos-agent-http.py
 require_line '"set-timezone": "set-timezone"' scripts/agent/obos-agent-http.py
+require_line '"web-auth-set": "web-auth-set"' scripts/agent/obos-agent-http.py
 require_line "MAX_POST_BYTES = 1024" scripts/agent/obos-agent-http.py
 require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.sh
-require_line "auth_basic \"open bridge operating system\";" packaging/nginx/openbridgeserver.conf
-require_line "auth_basic_user_file /etc/obos/web.htpasswd;" packaging/nginx/openbridgeserver.conf
+require_line "SESSION_COOKIE = \"obos_session\"" scripts/agent/obos-agent-http.py
+require_line "handle_session_login" scripts/agent/obos-agent-http.py
+require_line "require_session" scripts/agent/obos-agent-http.py
+require_line "/obos/api/v1/session/" apps/obos-web/app.js
+require_line "location /visu/" packaging/nginx/openbridgeserver.conf
+require_line "proxy_pass http://127.0.0.1:8080/visu/;" packaging/nginx/openbridgeserver.conf
 require_line "openssl passwd -apr1 -stdin" scripts/auth/generate-web-auth.sh
 require_line "web-auth-rotate)" scripts/obosctl
+require_line "web-auth-set)" scripts/obosctl
 require_line "action=web-auth-rotate|mutating=true|confirm=web-auth-rotate" scripts/agent/obos-agent.sh
+require_line "action=web-auth-set|mutating=true|confirm=web-auth-set" scripts/agent/obos-agent.sh
 require_line '"web-auth-rotate": "web-auth-rotate"' scripts/agent/obos-agent-http.py
 require_line "OBOS-ONBOARDING.txt" scripts/tls/export-boot-trust-summary.sh
-require_line "initial web console password" scripts/tls/export-boot-trust-summary.sh
+require_line "set during first web onboarding" scripts/tls/export-boot-trust-summary.sh
 require_line "Validation Matrix" docs/client-ca-trust.md
 require_line "fingerprint_verified=yes|no" docs/client-ca-trust.md
 require_line "tls-certificate-lifecycle.md" docs/tls-trust.md
@@ -181,6 +189,9 @@ require_line "check-release-candidate.sh" docs/image-release-validation.md
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh" docs/image-release-validation.md
 require_line "expect_value debian_release trixie" scripts/images/check-qcow2-manifest.sh
 require_line "expect_value provision_script scripts/bootstrap/provision-debian.sh" scripts/images/check-rpi-image-manifest.sh
+require_line "build_amd64" scripts/images/pull-and-build.sh
+require_line "build_arm64" scripts/images/pull-and-build.sh
+require_line "pull --ff-only" scripts/images/pull-and-build.sh
 require_line "require_value rollback_stage_result PASS" scripts/images/check-image-release-validation-record.sh
 require_line "require_value tls_leaf_renewal_plan_result PASS" scripts/images/check-image-release-validation-record.sh
 require_line "still contains a template placeholder" scripts/images/check-image-release-validation-record.sh

@@ -49,7 +49,7 @@ Validated behavior:
 - the image boots in QEMU
 - first boot generates runtime identity, secrets, and TLS material
 - nginx exposes the HTTPS boundary on TCP `443`
-- the HTTPS web path is protected by generated Basic Auth
+- the HTTPS web console is protected by generated login credentials
 - open bridge server health passes through the HTTPS reverse proxy
 - direct open bridge server HTTP remains closed from the VM network boundary
 - Docker daemon, Docker CLI, and Compose are present enough to start the stack

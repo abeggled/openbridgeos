@@ -13,8 +13,17 @@ fail() {
 grep -q 'APPLIANCE_ID_FILE=' scripts/bootstrap/first-boot.sh \
   || fail "appliance identifier path is not defined on first boot"
 
-grep -q 'WEB_AUTH_SCRIPT=' scripts/bootstrap/first-boot.sh \
-  || fail "web console auth is not generated on first boot"
+grep -q 'ONBOARDING_REQUIRED_FILE=' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not define the web onboarding marker"
+
+grep -q 'format=obos-onboarding-required-v1' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not create a machine-readable web onboarding marker"
+
+grep -q 'window_seconds=300' scripts/bootstrap/first-boot.sh \
+  || fail "first boot onboarding window is not limited to 300 seconds"
+
+grep -q 'refresh_onboarding_window' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not reopen onboarding after reboot when no password exists"
 
 grep -q 'generate-web-auth.sh' scripts/bootstrap/provision-debian.sh \
   || fail "web console auth helper is not installed during provisioning"
@@ -32,8 +41,8 @@ grep -q 'openssl passwd -apr1 -stdin' scripts/auth/generate-web-auth.sh \
 grep -q 'MODE="${1:-generate}"' scripts/auth/generate-web-auth.sh \
   || fail "web console auth helper does not default to generate mode"
 
-grep -q 'generate|rotate' scripts/auth/generate-web-auth.sh \
-  || fail "web console auth helper does not support rotation"
+grep -q 'generate|rotate|set' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth helper does not support setup and rotation"
 
 # shellcheck disable=SC2016
 grep -q 'password=${password}' scripts/auth/generate-web-auth.sh \
@@ -45,41 +54,61 @@ grep -q 'install -m 0640' scripts/auth/generate-web-auth.sh \
 grep -q 'install -m 0600' scripts/auth/generate-web-auth.sh \
   || fail "web console credential record is not installed with restrictive permissions"
 
-grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not require auth for obos web/API"
+if grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf; then
+  fail "nginx must not use browser Basic Auth for obos web/API"
+fi
 
-grep -q 'auth_basic_user_file /etc/obos/web.htpasswd;' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not use generated obos web credentials"
+grep -q 'SESSION_COOKIE = "obos_session"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not define the GUI session cookie"
+
+grep -q 'handle_session_login' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not expose GUI login handling"
+
+grep -q 'require_session' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not protect API calls with a session"
+
+grep -q 'SupplementaryGroups=www-data' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge cannot read nginx htpasswd group file"
 
 grep -q 'web-auth-rotate)' scripts/obosctl \
   || fail "obosctl does not expose web auth rotation"
 
+grep -q 'web-auth-set)' scripts/obosctl \
+  || fail "obosctl does not expose initial web auth setup"
+
 grep -q 'WEB_AUTH_SCRIPT=' scripts/obosctl \
   || fail "obosctl does not define web auth helper"
+
+grep -q 'action=web-auth-set|mutating=true|confirm=web-auth-set' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not expose confirmed initial web auth setup"
 
 grep -q 'action=web-auth-rotate|mutating=true|confirm=web-auth-rotate' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not expose confirmed web auth rotation"
 
+grep -q '"web-auth-set": "web-auth-set"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not expose confirmed initial web auth setup"
+
 grep -q '"web-auth-rotate": "web-auth-rotate"' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not expose confirmed web auth rotation"
+
+grep -q '/usr/bin/obosctl web-auth-set \*' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow initial web auth setup"
 
 grep -q '/usr/bin/obosctl web-auth-rotate' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow web auth rotation"
 
-grep -q 'WEB_AUTH_INFO_FILE=' scripts/tls/export-boot-trust-summary.sh \
-  || fail "boot onboarding summary does not read web console credentials"
-
 grep -q 'OBOS-ONBOARDING.txt' scripts/tls/export-boot-trust-summary.sh \
   || fail "boot onboarding summary does not define an onboarding file"
 
-grep -q 'initial web console password' scripts/tls/export-boot-trust-summary.sh \
-  || fail "boot onboarding summary does not label the initial web console password"
+grep -q 'set during first web onboarding' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not point to first web onboarding"
 
-grep -q 'Rotate the web console password after onboarding' scripts/tls/export-boot-trust-summary.sh \
-  || fail "boot onboarding summary does not instruct password rotation"
+grep -q 'This file does not contain a password' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not state that passwords are not exported"
 
-grep -q 'Remove it from the boot-accessible partition after onboarding' scripts/tls/export-boot-trust-summary.sh \
-  || fail "boot onboarding summary does not instruct removing the onboarding file"
+if grep -q 'initial web console password' scripts/tls/export-boot-trust-summary.sh; then
+  fail "boot onboarding summary must not export an initial web console password"
+fi
 
 # shellcheck disable=SC2016
 grep -Fq 'uuid > "${APPLIANCE_ID_FILE}"' scripts/bootstrap/first-boot.sh \
@@ -1006,7 +1035,7 @@ grep -q 'ssl_certificate /etc/obos/tls/obos.local.crt;' packaging/nginx/openbrid
 grep -q 'proxy_pass http://127.0.0.1:8080;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not target localhost OBS"
 
-grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
+grep -q 'location \^~ /obos/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not expose obos-web path"
 
 grep -q 'location /obos/api/' packaging/nginx/openbridgeserver.conf \
@@ -1080,6 +1109,23 @@ grep -q 'mqtt-disable-lan)' scripts/obosctl \
 
 grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-material.sh \
   || fail "local CA is not generated with critical CA constraints"
+
+grep -q 'CN=open bridge operating system local CA' scripts/tls/generate-tls-material.sh \
+  || fail "local CA subject does not use the required CA name"
+
+grep -q 'DNS.1=obs.local' scripts/tls/generate-tls-material.sh \
+  || fail "TLS generation does not use obs.local as the only DNS SAN"
+
+if grep -q 'DNS.2=' scripts/tls/generate-tls-material.sh || grep -q 'DNS.3=' scripts/tls/generate-tls-material.sh; then
+  fail "TLS generation must not add hostname DNS SANs"
+fi
+
+grep -q 'DNS.1=obs.local' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal does not use obs.local as the only DNS SAN"
+
+if grep -q 'DNS.2=' scripts/tls/renew-leaf-certificate.sh || grep -q 'DNS.3=' scripts/tls/renew-leaf-certificate.sh; then
+  fail "TLS leaf renewal must not add hostname DNS SANs"
+fi
 
 grep -q 'TLS material already exists' scripts/tls/generate-tls-material.sh \
   || fail "TLS material generation is not idempotent"

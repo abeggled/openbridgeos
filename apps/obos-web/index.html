@@ -8,7 +8,24 @@
     <script src="./app.js" defer></script>
   </head>
   <body>
-    <main class="shell">
+    <section class="auth-shell" data-auth-screen hidden aria-labelledby="login-title">
+      <form class="auth-panel" data-login-form>
+        <p class="eyebrow">Appliance Login</p>
+        <h1 id="login-title">open bridge operating system</h1>
+        <label>
+          User
+          <input name="username" type="text" value="admin" autocomplete="username" required>
+        </label>
+        <label>
+          Password
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Login</button>
+        <p class="auth-status" data-auth-status>Checking session...</p>
+      </form>
+    </section>
+
+    <main class="shell" data-app-shell hidden>
       <header class="topbar" aria-label="Appliance overview">
         <div>
           <p class="eyebrow">Appliance Console</p>
@@ -41,6 +58,7 @@
             <button type="button" data-mutation-action="stop" data-confirm="stop" data-mutation-status-target="service-action">Stop</button>
             <button type="button" data-mutation-action="restart" data-confirm="restart" data-mutation-status-target="service-action">Restart</button>
             <button type="button" data-mutation-action="update" data-confirm="update" data-mutation-status-target="service-action">Update</button>
+            <button type="button" data-logout>Logout</button>
             <button class="icon-button" type="button" aria-label="Refresh status" title="Refresh status" data-refresh-status>
               <span aria-hidden="true">R</span>
             </button>

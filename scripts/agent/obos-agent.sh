@@ -5,6 +5,7 @@ OBOSCTL="${OBOS_AGENT_OBOSCTL:-/usr/bin/obosctl}"
 BACKUP_DIR="${OBOS_AGENT_BACKUP_DIR:-/srv/obos/backups}"
 RESTORE_STAGE_DIR="${OBOS_AGENT_RESTORE_STAGE_DIR:-/srv/obos/state/restore-staging}"
 PORTABLE_IMPORT_DIR="${OBOS_AGENT_PORTABLE_IMPORT_DIR:-/srv/obos/state/portable-imports}"
+ONBOARDING_STATE_DIR="${OBOS_AGENT_ONBOARDING_STATE_DIR:-/srv/obos/state/onboarding}"
 TIMEOUT_SECONDS="${OBOS_AGENT_TIMEOUT_SECONDS:-30}"
 MUTATION_TIMEOUT_SECONDS="${OBOS_AGENT_MUTATION_TIMEOUT_SECONDS:-600}"
 AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-/srv/obos/state/agent/obos-agent-audit.log}"
@@ -47,6 +48,7 @@ Mutating actions:
   restore-stage <backup.tar.gz> --confirm restore-stage
   tls-generate --confirm tls-generate
   tls-export --confirm tls-export
+  web-auth-set <password-file> --confirm web-auth-set
   web-auth-rotate --confirm web-auth-rotate
   mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
   mqtt-disable-lan --confirm mqtt-disable-lan
@@ -298,6 +300,23 @@ require_set_timezone_args() {
   validate_timezone "${TIMEZONE_VALUE}"
 }
 
+require_web_auth_set_args() {
+  action="$1"
+  [ "$#" -eq 4 ] || fail "${action} requires: <password-file> --confirm ${action}"
+  [ "${3:-}" = "--confirm" ] || fail "${action} requires: <password-file> --confirm ${action}"
+  [ "${4:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
+  WEB_AUTH_PASSWORD_FILE="${2:-}"
+  case "${WEB_AUTH_PASSWORD_FILE}" in
+    "${ONBOARDING_STATE_DIR}"/obos-web-password-*) ;;
+    *) fail "${action} password file must be below ${ONBOARDING_STATE_DIR}" ;;
+  esac
+  case "${WEB_AUTH_PASSWORD_FILE}" in
+    *'/../'*|*'/..'|'../'*|..|-*)
+      fail "${action} password file path is invalid"
+      ;;
+  esac
+}
+
 print_actions() {
   cat <<'EOF'
 format=obos-agent-actions-v1
@@ -332,6 +351,7 @@ action=portable-import-stage|mutating=true|confirm=portable-import-stage|require
 action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path
 action=tls-generate|mutating=true|confirm=tls-generate
 action=tls-export|mutating=true|confirm=tls-export
+action=web-auth-set|mutating=true|confirm=web-auth-set|required_arg=password-file
 action=web-auth-rotate|mutating=true|confirm=web-auth-rotate
 action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_arg=source-cidr
 action=mqtt-disable-lan|mutating=true|confirm=mqtt-disable-lan
@@ -540,6 +560,10 @@ case "${1:-}" in
   web-auth-rotate)
     require_confirm_args "$@"
     run_obosctl web-auth-rotate "${MUTATION_TIMEOUT_SECONDS}" true web-auth-rotate
+    ;;
+  web-auth-set)
+    require_web_auth_set_args "$@"
+    run_obosctl web-auth-set "${MUTATION_TIMEOUT_SECONDS}" true web-auth-set "${WEB_AUTH_PASSWORD_FILE}" --confirm web-auth-set
     ;;
   mqtt-enable-lan)
     require_mqtt_enable_args "$@"

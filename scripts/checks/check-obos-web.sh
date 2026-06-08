@@ -2,9 +2,13 @@
 set -eu
 
 WEB_DIR="apps/obos-web"
+ONBOARDING_DIR="apps/obos-onboarding"
 INDEX="${WEB_DIR}/index.html"
 CSS="${WEB_DIR}/styles.css"
 JS="${WEB_DIR}/app.js"
+ONBOARDING_INDEX="${ONBOARDING_DIR}/index.html"
+ONBOARDING_CSS="${ONBOARDING_DIR}/styles.css"
+ONBOARDING_JS="${ONBOARDING_DIR}/onboarding.js"
 
 fail() {
   echo "obos-web check failed: $1" >&2
@@ -14,9 +18,18 @@ fail() {
 [ -f "${INDEX}" ] || fail "index.html missing"
 [ -f "${CSS}" ] || fail "styles.css missing"
 [ -f "${JS}" ] || fail "app.js missing"
+[ -f "${ONBOARDING_INDEX}" ] || fail "onboarding UI index missing"
+[ -f "${ONBOARDING_CSS}" ] || fail "onboarding UI styles missing"
+[ -f "${ONBOARDING_JS}" ] || fail "onboarding UI script missing"
 
-grep -q '<main class="shell">' "${INDEX}" \
+grep -q '<main class="shell" data-app-shell hidden>' "${INDEX}" \
   || fail "web UI does not define the appliance shell"
+
+grep -q 'data-login-form' "${INDEX}" \
+  || fail "web UI does not define a GUI login form"
+
+grep -q 'data-logout' "${INDEX}" \
+  || fail "web UI does not expose logout"
 
 grep -q 'open bridge operating system' "${INDEX}" \
   || fail "web UI does not use product name"
@@ -234,6 +247,12 @@ grep -q 'data-mutation-status="service-action"' "${INDEX}" \
 grep -q '/obos/api/v1/actions/' "${JS}" \
   || fail "web UI does not call the obos agent HTTP bridge"
 
+grep -q '/obos/api/v1/session/' "${JS}" \
+  || fail "web UI does not call the GUI session API"
+
+grep -q 'data-auth-screen' "${INDEX}" \
+  || fail "web UI does not define an auth screen"
+
 grep -q 'parseAgentResponse' "${JS}" \
   || fail "web UI does not parse the agent response envelope"
 
@@ -345,6 +364,9 @@ grep -q 'border-radius: var(--radius)' "${CSS}" \
 grep -q 'OBOS_WEB_DIR="/srv/obos/web"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not define the obos-web install directory"
 
+grep -q 'OBOS_ONBOARDING_DIR="/srv/obos/onboarding"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not define the onboarding UI install directory"
+
 # shellcheck disable=SC2016
 grep -q 'install -d -m 0755 "${OBOS_WEB_DIR}"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not create the obos-web install directory"
@@ -361,19 +383,39 @@ grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR
 grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/app.js" "${OBOS_WEB_DIR}/app.js"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web script"
 
-grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
+# shellcheck disable=SC2016
+grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-onboarding/index.html" "${OBOS_ONBOARDING_DIR}/index.html"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install onboarding index"
+
+grep -q '/obos/api/v1/onboarding/status' "${ONBOARDING_JS}" \
+  || fail "onboarding UI does not check onboarding status"
+
+grep -q '/obos/api/v1/onboarding/web-auth' "${ONBOARDING_JS}" \
+  || fail "onboarding UI does not set the initial web password"
+
+grep -q 'location \^~ /obos/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not expose obos-web under /obos/"
 
-grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not protect obos-web with basic auth"
+grep -q 'location \^~ /obos/onboarding/' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not expose onboarding UI under /obos/onboarding/"
 
-grep -q 'auth_basic_user_file /etc/obos/web.htpasswd;' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not use generated obos-web credentials"
+grep -q 'alias /srv/obos/onboarding/index.html;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve onboarding index directly"
+
+grep -q 'alias /srv/obos/onboarding/;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve onboarding UI from /srv/obos/onboarding"
+
+if grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf; then
+  fail "nginx must not use browser Basic Auth for obos-web"
+fi
+
+grep -q 'alias /srv/obos/web/index.html;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve obos-web index directly"
 
 grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web from /srv/obos/web"
 
-grep -q 'try_files .* /obos/index.html;' packaging/nginx/openbridgeserver.conf \
+grep -q 'try_files .* =404;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not fall back to obos-web index"
 
 echo "obos-web: PASS"

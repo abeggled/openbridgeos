@@ -15,7 +15,7 @@ APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-/etc/obos/web.htpasswd}"
 WEB_AUTH_INFO_FILE="${OBOS_WEB_AUTH_INFO_FILE:-/etc/obos/web-admin.env}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
-PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obos.local}"
+PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-obs.local}"
 PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
 WEB_AUTH_URL="${OBOS_WEB_AUTH_URL:-https://${PROXY_HEALTH_HOST}/obos/}"
 AGENT_HTTP_URL="${OBOS_AGENT_HTTP_URL:-http://127.0.0.1:8091/obos/api/v1/actions/status-summary}"
@@ -359,8 +359,8 @@ check_grep 'ssl_certificate /etc/obos/tls/obos.local.crt;' "${NGINX_PROXY_CONF}"
 check_grep 'proxy_pass http://127.0.0.1:8080;' "${NGINX_PROXY_CONF}" 'nginx proxies to localhost open bridge server'
 check_grep 'location /obos/api/' "${NGINX_PROXY_CONF}" 'nginx exposes obos agent HTTP bridge path'
 check_grep 'proxy_pass http://127.0.0.1:8091;' "${NGINX_PROXY_CONF}" 'nginx proxies obos agent HTTP bridge to localhost'
-check_grep 'auth_basic "open bridge operating system";' "${NGINX_PROXY_CONF}" 'nginx protects obos web and API with basic auth'
-check_grep 'auth_basic_user_file /etc/obos/web.htpasswd;' "${NGINX_PROXY_CONF}" 'nginx uses generated obos web credentials'
+check_grep 'location /visu/' "${NGINX_PROXY_CONF}" 'nginx exposes open bridge server visu path'
+check_grep 'proxy_pass http://127.0.0.1:8080/visu/;' "${NGINX_PROXY_CONF}" 'nginx proxies visu to localhost open bridge server'
 check_grep 'server_tokens off;' "${NGINX_PROXY_CONF}" 'nginx server token disclosure disabled'
 check_grep 'client_body_timeout 30s;' "${NGINX_PROXY_CONF}" 'nginx client body timeout bounded'
 check_grep 'client_header_timeout 30s;' "${NGINX_PROXY_CONF}" 'nginx client header timeout bounded'
