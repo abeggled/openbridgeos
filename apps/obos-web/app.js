@@ -196,7 +196,8 @@
         return;
       }
       if (values.web_auth_configured !== "true") {
-        showLogin("Onboarding window expired. Reboot the appliance to set the first password.", "error");
+        const reason = values.reason ? ` Reason: ${values.reason}.` : "";
+        showLogin(`Onboarding window is not active.${reason} Reboot the appliance to set the first password.`, "error");
         return;
       }
       showLogin();

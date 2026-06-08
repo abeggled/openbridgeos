@@ -37,7 +37,7 @@ refresh_onboarding_window() {
     echo "format=obos-onboarding-required-v1"
     echo "created_at=$(date -u +%Y%m%dT%H%M%SZ)"
     echo "window_seconds=300"
-    echo "window_basis=boot_uptime"
+    echo "window_basis=agent_start_per_boot_id"
   } > "${ONBOARDING_REQUIRED_FILE}"
   chown obos-agent:obos-agent "${ONBOARDING_REQUIRED_FILE}" 2>/dev/null || true
   chmod 0600 "${ONBOARDING_REQUIRED_FILE}"

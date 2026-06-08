@@ -72,9 +72,11 @@ The obos web console uses a GUI login after first web onboarding, and the
 `/obos/api/` bridge requires a server-side session cookie. First boot creates a
 local onboarding marker and serves `/obos/onboarding/` for about five minutes
 after system start until the administrator sets the initial `admin` password.
-The open window is evaluated from current system uptime, so it cannot stay
-expired across a real reboot. If the setup window expires before credentials
-exist, rebooting the appliance opens a new setup window. The password hash is stored in
+The open window is keyed by the current system boot ID and starts when the local
+agent opens the onboarding state for that boot, so it cannot stay expired across
+a real reboot but also does not reopen on a same-boot agent restart. If the
+setup window expires before credentials exist, rebooting the appliance opens a
+new setup window. The password hash is stored in
 `/etc/obos/web.htpasswd`, and the credential record is root-only in
 `/etc/obos/web-admin.env`. `OBOS-ONBOARDING.txt` may point to the onboarding URL,
 but it must not contain a password.

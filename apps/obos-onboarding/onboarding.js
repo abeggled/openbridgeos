@@ -10,6 +10,15 @@ function setStatus(message, state = "") {
   }
 }
 
+function parseStatus(text) {
+  return Object.fromEntries(
+    text
+      .split("\n")
+      .filter((line) => line.includes("="))
+      .map((line) => line.split(/=(.*)/s).slice(0, 2)),
+  );
+}
+
 async function checkStatus() {
   const response = await fetch("/obos/api/v1/onboarding/status", {
     cache: "no-store",
@@ -18,18 +27,21 @@ async function checkStatus() {
   if (!response.ok) {
     throw new Error(text.trim() || "onboarding status failed");
   }
-  const webAuthConfigured = text.includes("web_auth_configured=true");
-  const onboardingRequired = text.includes("onboarding_required=true");
+  const values = parseStatus(text);
+  const webAuthConfigured = values.web_auth_configured === "true";
+  const onboardingRequired = values.onboarding_required === "true";
   if (webAuthConfigured) {
     window.location.replace("/obos/");
     return;
   }
   if (!onboardingRequired) {
-    setStatus("Onboarding window expired. Reboot the appliance to set the first password.", "error");
+    const reason = values.reason ? ` Reason: ${values.reason}.` : "";
+    setStatus(`Onboarding window is not active.${reason} Reboot the appliance to set the first password.`, "error");
     form.querySelector("button").disabled = true;
     return;
   }
-  setStatus("Ready to create the local admin password. This first-boot window is available for about 5 minutes.");
+  const remaining = values.window_remaining_seconds || "unknown";
+  setStatus(`Ready to create the local admin password. This window has ${remaining} seconds remaining.`);
 }
 
 form.addEventListener("submit", async (event) => {
