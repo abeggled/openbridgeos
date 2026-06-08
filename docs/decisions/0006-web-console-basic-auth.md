@@ -32,7 +32,9 @@ flow. After setup, the onboarding marker is removed and the session login
 protects the normal console and agent API. If the setup window expires before
 credentials exist, rebooting opens a new onboarding window. The active window is
 keyed by the current system boot ID and its per-boot opening time rather than an
-absolute timestamp stored in the marker.
+absolute timestamp stored in the marker. If the required marker is absent while
+no console password exists, the local agent recreates the marker before
+evaluating the per-boot window.
 
 Per-appliance-instance credentials use:
 

@@ -43,6 +43,12 @@ grep -q 'OBOS_ONBOARDING_BOOT_AGE_SECONDS' scripts/agent/obos-agent-http.py \
 grep -q 'ONBOARDING_WINDOW_STATE_FILE' scripts/agent/obos-agent-http.py \
   || fail "agent does not persist onboarding window state per boot"
 
+grep -q 'ensure_onboarding_required_marker' scripts/agent/obos-agent-http.py \
+  || fail "agent does not self-heal a missing onboarding required marker"
+
+grep -q 'created_by=obos-agent-http' scripts/agent/obos-agent-http.py \
+  || fail "agent self-healed onboarding marker is not auditable"
+
 grep -q 'boot_id()' scripts/agent/obos-agent-http.py \
   || fail "agent onboarding window is not keyed by boot id"
 

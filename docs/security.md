@@ -78,7 +78,9 @@ about five minutes after system start so the administrator can set the initial
 records when the window opened for that boot. A real reboot opens a fresh window
 while stale marker timestamps cannot keep it closed, but a same-boot agent
 restart does not extend the window. If the setup window expires before
-credentials exist, rebooting opens a new window. The credential record is stored root-only in
+credentials exist, rebooting opens a new window. If the required marker is
+missing while no console password exists, the local agent recreates the marker
+before opening the per-boot window. The credential record is stored root-only in
 `/etc/obos/web-admin.env`. Headless images may also export `OBOS-ONBOARDING.txt`
 to a boot-accessible partition, but that file must not contain a password.
 

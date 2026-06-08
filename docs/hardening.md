@@ -76,7 +76,9 @@ The open window is keyed by the current system boot ID and starts when the local
 agent opens the onboarding state for that boot, so it cannot stay expired across
 a real reboot but also does not reopen on a same-boot agent restart. If the
 setup window expires before credentials exist, rebooting the appliance opens a
-new setup window. The password hash is stored in
+new setup window. If the required marker is missing while no console password
+exists, the local agent recreates that marker before evaluating the window. The
+password hash is stored in
 `/etc/obos/web.htpasswd`, and the credential record is root-only in
 `/etc/obos/web-admin.env`. `OBOS-ONBOARDING.txt` may point to the onboarding URL,
 but it must not contain a password.

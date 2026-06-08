@@ -517,10 +517,13 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             "opened_at_boot_age": None,
             "remaining": 0,
         }
-        if not os.path.exists(ONBOARDING_REQUIRED_FILE) or os.path.exists(WEB_AUTH_FILE):
-            if os.path.exists(WEB_AUTH_FILE):
-                status["reason"] = "web-auth-configured"
+        if os.path.exists(WEB_AUTH_FILE):
+            status["reason"] = "web-auth-configured"
             return status
+        if not self.ensure_onboarding_required_marker():
+            status["reason"] = "marker-unavailable"
+            return status
+
         boot_age = self.boot_age_seconds()
         boot_id = self.boot_id()
         status["boot_age"] = boot_age
@@ -544,7 +547,7 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             status["remaining"] = ONBOARDING_WINDOW_SECONDS - elapsed
         else:
             status["reason"] = "expired"
-        return status
+            return status
 
     def onboarding_window_opened_at(self, boot_id):
         values = {}
@@ -579,6 +582,24 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         except OSError:
             return None
         return opened_at
+
+    def ensure_onboarding_required_marker(self):
+        if os.path.exists(ONBOARDING_REQUIRED_FILE):
+            return True
+        try:
+            os.makedirs(ONBOARDING_STATE_DIR, mode=0o700, exist_ok=True)
+            tmp_path = f"{ONBOARDING_REQUIRED_FILE}.{os.getpid()}"
+            with open(tmp_path, "w", encoding="utf-8") as handle:
+                handle.write("format=obos-onboarding-required-v1\n")
+                handle.write(f"created_at={datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}\n")
+                handle.write(f"window_seconds={ONBOARDING_WINDOW_SECONDS}\n")
+                handle.write("window_basis=agent_start_per_boot_id\n")
+                handle.write("created_by=obos-agent-http\n")
+            os.chmod(tmp_path, 0o600)
+            os.replace(tmp_path, ONBOARDING_REQUIRED_FILE)
+        except OSError:
+            return False
+        return True
 
     def boot_age_seconds(self):
         return read_boot_age_seconds()
