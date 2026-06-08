@@ -199,7 +199,7 @@ tar -C "${REPO_ROOT}" \
 virt-customize -a "${OUTPUT_IMAGE}" \
   --mkdir /opt/openbridgeos \
   --copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos" \
-  --run-command "cd ${IMAGE_REPO_DIR} && OBOS_DISABLE_SSH=1 ${OBOS_PROVISION_SCRIPT} ${IMAGE_REPO_DIR}" \
+  --run-command "cd ${IMAGE_REPO_DIR} && OBOS_DISABLE_SSH=1 sh ${OBOS_PROVISION_SCRIPT} ${IMAGE_REPO_DIR}" \
   --run-command "systemctl enable ${OBOS_FIRST_BOOT_SERVICE}" \
   --run-command "rm -f /srv/obos/state/first-boot.done" \
   --run-command "truncate -s 0 /etc/machine-id" \

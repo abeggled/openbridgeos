@@ -260,6 +260,8 @@ require_line "--exclude ./dist" scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016
 require_line '--copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos"' scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016
+require_line 'OBOS_DISABLE_SSH=1 sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-amd64-qcow2.sh
+# shellcheck disable=SC2016
 require_line 'sh "${CHECK_QCOW2_MANIFEST}" "${MANIFEST}"' scripts/images/build-amd64-qcow2.sh
 require_line "qcow2_contract:" scripts/images/print-image-build-plan.sh
 require_line "OBOS_SMOKE_LOG_FILE" scripts/images/smoke-test-amd64-qcow2.sh
@@ -278,6 +280,8 @@ require_line "profile with SSH enabled was accepted" scripts/checks/check-image-
 require_line "Raspberry Pi profile without NVMe kernel config was accepted" scripts/checks/check-image-profiles.sh
 require_line "Raspberry Pi firmware config is not a Linux kernel config" scripts/images/check-rpi-kernel-config.sh
 require_line "CHECK_RPI_BOOT_FILES=" scripts/images/build-rpi4-arm64-image.sh
+# shellcheck disable=SC2016
+require_line 'OBOS_DISABLE_SSH=1 sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-rpi4-arm64-image.sh
 # shellcheck disable=SC2016
 require_line 'sh "${CHECK_RPI_BOOT_FILES}" "${BUILD_ROOT}"' scripts/images/build-rpi4-arm64-image.sh
 
