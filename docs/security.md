@@ -70,11 +70,12 @@ open bridge server binds to localhost behind nginx:
 The host firewall uses nftables with inbound default-drop. It allows loopback,
 established traffic, ICMP/IPv6 ICMP, DHCP renewals, and TCP `443`.
 
-nginx protects `/obos/` and `/obos/api/` with Basic Auth credentials generated
-during first boot. The initial credential record is stored root-only in
+nginx protects `/obos/` and `/obos/api/` with Basic Auth after first web
+onboarding. First boot exposes only `/obos/onboarding/` and
+`/obos/api/v1/onboarding/` without Basic Auth so the administrator can set the
+initial `admin` password. The credential record is stored root-only in
 `/etc/obos/web-admin.env`. Headless images may also export `OBOS-ONBOARDING.txt`
-to a boot-accessible partition; that file contains the initial web console
-password and should be removed after onboarding.
+to a boot-accessible partition, but that file must not contain a password.
 
 MQTT remains bound to localhost by default:
 

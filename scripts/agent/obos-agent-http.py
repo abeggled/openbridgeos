@@ -22,8 +22,12 @@ MAX_POST_BYTES = 1024
 MAX_UPLOAD_BYTES = int(os.environ.get("OBOS_AGENT_HTTP_MAX_UPLOAD_BYTES", str(1024 * 1024 * 1024)))
 PORTABLE_EXPORT_DIR = os.environ.get("OBOS_PORTABLE_EXPORT_DIR", "/srv/obos/state/portable-backups")
 PORTABLE_IMPORT_DIR = os.environ.get("OBOS_PORTABLE_IMPORT_DIR", "/srv/obos/state/portable-imports")
+ONBOARDING_STATE_DIR = os.environ.get("OBOS_ONBOARDING_STATE_DIR", "/srv/obos/state/onboarding")
+ONBOARDING_REQUIRED_FILE = os.environ.get("OBOS_ONBOARDING_REQUIRED_FILE", "/srv/obos/state/onboarding/onboarding-required")
+WEB_AUTH_FILE = os.environ.get("OBOS_WEB_AUTH_FILE", "/etc/obos/web.htpasswd")
 
 API_PREFIX = "/obos/api/v1/actions/"
+ONBOARDING_PREFIX = "/obos/api/v1/onboarding/"
 DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"
 UPLOAD_PREFIX = "/obos/api/v1/uploads/portable-import"
 ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -62,6 +66,7 @@ MUTATING_ACTIONS = {
     "tls-export": "tls-export",
     "tls-generate": "tls-generate",
     "update": "update",
+    "web-auth-set": "web-auth-set",
     "web-auth-rotate": "web-auth-rotate",
 }
 
@@ -291,8 +296,95 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         )
         self.send_text(200, body)
 
+    def onboarding_required(self):
+        return os.path.exists(ONBOARDING_REQUIRED_FILE) and not os.path.exists(WEB_AUTH_FILE)
+
+    def handle_onboarding_status(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        required = "true" if self.onboarding_required() else "false"
+        self.send_text(200, f"format=obos-onboarding-status-v1\nonboarding_required={required}\nadmin_user=admin\n")
+
+    def handle_onboarding_web_auth(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        if not self.onboarding_required():
+            self.send_text(410, error_envelope("onboarding-closed", "initial web onboarding is not active"))
+            return
+
+        content_type = self.headers.get("Content-Type", "")
+        if content_type.split(";", 1)[0].strip().lower() != "application/json":
+            self.send_text(415, error_envelope("unsupported-media-type", "POST requires application/json"))
+            return
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            self.send_text(400, error_envelope("invalid-content-length", "Content-Length is invalid"))
+            return
+        if content_length <= 0:
+            self.send_text(400, error_envelope("empty-body", "POST body is required"))
+            return
+        if content_length > MAX_POST_BYTES:
+            self.send_text(413, error_envelope("body-too-large", "POST body is too large"))
+            return
+
+        try:
+            payload = json.loads(self.rfile.read(content_length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            self.send_text(400, error_envelope("invalid-json", "POST body must be valid JSON"))
+            return
+        if not isinstance(payload, dict) or set(payload) != {"password"}:
+            self.send_text(400, error_envelope("invalid-body", "POST body contains unexpected fields"))
+            return
+        password = payload.get("password")
+        if not isinstance(password, str) or len(password) < 12:
+            self.send_text(400, error_envelope("invalid-password", "password must be at least 12 characters"))
+            return
+
+        password_file = None
+        try:
+            os.makedirs(ONBOARDING_STATE_DIR, mode=0o700, exist_ok=True)
+            handle = tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                prefix="obos-web-password-",
+                dir=ONBOARDING_STATE_DIR,
+                delete=False,
+            )
+            password_file = handle.name
+            try:
+                os.chmod(password_file, 0o600)
+                handle.write(password)
+                handle.write("\n")
+            finally:
+                handle.close()
+            completed = self.run_agent(
+                ["web-auth-set", password_file, "--confirm", "web-auth-set"],
+                AGENT_MUTATION_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            self.send_text(504, error_envelope("agent-timeout", "web auth setup timed out"))
+            return
+        except OSError as exc:
+            self.send_text(502, error_envelope("web-auth-setup-failed", str(exc)))
+            return
+        finally:
+            if password_file:
+                try:
+                    os.unlink(password_file)
+                except FileNotFoundError:
+                    pass
+
+        status = 200 if completed.returncode == 0 else 502
+        self.send_text(status, completed.stdout)
+
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == f"{ONBOARDING_PREFIX}status":
+            self.handle_onboarding_status(parsed)
+            return
         if parsed.path == DOWNLOAD_PREFIX:
             self.handle_portable_download(parsed)
             return
@@ -319,6 +411,9 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path == f"{ONBOARDING_PREFIX}web-auth":
+            self.handle_onboarding_web_auth(parsed)
+            return
         if parsed.path == UPLOAD_PREFIX:
             self.handle_portable_upload(parsed)
             return

@@ -28,8 +28,8 @@ Use one of these fingerprint sources:
 - Verify the local CA SHA-256 fingerprint before importing the CA.
 - Trust only the CA for the appliance instance you are onboarding.
 - Do not copy the CA private key to client devices.
-- Remove `OBOS-ONBOARDING.txt` from the boot-accessible partition after
-  onboarding because it may contain the initial web console password.
+- `OBOS-ONBOARDING.txt` may point to the first web onboarding URL, but it must
+  not contain a password.
 - Replacing or rotating the appliance CA requires clients to trust the new CA.
 
 ## Platform Notes

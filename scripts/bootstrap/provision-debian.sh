@@ -11,6 +11,7 @@ OBOS_SHARE_DIR="/usr/share/obos"
 OBOS_LIB_DIR="/usr/lib/obos"
 OBOS_APP_SOURCE="${OBOS_SHARE_DIR}/apps/openbridgeserver"
 OBOS_WEB_DIR="/srv/obos/web"
+OBOS_ONBOARDING_DIR="/srv/obos/onboarding"
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -39,7 +40,9 @@ install -d -m 0755 "${OBOS_LIB_DIR}"
 install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d /etc/systemd/network
 install -d -m 0750 /srv/obos /srv/obos/apps /srv/obos/backups /srv/obos/state
 install -d -m 0755 "${OBOS_WEB_DIR}"
+install -d -m 0755 "${OBOS_ONBOARDING_DIR}"
 install -d -m 0750 -o obos-agent -g obos-agent /srv/obos/state/agent
+install -d -m 0700 -o obos-agent -g obos-agent /srv/obos/state/onboarding
 install -d -m 0700 -o obos-agent -g obos-agent /srv/obos/state/portable-imports
 
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/compose.yaml" "${OBOS_APP_SOURCE}/compose.yaml"
@@ -48,6 +51,9 @@ install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/obos-app.yaml" "${OBOS_APP_S
 install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR}/index.html"
 install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR}/styles.css"
 install -m 0644 "${REPO_ROOT}/apps/obos-web/app.js" "${OBOS_WEB_DIR}/app.js"
+install -m 0644 "${REPO_ROOT}/apps/obos-onboarding/index.html" "${OBOS_ONBOARDING_DIR}/index.html"
+install -m 0644 "${REPO_ROOT}/apps/obos-onboarding/styles.css" "${OBOS_ONBOARDING_DIR}/styles.css"
+install -m 0644 "${REPO_ROOT}/apps/obos-onboarding/onboarding.js" "${OBOS_ONBOARDING_DIR}/onboarding.js"
 install -m 0644 "${REPO_ROOT}/packaging/apt/20auto-upgrades" /etc/apt/apt.conf.d/20auto-upgrades
 install -m 0644 "${REPO_ROOT}/packaging/apt/50unattended-upgrades" /etc/apt/apt.conf.d/50unattended-upgrades
 install -m 0644 "${REPO_ROOT}/packaging/docker/daemon.json" /etc/docker/daemon.json

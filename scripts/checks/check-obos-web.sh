@@ -2,9 +2,13 @@
 set -eu
 
 WEB_DIR="apps/obos-web"
+ONBOARDING_DIR="apps/obos-onboarding"
 INDEX="${WEB_DIR}/index.html"
 CSS="${WEB_DIR}/styles.css"
 JS="${WEB_DIR}/app.js"
+ONBOARDING_INDEX="${ONBOARDING_DIR}/index.html"
+ONBOARDING_CSS="${ONBOARDING_DIR}/styles.css"
+ONBOARDING_JS="${ONBOARDING_DIR}/onboarding.js"
 
 fail() {
   echo "obos-web check failed: $1" >&2
@@ -14,6 +18,9 @@ fail() {
 [ -f "${INDEX}" ] || fail "index.html missing"
 [ -f "${CSS}" ] || fail "styles.css missing"
 [ -f "${JS}" ] || fail "app.js missing"
+[ -f "${ONBOARDING_INDEX}" ] || fail "onboarding UI index missing"
+[ -f "${ONBOARDING_CSS}" ] || fail "onboarding UI styles missing"
+[ -f "${ONBOARDING_JS}" ] || fail "onboarding UI script missing"
 
 grep -q '<main class="shell">' "${INDEX}" \
   || fail "web UI does not define the appliance shell"
@@ -345,6 +352,9 @@ grep -q 'border-radius: var(--radius)' "${CSS}" \
 grep -q 'OBOS_WEB_DIR="/srv/obos/web"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not define the obos-web install directory"
 
+grep -q 'OBOS_ONBOARDING_DIR="/srv/obos/onboarding"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not define the onboarding UI install directory"
+
 # shellcheck disable=SC2016
 grep -q 'install -d -m 0755 "${OBOS_WEB_DIR}"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not create the obos-web install directory"
@@ -361,8 +371,24 @@ grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR
 grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/app.js" "${OBOS_WEB_DIR}/app.js"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web script"
 
+# shellcheck disable=SC2016
+grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-onboarding/index.html" "${OBOS_ONBOARDING_DIR}/index.html"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install onboarding index"
+
+grep -q '/obos/api/v1/onboarding/status' "${ONBOARDING_JS}" \
+  || fail "onboarding UI does not check onboarding status"
+
+grep -q '/obos/api/v1/onboarding/web-auth' "${ONBOARDING_JS}" \
+  || fail "onboarding UI does not set the initial web password"
+
 grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not expose obos-web under /obos/"
+
+grep -q 'location /obos/onboarding/' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not expose onboarding UI under /obos/onboarding/"
+
+grep -q 'alias /srv/obos/onboarding/;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve onboarding UI from /srv/obos/onboarding"
 
 grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not protect obos-web with basic auth"

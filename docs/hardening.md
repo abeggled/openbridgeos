@@ -68,11 +68,13 @@ restores localhost-only bind addresses and removes the firewall allow rules.
 nginx terminates HTTPS on TCP `443` using per-appliance-instance certificate
 material below `/etc/obos/tls`.
 
-The obos web console and `/obos/api/` bridge are protected by nginx Basic Auth.
-First boot generates `/etc/obos/web.htpasswd` and `/etc/obos/web-admin.env`.
-The password hash file is readable by nginx only, and the credential record is
-root-only. If `OBOS-ONBOARDING.txt` is exported to a boot-accessible partition,
-remove it after onboarding because it contains the initial web console password.
+The obos web console and `/obos/api/` bridge are protected by nginx Basic Auth
+after first web onboarding. First boot creates a local onboarding marker and
+serves `/obos/onboarding/` without Basic Auth until the administrator sets the
+initial `admin` password. The password hash is stored in
+`/etc/obos/web.htpasswd`, and the credential record is root-only in
+`/etc/obos/web-admin.env`. `OBOS-ONBOARDING.txt` may point to the onboarding URL,
+but it must not contain a password.
 
 The default proxy config is installed from:
 

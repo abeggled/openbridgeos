@@ -20,19 +20,29 @@ require confirmation tokens.
 open bridge operating system protects both `/obos/` and `/obos/api/` with nginx
 Basic Auth by default.
 
-First boot generates per-appliance-instance credentials:
+First boot does not generate a reusable administrator password. Instead it
+creates a local onboarding marker and exposes only these unauthenticated paths:
+
+- `/obos/onboarding/`
+- `/obos/api/v1/onboarding/`
+
+The administrator sets the first web console password during this onboarding
+flow. After setup, the onboarding marker is removed and nginx Basic Auth protects
+the normal console and agent API.
+
+Per-appliance-instance credentials use:
 
 - username defaults to `admin`
-- password is randomly generated
+- password is set by the administrator during first web onboarding
 - nginx password hash is stored in `/etc/obos/web.htpasswd`
-- the initial credential record is stored in `/etc/obos/web-admin.env`
+- the credential record is stored in `/etc/obos/web-admin.env`
 
 The password file is readable by nginx and not world-readable. The credential
 record is root-only and treated as sensitive.
 
 For headless onboarding, first boot may write `OBOS-ONBOARDING.txt` to a
-writable boot-accessible partition. That file contains the initial web console
-password and must be removed after onboarding.
+writable boot-accessible partition. That file points to the onboarding URL and
+must not contain a password.
 
 ## Consequences
 
@@ -41,6 +51,6 @@ password and must be removed after onboarding.
   auditable, and supported by stock Debian nginx.
 - Password rotation is an explicit confirmed workflow through `obosctl` and
   `obos-agent`; the web UI can add a polished display later.
-- The boot-accessible onboarding file is sensitive. It is acceptable for the
-  technical MVP only because it solves headless first access without requiring
-  SSH, but it must be clearly documented.
+- The unauthenticated onboarding endpoint is only available before credentials
+  exist. Test appliances should be attached to a trusted setup network until
+  onboarding is complete.

@@ -13,8 +13,11 @@ fail() {
 grep -q 'APPLIANCE_ID_FILE=' scripts/bootstrap/first-boot.sh \
   || fail "appliance identifier path is not defined on first boot"
 
-grep -q 'WEB_AUTH_SCRIPT=' scripts/bootstrap/first-boot.sh \
-  || fail "web console auth is not generated on first boot"
+grep -q 'ONBOARDING_REQUIRED_FILE=' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not define the web onboarding marker"
+
+grep -q 'format=obos-onboarding-required-v1' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not create a machine-readable web onboarding marker"
 
 grep -q 'generate-web-auth.sh' scripts/bootstrap/provision-debian.sh \
   || fail "web console auth helper is not installed during provisioning"
@@ -32,8 +35,8 @@ grep -q 'openssl passwd -apr1 -stdin' scripts/auth/generate-web-auth.sh \
 grep -q 'MODE="${1:-generate}"' scripts/auth/generate-web-auth.sh \
   || fail "web console auth helper does not default to generate mode"
 
-grep -q 'generate|rotate' scripts/auth/generate-web-auth.sh \
-  || fail "web console auth helper does not support rotation"
+grep -q 'generate|rotate|set' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth helper does not support setup and rotation"
 
 # shellcheck disable=SC2016
 grep -q 'password=${password}' scripts/auth/generate-web-auth.sh \
@@ -54,32 +57,42 @@ grep -q 'auth_basic_user_file /etc/obos/web.htpasswd;' packaging/nginx/openbridg
 grep -q 'web-auth-rotate)' scripts/obosctl \
   || fail "obosctl does not expose web auth rotation"
 
+grep -q 'web-auth-set)' scripts/obosctl \
+  || fail "obosctl does not expose initial web auth setup"
+
 grep -q 'WEB_AUTH_SCRIPT=' scripts/obosctl \
   || fail "obosctl does not define web auth helper"
+
+grep -q 'action=web-auth-set|mutating=true|confirm=web-auth-set' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not expose confirmed initial web auth setup"
 
 grep -q 'action=web-auth-rotate|mutating=true|confirm=web-auth-rotate' scripts/agent/obos-agent.sh \
   || fail "obos-agent does not expose confirmed web auth rotation"
 
+grep -q '"web-auth-set": "web-auth-set"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not expose confirmed initial web auth setup"
+
 grep -q '"web-auth-rotate": "web-auth-rotate"' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not expose confirmed web auth rotation"
+
+grep -q '/usr/bin/obosctl web-auth-set \*' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow initial web auth setup"
 
 grep -q '/usr/bin/obosctl web-auth-rotate' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow web auth rotation"
 
-grep -q 'WEB_AUTH_INFO_FILE=' scripts/tls/export-boot-trust-summary.sh \
-  || fail "boot onboarding summary does not read web console credentials"
-
 grep -q 'OBOS-ONBOARDING.txt' scripts/tls/export-boot-trust-summary.sh \
   || fail "boot onboarding summary does not define an onboarding file"
 
-grep -q 'initial web console password' scripts/tls/export-boot-trust-summary.sh \
-  || fail "boot onboarding summary does not label the initial web console password"
+grep -q 'set during first web onboarding' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not point to first web onboarding"
 
-grep -q 'Rotate the web console password after onboarding' scripts/tls/export-boot-trust-summary.sh \
-  || fail "boot onboarding summary does not instruct password rotation"
+grep -q 'This file does not contain a password' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding summary does not state that passwords are not exported"
 
-grep -q 'Remove it from the boot-accessible partition after onboarding' scripts/tls/export-boot-trust-summary.sh \
-  || fail "boot onboarding summary does not instruct removing the onboarding file"
+if grep -q 'initial web console password' scripts/tls/export-boot-trust-summary.sh; then
+  fail "boot onboarding summary must not export an initial web console password"
+fi
 
 # shellcheck disable=SC2016
 grep -Fq 'uuid > "${APPLIANCE_ID_FILE}"' scripts/bootstrap/first-boot.sh \

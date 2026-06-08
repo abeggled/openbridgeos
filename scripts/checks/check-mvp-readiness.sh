@@ -142,16 +142,19 @@ require_line '"tls-generate": "tls-generate"' scripts/agent/obos-agent-http.py
 require_line '"tls-export": "tls-export"' scripts/agent/obos-agent-http.py
 require_line '"set-hostname": "set-hostname"' scripts/agent/obos-agent-http.py
 require_line '"set-timezone": "set-timezone"' scripts/agent/obos-agent-http.py
+require_line '"web-auth-set": "web-auth-set"' scripts/agent/obos-agent-http.py
 require_line "MAX_POST_BYTES = 1024" scripts/agent/obos-agent-http.py
 require_line "Access-Control-Allow-Origin" scripts/checks/check-obos-agent-http.sh
 require_line "auth_basic \"open bridge operating system\";" packaging/nginx/openbridgeserver.conf
 require_line "auth_basic_user_file /etc/obos/web.htpasswd;" packaging/nginx/openbridgeserver.conf
 require_line "openssl passwd -apr1 -stdin" scripts/auth/generate-web-auth.sh
 require_line "web-auth-rotate)" scripts/obosctl
+require_line "web-auth-set)" scripts/obosctl
 require_line "action=web-auth-rotate|mutating=true|confirm=web-auth-rotate" scripts/agent/obos-agent.sh
+require_line "action=web-auth-set|mutating=true|confirm=web-auth-set" scripts/agent/obos-agent.sh
 require_line '"web-auth-rotate": "web-auth-rotate"' scripts/agent/obos-agent-http.py
 require_line "OBOS-ONBOARDING.txt" scripts/tls/export-boot-trust-summary.sh
-require_line "initial web console password" scripts/tls/export-boot-trust-summary.sh
+require_line "set during first web onboarding" scripts/tls/export-boot-trust-summary.sh
 require_line "Validation Matrix" docs/client-ca-trust.md
 require_line "fingerprint_verified=yes|no" docs/client-ca-trust.md
 require_line "tls-certificate-lifecycle.md" docs/tls-trust.md

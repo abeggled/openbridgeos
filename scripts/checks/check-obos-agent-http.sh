@@ -49,6 +49,8 @@ grep -q '"tls-export": "tls-export"' "${BRIDGE}" \
   || fail "tls-export mutation is not exposed with a matching confirmation token"
 grep -q '"web-auth-rotate": "web-auth-rotate"' "${BRIDGE}" \
   || fail "web-auth-rotate mutation is not exposed with a matching confirmation token"
+grep -q '"web-auth-set": "web-auth-set"' "${BRIDGE}" \
+  || fail "web-auth-set mutation is not exposed with a matching confirmation token"
 grep -q '"update": "update"' "${BRIDGE}" \
   || fail "update mutation is not exposed with a matching confirmation token"
 grep -q '"system-summary"' "${BRIDGE}" \
@@ -119,6 +121,10 @@ fi
 
 grep -q 'location /obos/api/' "${NGINX_CONF}" \
   || fail "nginx does not expose the agent API path"
+grep -q 'location /obos/api/v1/onboarding/' "${NGINX_CONF}" \
+  || fail "nginx does not expose the onboarding API path"
+grep -q 'auth_basic off;' "${NGINX_CONF}" \
+  || fail "nginx does not disable auth for the first onboarding path"
 grep -q 'proxy_pass http://127.0.0.1:8091;' "${NGINX_CONF}" \
   || fail "nginx does not proxy the API path to the loopback bridge"
 # shellcheck disable=SC2016
@@ -132,7 +138,8 @@ grep -q 'obos-agent-http.service' scripts/bootstrap/provision-debian.sh \
 tmp_dir="$(mktemp -d)"
 portable_export_dir="/tmp/obos-portable-exports"
 portable_import_dir="/tmp/obos-portable-imports"
-trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}"' EXIT
+onboarding_state_dir="/tmp/obos-onboarding-state"
+trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}" "${onboarding_state_dir}"' EXIT
 
 cat > "${tmp_dir}/obos-agent" <<'EOF'
 #!/usr/bin/env sh
@@ -369,6 +376,23 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  web-auth-set)
+    [ "${2:-}" != "" ] || exit 2
+    [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "web-auth-set" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=web-auth-set
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-web-auth-v1
+stdout=mode=set
+stdout=web auth set: PASS
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   set-hostname)
     [ "${2:-}" = "obos-test" ] || exit 2
     [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "set-hostname" ] || exit 2
@@ -411,16 +435,32 @@ chmod 0755 "${tmp_dir}/obos-agent"
 mkdir -p "${portable_export_dir}"
 printf 'encrypted portable fixture\n' > "${portable_export_dir}/obos-portable-test.tar"
 mkdir -p "${portable_import_dir}"
+mkdir -p "${onboarding_state_dir}"
+printf 'format=obos-onboarding-required-v1\n' > "${onboarding_state_dir}/onboarding-required"
 
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
 OBOS_AGENT_HTTP_BIND=127.0.0.1 \
 OBOS_AGENT_HTTP_PORT=18091 \
 OBOS_PORTABLE_EXPORT_DIR=/tmp/obos-portable-exports \
 OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
+OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
+OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
+OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
 "${PYTHON_BIN}" "${BRIDGE}" &
 server_pid="$!"
 
 sleep 1
+
+curl --fail --silent http://127.0.0.1:18091/obos/api/v1/onboarding/status |
+  grep -q 'onboarding_required=true' \
+  || fail "onboarding status endpoint did not report active onboarding"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth |
+  grep -q 'stdout=web auth set: PASS' \
+  || fail "onboarding web auth endpoint did not set the initial password"
 
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/status-summary |
   grep -q 'stdout=format=obos-status-summary-v1' \
