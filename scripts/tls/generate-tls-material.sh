@@ -2,7 +2,6 @@
 set -eu
 
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
-HOSTNAME_VALUE="${OBOS_HOSTNAME:-$(hostname)}"
 CA_KEY="${TLS_DIR}/obos-local-ca.key"
 CA_CERT="${TLS_DIR}/obos-local-ca.crt"
 LEAF_KEY="${TLS_DIR}/obos.local.key"
@@ -29,7 +28,7 @@ if [ ! -f "${CA_KEY}" ] || [ ! -f "${CA_CERT}" ]; then
     -key "${CA_KEY}" \
     -sha256 \
     -days "${DAYS_CA}" \
-    -subj "/CN=open bridge operating system local CA ${HOSTNAME_VALUE}" \
+    -subj "/CN=open bridge operating system local CA" \
     -addext "basicConstraints=critical,CA:TRUE,pathlen:0" \
     -addext "keyUsage=critical,keyCertSign,cRLSign" \
     -addext "subjectKeyIdentifier=hash" \
@@ -46,7 +45,7 @@ fi
 
 openssl genrsa -out "${LEAF_KEY}" 4096
 chmod 0600 "${LEAF_KEY}"
-openssl req -new -key "${LEAF_KEY}" -subj "/CN=${HOSTNAME_VALUE}" -out "${LEAF_CSR}"
+openssl req -new -key "${LEAF_KEY}" -subj "/CN=obs.local" -out "${LEAF_CSR}"
 : > "${IP_LIST}"
 hostname -I 2>/dev/null | tr ' ' '\n' > "${IP_LIST}" || true
 
@@ -58,9 +57,7 @@ hostname -I 2>/dev/null | tr ' ' '\n' > "${IP_LIST}" || true
   echo "subjectAltName=@alt_names"
   echo ""
   echo "[alt_names]"
-  echo "DNS.1=obos.local"
-  echo "DNS.2=${HOSTNAME_VALUE}"
-  echo "DNS.3=${HOSTNAME_VALUE}.local"
+  echo "DNS.1=obs.local"
   index=1
   while IFS= read -r ip; do
     [ -n "${ip}" ] || continue

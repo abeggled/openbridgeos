@@ -67,7 +67,7 @@ sudo obosctl agent-audit-summary
 Shows the systemd unit state, Docker Compose service state, the localhost open
 bridge server health endpoint result, and the HTTPS reverse proxy health result.
 The HTTPS proxy check verifies the response through the per-appliance-instance
-local CA by resolving `obos.local` to `127.0.0.1` for the local probe.
+local CA by resolving `obs.local` to `127.0.0.1` for the local probe.
 
 If `/srv/obos/state/last-update` exists, `status` also prints the last
 successful update record.
@@ -477,8 +477,8 @@ TLS, proxy health, and MQTT helper paths can also be overridden for tests:
 
 ```sh
 OBOS_TLS_CA_CERT=/tmp/tls/obos-local-ca.crt \
-OBOS_PROXY_HEALTH_HOST=obos.local \
-OBOS_PROXY_HEALTH_URL=https://obos.local/api/v1/system/health \
+OBOS_PROXY_HEALTH_HOST=obs.local \
+OBOS_PROXY_HEALTH_URL=https://obs.local/api/v1/system/health \
 OBOS_TLS_GENERATE_SCRIPT=/tmp/generate-tls-material.sh \
 OBOS_TLS_LEAF_RENEWAL_PLAN_SCRIPT=/tmp/plan-leaf-renewal.sh \
 OBOS_TLS_LEAF_RENEWAL_SCRIPT=/tmp/renew-leaf-certificate.sh \

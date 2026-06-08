@@ -1110,6 +1110,23 @@ grep -q 'mqtt-disable-lan)' scripts/obosctl \
 grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-material.sh \
   || fail "local CA is not generated with critical CA constraints"
 
+grep -q 'CN=open bridge operating system local CA' scripts/tls/generate-tls-material.sh \
+  || fail "local CA subject does not use the required CA name"
+
+grep -q 'DNS.1=obs.local' scripts/tls/generate-tls-material.sh \
+  || fail "TLS generation does not use obs.local as the only DNS SAN"
+
+if grep -q 'DNS.2=' scripts/tls/generate-tls-material.sh || grep -q 'DNS.3=' scripts/tls/generate-tls-material.sh; then
+  fail "TLS generation must not add hostname DNS SANs"
+fi
+
+grep -q 'DNS.1=obs.local' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal does not use obs.local as the only DNS SAN"
+
+if grep -q 'DNS.2=' scripts/tls/renew-leaf-certificate.sh || grep -q 'DNS.3=' scripts/tls/renew-leaf-certificate.sh; then
+  fail "TLS leaf renewal must not add hostname DNS SANs"
+fi
+
 grep -q 'TLS material already exists' scripts/tls/generate-tls-material.sh \
   || fail "TLS material generation is not idempotent"
 

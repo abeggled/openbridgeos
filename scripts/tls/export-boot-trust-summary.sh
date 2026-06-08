@@ -76,7 +76,7 @@ cat > "${onboarding_target}" <<'EOF'
 open bridge operating system onboarding
 
 URL:
-- https://obos.local/obos/onboarding/
+- https://obs.local/obos/onboarding/
 
 Initial web console credentials:
 - username: admin

@@ -2,7 +2,6 @@
 set -eu
 
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
-HOSTNAME_VALUE="${OBOS_HOSTNAME:-$(hostname)}"
 CA_KEY="${TLS_DIR}/obos-local-ca.key"
 CA_CERT="${TLS_DIR}/obos-local-ca.crt"
 LEAF_KEY="${TLS_DIR}/obos.local.key"
@@ -12,7 +11,7 @@ DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-397}"
 EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 RELOAD_NGINX="${OBOS_TLS_RELOAD_NGINX:-1}"
 ALLOW_NON_ROOT="${OBOS_ALLOW_NON_ROOT_TLS_RENEWAL:-0}"
-SUBJECT="${OBOS_TLS_LEAF_SUBJECT:-/CN=${HOSTNAME_VALUE}}"
+SUBJECT="${OBOS_TLS_LEAF_SUBJECT:-/CN=obs.local}"
 
 fail() {
   echo "tls leaf renewal failed: $1" >&2
@@ -107,9 +106,7 @@ hostname -I 2>/dev/null | tr ' ' '\n' > "${ip_list}" || true
   echo "subjectAltName=@alt_names"
   echo ""
   echo "[alt_names]"
-  echo "DNS.1=obos.local"
-  echo "DNS.2=${HOSTNAME_VALUE}"
-  echo "DNS.3=${HOSTNAME_VALUE}.local"
+  echo "DNS.1=obs.local"
   index=1
   while IFS= read -r ip; do
     [ -n "${ip}" ] || continue

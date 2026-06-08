@@ -27,13 +27,13 @@ openssl req -x509 -new -nodes \
 openssl genrsa -out "${TLS_DIR}/obos.local.key" 2048 >/dev/null 2>&1
 openssl req -new \
   -key "${TLS_DIR}/obos.local.key" \
-  -subj "//CN=obos.local" \
+  -subj "//CN=obs.local" \
   -out "${TLS_DIR}/obos.local.csr" >/dev/null 2>&1
 cat > "${TLS_DIR}/obos.local.ext" <<'EOF'
 basicConstraints=critical,CA:FALSE
 keyUsage=critical,digitalSignature,keyEncipherment
 extendedKeyUsage=serverAuth
-subjectAltName=DNS:obos.local
+subjectAltName=DNS:obs.local
 EOF
 openssl x509 -req \
   -in "${TLS_DIR}/obos.local.csr" \
