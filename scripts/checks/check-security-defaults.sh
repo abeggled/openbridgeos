@@ -22,11 +22,26 @@ grep -q 'format=obos-onboarding-required-v1' scripts/bootstrap/first-boot.sh \
 grep -q 'window_seconds=300' scripts/bootstrap/first-boot.sh \
   || fail "first boot onboarding window is not limited to 300 seconds"
 
+grep -q 'window_basis=boot_uptime' scripts/bootstrap/first-boot.sh \
+  || fail "first boot onboarding marker does not document boot uptime window basis"
+
+! grep -q 'expires_at_epoch=' scripts/bootstrap/first-boot.sh \
+  || fail "first boot onboarding window must not depend on stale absolute expiry timestamps"
+
 grep -q 'refresh_onboarding_window' scripts/bootstrap/first-boot.sh \
   || fail "first boot does not reopen onboarding after reboot when no password exists"
 
 ! grep -q 'ConditionPathExists=!/srv/obos/state/first-boot.done' packaging/systemd/obos-first-boot.service \
   || fail "first boot unit prevents onboarding window refresh after reboot"
+
+grep -q 'ONBOARDING_WINDOW_SECONDS = int' scripts/agent/obos-agent-http.py \
+  || fail "agent does not define an onboarding window duration"
+
+grep -q 'OBOS_ONBOARDING_BOOT_AGE_SECONDS' scripts/agent/obos-agent-http.py \
+  || fail "agent onboarding window cannot be tested by boot age"
+
+grep -q 'open("/proc/uptime"' scripts/agent/obos-agent-http.py \
+  || fail "agent onboarding window is not based on system uptime"
 
 grep -q 'generate-web-auth.sh' scripts/bootstrap/provision-debian.sh \
   || fail "web console auth helper is not installed during provisioning"

@@ -449,11 +449,10 @@ printf 'encrypted portable fixture\n' > "${portable_export_dir}/obos-portable-te
 mkdir -p "${portable_import_dir}"
 mkdir -p "${onboarding_state_dir}"
 mkdir -p "${session_state_dir}"
-expires_at=$(( $(date +%s) + 300 ))
 {
   echo 'format=obos-onboarding-required-v1'
-  echo "expires_at_epoch=${expires_at}"
   echo 'window_seconds=300'
+  echo 'window_basis=boot_uptime'
 } > "${onboarding_state_dir}/onboarding-required"
 cookie_jar="${tmp_dir}/cookies.txt"
 cat > "${tmp_dir}/.curlrc" <<EOF
@@ -464,11 +463,36 @@ export HOME="${tmp_dir}"
 
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
 OBOS_AGENT_HTTP_BIND=127.0.0.1 \
+OBOS_AGENT_HTTP_PORT=18092 \
+OBOS_PORTABLE_EXPORT_DIR=/tmp/obos-portable-exports \
+OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
+OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
+OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
+OBOS_ONBOARDING_BOOT_AGE_SECONDS=301 \
+OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
+OBOS_SESSION_DIR="${session_state_dir}" \
+OBOS_SESSION_COOKIE_SECURE=false \
+"${PYTHON_BIN}" "${BRIDGE}" &
+server_pid="$!"
+
+sleep 1
+
+curl --fail --silent http://127.0.0.1:18092/obos/api/v1/onboarding/status |
+  grep -q 'onboarding_required=false' \
+  || fail "onboarding status endpoint did not close after the boot window"
+
+kill "${server_pid}" 2>/dev/null || true
+wait "${server_pid}" 2>/dev/null || true
+server_pid=""
+
+OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
+OBOS_AGENT_HTTP_BIND=127.0.0.1 \
 OBOS_AGENT_HTTP_PORT=18091 \
 OBOS_PORTABLE_EXPORT_DIR=/tmp/obos-portable-exports \
 OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
+OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
 OBOS_SESSION_DIR="${session_state_dir}" \
 OBOS_SESSION_COOKIE_SECURE=false \

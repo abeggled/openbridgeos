@@ -32,14 +32,12 @@ uuid() {
 }
 
 refresh_onboarding_window() {
-  now_epoch="$(date +%s)"
-  expires_epoch=$((now_epoch + 300))
   install -d -m 0700 -o obos-agent -g obos-agent "${OBOS_STATE_DIR}/onboarding"
   {
     echo "format=obos-onboarding-required-v1"
     echo "created_at=$(date -u +%Y%m%dT%H%M%SZ)"
-    echo "expires_at_epoch=${expires_epoch}"
     echo "window_seconds=300"
+    echo "window_basis=boot_uptime"
   } > "${ONBOARDING_REQUIRED_FILE}"
   chown obos-agent:obos-agent "${ONBOARDING_REQUIRED_FILE}" 2>/dev/null || true
   chmod 0600 "${ONBOARDING_REQUIRED_FILE}"
