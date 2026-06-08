@@ -151,6 +151,10 @@ By default the script:
 9. cleans machine identity and logs with `virt-sysprep`
 10. writes `.sha256` and `.manifest` files next to the image
 
+Provisioning installs `packaging/network/20-obos-dhcp.network` and enables
+`systemd-networkd.service` so the generic cloud image receives DHCP networking
+in QEMU, hypervisors, and first boot smoke tests.
+
 Use a pre-downloaded base image when needed:
 
 ```sh
