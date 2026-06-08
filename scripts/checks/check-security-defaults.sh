@@ -1030,6 +1030,18 @@ grep -q 'client_header_timeout 30s;' packaging/nginx/openbridgeserver.conf \
 grep -q 'send_timeout 60s;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not bound send timeout"
 
+grep -q 'write_initramfs_modules' scripts/images/build-rpi4-arm64-image.sh \
+  || fail "Raspberry Pi image builder does not force boot media modules into initramfs"
+
+grep -q '^nvme$' scripts/images/build-rpi4-arm64-image.sh \
+  || fail "Raspberry Pi image builder does not include NVMe in initramfs modules"
+
+grep -q '^pcie-brcmstb$' scripts/images/build-rpi4-arm64-image.sh \
+  || fail "Raspberry Pi image builder does not include Raspberry Pi PCIe in initramfs modules"
+
+grep -q 'config_is_active' scripts/images/check-rpi-kernel-config.sh \
+  || fail "Raspberry Pi kernel config check does not accept active module configs"
+
 grep -q 'no-new-privileges:true' apps/openbridgeserver/compose.yaml \
   || fail "Compose services do not set no-new-privileges"
 

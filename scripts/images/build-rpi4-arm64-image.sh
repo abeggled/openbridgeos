@@ -121,6 +121,20 @@ console=serial0,115200 console=tty1 root=LABEL=${OBOS_RPI_ROOT_PARTITION_LABEL} 
 EOF
 }
 
+write_initramfs_modules() {
+  root_dir="$1"
+  modules_file="${root_dir}/etc/initramfs-tools/modules"
+
+  cat >> "${modules_file}" <<EOF
+
+# open bridge operating system Raspberry Pi boot media support.
+nvme
+nvme-core
+pcie-brcmstb
+xhci-pci
+EOF
+}
+
 write_manifest() {
   manifest_file="$1"
   image_file="$2"
@@ -286,6 +300,7 @@ truncate -s 0 "${BUILD_ROOT}/etc/machine-id"
 rm -f "${BUILD_ROOT}/var/lib/dbus/machine-id"
 write_fstab "${BUILD_ROOT}"
 write_boot_config "${BUILD_ROOT}/boot"
+write_initramfs_modules "${BUILD_ROOT}"
 sh "${CHECK_RPI_BOOT_FILES}" "${BUILD_ROOT}"
 
 cp -a "${BUILD_ROOT}/." "${ROOT_MOUNT}/"
