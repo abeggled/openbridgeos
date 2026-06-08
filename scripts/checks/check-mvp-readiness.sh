@@ -257,6 +257,10 @@ require_line "CHECK_QCOW2_MANIFEST=" scripts/images/build-amd64-qcow2.sh
 require_line "run_build_host_preflight" scripts/images/build-amd64-qcow2.sh
 require_line "REPO_STAGING_PARENT=" scripts/images/build-amd64-qcow2.sh
 require_line "--exclude ./dist" scripts/images/build-amd64-qcow2.sh
+require_file packaging/network/20-obos-dhcp.network
+require_line "DHCP=yes" packaging/network/20-obos-dhcp.network
+require_line "20-obos-dhcp.network" scripts/bootstrap/provision-debian.sh
+require_line "systemctl enable systemd-networkd.service" scripts/bootstrap/provision-debian.sh
 # shellcheck disable=SC2016
 require_line '--copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos"' scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016

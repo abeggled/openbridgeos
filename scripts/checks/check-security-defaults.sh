@@ -842,6 +842,18 @@ grep -q '50unattended-upgrades' scripts/bootstrap/provision-debian.sh \
 grep -q 'apt-daily-upgrade.timer' scripts/bootstrap/provision-debian.sh \
   || fail "apt unattended upgrade timer is not enabled"
 
+grep -q '20-obos-dhcp.network' scripts/bootstrap/provision-debian.sh \
+  || fail "DHCP network profile is not installed during provisioning"
+
+grep -q 'systemctl enable systemd-networkd.service' scripts/bootstrap/provision-debian.sh \
+  || fail "systemd-networkd is not enabled during provisioning"
+
+grep -q 'DHCP=yes' packaging/network/20-obos-dhcp.network \
+  || fail "VM network profile does not enable DHCP"
+
+grep -q 'Name=en\* eth\*' packaging/network/20-obos-dhcp.network \
+  || fail "VM network profile does not match common Ethernet interfaces"
+
 grep -q 'Unattended-Upgrade "1"' packaging/apt/20auto-upgrades \
   || fail "apt periodic unattended upgrades are not enabled"
 
