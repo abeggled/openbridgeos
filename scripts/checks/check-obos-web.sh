@@ -393,29 +393,29 @@ grep -q '/obos/api/v1/onboarding/status' "${ONBOARDING_JS}" \
 grep -q '/obos/api/v1/onboarding/web-auth' "${ONBOARDING_JS}" \
   || fail "onboarding UI does not set the initial web password"
 
-grep -q 'location /obos/' packaging/nginx/openbridgeserver.conf \
+grep -q 'location \^~ /obos/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not expose obos-web under /obos/"
 
-grep -q 'location /obos/onboarding/' packaging/nginx/openbridgeserver.conf \
+grep -q 'location \^~ /obos/onboarding/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not expose onboarding UI under /obos/onboarding/"
 
-grep -q 'root /srv/obos/onboarding;' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not serve onboarding UI from /srv/obos/onboarding"
+grep -q 'alias /srv/obos/onboarding/index.html;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve onboarding index directly"
 
-grep -q 'rewrite \^/obos/onboarding/' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not strip onboarding URL prefix before serving static files"
+grep -q 'alias /srv/obos/onboarding/;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve onboarding UI from /srv/obos/onboarding"
 
 if grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf; then
   fail "nginx must not use browser Basic Auth for obos-web"
 fi
 
-grep -q 'root /srv/obos/web;' packaging/nginx/openbridgeserver.conf \
+grep -q 'alias /srv/obos/web/index.html;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve obos-web index directly"
+
+grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web from /srv/obos/web"
 
-grep -q 'rewrite \^/obos/' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not strip obos URL prefix before serving static files"
-
-grep -q 'try_files .* /index.html;' packaging/nginx/openbridgeserver.conf \
+grep -q 'try_files .* =404;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not fall back to obos-web index"
 
 echo "obos-web: PASS"
