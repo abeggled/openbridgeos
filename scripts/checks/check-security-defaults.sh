@@ -516,6 +516,9 @@ grep -q 'data-agent-field="agent-audit-summary:' apps/obos-web/index.html \
 grep -q 'OBOS_WEB_DIR="/srv/obos/web"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not define obos-web install directory"
 
+grep -q 'install -d -m 0750 -g www-data /srv/obos' scripts/bootstrap/provision-debian.sh \
+  || fail "nginx cannot traverse /srv/obos while preserving 0750 mode"
+
 grep -q 'apps/obos-web/index.html' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web index"
 
