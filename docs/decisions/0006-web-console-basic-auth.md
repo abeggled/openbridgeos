@@ -30,7 +30,9 @@ about five minutes after system start:
 The administrator sets the first web console password during this onboarding
 flow. After setup, the onboarding marker is removed and the session login
 protects the normal console and agent API. If the setup window expires before
-credentials exist, rebooting opens a new onboarding window.
+credentials exist, rebooting opens a new onboarding window. The active window is
+based on current system uptime rather than an absolute timestamp stored in the
+marker.
 
 Per-appliance-instance credentials use:
 

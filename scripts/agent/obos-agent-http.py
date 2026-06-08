@@ -28,6 +28,7 @@ PORTABLE_EXPORT_DIR = os.environ.get("OBOS_PORTABLE_EXPORT_DIR", "/srv/obos/stat
 PORTABLE_IMPORT_DIR = os.environ.get("OBOS_PORTABLE_IMPORT_DIR", "/srv/obos/state/portable-imports")
 ONBOARDING_STATE_DIR = os.environ.get("OBOS_ONBOARDING_STATE_DIR", "/srv/obos/state/onboarding")
 ONBOARDING_REQUIRED_FILE = os.environ.get("OBOS_ONBOARDING_REQUIRED_FILE", "/srv/obos/state/onboarding/onboarding-required")
+ONBOARDING_WINDOW_SECONDS = int(os.environ.get("OBOS_ONBOARDING_WINDOW_SECONDS", "300"))
 WEB_AUTH_FILE = os.environ.get("OBOS_WEB_AUTH_FILE", "/etc/obos/web.htpasswd")
 SESSION_DIR = os.environ.get("OBOS_SESSION_DIR", "/srv/obos/state/sessions")
 SESSION_COOKIE = "obos_session"
@@ -487,18 +488,23 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
     def onboarding_required(self):
         if not os.path.exists(ONBOARDING_REQUIRED_FILE) or os.path.exists(WEB_AUTH_FILE):
             return False
-        try:
-            with open(ONBOARDING_REQUIRED_FILE, "r", encoding="utf-8") as handle:
-                values = {}
-                for line in handle:
-                    line = line.strip()
-                    if "=" in line:
-                        key, value = line.split("=", 1)
-                        values[key] = value
-            expires = int(values.get("expires_at_epoch", "0"))
-        except (OSError, ValueError):
+        boot_age = self.boot_age_seconds()
+        if boot_age is None:
             return False
-        return expires >= int(time.time())
+        return boot_age <= ONBOARDING_WINDOW_SECONDS
+
+    def boot_age_seconds(self):
+        override = os.environ.get("OBOS_ONBOARDING_BOOT_AGE_SECONDS")
+        if override is not None:
+            try:
+                return int(override)
+            except ValueError:
+                return None
+        try:
+            with open("/proc/uptime", "r", encoding="utf-8") as handle:
+                return int(float(handle.readline().split()[0]))
+        except (OSError, ValueError, IndexError):
+            return None
 
     def handle_onboarding_status(self, parsed):
         if parsed.query:
@@ -506,12 +512,18 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             return
         required = "true" if self.onboarding_required() else "false"
         web_auth_configured = "true" if os.path.exists(WEB_AUTH_FILE) else "false"
+        boot_age = self.boot_age_seconds()
+        remaining = 0
+        if boot_age is not None and boot_age <= ONBOARDING_WINDOW_SECONDS:
+            remaining = ONBOARDING_WINDOW_SECONDS - boot_age
         self.send_text(
             200,
             "format=obos-onboarding-status-v1\n"
             f"onboarding_required={required}\n"
             f"web_auth_configured={web_auth_configured}\n"
-            "window_seconds=300\n"
+            f"window_seconds={ONBOARDING_WINDOW_SECONDS}\n"
+            f"boot_age_seconds={boot_age if boot_age is not None else 'unknown'}\n"
+            f"window_remaining_seconds={remaining}\n"
             "admin_user=admin\n",
         )
 
