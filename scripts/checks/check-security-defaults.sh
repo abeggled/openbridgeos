@@ -957,6 +957,19 @@ grep -q 'udp sport 547 udp dport 546 accept' packaging/nftables/obos.nft \
 grep -Fq 'DISABLE_SSH="${OBOS_DISABLE_SSH:-1}"' scripts/hardening/apply-host-hardening.sh \
   || fail "SSH disablement is not the default hardening behavior"
 
+# shellcheck disable=SC2016
+grep -Fq 'APPLY_RUNTIME="${OBOS_APPLY_RUNTIME_HARDENING:-1}"' scripts/hardening/apply-host-hardening.sh \
+  || fail "host hardening does not default to runtime application"
+
+grep -q 'OBOS_APPLY_RUNTIME_HARDENING=0' scripts/images/build-rpi4-arm64-image.sh \
+  || fail "Raspberry Pi image builder does not disable live hardening in the chroot"
+
+grep -q 'systemctl enable nftables.service' scripts/hardening/apply-host-hardening.sh \
+  || fail "host hardening does not enable nftables for target boot"
+
+grep -q 'systemctl restart nftables.service' scripts/hardening/apply-host-hardening.sh \
+  || fail "host hardening does not apply nftables at runtime"
+
 grep -q 'NoNewPrivileges=true' packaging/systemd/obos-first-boot.service \
   || fail "first boot systemd unit is missing NoNewPrivileges"
 
