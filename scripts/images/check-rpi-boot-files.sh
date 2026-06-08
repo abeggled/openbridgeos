@@ -53,10 +53,12 @@ OBOS_RPI_ROOT_PARTITION_LABEL=
 FSTAB="${ROOT_DIR}/etc/fstab"
 CONFIG_TXT="${ROOT_DIR}/boot/config.txt"
 CMDLINE_TXT="${ROOT_DIR}/boot/cmdline.txt"
+INITRAMFS_MODULES="${ROOT_DIR}/etc/initramfs-tools/modules"
 
 check_file "${FSTAB}"
 check_file "${CONFIG_TXT}"
 check_file "${CMDLINE_TXT}"
+check_file "${INITRAMFS_MODULES}"
 
 check_line "LABEL=${OBOS_RPI_ROOT_PARTITION_LABEL} / ext4 defaults,noatime 0 1" "${FSTAB}"
 check_line "LABEL=${OBOS_RPI_BOOT_PARTITION_LABEL} /boot vfat defaults 0 2" "${FSTAB}"
@@ -66,5 +68,9 @@ check_cmdline_token "root=LABEL=${OBOS_RPI_ROOT_PARTITION_LABEL}" "${CMDLINE_TXT
 check_cmdline_token "rootfstype=ext4" "${CMDLINE_TXT}"
 check_cmdline_token "fsck.repair=yes" "${CMDLINE_TXT}"
 check_cmdline_token "rootwait" "${CMDLINE_TXT}"
+check_line "nvme" "${INITRAMFS_MODULES}"
+check_line "nvme-core" "${INITRAMFS_MODULES}"
+check_line "pcie-brcmstb" "${INITRAMFS_MODULES}"
+check_line "xhci-pci" "${INITRAMFS_MODULES}"
 
 echo "Raspberry Pi boot files: PASS ${ROOT_DIR}"

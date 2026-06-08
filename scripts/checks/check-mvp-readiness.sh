@@ -289,7 +289,12 @@ require_line "rpi_contract:" scripts/images/print-image-build-plan.sh
 require_line "profile with SSH enabled was accepted" scripts/checks/check-image-profiles.sh
 require_line "Raspberry Pi profile without NVMe kernel config was accepted" scripts/checks/check-image-profiles.sh
 require_line "Raspberry Pi firmware config is not a Linux kernel config" scripts/images/check-rpi-kernel-config.sh
+require_line "config_is_active" scripts/images/check-rpi-kernel-config.sh
+# shellcheck disable=SC2016
+require_line '^${key}=m$' scripts/images/check-rpi-kernel-config.sh
 require_line "CHECK_RPI_BOOT_FILES=" scripts/images/build-rpi4-arm64-image.sh
+require_line "write_initramfs_modules" scripts/images/build-rpi4-arm64-image.sh
+require_line "pcie-brcmstb" scripts/images/check-rpi-boot-files.sh
 # shellcheck disable=SC2016
 require_line 'OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-rpi4-arm64-image.sh
 # shellcheck disable=SC2016

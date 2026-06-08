@@ -33,11 +33,16 @@ find_kernel_config() {
   return 1
 }
 
-config_has_value() {
+config_is_active() {
   config_file="$1"
   expected="$2"
+  key="${expected%%=*}"
 
-  if grep -q "^${expected}$" "${config_file}"; then
+  if grep -q "^${key}=y$" "${config_file}"; then
+    return 0
+  fi
+
+  if grep -q "^${key}=m$" "${config_file}"; then
     return 0
   fi
 
@@ -55,10 +60,10 @@ check_required_config() {
   IFS="${old_ifs}"
 
   for expected in "$@"; do
-    if config_has_value "${config_file}" "${expected}"; then
+    if config_is_active "${config_file}" "${expected}"; then
       pass "${expected}"
     else
-      fail "missing required kernel config: ${expected}"
+      fail "missing required active kernel config: ${expected}"
     fi
   done
 }
