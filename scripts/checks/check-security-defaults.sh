@@ -25,6 +25,9 @@ grep -q 'window_seconds=300' scripts/bootstrap/first-boot.sh \
 grep -q 'refresh_onboarding_window' scripts/bootstrap/first-boot.sh \
   || fail "first boot does not reopen onboarding after reboot when no password exists"
 
+! grep -q 'ConditionPathExists=!/srv/obos/state/first-boot.done' packaging/systemd/obos-first-boot.service \
+  || fail "first boot unit prevents onboarding window refresh after reboot"
+
 grep -q 'generate-web-auth.sh' scripts/bootstrap/provision-debian.sh \
   || fail "web console auth helper is not installed during provisioning"
 
