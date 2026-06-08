@@ -1047,8 +1047,12 @@ grep -q 'location /obos/api/' packaging/nginx/openbridgeserver.conf \
 grep -q 'proxy_pass http://127.0.0.1:8091;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not target localhost obos agent HTTP bridge"
 
-grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
+grep -q 'root /srv/obos/web;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not serve obos-web assets"
+
+if grep -q 'alias /srv/obos/' packaging/nginx/openbridgeserver.conf; then
+  fail "nginx must not use prefix alias for obos static files"
+fi
 
 grep -q 'server_tokens off;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy exposes server tokens"

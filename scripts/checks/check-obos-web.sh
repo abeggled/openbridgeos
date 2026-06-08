@@ -402,23 +402,27 @@ grep -q 'location \^~ /obos/' packaging/nginx/openbridgeserver.conf \
 grep -q 'location \^~ /obos/onboarding/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not expose onboarding UI under /obos/onboarding/"
 
-grep -q 'alias /srv/obos/onboarding/index.html;' packaging/nginx/openbridgeserver.conf \
+grep -q 'root /srv/obos/onboarding;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve onboarding index directly"
 
-grep -q 'alias /srv/obos/onboarding/;' packaging/nginx/openbridgeserver.conf \
+grep -q 'try_files /onboarding.js =404;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve onboarding UI from /srv/obos/onboarding"
 
 if grep -q 'auth_basic "open bridge operating system";' packaging/nginx/openbridgeserver.conf; then
   fail "nginx must not use browser Basic Auth for obos-web"
 fi
 
-grep -q 'alias /srv/obos/web/index.html;' packaging/nginx/openbridgeserver.conf \
+grep -q 'root /srv/obos/web;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web index directly"
 
-grep -q 'alias /srv/obos/web/;' packaging/nginx/openbridgeserver.conf \
+grep -q 'try_files /app.js =404;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web from /srv/obos/web"
 
-grep -q 'try_files .* =404;' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx does not fall back to obos-web index"
+if grep -q 'alias /srv/obos/' packaging/nginx/openbridgeserver.conf; then
+  fail "nginx must not use prefix alias for obos static files"
+fi
+
+grep -q 'return 404;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not reject unknown obos static paths"
 
 echo "obos-web: PASS"
