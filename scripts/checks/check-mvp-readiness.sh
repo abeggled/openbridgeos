@@ -261,6 +261,8 @@ require_file packaging/network/20-obos-dhcp.network
 require_line "DHCP=yes" packaging/network/20-obos-dhcp.network
 require_line "20-obos-dhcp.network" scripts/bootstrap/provision-debian.sh
 require_line "systemctl enable systemd-networkd.service" scripts/bootstrap/provision-debian.sh
+require_line "docker-cli" scripts/bootstrap/provision-debian.sh
+require_line "docker.io" scripts/bootstrap/provision-debian.sh
 # shellcheck disable=SC2016
 require_line '--copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos"' scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016

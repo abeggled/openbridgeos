@@ -830,6 +830,12 @@ grep -q 'BOOT_TRUST_SCRIPT=' scripts/bootstrap/first-boot.sh \
 grep -q 'nginx-light' scripts/bootstrap/provision-debian.sh \
   || fail "nginx reverse proxy package is not installed during provisioning"
 
+grep -q 'docker-cli' scripts/bootstrap/provision-debian.sh \
+  || fail "Docker CLI package is not installed during provisioning"
+
+grep -q 'docker.io' scripts/bootstrap/provision-debian.sh \
+  || fail "Docker daemon package is not installed during provisioning"
+
 grep -q 'unattended-upgrades' scripts/bootstrap/provision-debian.sh \
   || fail "unattended security upgrade package is not installed during provisioning"
 

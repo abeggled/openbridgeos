@@ -18,6 +18,7 @@ apt-get update
 apt-get install -y --no-install-recommends \
   ca-certificates \
   curl \
+  docker-cli \
   docker-compose \
   docker.io \
   gnupg \
