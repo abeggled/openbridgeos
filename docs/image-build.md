@@ -76,6 +76,22 @@ sh scripts/images/print-image-build-plan.sh packaging/images/profiles/amd64-vm.e
 sh scripts/images/print-image-build-plan.sh packaging/images/profiles/rpi4-arm64.env
 ```
 
+## Pull and Build Helper
+
+For repeated MVP build iterations, use the generic helper to update a git ref and
+build one or both image targets:
+
+```sh
+scripts/images/pull-and-build.sh amd64 codex/web-onboarding-password
+scripts/images/pull-and-build.sh arm64 codex/web-onboarding-password
+scripts/images/pull-and-build.sh all codex/web-onboarding-password
+```
+
+Without a git ref, the helper updates the current branch with `git pull
+--ff-only`. It runs the build-host preflight and post-build manifest checks for
+each selected target, and uses `sudo` for image build steps when it is not
+already running as root.
+
 ## Build Contract
 
 Every image builder must follow the same contract:
