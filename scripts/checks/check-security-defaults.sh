@@ -22,8 +22,8 @@ grep -q 'format=obos-onboarding-required-v1' scripts/bootstrap/first-boot.sh \
 grep -q 'window_seconds=300' scripts/bootstrap/first-boot.sh \
   || fail "first boot onboarding window is not limited to 300 seconds"
 
-grep -q 'window_basis=boot_uptime' scripts/bootstrap/first-boot.sh \
-  || fail "first boot onboarding marker does not document boot uptime window basis"
+grep -q 'window_basis=agent_start_per_boot_id' scripts/bootstrap/first-boot.sh \
+  || fail "first boot onboarding marker does not document per-boot agent window basis"
 
 ! grep -q 'expires_at_epoch=' scripts/bootstrap/first-boot.sh \
   || fail "first boot onboarding window must not depend on stale absolute expiry timestamps"
@@ -39,6 +39,12 @@ grep -q 'ONBOARDING_WINDOW_SECONDS = int' scripts/agent/obos-agent-http.py \
 
 grep -q 'OBOS_ONBOARDING_BOOT_AGE_SECONDS' scripts/agent/obos-agent-http.py \
   || fail "agent onboarding window cannot be tested by boot age"
+
+grep -q 'ONBOARDING_WINDOW_STATE_FILE' scripts/agent/obos-agent-http.py \
+  || fail "agent does not persist onboarding window state per boot"
+
+grep -q 'boot_id()' scripts/agent/obos-agent-http.py \
+  || fail "agent onboarding window is not keyed by boot id"
 
 grep -q 'open("/proc/uptime"' scripts/agent/obos-agent-http.py \
   || fail "agent onboarding window is not based on system uptime"

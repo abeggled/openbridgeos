@@ -150,6 +150,7 @@ tmp_dir="$(mktemp -d)"
 portable_export_dir="/tmp/obos-portable-exports"
 portable_import_dir="/tmp/obos-portable-imports"
 onboarding_state_dir="/tmp/obos-onboarding-state"
+onboarding_window_state_file="${onboarding_state_dir}/window-state"
 session_state_dir="/tmp/obos-session-state"
 trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}" "${onboarding_state_dir}" "${session_state_dir}"' EXIT
 
@@ -452,7 +453,7 @@ mkdir -p "${session_state_dir}"
 {
   echo 'format=obos-onboarding-required-v1'
   echo 'window_seconds=300'
-  echo 'window_basis=boot_uptime'
+  echo 'window_basis=agent_start_per_boot_id'
 } > "${onboarding_state_dir}/onboarding-required"
 cookie_jar="${tmp_dir}/cookies.txt"
 cat > "${tmp_dir}/.curlrc" <<EOF
@@ -461,6 +462,13 @@ cookie-jar = "${cookie_jar}"
 EOF
 export HOME="${tmp_dir}"
 
+{
+  echo 'format=obos-onboarding-window-v1'
+  echo 'boot_id=expired-boot'
+  echo 'opened_at_boot_age=0'
+  echo 'window_seconds=300'
+} > "${onboarding_window_state_file}"
+
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
 OBOS_AGENT_HTTP_BIND=127.0.0.1 \
 OBOS_AGENT_HTTP_PORT=18092 \
@@ -468,6 +476,8 @@ OBOS_PORTABLE_EXPORT_DIR=/tmp/obos-portable-exports \
 OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
+OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
+OBOS_ONBOARDING_BOOT_ID=expired-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=301 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
 OBOS_SESSION_DIR="${session_state_dir}" \
@@ -487,11 +497,40 @@ server_pid=""
 
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
 OBOS_AGENT_HTTP_BIND=127.0.0.1 \
+OBOS_AGENT_HTTP_PORT=18093 \
+OBOS_PORTABLE_EXPORT_DIR=/tmp/obos-portable-exports \
+OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
+OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
+OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
+OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
+OBOS_ONBOARDING_BOOT_ID=fresh-boot \
+OBOS_ONBOARDING_BOOT_AGE_SECONDS=301 \
+OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
+OBOS_SESSION_DIR="${session_state_dir}" \
+OBOS_SESSION_COOKIE_SECURE=false \
+"${PYTHON_BIN}" "${BRIDGE}" &
+server_pid="$!"
+
+sleep 1
+
+curl --fail --silent http://127.0.0.1:18093/obos/api/v1/onboarding/status |
+  grep -q 'onboarding_required=true' \
+  || fail "onboarding status endpoint did not reopen after a new boot id"
+
+kill "${server_pid}" 2>/dev/null || true
+wait "${server_pid}" 2>/dev/null || true
+server_pid=""
+rm -f "${onboarding_window_state_file}"
+
+OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
+OBOS_AGENT_HTTP_BIND=127.0.0.1 \
 OBOS_AGENT_HTTP_PORT=18091 \
 OBOS_PORTABLE_EXPORT_DIR=/tmp/obos-portable-exports \
 OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
+OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
+OBOS_ONBOARDING_BOOT_ID=active-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
 OBOS_SESSION_DIR="${session_state_dir}" \

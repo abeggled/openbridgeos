@@ -31,8 +31,8 @@ The administrator sets the first web console password during this onboarding
 flow. After setup, the onboarding marker is removed and the session login
 protects the normal console and agent API. If the setup window expires before
 credentials exist, rebooting opens a new onboarding window. The active window is
-based on current system uptime rather than an absolute timestamp stored in the
-marker.
+keyed by the current system boot ID and its per-boot opening time rather than an
+absolute timestamp stored in the marker.
 
 Per-appliance-instance credentials use:
 

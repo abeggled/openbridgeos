@@ -28,6 +28,7 @@ PORTABLE_EXPORT_DIR = os.environ.get("OBOS_PORTABLE_EXPORT_DIR", "/srv/obos/stat
 PORTABLE_IMPORT_DIR = os.environ.get("OBOS_PORTABLE_IMPORT_DIR", "/srv/obos/state/portable-imports")
 ONBOARDING_STATE_DIR = os.environ.get("OBOS_ONBOARDING_STATE_DIR", "/srv/obos/state/onboarding")
 ONBOARDING_REQUIRED_FILE = os.environ.get("OBOS_ONBOARDING_REQUIRED_FILE", "/srv/obos/state/onboarding/onboarding-required")
+ONBOARDING_WINDOW_STATE_FILE = os.environ.get("OBOS_ONBOARDING_WINDOW_STATE_FILE", "/srv/obos/state/onboarding/window-state")
 ONBOARDING_WINDOW_SECONDS = int(os.environ.get("OBOS_ONBOARDING_WINDOW_SECONDS", "300"))
 WEB_AUTH_FILE = os.environ.get("OBOS_WEB_AUTH_FILE", "/etc/obos/web.htpasswd")
 SESSION_DIR = os.environ.get("OBOS_SESSION_DIR", "/srv/obos/state/sessions")
@@ -44,6 +45,24 @@ ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{32,128}$")
 PORTABLE_EXPORT_FILENAME_RE = re.compile(r"^obos-portable-[A-Za-z0-9T._-]+\.tar$")
 PORTABLE_UPLOAD_FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.tar$")
+
+
+def read_boot_age_seconds():
+    override = os.environ.get("OBOS_ONBOARDING_BOOT_AGE_SECONDS")
+    if override is not None:
+        try:
+            return int(override)
+        except ValueError:
+            return None
+    try:
+        with open("/proc/uptime", "r", encoding="utf-8") as handle:
+            return int(float(handle.readline().split()[0]))
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+AGENT_START_BOOT_AGE_SECONDS = read_boot_age_seconds()
+
 READ_ONLY_ACTIONS = {
     "actions",
     "status-summary",
@@ -486,44 +505,112 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         self.send_text(200, body)
 
     def onboarding_required(self):
+        status = self.onboarding_window_status()
+        return status["required"]
+
+    def onboarding_window_status(self):
+        status = {
+            "required": False,
+            "reason": "not-required",
+            "boot_id": "unknown",
+            "boot_age": self.boot_age_seconds(),
+            "opened_at_boot_age": None,
+            "remaining": 0,
+        }
         if not os.path.exists(ONBOARDING_REQUIRED_FILE) or os.path.exists(WEB_AUTH_FILE):
-            return False
+            if os.path.exists(WEB_AUTH_FILE):
+                status["reason"] = "web-auth-configured"
+            return status
         boot_age = self.boot_age_seconds()
-        if boot_age is None:
-            return False
-        return boot_age <= ONBOARDING_WINDOW_SECONDS
+        boot_id = self.boot_id()
+        status["boot_age"] = boot_age
+        status["boot_id"] = boot_id if boot_id is not None else "unknown"
+        if boot_age is None or boot_id is None:
+            status["reason"] = "boot-state-unavailable"
+            return status
+
+        opened_at = self.onboarding_window_opened_at(boot_id)
+        if opened_at is None:
+            status["reason"] = "window-state-unavailable"
+            return status
+
+        status["opened_at_boot_age"] = opened_at
+        elapsed = boot_age - opened_at
+        if elapsed < 0:
+            elapsed = 0
+        if elapsed <= ONBOARDING_WINDOW_SECONDS:
+            status["required"] = True
+            status["reason"] = "active"
+            status["remaining"] = ONBOARDING_WINDOW_SECONDS - elapsed
+        else:
+            status["reason"] = "expired"
+        return status
+
+    def onboarding_window_opened_at(self, boot_id):
+        values = {}
+        try:
+            with open(ONBOARDING_WINDOW_STATE_FILE, "r", encoding="utf-8") as handle:
+                for line in handle:
+                    line = line.strip()
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        values[key] = value
+            if values.get("boot_id") == boot_id:
+                return int(values.get("opened_at_boot_age", "0"))
+        except (OSError, ValueError):
+            pass
+
+        opened_at = AGENT_START_BOOT_AGE_SECONDS
+        if opened_at is None:
+            opened_at = self.boot_age_seconds()
+        if opened_at is None:
+            return None
+
+        try:
+            os.makedirs(ONBOARDING_STATE_DIR, mode=0o700, exist_ok=True)
+            tmp_path = f"{ONBOARDING_WINDOW_STATE_FILE}.{os.getpid()}"
+            with open(tmp_path, "w", encoding="utf-8") as handle:
+                handle.write("format=obos-onboarding-window-v1\n")
+                handle.write(f"boot_id={boot_id}\n")
+                handle.write(f"opened_at_boot_age={opened_at}\n")
+                handle.write(f"window_seconds={ONBOARDING_WINDOW_SECONDS}\n")
+            os.chmod(tmp_path, 0o600)
+            os.replace(tmp_path, ONBOARDING_WINDOW_STATE_FILE)
+        except OSError:
+            return None
+        return opened_at
 
     def boot_age_seconds(self):
-        override = os.environ.get("OBOS_ONBOARDING_BOOT_AGE_SECONDS")
-        if override is not None:
-            try:
-                return int(override)
-            except ValueError:
-                return None
+        return read_boot_age_seconds()
+
+    def boot_id(self):
+        override = os.environ.get("OBOS_ONBOARDING_BOOT_ID")
+        if override:
+            return override
         try:
-            with open("/proc/uptime", "r", encoding="utf-8") as handle:
-                return int(float(handle.readline().split()[0]))
-        except (OSError, ValueError, IndexError):
+            with open("/proc/sys/kernel/random/boot_id", "r", encoding="utf-8") as handle:
+                return handle.readline().strip()
+        except OSError:
             return None
 
     def handle_onboarding_status(self, parsed):
         if parsed.query:
             self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
             return
-        required = "true" if self.onboarding_required() else "false"
+        status = self.onboarding_window_status()
+        required = "true" if status["required"] else "false"
         web_auth_configured = "true" if os.path.exists(WEB_AUTH_FILE) else "false"
-        boot_age = self.boot_age_seconds()
-        remaining = 0
-        if boot_age is not None and boot_age <= ONBOARDING_WINDOW_SECONDS:
-            remaining = ONBOARDING_WINDOW_SECONDS - boot_age
         self.send_text(
             200,
             "format=obos-onboarding-status-v1\n"
             f"onboarding_required={required}\n"
             f"web_auth_configured={web_auth_configured}\n"
             f"window_seconds={ONBOARDING_WINDOW_SECONDS}\n"
-            f"boot_age_seconds={boot_age if boot_age is not None else 'unknown'}\n"
-            f"window_remaining_seconds={remaining}\n"
+            f"boot_id={status['boot_id']}\n"
+            f"boot_age_seconds={status['boot_age'] if status['boot_age'] is not None else 'unknown'}\n"
+            f"window_opened_at_boot_age={status['opened_at_boot_age'] if status['opened_at_boot_age'] is not None else 'unknown'}\n"
+            f"window_remaining_seconds={status['remaining']}\n"
+            f"reason={status['reason']}\n"
             "admin_user=admin\n",
         )
 

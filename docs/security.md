@@ -74,10 +74,11 @@ nginx serves `/obos/` as the appliance console and proxies `/obos/api/` to the
 local agent bridge. The bridge requires a server-side session cookie after GUI
 login. First boot exposes `/obos/onboarding/` and `/obos/api/v1/onboarding/` for
 about five minutes after system start so the administrator can set the initial
-`admin` password. The agent evaluates this window from current system uptime,
-so a real reboot opens a fresh window while stale marker timestamps cannot keep
-it closed. If the setup window expires before credentials exist, rebooting opens
-a new window. The credential record is stored root-only in
+`admin` password. The agent keys this window by the current system boot ID and
+records when the window opened for that boot. A real reboot opens a fresh window
+while stale marker timestamps cannot keep it closed, but a same-boot agent
+restart does not extend the window. If the setup window expires before
+credentials exist, rebooting opens a new window. The credential record is stored root-only in
 `/etc/obos/web-admin.env`. Headless images may also export `OBOS-ONBOARDING.txt`
 to a boot-accessible partition, but that file must not contain a password.
 
