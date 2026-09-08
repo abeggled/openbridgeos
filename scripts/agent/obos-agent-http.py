@@ -2,7 +2,7 @@
 """HTTP bridge for the local obos-agent."""
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from datetime import datetime
+from datetime import datetime, UTC
 import hmac
 import json
 import os
@@ -470,7 +470,7 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             return
 
         os.makedirs(PORTABLE_IMPORT_DIR, mode=0o700, exist_ok=True)
-        uploaded_at = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        uploaded_at = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         target_name = f"obos-portable-upload-{uploaded_at}-{source_name}"
         target_path = os.path.join(PORTABLE_IMPORT_DIR, target_name)
         try:
@@ -547,7 +547,7 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             status["remaining"] = ONBOARDING_WINDOW_SECONDS - elapsed
         else:
             status["reason"] = "expired"
-            return status
+        return status
 
     def onboarding_window_opened_at(self, boot_id):
         values = {}
@@ -591,7 +591,7 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             tmp_path = f"{ONBOARDING_REQUIRED_FILE}.{os.getpid()}"
             with open(tmp_path, "w", encoding="utf-8") as handle:
                 handle.write("format=obos-onboarding-required-v1\n")
-                handle.write(f"created_at={datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}\n")
+                handle.write(f"created_at={datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}\n")
                 handle.write(f"window_seconds={ONBOARDING_WINDOW_SECONDS}\n")
                 handle.write("window_basis=agent_start_per_boot_id\n")
                 handle.write("created_by=obos-agent-http\n")
