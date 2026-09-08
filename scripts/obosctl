@@ -1615,10 +1615,10 @@ case "${1:-}" in
     require_root web-auth-set
     shift
     password_file="${1:-}"
-    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "web-auth-set" ] || {
+    if [ "${2:-}" != "--confirm" ] || [ "${3:-}" != "web-auth-set" ]; then
       echo "usage: obosctl web-auth-set <password-file> --confirm web-auth-set" >&2
       exit 2
-    }
+    fi
     validate_onboarding_password_file "${password_file}"
     run_helper "${WEB_AUTH_SCRIPT}" set "${password_file}"
     rm -f "${password_file}"
