@@ -37,9 +37,12 @@ Permissions:
 
 The 90-day leaf certificate includes SANs for:
 
-- `obs.local`
 - the current hostname and FQDN where detectable
-- current local IP addresses where detectable
+- globally scoped addresses on the interface carrying the default route
+
+Container bridge addresses such as Docker `172.x` gateways are excluded. The
+old `obs.local` bootstrap alias is also excluded after renewal unless it is the
+actual configured hostname.
 
 ## Print Trust Information
 
@@ -129,6 +132,9 @@ This writes public trust artifacts to:
 
 The bundle intentionally excludes private keys. It is suitable as a source for
 the web UI, boot-accessible trust summary, or manual support workflow.
+First boot creates this export automatically and every successful leaf renewal
+refreshes it, so normal web-console operation does not require a separate
+prepare/export action.
 The CA certificate can be copied to client devices after the fingerprint has
 been verified through an out-of-band path.
 

@@ -568,9 +568,6 @@
       if (action === "portable-export") {
         setPortableDownload(parseAgentResponse(text));
       }
-      if (action === "tls-export" && caDownloadLink) {
-        caDownloadLink.hidden = false;
-      }
       if (action === "web-auth-rotate") {
         setWebAuthPassword(parseAgentResponse(text));
       }

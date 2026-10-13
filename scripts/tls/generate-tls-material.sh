@@ -46,14 +46,35 @@ fi
 
 openssl genrsa -out "${LEAF_KEY}" 4096
 chmod 0600 "${LEAF_KEY}"
-openssl req -new -key "${LEAF_KEY}" -subj "/CN=obs.local" -out "${LEAF_CSR}"
 : > "${IP_LIST}"
-hostname -I 2>/dev/null | tr ' ' '\n' > "${IP_LIST}" || true
+if command -v ip >/dev/null 2>&1; then
+  {
+    ip -o route show default 2>/dev/null || true
+    ip -o -6 route show default 2>/dev/null || true
+  } | awk '
+    {
+      for (i = 1; i <= NF; i++) {
+        if ($i == "dev") {
+          print $(i + 1)
+          break
+        }
+      }
+    }
+  ' | awk 'NF && !seen[$0]++' |
+    while IFS= read -r interface; do
+      ip -o addr show dev "${interface}" scope global 2>/dev/null || true
+    done |
+    awk '{ value=$4; sub(/\/.*/, "", value); if (value != "" && !seen[value]++) print value }' > "${IP_LIST}"
+else
+  hostname -I 2>/dev/null | tr ' ' '\n' > "${IP_LIST}" || true
+fi
 {
-  echo "obs.local"
-  hostname 2>/dev/null || true
   hostname -f 2>/dev/null || true
+  hostname 2>/dev/null || true
 } | awk 'NF && /^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$/ && !seen[$0]++' > "${DNS_LIST}"
+leaf_common_name="$(sed -n '1p' "${DNS_LIST}")"
+[ -n "${leaf_common_name}" ] || leaf_common_name=localhost
+openssl req -new -key "${LEAF_KEY}" -subj "/CN=${leaf_common_name}" -out "${LEAF_CSR}"
 
 {
   echo "authorityKeyIdentifier=keyid,issuer"

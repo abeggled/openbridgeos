@@ -1305,6 +1305,13 @@ grep -q 'RENEW_AFTER_DAYS="${OBOS_TLS_RENEW_AFTER_DAYS:-47}"' scripts/tls/auto-r
 grep -q 'leaf_validity_exceeds_' scripts/tls/auto-renew-leaf-certificate.sh \
   || fail "automatic TLS leaf renewal does not replace overlong legacy leaves"
 
+grep -q 'ip -o route show default' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS renewal does not restrict IP SAN discovery to the default route"
+
+if grep -q 'echo "obs.local"' scripts/tls/renew-leaf-certificate.sh; then
+  fail "TLS renewal still injects the legacy obs.local DNS SAN"
+fi
+
 grep -q 'OnCalendar=daily' packaging/systemd/obos-tls-leaf-renewal.timer \
   || fail "TLS leaf renewal timer is not scheduled daily"
 

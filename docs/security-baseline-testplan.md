@@ -225,8 +225,9 @@ obosctl status
 obosctl health
 obosctl proxy-health
 curl --fail http://127.0.0.1:8080/api/v1/system/health
-curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obs.local:443:127.0.0.1 https://obs.local/api/v1/system/health
-curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve obs.local:443:127.0.0.1 https://obs.local/obos/ && false || true
+tls_host="$(hostname -f)"
+curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve "${tls_host}:443:127.0.0.1" "https://${tls_host}/api/v1/system/health"
+curl --fail --cacert /etc/obos/tls/obos-local-ca.crt --resolve "${tls_host}:443:127.0.0.1" "https://${tls_host}/obos/" && false || true
 ```
 
 Expected:

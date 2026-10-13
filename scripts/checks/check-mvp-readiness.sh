@@ -259,8 +259,8 @@ require_line 'data-agent-field="mqtt-summary:firewall_source"' apps/obos-web/ind
 require_line 'data-load-logs' apps/obos-web/index.html
 require_line 'data-mutation-action="mqtt-enable-lan"' apps/obos-web/index.html
 require_line 'data-mutation-action="mqtt-disable-lan"' apps/obos-web/index.html
-require_line 'data-mutation-action="tls-generate"' apps/obos-web/index.html
-require_line 'data-mutation-action="tls-export"' apps/obos-web/index.html
+require_line 'data-mutation-action="tls-renew-leaf"' apps/obos-web/index.html
+require_line 'data-ca-download' apps/obos-web/index.html
 require_line 'data-mutation-action="set-hostname"' apps/obos-web/index.html
 require_line 'data-mutation-action="set-timezone"' apps/obos-web/index.html
 

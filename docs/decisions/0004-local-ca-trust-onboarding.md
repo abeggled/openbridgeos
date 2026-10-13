@@ -33,8 +33,10 @@ Default release direction:
 - generate a unique local CA for each appliance instance
 - store CA private key material under `/etc/obos/tls` with restrictive
   permissions
-- issue a leaf certificate for `obs.local`
-- include SANs for `obs.local` and current local IP addresses where practical
+- issue a leaf certificate for the configured appliance hostname/FQDN
+- include SANs for the configured host identity and globally scoped addresses
+  on the default-route interface
+- exclude container bridge addresses and unconfigured legacy aliases
 - terminate HTTPS at the obos reverse proxy
 - bind open bridge server to localhost behind that proxy
 - expose HTTPS on TCP `443`

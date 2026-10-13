@@ -67,7 +67,8 @@ sudo obosctl agent-audit-summary
 Shows the systemd unit state, Docker Compose service state, the localhost open
 bridge server health endpoint result, and the HTTPS reverse proxy health result.
 The HTTPS proxy check verifies the response through the per-appliance-instance
-local CA by resolving `obs.local` to `127.0.0.1` for the local probe.
+local CA by resolving the configured appliance FQDN to `127.0.0.1` for the
+local probe.
 
 If `/srv/obos/state/last-update` exists, `status` also prints the last
 successful update record.
@@ -217,10 +218,11 @@ The web UI can enable or disable MQTT LAN exposure through the same local HTTP
 bridge. Enabling MQTT accepts an optional source CIDR, which `obos-agent`
 validates before calling `sudo obosctl mqtt-enable-lan`.
 
-The web UI can also generate TLS material and export the public trust bundle
-through confirmed `tls-generate` and `tls-export` mutations. TLS generation
-preserves existing appliance identity material instead of rotating it
-implicitly.
+TLS material and the public trust bundle are generated automatically during
+first boot and refreshed after every leaf renewal. The web UI therefore exposes
+only immediate leaf renewal and Root CA download. `tls-generate` and
+`tls-export` remain CLI/agent recovery operations and preserve existing
+appliance identity material.
 
 The web UI can stage the latest listed backup through `obos-agent restore-stage
 <backup.tar.gz> --confirm restore-stage`. This extracts into private restore
@@ -454,6 +456,12 @@ certificate paths, and SHA-256 fingerprints.
 `tls-export-boot` writes the public trust summary and local CA certificate to a
 mounted boot partition when one is available.
 
+Leaf DNS SANs are derived from the current FQDN and hostname. IP SANs are
+limited to globally scoped addresses on the interface carrying the default
+route; Docker and other container bridge addresses are intentionally excluded.
+The legacy `obs.local` alias is not added after renewal because it is not part
+of the configured host identity.
+
 `web-auth-rotate` rotates the generated web console login password and
 prints the new password once. Store it in a password manager. The appliance
 stores only a SHA-512 password hash in `/etc/obos/web.htpasswd`;
@@ -481,8 +489,8 @@ TLS, proxy health, and MQTT helper paths can also be overridden for tests:
 
 ```sh
 OBOS_TLS_CA_CERT=/tmp/tls/obos-local-ca.crt \
-OBOS_PROXY_HEALTH_HOST=obs.local \
-OBOS_PROXY_HEALTH_URL=https://obs.local/api/v1/system/health \
+OBOS_PROXY_HEALTH_HOST=obos.example.test \
+OBOS_PROXY_HEALTH_URL=https://obos.example.test/api/v1/system/health \
 OBOS_TLS_GENERATE_SCRIPT=/tmp/generate-tls-material.sh \
 OBOS_TLS_LEAF_RENEWAL_PLAN_SCRIPT=/tmp/plan-leaf-renewal.sh \
 OBOS_TLS_LEAF_RENEWAL_SCRIPT=/tmp/renew-leaf-certificate.sh \
