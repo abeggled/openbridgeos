@@ -374,6 +374,12 @@ grep -q 'install -d -m 0755 "${OBOS_WEB_DIR}"' scripts/bootstrap/provision-debia
 grep -q 'install -d -m 0750 -g www-data /srv/obos' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not allow nginx to traverse /srv/obos"
 
+grep -Fq 'width: min(100%, 560px);' apps/obos-web/styles.css \
+  || fail "obos-web login panel does not use the wider responsive layout"
+
+grep -Fq 'width: min(100%, 560px);' apps/obos-onboarding/styles.css \
+  || fail "obos onboarding panel does not use the wider responsive layout"
+
 # shellcheck disable=SC2016
 grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR}/index.html"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web index"

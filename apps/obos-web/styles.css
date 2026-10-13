@@ -74,7 +74,7 @@ input {
 }
 
 .auth-panel {
-  width: min(100%, 440px);
+  width: min(100%, 560px);
   display: grid;
   gap: 14px;
   border: 1px solid var(--line);
@@ -308,5 +308,21 @@ dd,
 
   h1 {
     font-size: 28px;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-shell {
+    padding: 12px;
+  }
+
+  .auth-panel h1 {
+    font-size: 26px;
+  }
+}
+
+@media (min-width: 440px) {
+  .auth-panel h1 {
+    white-space: nowrap;
   }
 }

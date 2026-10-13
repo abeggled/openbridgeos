@@ -31,7 +31,7 @@ body {
 }
 
 .onboarding-panel {
-  width: min(100%, 460px);
+  width: min(100%, 560px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -112,4 +112,20 @@ button:disabled {
 
 .onboarding-status[data-state="error"] {
   color: var(--danger);
+}
+
+@media (max-width: 600px) {
+  .onboarding-shell {
+    padding: 12px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+}
+
+@media (min-width: 440px) {
+  h1 {
+    white-space: nowrap;
+  }
 }
