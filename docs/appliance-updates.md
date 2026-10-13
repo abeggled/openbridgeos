@@ -32,7 +32,7 @@ obos-update-notes.txt
 Create the archive and manifest from a clean tagged checkout:
 
 ```sh
-sh scripts/update/create-update-bundle.sh 2026.10.0 dist/update docs/releases/2026.10.0.md
+sh scripts/update/create-update-bundle.sh 2026.10.0 dist/update RELEASENOTES.md
 minisign -Sm dist/update/obos-update.manifest
 ```
 
