@@ -203,7 +203,7 @@ require_line "amd64-vm release artifact missing" scripts/images/check-release-ma
 require_line "rpi4-arm64 release artifact missing" scripts/images/check-release-manifest.sh
 require_line "duplicate release artifact profile" scripts/images/check-release-manifest.sh
 require_line "Release private key" docs/release-signing.md
-require_line "Do not inject the private key into CI" docs/release-signing.md
+require_line "environment-scoped GitHub Actions secret" docs/release-signing.md
 require_line "OBOS_RELEASE_MINISIGN_PUBLIC_KEY" docs/release-signing.md
 require_line "cross-checks validation records against the" docs/release-signing.md
 require_line "release-notes-template.md" docs/release-signing.md
