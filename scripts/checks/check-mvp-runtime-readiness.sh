@@ -135,12 +135,12 @@ case "${1:-}" in
 esac
 '
 
-if PATH="${FAKE_BIN}:$PATH" \
+if ! PATH="${FAKE_BIN}:$PATH" \
   OBOSCTL="${FAKE_BIN}/obosctl" \
   OBOS_AGENT="${FAKE_BIN}/obos-agent" \
   OBOS_SECURITY_BASELINE_SCRIPT="${SECURITY_BASELINE}" \
   sh "${SCRIPT}" summary > "${TMP_DIR}/fail.out" 2>/dev/null; then
-  fail "runtime readiness accepted restore apply mutation exposure"
+  fail "runtime readiness summary did not return a renderable result"
 fi
 grep -q '^result=FAIL$' "${TMP_DIR}/fail.out" \
   || fail "restore apply mutation exposure did not produce FAIL summary"

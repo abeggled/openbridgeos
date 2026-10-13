@@ -804,11 +804,13 @@ grep -q 'WEB_AUTH_URL=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not define web console auth probe URL"
 
 grep -q 'check_web_auth' scripts/audit/security-baseline.sh \
-  || fail "security baseline does not verify web console auth challenge"
+  || fail "security baseline does not verify web console session authentication"
 
-# shellcheck disable=SC2016
-grep -q -- '--user "${web_user}:${web_password}"' scripts/audit/security-baseline.sh \
-  || fail "security baseline does not verify generated web console credentials"
+grep -Fq 'data-login-form' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not verify the web console login form"
+
+grep -Fq 'api/v1/session/status' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not verify the protected session endpoint"
 
 grep -q 'AGENT_AUDIT_LOG=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit agent audit log"
