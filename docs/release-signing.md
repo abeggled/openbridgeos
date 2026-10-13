@@ -26,9 +26,10 @@ release archives.
 - Store the private key encrypted at rest.
 - Keep the private key outside this repository.
 - Keep the private key outside `build/` and `dist/`.
-- Store the automation copy only as an environment-scoped GitHub Actions secret
-  in the `release` environment. Keep the key password in a separate environment
-  secret.
+- Use a dedicated passwordless Minisign automation key generated with `-W` for
+  GitHub Actions. Do not reuse a personal or offline signing key.
+- Store the automation private key only as the encrypted, environment-scoped
+  `OBOS_RELEASE_MINISIGN_SECRET_KEY` secret in the `release` environment.
 - Do not copy the private key to test appliances.
 - Rotate the key if it is copied to an untrusted system or exposed in logs.
 
@@ -39,7 +40,7 @@ release archives.
 3. Create the release manifest.
 4. Validate the release manifest with strict file and signature-file checks.
 5. Manually dispatch the environment-gated GitHub release workflow, which signs
-   the release manifest without printing the key or password.
+   the release manifest without printing the private key.
 6. Validate the detached signature with the release public key.
 7. Publish images, checksum files, image manifests, release manifest, detached
    signature, public key, and validation records together.
