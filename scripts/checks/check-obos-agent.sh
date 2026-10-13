@@ -120,6 +120,8 @@ grep -q 'mqtt-summary)' "${AGENT}" \
   || fail "mqtt-summary action missing"
 grep -q 'tls-summary)' "${AGENT}" \
   || fail "tls-summary action missing"
+grep -q 'action=tls-renew-leaf|mutating=true|confirm=tls-renew-leaf' "${AGENT}" \
+  || fail "confirmed TLS leaf renewal action missing"
 grep -q 'security-summary)' "${AGENT}" \
   || fail "security-summary action missing"
 grep -q 'mvp-readiness-summary)' "${AGENT}" \
@@ -305,6 +307,11 @@ case "$1" in
     ;;
   set-timezone)
     echo "timezone-set:${2:-missing}"
+    exit 0
+    ;;
+  tls-renew-leaf)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "tls-renew-leaf" ] || exit 2
+    echo "leaf-renewed"
     exit 0
     ;;
   web-auth-rotate)
@@ -497,6 +504,10 @@ OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}
   grep -q 'stdout=hostname-set:obos-test' \
   || fail "agent did not forward checked hostname"
 
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-hostname obos-test.example.test --confirm set-hostname |
+  grep -q 'stdout=hostname-set:obos-test.example.test' \
+  || fail "agent did not accept and forward a checked FQDN"
+
 if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-hostname '-bad' --confirm set-hostname >/dev/null 2>&1; then
   fail "agent accepted invalid hostname"
 fi
@@ -504,6 +515,10 @@ fi
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-timezone Europe/Zurich --confirm set-timezone |
   grep -q 'stdout=timezone-set:Europe/Zurich' \
   || fail "agent did not forward checked timezone"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" tls-renew-leaf --confirm tls-renew-leaf |
+  grep -q 'stdout=leaf-renewed' \
+  || fail "agent did not run confirmed TLS leaf renewal"
 
 if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-timezone '../etc/passwd' --confirm set-timezone >/dev/null 2>&1; then
   fail "agent accepted invalid timezone"

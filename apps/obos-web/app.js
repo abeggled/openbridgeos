@@ -22,6 +22,7 @@
   const webAuthSecret = document.querySelector("[data-web-auth-secret]");
   const clearWebAuthPasswordButton = document.querySelector("[data-clear-web-auth-password]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
+  const timezoneOptions = document.querySelector("#timezone-options");
   const helpButtons = Array.from(document.querySelectorAll("[data-help]"));
   const helpDialog = document.querySelector("[data-help-dialog]");
   const helpDialogTitle = document.querySelector("[data-help-dialog-title]");
@@ -30,6 +31,19 @@
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
   let webAuthPasswordTimer;
+
+  function populateTimezones() {
+    if (!timezoneOptions) {
+      return;
+    }
+    const fallback = ["UTC", "Europe/Zurich", "Europe/Berlin", "Europe/London", "America/New_York", "America/Los_Angeles", "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney"];
+    const zones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : fallback;
+    for (const zone of zones) {
+      const option = document.createElement("option");
+      option.value = zone;
+      timezoneOptions.append(option);
+    }
+  }
 
   function clearWebAuthPassword() {
     if (webAuthPasswordTimer) {
@@ -485,11 +499,12 @@
     }
     if (action === "set-hostname") {
       const hostname = document.querySelector("#host-name")?.value.trim();
+      const domain = document.querySelector("#host-domain")?.value.trim().replace(/^\.+|\.+$/g, "");
       if (!hostname) {
         setMutationStatus(statusTarget, "missing hostname", "error");
         return;
       }
-      body.hostname = hostname;
+      body.hostname = domain && !hostname.includes(".") ? `${hostname}.${domain}` : hostname;
     }
     if (action === "set-timezone") {
       const timezone = document.querySelector("#host-timezone")?.value.trim();
@@ -541,7 +556,8 @@
       if (action === "web-auth-rotate") {
         setWebAuthPassword(parseAgentResponse(text));
       }
-      setMutationStatus(statusTarget, "completed", "ok");
+      const completedMessage = action === "set-hostname" ? "completed; renew leaf to apply FQDN" : "completed";
+      setMutationStatus(statusTarget, completedMessage, "ok");
       void refresh();
     } catch (error) {
       setMutationStatus(statusTarget, error.message || "failed", "error");
@@ -575,5 +591,6 @@
   loginForm?.addEventListener("submit", login);
   logoutButton?.addEventListener("click", logout);
 
+  populateTimezones();
   checkSession();
 })();

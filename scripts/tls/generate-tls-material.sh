@@ -9,6 +9,7 @@ LEAF_CERT="${TLS_DIR}/obos.local.crt"
 LEAF_CSR="${TLS_DIR}/obos.local.csr"
 LEAF_EXT="${TLS_DIR}/obos.local.ext"
 IP_LIST="${TLS_DIR}/obos.local.ips"
+DNS_LIST="${TLS_DIR}/obos.local.dns"
 DAYS_CA="${OBOS_TLS_CA_DAYS:-3650}"
 DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-397}"
 
@@ -48,6 +49,11 @@ chmod 0600 "${LEAF_KEY}"
 openssl req -new -key "${LEAF_KEY}" -subj "/CN=obs.local" -out "${LEAF_CSR}"
 : > "${IP_LIST}"
 hostname -I 2>/dev/null | tr ' ' '\n' > "${IP_LIST}" || true
+{
+  echo "obs.local"
+  hostname 2>/dev/null || true
+  hostname -f 2>/dev/null || true
+} | awk 'NF && /^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$/ && !seen[$0]++' > "${DNS_LIST}"
 
 {
   echo "authorityKeyIdentifier=keyid,issuer"
@@ -57,7 +63,12 @@ hostname -I 2>/dev/null | tr ' ' '\n' > "${IP_LIST}" || true
   echo "subjectAltName=@alt_names"
   echo ""
   echo "[alt_names]"
-  echo "DNS.1=obs.local"
+  dns_index=1
+  while IFS= read -r dns_name; do
+    [ -n "${dns_name}" ] || continue
+    echo "DNS.${dns_index}=${dns_name}"
+    dns_index=$((dns_index + 1))
+  done < "${DNS_LIST}"
   index=1
   while IFS= read -r ip; do
     [ -n "${ip}" ] || continue
@@ -77,6 +88,6 @@ openssl x509 -req \
   -extfile "${LEAF_EXT}"
 
 chmod 0644 "${LEAF_CERT}"
-rm -f "${LEAF_CSR}" "${IP_LIST}"
+rm -f "${LEAF_CSR}" "${IP_LIST}" "${DNS_LIST}"
 
 printf 'TLS material written to %s\n' "${TLS_DIR}"

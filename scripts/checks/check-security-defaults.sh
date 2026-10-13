@@ -1224,19 +1224,19 @@ grep -q 'basicConstraints=critical,CA:TRUE,pathlen:0' scripts/tls/generate-tls-m
 grep -q 'CN=open bridge operating system local CA' scripts/tls/generate-tls-material.sh \
   || fail "local CA subject does not use the required CA name"
 
-grep -q 'DNS.1=obs.local' scripts/tls/generate-tls-material.sh \
-  || fail "TLS generation does not use obs.local as the only DNS SAN"
+grep -q 'hostname -f' scripts/tls/generate-tls-material.sh \
+  || fail "TLS generation does not include the appliance FQDN"
 
-if grep -q 'DNS.2=' scripts/tls/generate-tls-material.sh || grep -q 'DNS.3=' scripts/tls/generate-tls-material.sh; then
-  fail "TLS generation must not add hostname DNS SANs"
-fi
+# shellcheck disable=SC2016
+grep -q 'DNS.${dns_index}' scripts/tls/generate-tls-material.sh \
+  || fail "TLS generation does not emit dynamic DNS SANs"
 
-grep -q 'DNS.1=obs.local' scripts/tls/renew-leaf-certificate.sh \
-  || fail "TLS leaf renewal does not use obs.local as the only DNS SAN"
+grep -q 'hostname -f' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal does not include the appliance FQDN"
 
-if grep -q 'DNS.2=' scripts/tls/renew-leaf-certificate.sh || grep -q 'DNS.3=' scripts/tls/renew-leaf-certificate.sh; then
-  fail "TLS leaf renewal must not add hostname DNS SANs"
-fi
+# shellcheck disable=SC2016
+grep -q 'DNS.${dns_index}' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf renewal does not emit dynamic DNS SANs"
 
 grep -q 'TLS material already exists' scripts/tls/generate-tls-material.sh \
   || fail "TLS material generation is not idempotent"
@@ -1286,20 +1286,14 @@ grep -q 'trust_export_refreshed=' scripts/tls/renew-leaf-certificate.sh \
 grep -q 'systemctl reload nginx.service' scripts/tls/renew-leaf-certificate.sh \
   || fail "TLS leaf renewal must reload nginx when active"
 
-if grep -q 'action=tls-renew-leaf' scripts/agent/obos-agent.sh; then
-  fail "TLS leaf renewal must remain CLI-only and not be exposed through obos-agent"
-fi
+grep -q 'action=tls-renew-leaf|mutating=true|confirm=tls-renew-leaf' scripts/agent/obos-agent.sh \
+  || fail "TLS leaf renewal is not exposed as a confirmed agent mutation"
 
-if grep -q '"tls-renew-leaf"' scripts/agent/obos-agent-http.py; then
-  fail "TLS leaf renewal must remain CLI-only and not be exposed through HTTP bridge"
-fi
+grep -q '"tls-renew-leaf": "tls-renew-leaf"' scripts/agent/obos-agent-http.py \
+  || fail "TLS leaf renewal is not exposed through the authenticated HTTP bridge"
 
-if grep -q 'data-mutation-action="tls-renew-leaf"' apps/obos-web/index.html; then
-  fail "TLS leaf renewal must remain CLI-only and not be exposed through web UI"
-fi
-
-grep -q 'TLS leaf renewal is intentionally not exposed through the HTTP bridge or web UI' docs/web-ui-agent-contract.md \
-  || fail "web UI agent contract does not document CLI-only TLS leaf renewal"
+grep -q 'data-mutation-action="tls-renew-leaf"' apps/obos-web/index.html \
+  || fail "TLS leaf renewal is not exposed through the web UI"
 
 grep -q 'No private keys were exported.' scripts/tls/export-trust-bundle.sh \
   || fail "TLS trust export does not state that private keys are excluded"

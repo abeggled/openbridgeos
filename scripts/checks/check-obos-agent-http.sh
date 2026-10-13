@@ -47,6 +47,8 @@ grep -q '"tls-generate": "tls-generate"' "${BRIDGE}" \
   || fail "tls-generate mutation is not exposed with a matching confirmation token"
 grep -q '"tls-export": "tls-export"' "${BRIDGE}" \
   || fail "tls-export mutation is not exposed with a matching confirmation token"
+grep -q '"tls-renew-leaf": "tls-renew-leaf"' "${BRIDGE}" \
+  || fail "tls-renew-leaf mutation is not exposed with a matching confirmation token"
 grep -q '"web-auth-rotate": "web-auth-rotate"' "${BRIDGE}" \
   || fail "web-auth-rotate mutation is not exposed with a matching confirmation token"
 grep -q '"web-auth-set": "web-auth-set"' "${BRIDGE}" \
@@ -431,7 +433,7 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
-  tls-generate|tls-export)
+  tls-generate|tls-export|tls-renew-leaf)
     [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "${1:-}" ] || exit 2
     cat <<RESPONSE
 format=obos-agent-response-v1
@@ -829,6 +831,13 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/tls-generate |
   grep -q 'stdout=tls-generate:ok' \
   || fail "HTTP bridge did not run confirmed TLS generate mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"tls-renew-leaf"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/tls-renew-leaf |
+  grep -q 'stdout=tls-renew-leaf:ok' \
+  || fail "HTTP bridge did not run confirmed TLS leaf renewal"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \
