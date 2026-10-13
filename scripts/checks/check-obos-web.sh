@@ -194,6 +194,18 @@ grep -q 'data-agent-field="tls-summary:leaf_dns_names"' "${INDEX}" \
 grep -q 'data-agent-field="tls-summary:leaf_ip_addresses"' "${INDEX}" \
   || fail "web UI does not expose leaf IP SANs"
 
+grep -q 'data-host-identity-tls-notice' "${INDEX}" \
+  || fail "web UI does not expose the host identity certificate mismatch notice"
+
+grep -q 'data-agent-field="tls-summary:leaf_validity_days"' "${INDEX}" \
+  || fail "web UI does not expose the leaf validity policy"
+
+grep -q 'data-agent-field="tls-summary:leaf_renew_after_days"' "${INDEX}" \
+  || fail "web UI does not expose the automatic renewal age"
+
+grep -q 'updateHostIdentityTlsNotice' "${JS}" \
+  || fail "web UI does not reconcile host identity with leaf DNS names"
+
 grep -q 'data-mutation-action="tls-renew-leaf"' "${INDEX}" \
   || fail "web UI does not expose confirmed leaf renewal"
 

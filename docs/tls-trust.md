@@ -35,9 +35,10 @@ Permissions:
 /etc/obos/tls/*.crt            0644
 ```
 
-The leaf certificate includes SANs for:
+The 90-day leaf certificate includes SANs for:
 
 - `obs.local`
+- the current hostname and FQDN where detectable
 - current local IP addresses where detectable
 
 ## Print Trust Information
@@ -82,7 +83,7 @@ obosctl tls-renew-leaf-plan
 The plan command is non-destructive. It verifies that the local CA certificate,
 local CA key, leaf certificate, and leaf key are present and parseable. It then
 prints `obos-tls-leaf-renewal-plan-v1`, including the current CA and leaf
-fingerprints, whether renewal is due within the configured warning window, and
+fingerprints, whether renewal is due under the 90/47-day policy, and
 the required post-change gates for the confirmed CLI renewal command.
 
 Leaf renewal preserves the appliance local CA and therefore does not require
@@ -95,11 +96,18 @@ and support surfaces can show the new leaf fingerprint after renewal.
 sudo obosctl tls-renew-leaf --confirm tls-renew-leaf
 ```
 
-The renewal command is CLI-only for the technical MVP. It creates a private
-backup of the current leaf key, leaf certificate, and leaf extension file below
-`/etc/obos/tls/backups`, generates a new leaf key and certificate signed by the
-existing appliance local CA, verifies the new certificate against that CA,
-refreshes the public trust export, and reloads nginx when it is active.
+The renewal command is available through the confirmed CLI and authenticated
+web console. It creates a private backup of the current leaf key, leaf
+certificate, and leaf extension file below `/etc/obos/tls/backups`, generates a
+new leaf key and 90-day certificate signed by the existing appliance local CA,
+verifies the new certificate against that CA, refreshes the public trust export,
+and reloads nginx when it is active. Only the newest previous leaf backup is
+retained.
+
+`obos-tls-leaf-renewal.timer` checks daily. It renews after certificate day 47
+(43 days remaining) and immediately replaces legacy leaves with a validity over
+90 days. A hostname/FQDN change does not silently rotate the certificate; the
+web console displays the mismatch until **Renew Leaf** is selected.
 
 The command preserves the local CA fingerprint. Client devices do not need to
 trust a new CA after leaf-only renewal, but administrators should refresh any
@@ -190,7 +198,7 @@ Summary:
   material implicitly.
 - `obosctl tls-renew-leaf-plan` is non-destructive and preserves the local CA.
 - `sudo obosctl tls-renew-leaf --confirm tls-renew-leaf` renews the leaf
-  certificate only and remains CLI-only for the technical MVP.
+  certificate only; the authenticated console exposes the same confirmed action.
 - Leaf renewal keeps the existing appliance local CA and should not require
   client devices to trust a new CA.
 - Local CA rotation creates a new trust identity and requires explicit client
@@ -200,8 +208,8 @@ Summary:
 
 ## Current Limitations
 
-- IP SANs are generated from the current network state and are not renewed yet
-  when DHCP addresses change.
+- IP SANs are captured during leaf issuance. Address changes take effect at the
+  next automatic renewal or an immediate manual **Renew Leaf** action.
 - Client CA import guidance still needs screenshots and tested release
   instructions for each supported platform.
 - Leaf certificate renewal is implemented as a CLI-only command. Local CA

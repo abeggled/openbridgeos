@@ -7,11 +7,13 @@ CA_CERT="${TLS_DIR}/obos-local-ca.crt"
 LEAF_KEY="${TLS_DIR}/obos.local.key"
 LEAF_CERT="${TLS_DIR}/obos.local.crt"
 LEAF_EXT="${TLS_DIR}/obos.local.ext"
-DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-397}"
+DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-90}"
+BACKUP_KEEP="${OBOS_TLS_LEAF_BACKUP_KEEP:-1}"
 EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 RELOAD_NGINX="${OBOS_TLS_RELOAD_NGINX:-1}"
 ALLOW_NON_ROOT="${OBOS_ALLOW_NON_ROOT_TLS_RENEWAL:-0}"
 SUBJECT="${OBOS_TLS_LEAF_SUBJECT:-/CN=obs.local}"
+LOCK_FILE="${OBOS_TLS_RENEW_LOCK_FILE:-${TLS_DIR}/.leaf-renew.lock}"
 
 fail() {
   echo "tls leaf renewal failed: $1" >&2
@@ -50,8 +52,12 @@ case "${DAYS_LEAF}" in
   ''|*[!0-9]*) fail "OBOS_TLS_LEAF_DAYS must be a positive integer" ;;
   0) fail "OBOS_TLS_LEAF_DAYS must be greater than zero" ;;
 esac
+case "${BACKUP_KEEP}" in
+  ''|*[!0-9]*) fail "OBOS_TLS_LEAF_BACKUP_KEEP must be a non-negative integer" ;;
+esac
 
 command -v openssl >/dev/null 2>&1 || fail "openssl is required"
+command -v flock >/dev/null 2>&1 || fail "flock is required"
 require_cert "${CA_CERT}" local_ca
 require_key "${CA_KEY}" local_ca
 require_cert "${LEAF_CERT}" leaf
@@ -59,7 +65,12 @@ require_key "${LEAF_KEY}" leaf
 
 old_ca_fingerprint="$(cert_fingerprint "${CA_CERT}")"
 old_leaf_fingerprint="$(cert_fingerprint "${LEAF_CERT}")"
-stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+touch "${LOCK_FILE}"
+chmod 0600 "${LOCK_FILE}"
+exec 9>"${LOCK_FILE}"
+flock -n 9 || fail "another leaf renewal is already running"
+
+stamp="$(date -u +%Y%m%dT%H%M%S%NZ)"
 backup_root="${TLS_DIR}/backups"
 work_dir="$(mktemp -d "${TLS_DIR}/leaf-renew.XXXXXXXX")"
 new_key="${work_dir}/obos.local.key"
@@ -170,9 +181,27 @@ if [ "${RELOAD_NGINX}" = "1" ] && command -v systemctl >/dev/null 2>&1; then
   fi
 fi
 
+backup_pruned=0
+prune_list="${work_dir}/leaf-backups-to-prune"
+find "${backup_root}" -mindepth 1 -maxdepth 1 -type d -name 'leaf-*' -print |
+  sort -r |
+  awk -v keep="${BACKUP_KEEP}" 'NR > keep' > "${prune_list}"
+while IFS= read -r old_backup; do
+  [ -n "${old_backup}" ] || continue
+  case "${old_backup}" in
+    "${backup_root}"/leaf-*)
+      rm -rf -- "${old_backup}"
+      backup_pruned=$((backup_pruned + 1))
+      ;;
+    *) fail "refusing to prune unexpected backup path: ${old_backup}" ;;
+  esac
+done < "${prune_list}"
+
 echo "format=obos-tls-leaf-renewal-v1"
 echo "tls_dir=${TLS_DIR}"
 echo "backup_dir=${backup_dir}"
+echo "backup_retention_keep=${BACKUP_KEEP}"
+echo "backup_pruned=${backup_pruned}"
 echo "preserves_local_ca=true"
 echo "client_reonboarding_required=false"
 echo "old_local_ca_sha256_fingerprint=${old_ca_fingerprint}"

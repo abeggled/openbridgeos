@@ -82,6 +82,7 @@ install -m 0755 "${REPO_ROOT}/scripts/tls/generate-tls-material.sh" "${OBOS_LIB_
 install -m 0755 "${REPO_ROOT}/scripts/tls/check-tls-status.sh" "${OBOS_LIB_DIR}/check-tls-status.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/plan-leaf-renewal.sh" "${OBOS_LIB_DIR}/plan-leaf-renewal.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/renew-leaf-certificate.sh" "${OBOS_LIB_DIR}/renew-leaf-certificate.sh"
+install -m 0755 "${REPO_ROOT}/scripts/tls/auto-renew-leaf-certificate.sh" "${OBOS_LIB_DIR}/auto-renew-leaf-certificate.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/print-trust-info.sh" "${OBOS_LIB_DIR}/print-trust-info.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/export-trust-bundle.sh" "${OBOS_LIB_DIR}/export-trust-bundle.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/export-boot-trust-summary.sh" "${OBOS_LIB_DIR}/export-boot-trust-summary.sh"
@@ -91,6 +92,8 @@ install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent-http.py" "${OBOS_LIB_DIR}
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-first-boot.service" /etc/systemd/system/obos-first-boot.service
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-agent-http.service" /etc/systemd/system/obos-agent-http.service
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-openbridgeserver.service" /etc/systemd/system/obos-openbridgeserver.service
+install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-tls-leaf-renewal.service" /etc/systemd/system/obos-tls-leaf-renewal.service
+install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-tls-leaf-renewal.timer" /etc/systemd/system/obos-tls-leaf-renewal.timer
 
 rm -f /etc/nginx/sites-enabled/default
 ln -sf /etc/nginx/sites-available/obos-openbridgeserver.conf /etc/nginx/sites-enabled/obos-openbridgeserver.conf
@@ -106,6 +109,7 @@ systemctl enable nginx.service
 systemctl enable obos-agent-http.service
 systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
+systemctl enable obos-tls-leaf-renewal.timer
 systemctl enable apt-daily.timer
 systemctl enable apt-daily-upgrade.timer
 

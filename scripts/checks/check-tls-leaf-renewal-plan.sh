@@ -41,7 +41,7 @@ openssl x509 -req \
   -CAkey "${TLS_DIR}/obos-local-ca.key" \
   -CAcreateserial \
   -out "${TLS_DIR}/obos.local.crt" \
-  -days 397 \
+  -days 90 \
   -sha256 \
   -extfile "${TLS_DIR}/obos.local.ext" >/dev/null 2>&1
 
@@ -49,7 +49,11 @@ OBOS_TLS_DIR="${TLS_DIR}" OBOS_TLS_EXPIRY_WARN_DAYS=30 sh "${CHECKER}" |
   grep -q '^result=PASS$' \
   || fail "valid leaf renewal plan did not pass"
 
-OBOS_TLS_DIR="${TLS_DIR}" OBOS_TLS_EXPIRY_WARN_DAYS=500 sh "${CHECKER}" |
+OBOS_TLS_DIR="${TLS_DIR}" OBOS_TLS_LEAF_DAYS=90 OBOS_TLS_RENEW_AFTER_DAYS=89 sh "${CHECKER}" |
+  grep -q '^renewal_due=false$' \
+  || fail "fresh leaf was incorrectly reported as due"
+
+OBOS_TLS_DIR="${TLS_DIR}" OBOS_TLS_LEAF_DAYS=500 OBOS_TLS_RENEW_AFTER_DAYS=1 sh "${CHECKER}" |
   grep -q '^renewal_due=true$' \
   || fail "near-expiry leaf renewal was not reported"
 

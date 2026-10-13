@@ -28,6 +28,7 @@
   const helpDialogTitle = document.querySelector("[data-help-dialog-title]");
   const helpDialogBody = document.querySelector("[data-help-dialog-body]");
   const helpCloseButton = document.querySelector("[data-help-close]");
+  const hostIdentityTlsNotice = document.querySelector("[data-host-identity-tls-notice]");
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
   let webAuthPasswordTimer;
@@ -199,6 +200,22 @@
     element.dataset.state = state;
   }
 
+  function updateHostIdentityTlsNotice() {
+    if (!hostIdentityTlsNotice) {
+      return;
+    }
+    const hostname = latestValues.get("system-summary")?.hostname;
+    const dnsNames = (latestValues.get("tls-summary")?.leaf_dns_names || "")
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+    if (!hostname || hostname === "unknown" || dnsNames.length === 0) {
+      hostIdentityTlsNotice.hidden = true;
+      return;
+    }
+    hostIdentityTlsNotice.hidden = dnsNames.includes(hostname.toLowerCase());
+  }
+
   async function loadAction(action, targets) {
     for (const target of targets) {
       setField(target.element, "loading", "loading");
@@ -219,6 +236,7 @@
       }
       const values = parseAgentResponse(text);
       latestValues.set(action, values);
+      updateHostIdentityTlsNotice();
       if (action === "tls-summary" && caDownloadLink) {
         caDownloadLink.hidden = values.trust_export_present !== "true";
       }
@@ -555,6 +573,9 @@
       }
       if (action === "web-auth-rotate") {
         setWebAuthPassword(parseAgentResponse(text));
+      }
+      if (action === "set-hostname" && hostIdentityTlsNotice) {
+        hostIdentityTlsNotice.hidden = false;
       }
       const completedMessage = action === "set-hostname" ? "completed; renew leaf to apply FQDN" : "completed";
       setMutationStatus(statusTarget, completedMessage, "ok");

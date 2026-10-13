@@ -6,6 +6,8 @@ EXPORT_DIR="${OBOS_TRUST_EXPORT_DIR:-/srv/obos/state/trust}"
 CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 LEAF_CERT="${OBOS_TLS_LEAF_CERT:-${TLS_DIR}/obos.local.crt}"
 WARN_DAYS="${OBOS_TLS_EXPIRY_WARN_DAYS:-30}"
+LEAF_VALIDITY_DAYS="${OBOS_TLS_LEAF_DAYS:-90}"
+LEAF_RENEW_AFTER_DAYS="${OBOS_TLS_RENEW_AFTER_DAYS:-47}"
 
 fail() {
   echo "FAIL $1" >&2
@@ -98,6 +100,10 @@ format=obos-tls-summary-v1
 tls_dir=${TLS_DIR}
 trust_export_dir=${EXPORT_DIR}
 warn_days=${WARN_DAYS}
+leaf_validity_days=${LEAF_VALIDITY_DAYS}
+leaf_renew_after_days=${LEAF_RENEW_AFTER_DAYS}
+leaf_backup_keep=${OBOS_TLS_LEAF_BACKUP_KEEP:-1}
+leaf_auto_renewal=daily_systemd_timer
 EOF
   cert_summary "${CA_CERT}" local_ca || failed=1
   cert_summary "${LEAF_CERT}" leaf || failed=1

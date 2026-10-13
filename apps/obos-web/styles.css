@@ -312,6 +312,15 @@ dd,
   padding: 16px;
 }
 
+.inline-notice {
+  margin: 0 0 14px;
+  border: 1px solid #d49a27;
+  border-radius: 8px;
+  background: #fff7df;
+  color: #714d00;
+  padding: 10px 12px;
+}
+
 .primary-panel {
   margin-bottom: 16px;
 }
