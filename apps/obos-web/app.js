@@ -29,6 +29,10 @@
   const helpDialogBody = document.querySelector("[data-help-dialog-body]");
   const helpCloseButton = document.querySelector("[data-help-close]");
   const hostIdentityTlsNotice = document.querySelector("[data-host-identity-tls-notice]");
+  const securityFailureDetails = document.querySelector("[data-security-failure-details]");
+  const securityFailures = document.querySelector("[data-security-failures]");
+  const mvpFailureDetails = document.querySelector("[data-mvp-failure-details]");
+  const mvpFailures = document.querySelector("[data-mvp-failures]");
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
   let webAuthPasswordTimer;
@@ -216,6 +220,23 @@
     hostIdentityTlsNotice.hidden = dnsNames.includes(hostname.toLowerCase());
   }
 
+  function renderFailures(container, list, values) {
+    if (!container || !list) {
+      return;
+    }
+    const failures = Object.entries(values)
+      .filter(([key, value]) => /^failure_\d+$/.test(key) && value)
+      .sort(([left], [right]) => Number(left.slice(8)) - Number(right.slice(8)))
+      .map(([, value]) => value);
+    list.replaceChildren();
+    for (const failure of failures) {
+      const item = document.createElement("li");
+      item.textContent = failure;
+      list.append(item);
+    }
+    container.hidden = failures.length === 0;
+  }
+
   async function loadAction(action, targets) {
     for (const target of targets) {
       setField(target.element, "loading", "loading");
@@ -237,6 +258,12 @@
       const values = parseAgentResponse(text);
       latestValues.set(action, values);
       updateHostIdentityTlsNotice();
+      if (action === "security-summary") {
+        renderFailures(securityFailureDetails, securityFailures, values);
+      }
+      if (action === "mvp-readiness-summary") {
+        renderFailures(mvpFailureDetails, mvpFailures, values);
+      }
       if (action === "tls-summary" && caDownloadLink) {
         caDownloadLink.hidden = values.trust_export_present !== "true";
       }
@@ -244,6 +271,12 @@
         setField(target.element, values[target.key], "ok");
       }
     } catch (error) {
+      if (action === "security-summary") {
+        renderFailures(securityFailureDetails, securityFailures, {});
+      }
+      if (action === "mvp-readiness-summary") {
+        renderFailures(mvpFailureDetails, mvpFailures, {});
+      }
       for (const target of targets) {
         setField(target.element, "unavailable", "error");
       }

@@ -5,6 +5,7 @@ FAILED=0
 PASS_COUNT=0
 FAIL_COUNT=0
 SUMMARY_MODE=0
+FAILURE_MESSAGES=
 OBOSCTL="${OBOSCTL:-/usr/bin/obosctl}"
 OBOS_AGENT="${OBOS_AGENT:-/usr/bin/obos-agent}"
 SECURITY_BASELINE_SCRIPT="${OBOS_SECURITY_BASELINE_SCRIPT:-/usr/lib/obos/security-baseline.sh}"
@@ -18,9 +19,16 @@ pass() {
 }
 
 fail() {
+  message="$1"
   FAIL_COUNT=$((FAIL_COUNT + 1))
+  if [ -z "${FAILURE_MESSAGES}" ]; then
+    FAILURE_MESSAGES="${message}"
+  else
+    FAILURE_MESSAGES="${FAILURE_MESSAGES}
+${message}"
+  fi
   if [ "${SUMMARY_MODE}" -ne 1 ]; then
-    printf 'FAIL %s\n' "$1"
+    printf 'FAIL %s\n' "${message}"
   fi
   FAILED=1
 }
@@ -219,6 +227,8 @@ result=${result}
 pass_count=${PASS_COUNT}
 fail_count=${FAIL_COUNT}
 EOF
+  printf '%s\n' "${FAILURE_MESSAGES}" |
+    awk 'NF { count += 1; printf "failure_%d=%s\n", count, $0 }'
   exit 0
 elif [ "${FAILED}" -eq 0 ]; then
   echo 'mvp runtime readiness: PASS'
