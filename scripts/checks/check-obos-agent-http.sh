@@ -125,8 +125,12 @@ grep -q 'MemoryDenyWriteExecute=true' "${SERVICE}" \
   || fail "HTTP bridge service lacks memory hardening"
 grep -q 'SupplementaryGroups=www-data' "${SERVICE}" \
   || fail "HTTP bridge service cannot read the web auth hash"
-grep -q '/srv/obos/state/trust' "${SERVICE}" \
-  || fail "HTTP bridge service cannot write public trust exports"
+grep -q '/srv/obos/apps/openbridgeserver' "${SERVICE}" \
+  || fail "HTTP bridge service cannot apply explicitly confirmed restores"
+grep -q '/srv/obos/backups' "${SERVICE}" \
+  || fail "HTTP bridge service cannot write appliance backups"
+grep -q '/srv/obos/state' "${SERVICE}" \
+  || fail "HTTP bridge service cannot write appliance state and public trust exports"
 if grep -q 'NoNewPrivileges=true' "${SERVICE}"; then
   fail "HTTP bridge service must not enable NoNewPrivileges while obos-agent uses sudo"
 fi

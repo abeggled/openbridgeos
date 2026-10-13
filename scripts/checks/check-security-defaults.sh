@@ -116,8 +116,14 @@ grep -q 'require_session' scripts/agent/obos-agent-http.py \
 grep -q 'SupplementaryGroups=www-data' packaging/systemd/obos-agent-http.service \
   || fail "HTTP bridge cannot read nginx htpasswd group file"
 
-grep -q '/srv/obos/state/trust' packaging/systemd/obos-agent-http.service \
-  || fail "HTTP bridge sandbox does not permit public trust exports"
+grep -q '/srv/obos/apps/openbridgeserver' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge sandbox does not permit explicitly confirmed restores"
+
+grep -q '/srv/obos/backups' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge sandbox does not permit appliance backups"
+
+grep -q '/srv/obos/state' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge sandbox does not permit appliance state and public trust exports"
 
 grep -q 'web-auth-rotate)' scripts/obosctl \
   || fail "obosctl does not expose web auth rotation"
@@ -315,14 +321,11 @@ grep -q 'application/octet-stream' scripts/agent/obos-agent-http.py \
 grep -q 'MAX_UPLOAD_BYTES' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not bound portable import uploads"
 
-grep -q 'ReadWritePaths=.*\/srv\/obos\/state\/portable-imports' packaging/systemd/obos-agent-http.service \
-  || fail "HTTP bridge service does not restrict write access to portable imports"
+grep -q 'ReadWritePaths=.*\/srv\/obos\/state' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge service cannot persist managed appliance state"
 
 grep -q 'ReadWritePaths=.*\/etc\/obos' packaging/systemd/obos-agent-http.service \
   || fail "HTTP bridge service cannot persist web authentication state"
-
-grep -q 'ReadWritePaths=.*\/srv\/obos\/state\/agent' packaging/systemd/obos-agent-http.service \
-  || fail "HTTP bridge service cannot persist its mutation audit log"
 
 grep -q 'install -d -m 0700 -o obos-agent -g obos-agent /srv/obos/state/portable-imports' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not create private portable import upload directory"
