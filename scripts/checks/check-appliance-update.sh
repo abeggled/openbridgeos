@@ -6,7 +6,6 @@ UPDATE_RELEASE="scripts/update/update-obos-release.sh"
 INSTALL_BUNDLE="scripts/update/install-update-bundle.sh"
 PUBLIC_KEY="packaging/update/obos-release.minisign.pub"
 RELEASE_WORKFLOW=".github/workflows/release-appliance.yml"
-SIGN_HELPER="scripts/update/sign-update-manifest.py"
 
 fail() {
   echo "appliance update fixture failed: $1" >&2
@@ -18,7 +17,6 @@ fail() {
 [ -f "${INSTALL_BUNDLE}" ] || fail "OBOS update bundle installer missing"
 [ -s "${PUBLIC_KEY}" ] || fail "pinned OBOS release public key missing"
 [ -s "${RELEASE_WORKFLOW}" ] || fail "GitHub appliance release workflow missing"
-[ -s "${SIGN_HELPER}" ] || fail "non-interactive Minisign helper missing"
 [ "$(wc -l < "${PUBLIC_KEY}")" -eq 2 ] || fail "pinned release public key has an unexpected format"
 grep -Eq '^untrusted comment: minisign public key [A-F0-9]{16}$' "${PUBLIC_KEY}" \
   || fail "pinned release public key identifier is invalid"
@@ -35,8 +33,11 @@ grep -q 'contents: write' "${RELEASE_WORKFLOW}" \
   || fail "release job cannot publish GitHub assets"
 grep -q 'secrets.OBOS_RELEASE_MINISIGN_SECRET_KEY' "${RELEASE_WORKFLOW}" \
   || fail "release workflow does not use the environment signing key"
-grep -q 'secrets.OBOS_RELEASE_MINISIGN_PASSWORD' "${RELEASE_WORKFLOW}" \
-  || fail "release workflow does not use the separate key password"
+grep -q '^            -W' "${RELEASE_WORKFLOW}" \
+  || fail "release workflow does not use the dedicated passwordless CI key"
+if grep -q 'OBOS_RELEASE_MINISIGN_PASSWORD' "${RELEASE_WORKFLOW}"; then
+  fail "release workflow still requires a signing-key password"
+fi
 grep -q 'Refusing to replace existing release' "${RELEASE_WORKFLOW}" \
   || fail "release workflow can replace an existing release"
 

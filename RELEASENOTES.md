@@ -10,5 +10,5 @@
 * none
 
 ### Release verification
-* Minisign public key ID: `BA4A7C6EBE2B1251`
-* Public key: `RWRREiu+bnxKujIHvOMcX9bPiLa7oziNQL5dx2d/IKRnMHrSNNh9utEE`
+* Minisign public key ID: `1D3C747967BE7F02`
+* Public key: `RWQCf75neXQ8HR0B7VAbOhEJ/3A/iL7BKj/3+l/4gZ+Z+aqazNEcMW/I`

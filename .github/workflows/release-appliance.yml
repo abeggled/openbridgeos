@@ -32,7 +32,6 @@ jobs:
       RELEASE_VERSION: ${{ inputs.version }}
       RELEASE_PRERELEASE: ${{ inputs.prerelease }}
       OBOS_RELEASE_MINISIGN_SECRET_KEY: ${{ secrets.OBOS_RELEASE_MINISIGN_SECRET_KEY }}
-      OBOS_RELEASE_MINISIGN_PASSWORD: ${{ secrets.OBOS_RELEASE_MINISIGN_PASSWORD }}
 
     steps:
       - name: Checkout exact release commit
@@ -48,7 +47,6 @@ jobs:
           test -s RELEASENOTES.md
           test -s packaging/update/obos-release.minisign.pub
           test -n "${OBOS_RELEASE_MINISIGN_SECRET_KEY}"
-          test -n "${OBOS_RELEASE_MINISIGN_PASSWORD}"
           if git rev-parse --verify --quiet "refs/tags/${RELEASE_VERSION}"; then
             echo "Refusing to replace existing tag ${RELEASE_VERSION}" >&2
             exit 1
@@ -61,7 +59,7 @@ jobs:
       - name: Install release signing tool
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends minisign python3-pexpect
+          sudo apt-get install -y --no-install-recommends minisign
 
       - name: Build signed appliance update assets
         shell: bash
@@ -76,10 +74,10 @@ jobs:
             "${RELEASE_VERSION}" \
             "${release_dir}" \
             RELEASENOTES.md
-          export OBOS_SIGN_KEY_FILE="${key_file}"
-          export OBOS_SIGN_MANIFEST="${release_dir}/obos-update.manifest"
-          export OBOS_SIGN_TRUSTED_COMMENT="OBOS appliance release ${RELEASE_VERSION}"
-          python3 scripts/update/sign-update-manifest.py
+          minisign -Sm "${release_dir}/obos-update.manifest" \
+            -s "${key_file}" \
+            -W \
+            -t "OBOS appliance release ${RELEASE_VERSION}"
           minisign -Vm "${release_dir}/obos-update.manifest" \
             -p packaging/update/obos-release.minisign.pub
           sha256sum \

@@ -69,13 +69,16 @@ normal release and remove the override file; subsequent appliances use
 
 The manually dispatched `Release appliance update` workflow builds, signs,
 verifies, and publishes the fixed-name assets from the selected `main` commit.
-It uses the GitHub environment `release` and requires these environment
-secrets:
+It uses the GitHub environment `release` and requires this environment secret:
 
 ```text
 OBOS_RELEASE_MINISIGN_SECRET_KEY
-OBOS_RELEASE_MINISIGN_PASSWORD
 ```
+
+This is a dedicated passwordless Minisign automation key generated with `-W`.
+GitHub stores the private key as an encrypted environment secret; it is never
+committed to the repository or copied to an appliance. Personal and offline
+release keys are not used by the workflow.
 
 The workflow refuses to replace an existing tag or release. Start it from the
 GitHub Actions page with the exact version and keep `prerelease` enabled for the
@@ -93,5 +96,5 @@ If no key is pinned, the release step reports `not-configured` and does not
 download or execute release content. Debian and container update stages can
 still proceed, but the GUI marks the OBOS release state as a deviation.
 
-The release private key remains offline and must follow
+Release signing keys must follow
 [release-signing.md](release-signing.md).
