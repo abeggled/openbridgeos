@@ -29,6 +29,7 @@ parsing human-oriented command output or writing appliance files directly.
 | Appliance status | `obosctl status-summary` | `obos-status-summary-v1` |
 | Host basics | `obosctl system-summary` | `obos-system-summary-v1` |
 | Last update | `obosctl update-summary` | `obos-update-summary-v1` |
+| Signed release preview and notes | `sudo obosctl update-release-summary` | `obos-release-update-v1` |
 | Last update rollback plan | `sudo obosctl update-rollback-plan` | `obos-update-rollback-plan-v1` |
 | Latest backup | `obosctl backup-summary` | `obos-backup-summary-v1` |
 | Backup inventory | `obosctl backup-list` | `obos-backup-list-v1` |
@@ -47,6 +48,11 @@ parsing human-oriented command output or writing appliance files directly.
 These commands print key-value records. The agent should reject unknown format
 versions instead of guessing.
 
+`obos-release-update-v1` includes the installed version, latest signed version,
+availability state, and bounded `release_note_NNN` lines. Notes are returned
+only after Minisign verification of the manifest and SHA-256 verification of
+the notes asset. The browser renders them as text, never HTML.
+
 `obos-backup-summary-v1` includes latest-backup inspection status and whether the
 latest backup manifest records secrets, logs, and TLS private key material.
 
@@ -62,7 +68,7 @@ open bridge server systemd unit and Compose stack.
 | Start open bridge server | `sudo obosctl start` |
 | Stop open bridge server | `sudo obosctl stop` |
 | Restart open bridge server | `sudo obosctl restart` |
-| Update appliance app stack | `sudo obosctl update` |
+| Update complete appliance | `sudo obosctl update` |
 | Set appliance hostname | `sudo obosctl set-hostname <hostname>` |
 | Set appliance timezone | `sudo obosctl set-timezone <timezone>` |
 | Create backup | `sudo obosctl backup` |

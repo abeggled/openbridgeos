@@ -54,6 +54,10 @@ grep -q 'action=system-summary|mutating=false' "${AGENT}" \
   || fail "system-summary action is not listed as read-only"
 grep -q 'update-summary)' "${AGENT}" \
   || fail "update-summary action missing"
+grep -q 'update-release-summary)' "${AGENT}" \
+  || fail "update-release-summary action missing"
+grep -q 'action=update-release-summary|mutating=false' "${AGENT}" \
+  || fail "update-release-summary action is not listed as read-only"
 grep -q 'update-rollback-plan)' "${AGENT}" \
   || fail "update-rollback-plan action missing"
 grep -q 'action=update-rollback-plan|mutating=false' "${AGENT}" \

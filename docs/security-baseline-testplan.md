@@ -243,7 +243,7 @@ Expected:
 ```sh
 sudo obosctl update
 sudo stat -c '%a %U:%G %n' /srv/obos/state /srv/obos/state/last-update
-sudo grep '^format=obos-update-v1$' /srv/obos/state/last-update
+sudo grep '^format=obos-update-v2$' /srv/obos/state/last-update
 sudo grep '^health_local=ok$' /srv/obos/state/last-update
 sudo grep '^health_https_proxy=ok$' /srv/obos/state/last-update
 obosctl status | grep 'last-update:'

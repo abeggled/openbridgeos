@@ -67,5 +67,7 @@ Restore apply controls are intentionally absent from HTML.
 
 Mutation buttons use an application-styled confirmation dialog with an
 action-specific description instead of the browser's native confirmation
-prompt. The container update dialog explicitly distinguishes OBS image updates
-from Debian package updates and reboots.
+prompt. The appliance update dialog explains that the workflow updates signed
+OBOS release files, Debian packages, and OBS container images and schedules a
+reboot when required. The overview verifies and shows the latest signed version
+and release notes before update confirmation.

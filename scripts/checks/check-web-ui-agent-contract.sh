@@ -165,6 +165,8 @@ grep -q 'set-timezone)' scripts/obosctl \
   || fail "obosctl set-timezone command missing"
 grep -q 'update-summary)' scripts/obosctl \
   || fail "obosctl update-summary command missing"
+grep -q 'update-release-summary)' scripts/obosctl \
+  || fail "obosctl update-release-summary command missing"
 grep -q 'update-rollback-plan)' scripts/obosctl \
   || fail "obosctl update-rollback-plan command missing"
 grep -q 'backup-summary)' scripts/obosctl \

@@ -130,9 +130,10 @@ Provisioning installs `unattended-upgrades` and configures apt periodic updates
 for Debian security origins only. Automatic package installation is enabled for
 security updates, while automatic reboots are disabled.
 
-This separates host CVE handling from application container updates: Debian
-security fixes can land automatically, but reboot timing remains an explicit
-appliance administration decision.
+This provides a quiet security baseline between explicit maintenance windows.
+The confirmed full appliance update additionally refreshes all configured APT
+origins, installs the signed OBOS release, updates containers, and may schedule
+a reboot after reporting the result to the administrator.
 
 Installed policy files:
 

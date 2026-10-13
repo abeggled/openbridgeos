@@ -32,6 +32,11 @@ MQTT_LAN_SCRIPT="${OBOS_MQTT_LAN_SCRIPT:-/usr/lib/obos/set-mqtt-lan-access.sh}"
 SECURITY_BASELINE_SCRIPT="${OBOS_SECURITY_BASELINE_SCRIPT:-/usr/lib/obos/security-baseline.sh}"
 MVP_READINESS_SCRIPT="${OBOS_MVP_READINESS_SCRIPT:-/usr/lib/obos/mvp-runtime-readiness.sh}"
 WEB_AUTH_SCRIPT="${OBOS_WEB_AUTH_SCRIPT:-/usr/lib/obos/generate-web-auth.sh}"
+HOST_UPDATE_SCRIPT="${OBOS_HOST_UPDATE_SCRIPT:-/usr/lib/obos/update-host.sh}"
+OBOS_RELEASE_UPDATE_SCRIPT="${OBOS_RELEASE_UPDATE_SCRIPT:-/usr/lib/obos/update-obos-release.sh}"
+SYSTEMD_RUN="${OBOS_SYSTEMD_RUN:-systemd-run}"
+REBOOT_DELAY_SECONDS="${OBOS_REBOOT_DELAY_SECONDS:-60}"
+BOOT_ID_FILE="${OBOS_BOOT_ID_FILE:-/proc/sys/kernel/random/boot_id}"
 
 usage() {
   cat <<'EOF'
@@ -53,8 +58,10 @@ Commands:
   start             Start open bridge server
   stop              Stop open bridge server
   restart           Restart open bridge server
-  update            Pull container images, restart, and verify health
+  update            Update signed OBOS release, Debian, containers, and reboot if required
   update-summary    Print machine-readable last update status
+  update-release-summary
+                    Check the signed latest release and print its release notes
   update-rollback-plan
                     Print the non-destructive rollback plan for the last update
   update-rollback-stage
@@ -1452,19 +1459,40 @@ EOF
 
 write_update_state() {
   backup_path="$1"
+  reboot_required="$2"
+  reboot_scheduled="$3"
+  reboot_reason="$4"
+  running_kernel="$5"
+  latest_installed_kernel="$6"
+  boot_id_before="$7"
+  release_status="$8"
+  release_version="$9"
+  release_updated="${10}"
   state_dir="$(dirname -- "${LAST_UPDATE_FILE}")"
   completed_at="$(date -u +%Y%m%dT%H%M%SZ)"
   tmp_file="${LAST_UPDATE_FILE}.$$"
 
   install -d -m 0750 "${state_dir}"
   cat > "${tmp_file}" <<EOF
-format=obos-update-v1
+format=obos-update-v2
 completed_at=${completed_at}
 app=${APP_NAME}
 service=${SERVICE_NAME}
 pre_update_backup_required=true
 pre_update_backup_created=true
 backup=${backup_path}
+obos_release_status=${release_status}
+obos_release_version=${release_version}
+obos_release_updated=${release_updated}
+os_packages_updated=true
+container_images_updated=true
+reboot_required=${reboot_required}
+reboot_scheduled=${reboot_scheduled}
+reboot_delay_seconds=${REBOOT_DELAY_SECONDS}
+reboot_reason=${reboot_reason}
+running_kernel_before_reboot=${running_kernel}
+latest_installed_kernel=${latest_installed_kernel}
+boot_id_before=${boot_id_before}
 health_local=ok
 health_https_proxy=ok
 EOF
@@ -1472,7 +1500,7 @@ EOF
   mv -f "${tmp_file}" "${LAST_UPDATE_FILE}"
 }
 
-update_app() {
+update_app_worker() {
   require_root update
   require_files
   service_was_active=false
@@ -1493,6 +1521,42 @@ update_app() {
     echo "update: blocked; pre-update backup was not created" >&2
     return 1
   fi
+  if ! release_update_output="$(run_helper "${OBOS_RELEASE_UPDATE_SCRIPT}")"; then
+    if [ "${service_was_active}" = true ]; then
+      systemctl start "${SERVICE_NAME}" || true
+    fi
+    echo "update: signed OBOS release update failed; previous service restored" >&2
+    return 1
+  fi
+  printf '%s\n' "${release_update_output}"
+  release_status="$(printf '%s\n' "${release_update_output}" | sed -n 's/^release_status=//p' | head -n 1)"
+  release_version="$(printf '%s\n' "${release_update_output}" | sed -n 's/^release_version=//p' | head -n 1)"
+  release_updated="$(printf '%s\n' "${release_update_output}" | sed -n 's/^release_updated=//p' | head -n 1)"
+  release_reboot_required="$(printf '%s\n' "${release_update_output}" | sed -n 's/^release_reboot_required=//p' | head -n 1)"
+  [ -n "${release_status}" ] || release_status=unknown
+  [ -n "${release_version}" ] || release_version=unchanged
+  case "${release_updated}" in true|false) ;; *) echo "update: invalid OBOS release update state" >&2; return 1 ;; esac
+  case "${release_reboot_required}" in true|false) ;; *) echo "update: invalid OBOS release reboot state" >&2; return 1 ;; esac
+  if ! host_update_output="$(run_helper "${HOST_UPDATE_SCRIPT}")"; then
+    if [ "${service_was_active}" = true ]; then
+      systemctl start "${SERVICE_NAME}" || true
+    fi
+    echo "update: host package update failed; previous service restored" >&2
+    return 1
+  fi
+  printf '%s\n' "${host_update_output}"
+  reboot_required="$(printf '%s\n' "${host_update_output}" | sed -n 's/^reboot_required=//p' | head -n 1)"
+  reboot_reason="$(printf '%s\n' "${host_update_output}" | sed -n 's/^reboot_reason=//p' | head -n 1)"
+  running_kernel="$(printf '%s\n' "${host_update_output}" | sed -n 's/^running_kernel=//p' | head -n 1)"
+  latest_installed_kernel="$(printf '%s\n' "${host_update_output}" | sed -n 's/^latest_installed_kernel=//p' | head -n 1)"
+  case "${reboot_required}" in true|false) ;; *) echo "update: invalid host reboot state" >&2; return 1 ;; esac
+  if [ "${release_reboot_required}" = true ]; then
+    reboot_required=true
+    reboot_reason=obos-release
+  fi
+  [ -n "${reboot_reason}" ] || reboot_reason=unknown
+  [ -n "${running_kernel}" ] || running_kernel=unknown
+  [ -n "${latest_installed_kernel}" ] || latest_installed_kernel=unknown
   if ! compose pull; then
     if [ "${service_was_active}" = true ]; then
       systemctl start "${SERVICE_NAME}" || true
@@ -1505,8 +1569,27 @@ update_app() {
   tries=30
   while [ "${tries}" -gt 0 ]; do
     if health && proxy_health; then
-      write_update_state "${backup_path}"
+      reboot_scheduled=false
+      boot_id_before="$(cat "${BOOT_ID_FILE}" 2>/dev/null || printf unknown)"
+      if [ "${reboot_required}" = true ]; then
+        reboot_unit="obos-update-reboot-$(date -u +%Y%m%d%H%M%S)"
+        if ! "${SYSTEMD_RUN}" --unit="${reboot_unit}" --on-active="${REBOOT_DELAY_SECONDS}s" --property=Type=oneshot /usr/bin/systemctl reboot >/dev/null; then
+          echo "update: packages and containers updated, but reboot scheduling failed" >&2
+          return 1
+        fi
+        reboot_scheduled=true
+      fi
+      write_update_state "${backup_path}" "${reboot_required}" "${reboot_scheduled}" "${reboot_reason}" "${running_kernel}" "${latest_installed_kernel}" "${boot_id_before}" "${release_status}" "${release_version}" "${release_updated}"
       echo "update: health checks passed"
+      echo "obos-release-status: ${release_status}"
+      echo "obos-release-updated: ${release_updated}"
+      echo "os-packages-updated: true"
+      echo "container-images-updated: true"
+      echo "reboot-required: ${reboot_required}"
+      echo "reboot-scheduled: ${reboot_scheduled}"
+      if [ "${reboot_scheduled}" = true ]; then
+        echo "reboot-delay-seconds: ${REBOOT_DELAY_SECONDS}"
+      fi
       echo "update-state: ${LAST_UPDATE_FILE}"
       return 0
     fi
@@ -1518,6 +1601,24 @@ update_app() {
   return 1
 }
 
+update_app() {
+  require_root update
+  command -v "${SYSTEMD_RUN}" >/dev/null 2>&1 || {
+    echo "update: systemd-run is unavailable" >&2
+    return 1
+  }
+  update_unit="obos-appliance-update-$(date -u +%Y%m%d%H%M%S)-$$"
+  "${SYSTEMD_RUN}" \
+    --quiet \
+    --pipe \
+    --wait \
+    --collect \
+    --service-type=exec \
+    --unit="${update_unit}" \
+    --setenv=OBOS_UPDATE_WORKER_ACTIVE=1 \
+    /usr/bin/flock -n /run/lock/obos-appliance-update.lock /usr/bin/obosctl update-worker
+}
+
 update_summary() {
   echo "format=obos-update-summary-v1"
   echo "state_file=${LAST_UPDATE_FILE}"
@@ -1525,6 +1626,14 @@ update_summary() {
   if [ ! -f "${LAST_UPDATE_FILE}" ]; then
     echo "last_update_present=false"
     echo "rollback_backup_present=false"
+    echo "last_update_os_packages_updated=false"
+    echo "last_update_container_images_updated=false"
+    echo "last_update_obos_release_status=never"
+    echo "last_update_obos_release_updated=false"
+    echo "last_update_reboot_required=false"
+    echo "last_update_reboot_scheduled=false"
+    echo "last_update_reboot_pending=false"
+    echo "last_update_reboot_completed=false"
     return 0
   fi
 
@@ -1536,6 +1645,25 @@ update_summary() {
     echo "rollback_backup_present=false"
   fi
   sed 's/^/last_update_/' "${LAST_UPDATE_FILE}"
+  reboot_required="$(key_value reboot_required "${LAST_UPDATE_FILE}")"
+  reboot_scheduled="$(key_value reboot_scheduled "${LAST_UPDATE_FILE}")"
+  boot_id_before="$(key_value boot_id_before "${LAST_UPDATE_FILE}")"
+  boot_id_now="$(cat "${BOOT_ID_FILE}" 2>/dev/null || printf unknown)"
+  reboot_pending=false
+  reboot_completed=false
+  if [ "${reboot_required}" = true ] && [ "${reboot_scheduled}" = true ]; then
+    if [ "${boot_id_before}" != unknown ] && [ "${boot_id_now}" != "${boot_id_before}" ]; then
+      reboot_completed=true
+    else
+      reboot_pending=true
+    fi
+  fi
+  echo "last_update_reboot_pending=${reboot_pending}"
+  echo "last_update_reboot_completed=${reboot_completed}"
+}
+
+update_release_summary() {
+  run_helper "${OBOS_RELEASE_UPDATE_SCRIPT}" check
 }
 
 update_rollback_plan() {
@@ -1681,8 +1809,18 @@ case "${1:-}" in
   update)
     update_app
     ;;
+  update-worker)
+    [ "${OBOS_UPDATE_WORKER_ACTIVE:-}" = 1 ] || {
+      echo "obosctl update-worker is restricted to the transient update service" >&2
+      exit 1
+    }
+    update_app_worker
+    ;;
   update-summary)
     update_summary
+    ;;
+  update-release-summary)
+    update_release_summary
     ;;
   update-rollback-plan)
     update_rollback_plan

@@ -38,6 +38,16 @@ Required profiles:
 - `amd64-vm`
 - `rpi4-arm64`
 
+For releases that support in-place appliance updates, also publish:
+
+```text
+in_place_archive=obos-update.tar.gz
+in_place_manifest=obos-update.manifest
+in_place_signature=obos-update.manifest.minisig
+in_place_notes=obos-update-notes.txt
+in_place_version=
+```
+
 ## Signature Verification
 
 Release manifest:

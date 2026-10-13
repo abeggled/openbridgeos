@@ -22,6 +22,7 @@ BIND_HOST = os.environ.get("OBOS_AGENT_HTTP_BIND", "127.0.0.1")
 BIND_PORT = int(os.environ.get("OBOS_AGENT_HTTP_PORT", "8091"))
 AGENT_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_TIMEOUT_SECONDS", "45"))
 AGENT_MUTATION_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_MUTATION_TIMEOUT_SECONDS", "600"))
+AGENT_UPDATE_TIMEOUT_SECONDS = int(os.environ.get("OBOS_AGENT_HTTP_UPDATE_TIMEOUT_SECONDS", "3600"))
 MAX_POST_BYTES = 1024
 MAX_UPLOAD_BYTES = int(os.environ.get("OBOS_AGENT_HTTP_MAX_UPLOAD_BYTES", str(1024 * 1024 * 1024)))
 PORTABLE_EXPORT_DIR = os.environ.get("OBOS_PORTABLE_EXPORT_DIR", "/srv/obos/state/portable-backups")
@@ -70,6 +71,7 @@ READ_ONLY_ACTIONS = {
     "status-summary",
     "system-summary",
     "update-summary",
+    "update-release-summary",
     "update-rollback-plan",
     "backup-summary",
     "backup-list",
@@ -857,7 +859,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             args = [action, payload["timezone"], "--confirm", payload["confirm"]]
 
         try:
-            completed = self.run_agent(args, AGENT_MUTATION_TIMEOUT_SECONDS)
+            timeout_seconds = AGENT_UPDATE_TIMEOUT_SECONDS if action == "update" else AGENT_MUTATION_TIMEOUT_SECONDS
+            completed = self.run_agent(args, timeout_seconds)
         except subprocess.TimeoutExpired:
             self.send_text(504, error_envelope("agent-timeout", "obos-agent mutation timed out"))
             return

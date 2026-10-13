@@ -12,6 +12,7 @@ OBOS_LIB_DIR="/usr/lib/obos"
 OBOS_APP_SOURCE="${OBOS_SHARE_DIR}/apps/openbridgeserver"
 OBOS_WEB_DIR="/srv/obos/web"
 OBOS_ONBOARDING_DIR="/srv/obos/onboarding"
+OBOS_VERSION="${OBOS_VERSION:-0.0.0}"
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -24,6 +25,7 @@ apt-get install -y --no-install-recommends \
   docker.io \
   gnupg \
   logrotate \
+  minisign \
   nftables \
   nginx-light \
   openssl \
@@ -37,7 +39,7 @@ fi
 
 install -d -m 0755 "${OBOS_SHARE_DIR}/apps/openbridgeserver"
 install -d -m 0755 "${OBOS_LIB_DIR}"
-install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d /etc/systemd/network
+install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos/apps /etc/obos/update /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d /etc/systemd/network
 install -d -m 0750 -o root -g www-data /etc/obos
 install -d -m 0750 -g www-data /srv/obos
 install -d -m 0750 /srv/obos/apps /srv/obos/backups
@@ -77,6 +79,17 @@ install -m 0755 "${REPO_ROOT}/scripts/auth/generate-web-auth.sh" "${OBOS_LIB_DIR
 install -m 0755 "${REPO_ROOT}/scripts/hardening/apply-host-hardening.sh" "${OBOS_LIB_DIR}/apply-host-hardening.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/enable-ssh.sh" "${OBOS_LIB_DIR}/enable-ssh.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/set-mqtt-lan-access.sh" "${OBOS_LIB_DIR}/set-mqtt-lan-access.sh"
+install -m 0755 "${REPO_ROOT}/scripts/update/update-host.sh" "${OBOS_LIB_DIR}/update-host.sh"
+install -m 0755 "${REPO_ROOT}/scripts/update/update-obos-release.sh" "${OBOS_LIB_DIR}/update-obos-release.sh"
+install -m 0755 "${REPO_ROOT}/scripts/update/install-update-bundle.sh" "${OBOS_LIB_DIR}/install-update-bundle.sh"
+if [ -n "${OBOS_RELEASE_MINISIGN_PUBLIC_KEY:-}" ]; then
+  printf '%s\n' "${OBOS_RELEASE_MINISIGN_PUBLIC_KEY}" > /etc/obos/update/minisign.pub
+  chmod 0644 /etc/obos/update/minisign.pub
+elif [ -s "${REPO_ROOT}/packaging/update/obos-release.minisign.pub" ]; then
+  install -m 0644 "${REPO_ROOT}/packaging/update/obos-release.minisign.pub" /etc/obos/update/minisign.pub
+fi
+printf '%s\n' "${OBOS_VERSION}" > /etc/obos/version
+chmod 0644 /etc/obos/version
 install -m 0755 "${REPO_ROOT}/scripts/audit/security-baseline.sh" "${OBOS_LIB_DIR}/security-baseline.sh"
 install -m 0755 "${REPO_ROOT}/scripts/audit/mvp-runtime-readiness.sh" "${OBOS_LIB_DIR}/mvp-runtime-readiness.sh"
 install -m 0755 "${REPO_ROOT}/scripts/tls/generate-tls-material.sh" "${OBOS_LIB_DIR}/generate-tls-material.sh"

@@ -28,6 +28,7 @@ sudo obosctl stop
 sudo obosctl restart
 sudo obosctl update
 obosctl update-summary
+sudo obosctl update-release-summary
 sudo obosctl backup
 obosctl backup-list
 obosctl logs
@@ -127,6 +128,9 @@ accept paths, queries, or a custom shell command.
 
 ## Update
 
+See [appliance-updates.md](appliance-updates.md) for the signed GitHub release
+asset contract and release-key bootstrap.
+
 ```sh
 sudo obosctl update
 obosctl update-summary
@@ -134,18 +138,21 @@ sudo obosctl update-rollback-plan
 sudo obosctl update-rollback-stage
 ```
 
-The update command performs the first conservative update flow:
+The update command performs the complete appliance update flow:
 
 1. Create a timestamped backup.
-2. Pull newer container images.
-3. Restart the managed systemd service.
-4. Poll the localhost and HTTPS proxy health endpoints for up to 60 seconds.
-5. Write `/srv/obos/state/last-update` after both health checks pass.
+2. Refresh APT metadata and run a noninteractive full upgrade of installed
+   Debian packages, including the kernel and container runtime when available.
+3. Pull newer OBS container images.
+4. Restart the managed systemd service.
+5. Poll the localhost and HTTPS proxy health endpoints for up to 60 seconds.
+6. Write `/srv/obos/state/last-update` after both health checks pass.
+7. If packages request a reboot or a newer installed kernel is detected,
+   schedule an appliance reboot after a 60-second grace period.
 
-This command updates only the configured OBS container images. It does not run
-APT, update Debian packages, install a host kernel, or reboot the appliance.
-Debian security packages are managed separately by `unattended-upgrades`, with
-automatic reboot disabled.
+The APT transaction uses `--no-remove`: if completing an upgrade would require
+removing installed packages, the appliance update stops and reports the issue
+instead of silently changing the package set.
 
 If the pre-update backup is not created or cannot be found, the update is
 blocked before images are pulled or services are restarted.
@@ -155,13 +162,19 @@ last successful update record. Automatic rollback is not implemented yet; the
 last successful update backup can be staged explicitly for confirmed CLI
 rollback.
 
-The update record is a small key-value file with format `obos-update-v1`. It
+The update record is a small key-value file with format `obos-update-v2`. It
 includes the completion timestamp, app name, systemd service name, pre-update
-backup requirement, backup path, and successful local/proxy health markers.
+backup requirement, backup path, OS and container completion markers, kernel
+and reboot state, and successful local/proxy health markers.
 
 `update-summary` prints a stable key-value format for agents and the web UI. It
 includes the update state file path, whether a successful update record is
 present, and the last update record fields when present.
+
+`update-release-summary` performs a read-only check of the latest GitHub
+release. It verifies the pinned Minisign signature and signed checksums, then
+prints the installed and available versions plus bounded release-note lines for
+display before update confirmation.
 
 `update-rollback-plan` is read-only and non-destructive. It reads the last
 successful update record, verifies that the recorded backup still exists and
