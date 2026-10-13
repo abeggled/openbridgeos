@@ -169,6 +169,7 @@ button:disabled {
   margin: 18px 0 0;
   color: var(--muted);
   line-height: 1.55;
+  white-space: pre-line;
 }
 
 .confirmation-actions {
@@ -425,6 +426,30 @@ dd,
   font: 13px/1.45 Consolas, "Liberation Mono", monospace;
   overflow-wrap: anywhere;
   padding: 12px;
+  white-space: pre-wrap;
+}
+
+.release-preview {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  padding: 14px;
+}
+
+.release-preview h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.release-preview pre {
+  max-height: 240px;
+  margin: 10px 0 0;
+  overflow: auto;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 

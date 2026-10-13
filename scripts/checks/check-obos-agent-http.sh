@@ -216,6 +216,26 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  update-release-summary)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=update-release-summary
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-release-update-v1
+stdout=release_status=available
+stdout=installed_version=2026.9.0
+stdout=available_version=2026.10.0
+stdout=update_available=true
+stdout=release_notes_present=true
+stdout=release_note_001=Complete appliance update support
+stdout=release_note_count=1
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   backup-summary)
     cat <<'RESPONSE'
 format=obos-agent-response-v1
@@ -719,7 +739,7 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/system-summary |
   grep -q 'stdout=hostname=obos-test' \
   || fail "HTTP bridge did not expose system summary"
 
-for gui_action in update-summary backup-summary backup-list backup-prune-plan restore-stage-summary mqtt-summary tls-summary security-summary mvp-readiness-summary agent-audit-summary logs-summary; do
+for gui_action in update-summary update-release-summary backup-summary backup-list backup-prune-plan restore-stage-summary mqtt-summary tls-summary security-summary mvp-readiness-summary agent-audit-summary logs-summary; do
   curl --fail --silent "http://127.0.0.1:18091/obos/api/v1/actions/${gui_action}" >/dev/null \
     || fail "HTTP bridge did not expose GUI action ${gui_action}"
 done

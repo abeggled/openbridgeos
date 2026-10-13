@@ -116,18 +116,25 @@ or clearly surfaced during first setup.
 
 ## Update Model
 
-The implemented `obosctl update` and web-console **Update Containers** action
-are deliberately scoped to the OBS application stack:
+The implemented `obosctl update` and web-console **Update Appliance** action
+cover the complete installed appliance runtime:
 
 1. Create a consistent appliance backup.
-2. Pull the configured container images.
-3. Restart the managed stack.
-4. Verify localhost and HTTPS health checks.
-5. Keep enough state to show the last successful update and rollback backup.
+2. Refresh APT metadata and fully upgrade installed Debian packages without
+   allowing package removals.
+3. Pull the configured container images.
+4. Restart the managed stack.
+5. Verify localhost and HTTPS health checks.
+6. Record the result and schedule a controlled reboot when a package marker or
+   newly installed kernel requires it.
 
-It does not run APT, update the host kernel, or reboot the appliance. Debian
-security packages are handled separately by `unattended-upgrades`; automatic
-reboots remain disabled so the administrator controls maintenance timing.
+Periodic `unattended-upgrades` remains restricted to Debian security origins
+and does not reboot automatically. An explicitly confirmed full appliance
+update may update all configured Debian origins and schedules its own reboot
+after a 60-second browser grace period when required.
+
+OBOS itself is updated from a signed GitHub release bundle rather than from a
+mutable branch or `git pull`. See [appliance-updates.md](appliance-updates.md).
 
 ## Web UI Agent Contract
 

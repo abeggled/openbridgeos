@@ -495,7 +495,7 @@ grep -q 'TLS private key material present' scripts/obosctl \
 grep -q 'LAST_UPDATE_FILE=' scripts/obosctl \
   || fail "obosctl update does not track last update state"
 
-grep -q 'format=obos-update-v1' scripts/obosctl \
+grep -q 'format=obos-update-v2' scripts/obosctl \
   || fail "obosctl update state does not declare a format"
 
 grep -q 'update-summary)' scripts/obosctl \
@@ -530,6 +530,33 @@ grep -q 'pre_update_backup_required=true' scripts/obosctl \
 
 grep -q 'pre_update_backup_created=true' scripts/obosctl \
   || fail "obosctl update state does not record pre-update backup creation"
+
+grep -q 'HOST_UPDATE_SCRIPT=' scripts/obosctl \
+  || fail "obosctl update does not invoke the host package updater"
+
+grep -q 'OBOS_RELEASE_UPDATE_SCRIPT=' scripts/obosctl \
+  || fail "obosctl update does not invoke the signed OBOS release updater"
+
+grep -q 'container_images_updated=true' scripts/obosctl \
+  || fail "obosctl update state does not record container image updates"
+
+grep -q 'reboot_scheduled=' scripts/obosctl \
+  || fail "obosctl update state does not record reboot scheduling"
+
+grep -q 'systemctl reboot' scripts/obosctl \
+  || fail "obosctl update does not schedule a required appliance reboot"
+
+grep -q 'OBOS_UPDATE_WORKER_ACTIVE=1' scripts/obosctl \
+  || fail "obosctl does not isolate the privileged appliance update in a transient worker"
+
+grep -q 'OBOS_AGENT_UPDATE_TIMEOUT_SECONDS:-3600' scripts/agent/obos-agent.sh \
+  || fail "obos-agent does not allow appliance updates enough execution time"
+
+grep -q 'OBOS_AGENT_HTTP_UPDATE_TIMEOUT_SECONDS", "3600"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not allow appliance updates enough execution time"
+
+grep -q 'proxy_read_timeout 3700s;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not allow complete appliance updates enough execution time"
 
 grep -q 'update: blocked; pre-update backup was not created' scripts/obosctl \
   || fail "obosctl update does not block when the pre-update backup is missing"
@@ -753,6 +780,9 @@ grep -q 'data-mutation-action="update"' apps/obos-web/index.html \
 grep -q '/usr/bin/obosctl update-rollback-plan' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow update rollback planning"
 
+grep -q '/usr/bin/obosctl update-release-summary' packaging/sudoers/obos-agent \
+  || fail "obos-agent sudoers policy does not allow signed release preview"
+
 grep -q '/usr/bin/obosctl system-summary' packaging/sudoers/obos-agent \
   || fail "obos-agent sudoers policy does not allow system summary"
 
@@ -962,6 +992,18 @@ grep -q 'docker.io' scripts/bootstrap/provision-debian.sh \
 
 grep -q 'unattended-upgrades' scripts/bootstrap/provision-debian.sh \
   || fail "unattended security upgrade package is not installed during provisioning"
+
+grep -q 'minisign' scripts/bootstrap/provision-debian.sh \
+  || fail "release signature verifier is not installed during provisioning"
+
+grep -q 'scripts/update/update-host.sh' scripts/bootstrap/provision-debian.sh \
+  || fail "host update helper is not installed during provisioning"
+
+grep -q 'scripts/update/update-obos-release.sh' scripts/bootstrap/provision-debian.sh \
+  || fail "signed OBOS release updater is not installed during provisioning"
+
+grep -q 'OBOS_RELEASE_MINISIGN_PUBLIC_KEY' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning cannot pin the OBOS release public key"
 
 grep -q '20auto-upgrades' scripts/bootstrap/provision-debian.sh \
   || fail "apt periodic unattended upgrade config is not installed"

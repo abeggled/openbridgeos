@@ -340,8 +340,32 @@ grep -q 'data-confirm-dialog' "${INDEX}" \
 grep -q 'data-confirm-dialog' "${DIAGNOSTICS}" \
   || fail "diagnostics does not define the branded mutation confirmation dialog"
 
-grep -q '>Update Containers</button>' "${INDEX}" \
-  || fail "container-only update control is ambiguously labelled"
+grep -q '>Update Appliance</button>' "${INDEX}" \
+  || fail "complete appliance update control is ambiguously labelled"
+
+grep -q 'update-summary:last_update_os_packages_updated' "${INDEX}" \
+  || fail "web UI does not show host package update state"
+
+grep -q 'update-summary:last_update_obos_release_status' "${INDEX}" \
+  || fail "web UI does not show signed OBOS release update state"
+
+grep -q 'update-release-summary:available_version' "${INDEX}" \
+  || fail "web UI does not show the signed release preview version"
+
+grep -q 'data-release-notes' "${INDEX}" \
+  || fail "web UI does not define a signed release notes panel"
+
+grep -q 'function renderReleaseNotes' "${JS}" \
+  || fail "web UI does not safely render signed release notes"
+
+grep -q 'Available signed OBOS release' "${JS}" \
+  || fail "update confirmation does not include the signed release preview"
+
+grep -q 'update-summary:last_update_container_images_updated' "${INDEX}" \
+  || fail "web UI does not show container image update state"
+
+grep -q 'update-summary:last_update_reboot_pending' "${INDEX}" \
+  || fail "web UI does not show pending update reboot state"
 
 grep -q 'data-mutation-action="start"' "${INDEX}" \
   || fail "web UI does not expose start mutation control"
@@ -415,8 +439,14 @@ grep -q 'function confirmMutation' "${JS}" \
 grep -q 'confirmationDialog.showModal()' "${JS}" \
   || fail "web UI does not open the mutation confirmation dialog"
 
-grep -q 'This does not update Debian packages or reboot the appliance' "${JS}" \
-  || fail "web UI update confirmation does not explain its container-only scope"
+grep -q 'updates all Debian packages' "${JS}" \
+  || fail "web UI update confirmation does not explain its appliance-wide scope"
+
+grep -q 'signed OBOS GitHub release' "${JS}" \
+  || fail "web UI update confirmation does not explain signed OBOS release updates"
+
+grep -q 'reboots automatically after a 60-second grace period' "${JS}" \
+  || fail "web UI update confirmation does not explain automatic reboot behavior"
 
 if grep -q 'window.confirm' "${JS}"; then
   fail "web UI still uses native browser confirmation prompts"

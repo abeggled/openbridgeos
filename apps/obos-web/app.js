@@ -37,6 +37,7 @@
   const securityFailures = document.querySelector("[data-security-failures]");
   const mvpFailureDetails = document.querySelector("[data-mvp-failure-details]");
   const mvpFailures = document.querySelector("[data-mvp-failures]");
+  const releaseNotes = document.querySelector("[data-release-notes]");
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const actionConfirmations = {
     start: {
@@ -58,9 +59,9 @@
       tone: "warning",
     },
     update: {
-      title: "Update OBS containers?",
-      body: "Creates a backup, pulls the configured container images, restarts OBS, and verifies local and HTTPS health. This does not update Debian packages or reboot the appliance.",
-      label: "Update Containers",
+      title: "Update the complete appliance?",
+      body: "Checks and verifies the signed OBOS GitHub release, creates an OBS backup, updates all Debian packages (including the kernel and container runtime), pulls the configured container images, restarts OBS, and verifies health. If required, the appliance reboots automatically after a 60-second grace period. System changes are not covered by the OBS data rollback backup.",
+      label: "Update Appliance",
       tone: "warning",
     },
     backup: {
@@ -301,6 +302,10 @@
       "status-summary:health_local": "ok",
       "status-summary:health_https_proxy": "ok",
       "system-summary:default_route_present": "true",
+      "update-summary:last_update_present": "true",
+      "update-summary:last_update_os_packages_updated": "true",
+      "update-summary:last_update_container_images_updated": "true",
+      "update-summary:last_update_reboot_pending": "false",
       "security-summary:result": "pass",
       "security-summary:fail_count": "0",
       "mvp-readiness-summary:result": "pass",
@@ -322,6 +327,12 @@
     }
     if (action === "mqtt-summary" && ["mqtt_host_port", "mqtt_ws_host_port"].includes(key)) {
       return normalized.startsWith("127.0.0.1:") ? "ok" : "error";
+    }
+    if (action === "update-summary" && key === "last_update_obos_release_status") {
+      return ["current", "updated"].includes(normalized) ? "ok" : "error";
+    }
+    if (action === "update-release-summary" && key === "release_status") {
+      return ["available", "current"].includes(normalized) ? "ok" : "error";
     }
     if (["fail", "failed", "error", "unavailable", "expired", "missing", "unparseable"].includes(normalized)) {
       return "error";
@@ -365,6 +376,24 @@
     container.hidden = failures.length === 0;
   }
 
+  function releaseNoteText(values) {
+    return Object.entries(values)
+      .filter(([key, value]) => /^release_note_\d{3}$/.test(key) && value !== undefined)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([, value]) => value)
+      .join("\n")
+      .trim();
+  }
+
+  function renderReleaseNotes(values) {
+    if (!releaseNotes) {
+      return;
+    }
+    const notes = releaseNoteText(values);
+    releaseNotes.textContent = notes || "No signed release notes are available.";
+    releaseNotes.dataset.state = notes ? "ok" : "neutral";
+  }
+
   async function loadAction(action, targets) {
     for (const target of targets) {
       setField(target.element, "loading", "loading");
@@ -392,6 +421,9 @@
       if (action === "mvp-readiness-summary") {
         renderFailures(mvpFailureDetails, mvpFailures, values);
       }
+      if (action === "update-release-summary") {
+        renderReleaseNotes(values);
+      }
       if (action === "tls-summary" && caDownloadLink) {
         caDownloadLink.hidden = values.trust_export_present !== "true";
       }
@@ -404,6 +436,9 @@
       }
       if (action === "mvp-readiness-summary") {
         renderFailures(mvpFailureDetails, mvpFailures, {});
+      }
+      if (action === "update-release-summary") {
+        renderReleaseNotes({});
       }
       for (const target of targets) {
         setField(target.element, "unavailable", "error");
@@ -653,7 +688,21 @@
       tone: "warning",
     };
     confirmationDialogTitle.textContent = confirmation.title;
-    confirmationDialogBody.textContent = confirmation.body;
+    let body = confirmation.body;
+    if (action === "update") {
+      const release = latestValues.get("update-release-summary") || {};
+      const notes = releaseNoteText(release);
+      const version = release.available_version;
+      if (release.update_available === "true" && version) {
+        body += `\n\nAvailable signed OBOS release: ${version}`;
+        if (notes) {
+          body += `\n\nRelease notes:\n${notes}`;
+        }
+      } else if (release.release_status === "not-configured") {
+        body += "\n\nOBOS release updates are not configured because no trusted release signing key is installed.";
+      }
+    }
+    confirmationDialogBody.textContent = body;
     confirmationDialogAccept.textContent = confirmation.label;
     confirmationDialog.dataset.tone = confirmation.tone;
     confirmationDialog.returnValue = "cancel";
@@ -754,16 +803,20 @@
       if (!response.ok) {
         throw new Error(mutationErrorMessage(text, `HTTP ${response.status}`));
       }
+      const responseValues = parseAgentResponse(text);
       if (action === "portable-export") {
-        setPortableDownload(parseAgentResponse(text));
+        setPortableDownload(responseValues);
       }
       if (action === "web-auth-rotate") {
-        setWebAuthPassword(parseAgentResponse(text));
+        setWebAuthPassword(responseValues);
       }
       if (action === "set-hostname" && hostIdentityTlsNotice) {
         hostIdentityTlsNotice.hidden = false;
       }
-      const completedMessage = action === "set-hostname" ? "completed; renew leaf to apply FQDN" : "completed";
+      let completedMessage = action === "set-hostname" ? "completed; renew leaf to apply FQDN" : "completed";
+      if (action === "update" && responseValues["reboot-scheduled"] === "true") {
+        completedMessage = `completed; reboot scheduled in ${responseValues["reboot-delay-seconds"] || "60"} seconds`;
+      }
       setMutationStatus(statusTarget, completedMessage, "ok");
       void refresh();
     } catch (error) {

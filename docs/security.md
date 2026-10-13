@@ -181,10 +181,11 @@ Image pinning can be audited with
 
 ## Updates
 
-Host security updates and application updates are intentionally separate.
-Debian security updates are handled by `unattended-upgrades` for security
-origins only, with automatic reboots disabled. open bridge server container
-updates remain an explicit `obosctl update` action.
+Debian security updates continue to run automatically through
+`unattended-upgrades` for security origins only, with automatic reboots
+disabled. The explicitly confirmed `obosctl update` action is broader: it
+updates installed Debian packages from all configured origins, pulls the OBS
+container images, verifies the appliance, and schedules a reboot when required.
 
 A successful `obosctl update` should leave an audit-friendly state record at
 `/srv/obos/state/last-update`. The record should include the completion time,

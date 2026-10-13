@@ -8,6 +8,7 @@ PORTABLE_IMPORT_DIR="${OBOS_AGENT_PORTABLE_IMPORT_DIR:-/srv/obos/state/portable-
 ONBOARDING_STATE_DIR="${OBOS_AGENT_ONBOARDING_STATE_DIR:-/srv/obos/state/onboarding}"
 TIMEOUT_SECONDS="${OBOS_AGENT_TIMEOUT_SECONDS:-30}"
 MUTATION_TIMEOUT_SECONDS="${OBOS_AGENT_MUTATION_TIMEOUT_SECONDS:-600}"
+UPDATE_TIMEOUT_SECONDS="${OBOS_AGENT_UPDATE_TIMEOUT_SECONDS:-3600}"
 AGENT_AUDIT_LOG="${OBOS_AGENT_AUDIT_LOG:-/srv/obos/state/agent/obos-agent-audit.log}"
 
 usage() {
@@ -19,6 +20,7 @@ Read-only actions:
   status-summary
   system-summary
   update-summary
+  update-release-summary
   update-rollback-plan
   backup-summary
   backup-list
@@ -325,6 +327,7 @@ action=actions|mutating=false
 action=status-summary|mutating=false
 action=system-summary|mutating=false
 action=update-summary|mutating=false
+action=update-release-summary|mutating=false
 action=update-rollback-plan|mutating=false
 action=backup-summary|mutating=false
 action=backup-list|mutating=false
@@ -451,6 +454,10 @@ case "${1:-}" in
     require_no_extra_args "$@"
     run_obosctl update-summary "${TIMEOUT_SECONDS}" false update-summary
     ;;
+  update-release-summary)
+    require_no_extra_args "$@"
+    run_obosctl update-release-summary "${TIMEOUT_SECONDS}" false update-release-summary
+    ;;
   update-rollback-plan)
     require_no_extra_args "$@"
     run_obosctl update-rollback-plan "${TIMEOUT_SECONDS}" false update-rollback-plan
@@ -533,7 +540,7 @@ case "${1:-}" in
     ;;
   update)
     require_confirm_args "$@"
-    run_obosctl update "${MUTATION_TIMEOUT_SECONDS}" true update
+    run_obosctl update "${UPDATE_TIMEOUT_SECONDS}" true update
     ;;
   backup)
     require_confirm_args "$@"
