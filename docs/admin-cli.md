@@ -142,6 +142,11 @@ The update command performs the first conservative update flow:
 4. Poll the localhost and HTTPS proxy health endpoints for up to 60 seconds.
 5. Write `/srv/obos/state/last-update` after both health checks pass.
 
+This command updates only the configured OBS container images. It does not run
+APT, update Debian packages, install a host kernel, or reboot the appliance.
+Debian security packages are managed separately by `unattended-upgrades`, with
+automatic reboot disabled.
+
 If the pre-update backup is not created or cannot be found, the update is
 blocked before images are pulled or services are restarted.
 

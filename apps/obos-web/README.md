@@ -64,3 +64,8 @@ encrypted portable backups, and decrypt them into private import staging.
 Restore apply remains outside the HTML controls.
 
 Restore apply controls are intentionally absent from HTML.
+
+Mutation buttons use an application-styled confirmation dialog with an
+action-specific description instead of the browser's native confirmation
+prompt. The container update dialog explicitly distinguishes OBS image updates
+from Debian package updates and reboots.

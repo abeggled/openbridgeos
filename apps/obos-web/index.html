@@ -62,7 +62,7 @@
             <button type="button" data-mutation-action="start" data-confirm="start" data-mutation-status-target="service-action">Start</button>
             <button type="button" data-mutation-action="stop" data-confirm="stop" data-mutation-status-target="service-action">Stop</button>
             <button type="button" data-mutation-action="restart" data-confirm="restart" data-mutation-status-target="service-action">Restart</button>
-            <button type="button" data-mutation-action="update" data-confirm="update" data-mutation-status-target="service-action">Update</button>
+            <button type="button" data-mutation-action="update" data-confirm="update" data-mutation-status-target="service-action" title="Back up OBS, pull new container images, restart the stack, and verify health">Update Containers</button>
             <button type="button" data-logout>Logout</button>
             <button class="icon-button" type="button" aria-label="Refresh status" title="Refresh status" data-refresh-status>
               <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
@@ -229,6 +229,20 @@
         <button class="help-close" type="button" aria-label="Close help" data-help-close>×</button>
       </div>
       <p data-help-dialog-body></p>
+    </dialog>
+    <dialog class="confirmation-dialog" data-confirm-dialog aria-labelledby="confirmation-dialog-title" aria-describedby="confirmation-dialog-body">
+      <div class="confirmation-dialog-heading">
+        <span class="confirmation-icon" aria-hidden="true">!</span>
+        <div>
+          <p class="eyebrow">Confirm action</p>
+          <h2 id="confirmation-dialog-title" data-confirm-dialog-title>Continue?</h2>
+        </div>
+      </div>
+      <p id="confirmation-dialog-body" data-confirm-dialog-body></p>
+      <form method="dialog" class="confirmation-actions">
+        <button type="submit" value="cancel" autofocus>Cancel</button>
+        <button class="primary-action" type="submit" value="confirm" data-confirm-dialog-accept>Continue</button>
+      </form>
     </dialog>
   </body>
 </html>
