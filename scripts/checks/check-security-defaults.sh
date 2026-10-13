@@ -1005,6 +1005,12 @@ grep -q 'OBOS_MQTT_LAN_SOURCE_CIDR' scripts/hardening/set-mqtt-lan-access.sh \
 grep -q 'OBOS_NFT_TMP_FILE:-/etc/obos/nftables.conf.tmp' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not stage firewall changes in its writable configuration directory"
 
+grep -q 'nft -c -f "${tmp}"' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not validate staged firewall changes"
+
+grep -q 'cp "${tmp}" "${NFT_FILE}"' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not preserve its sandbox-mounted firewall target"
+
 grep -q 'is_ipv4_cidr' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not validate IPv4 CIDR numerically"
 
