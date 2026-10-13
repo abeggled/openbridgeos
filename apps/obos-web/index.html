@@ -51,7 +51,7 @@
         <div class="panel-heading">
           <div>
             <p class="eyebrow">Status</p>
-            <h2 id="status-title">Appliance Health</h2>
+            <h2 id="status-title">Appliance Health <button class="help-button" type="button" aria-label="Help for appliance health" data-help-title="Appliance Health" data-help="This area combines the managed OBS service state, direct health checks, update recovery readiness, network state, and the result of the most recent action.">?</button></h2>
           </div>
           <div class="button-row" aria-label="Appliance actions">
             <button type="button" data-mutation-action="start" data-confirm="start" data-mutation-status-target="service-action">Start</button>
@@ -66,31 +66,31 @@
         </div>
         <div class="metric-grid">
           <article>
-            <span>Systemd</span>
+            <span>Systemd <button class="help-button" type="button" aria-label="Help for Systemd" data-help-title="Systemd" data-help="Shows whether the operating-system service that manages the OBS containers is active. Active means systemd completed the managed Compose start successfully.">?</button></span>
             <strong data-agent-field="status-summary:service_active">pending</strong>
           </article>
           <article>
-            <span>Local health</span>
+            <span>Local health <button class="help-button" type="button" aria-label="Help for local health" data-help-title="Local health" data-help="Checks the OBS health endpoint directly on localhost. OK confirms that the application responds without involving nginx or TLS.">?</button></span>
             <strong data-agent-field="status-summary:health_local">pending</strong>
           </article>
           <article>
-            <span>HTTPS proxy</span>
+            <span>HTTPS proxy <button class="help-button" type="button" aria-label="Help for HTTPS proxy" data-help-title="HTTPS proxy" data-help="Checks OBS through nginx using the appliance Root CA. OK confirms the complete local HTTPS path and certificate trust.">?</button></span>
             <strong data-agent-field="status-summary:health_https_proxy">pending</strong>
           </article>
           <article>
-            <span>Last update</span>
+            <span>Last update <button class="help-button" type="button" aria-label="Help for last update" data-help-title="Last update" data-help="True means at least one complete update has pulled images, restarted OBS, passed both health checks, and written an update record.">?</button></span>
             <strong data-agent-field="update-summary:last_update_present">pending</strong>
           </article>
           <article>
-            <span title="A verified pre-update backup is available for a manually confirmed restore.">Rollback backup</span>
+            <span>Rollback backup <button class="help-button" type="button" aria-label="Help for rollback backup" data-help-title="Rollback backup" data-help="True means the backup created immediately before the last successful update still exists. Rollback is deliberately manual: inspect, stage, review, and explicitly apply the restore from the CLI.">?</button></span>
             <strong data-agent-field="update-summary:rollback_backup_present">pending</strong>
           </article>
           <article>
-            <span>Network</span>
+            <span>Network <button class="help-button" type="button" aria-label="Help for network" data-help-title="Network" data-help="True means the appliance has a default network route. It does not by itself prove Internet or DNS connectivity.">?</button></span>
             <strong data-agent-field="system-summary:default_route_present">pending</strong>
           </article>
           <article>
-            <span>Action</span>
+            <span>Action <button class="help-button" type="button" aria-label="Help for action status" data-help-title="Action status" data-help="Shows the current or most recent Start, Stop, Restart, or Update operation. On failure the detailed agent error is displayed here.">?</button></span>
             <strong data-mutation-status="service-action">ready</strong>
           </article>
         </div>
@@ -99,7 +99,7 @@
       <section class="grid" aria-label="Operational panels">
         <article class="panel">
           <div class="panel-heading">
-            <h2>Backups</h2>
+            <h2>Backups <button class="help-button" type="button" aria-label="Help for backups" data-help-title="Backups" data-help="Creates appliance-local backups containing OBS data, MQTT state, configuration, appliance identity, and TLS private material. Portable exports add passphrase-based encryption for transfer.">?</button></h2>
             <div class="button-row">
               <button type="button" data-mutation-action="backup" data-confirm="backup" data-mutation-status-target="backup">Create Backup</button>
               <input id="portable-passphrase" type="password" autocomplete="new-password" placeholder="export passphrase">
@@ -119,7 +119,7 @@
 
         <article class="panel">
           <div class="panel-heading">
-            <h2>Restore</h2>
+            <h2>Restore <button class="help-button" type="button" aria-label="Help for restore" data-help-title="Restore" data-help="Restore is staged first and never applied directly from this web console. Inspect the staged result and use an explicitly confirmed CLI apply step.">?</button></h2>
             <div class="button-row">
               <button type="button" data-mutation-action="restore-stage" data-confirm="restore-stage" data-mutation-status-target="restore-stage" data-mutation-backup-from="backup-summary:latest_backup">Stage Latest</button>
               <input id="portable-import-file" type="file" accept=".tar,application/x-tar">
@@ -139,7 +139,7 @@
 
         <article class="panel">
           <div class="panel-heading">
-            <h2>MQTT Exposure</h2>
+            <h2>MQTT Exposure <button class="help-button" type="button" aria-label="Help for MQTT exposure" data-help-title="MQTT Exposure" data-help="MQTT is localhost-only by default. Enable LAN only when external clients require it, and restrict the source CIDR whenever possible.">?</button></h2>
             <div class="button-row">
               <input id="mqtt-source-cidr" type="text" inputmode="text" autocomplete="off" placeholder="source CIDR">
               <button type="button" data-mutation-action="mqtt-enable-lan" data-confirm="mqtt-enable-lan" data-mutation-status-target="mqtt">Enable LAN</button>
@@ -156,7 +156,7 @@
 
         <article class="panel">
           <div class="panel-heading">
-            <h2>Host Basics</h2>
+            <h2>Host Basics <button class="help-button" type="button" aria-label="Help for host basics" data-help-title="Host Basics" data-help="Changes the Debian hostname and timezone used by logs, certificates, and administrative diagnostics.">?</button></h2>
             <div class="button-row">
               <input id="host-name" type="text" inputmode="text" autocomplete="off" placeholder="hostname">
               <button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Set Hostname</button>
@@ -174,26 +174,27 @@
 
         <article class="panel">
           <div class="panel-heading">
-            <h2>TLS Trust</h2>
+            <h2>TLS Trust <button class="help-button" type="button" aria-label="Help for TLS trust" data-help-title="TLS Trust" data-help="OBOS maintains a private local Root CA and an appliance leaf certificate. Install only the exported Root CA on trusted client devices; never export or copy the private keys.">?</button></h2>
             <div class="button-row">
               <button type="button" data-mutation-action="tls-generate" data-confirm="tls-generate" data-mutation-status-target="tls">Generate</button>
               <button type="button" data-mutation-action="tls-export" data-confirm="tls-export" data-mutation-status-target="tls">Export</button>
+              <a class="download-link" href="/obos/api/v1/downloads/trust-ca" data-ca-download hidden>Download Root CA</a>
             </div>
           </div>
           <dl>
-            <div><dt>Local CA</dt><dd data-agent-field="tls-summary:local_ca_present">pending</dd></div>
+            <div><dt>Local CA <button class="help-button" type="button" aria-label="Help for local CA" data-help-title="Local Root CA" data-help="The appliance-specific trust anchor. Export and install this public certificate on clients that should trust the OBOS HTTPS certificate.">?</button></dt><dd data-agent-field="tls-summary:local_ca_present">pending</dd></div>
             <div><dt>CA fingerprint</dt><dd data-agent-field="tls-summary:local_ca_sha256_fingerprint">pending</dd></div>
-            <div><dt>Leaf certificate</dt><dd data-agent-field="tls-summary:leaf_present">pending</dd></div>
+            <div><dt>Leaf certificate <button class="help-button" type="button" aria-label="Help for leaf certificate" data-help-title="Leaf certificate" data-help="The HTTPS server certificate presented by this appliance. It is signed by the local Root CA and should not be installed as the trust anchor.">?</button></dt><dd data-agent-field="tls-summary:leaf_present">pending</dd></div>
             <div><dt>Leaf fingerprint</dt><dd data-agent-field="tls-summary:leaf_sha256_fingerprint">pending</dd></div>
             <div><dt>Leaf expiry</dt><dd data-agent-field="tls-summary:leaf_expiry_warning">pending</dd></div>
-            <div><dt>Trust bundle</dt><dd data-agent-field="tls-summary:trust_export_present">pending</dd></div>
+            <div><dt>Trust bundle <button class="help-button" type="button" aria-label="Help for trust bundle" data-help-title="Trust bundle" data-help="True means public trust files were generated on the appliance. Use Download Root CA to retrieve the Root CA certificate; no private key is included.">?</button></dt><dd data-agent-field="tls-summary:trust_export_present">pending</dd></div>
             <div><dt>TLS action</dt><dd data-mutation-status="tls">ready</dd></div>
           </dl>
         </article>
 
         <article class="panel wide">
           <div class="panel-heading">
-            <h2>Security Baseline</h2>
+            <h2>Security Baseline <button class="help-button" type="button" aria-label="Help for security baseline" data-help-title="Security Baseline" data-help="Checks host hardening, file permissions, firewall policy, TLS, service isolation, and configured exposure. MVP readiness additionally checks whether the complete technical appliance contract is available.">?</button></h2>
             <div class="button-row">
               <button type="button" data-run-security-audit>Run Audit</button>
               <button type="button" data-run-mvp-readiness>Check Readiness</button>
@@ -222,7 +223,7 @@
 
         <article class="panel wide">
           <div class="panel-heading">
-            <h2>Logs</h2>
+            <h2>Logs <button class="help-button" type="button" aria-label="Help for logs" data-help-title="Logs" data-help="Displays a bounded recent tail from systemd and the OBS Compose stack. Raw unbounded logs are intentionally not exposed through the browser.">?</button></h2>
             <button type="button" data-load-logs>View Logs</button>
           </div>
           <dl class="inline-list">
@@ -235,5 +236,12 @@
         </article>
       </section>
     </main>
+    <dialog class="help-dialog" data-help-dialog aria-labelledby="help-dialog-title">
+      <div class="help-dialog-heading">
+        <h2 id="help-dialog-title" data-help-dialog-title>Help</h2>
+        <button class="help-close" type="button" aria-label="Close help" data-help-close>×</button>
+      </div>
+      <p data-help-dialog-body></p>
+    </dialog>
   </body>
 </html>

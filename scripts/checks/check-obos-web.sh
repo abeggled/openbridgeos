@@ -197,6 +197,15 @@ grep -q 'data-confirm="tls-export"' "${INDEX}" \
 grep -q 'data-mutation-status="tls"' "${INDEX}" \
   || fail "web UI does not expose TLS mutation status"
 
+grep -q 'data-ca-download' "${INDEX}" \
+  || fail "web UI does not expose the exported Root CA download"
+
+grep -q 'data-help-dialog' "${INDEX}" \
+  || fail "web UI does not define contextual help overlay"
+
+grep -q 'data-help-title' "${INDEX}" \
+  || fail "web UI does not expose contextual help controls"
+
 grep -q 'data-agent-field="security-summary:' "${INDEX}" \
   || fail "web UI does not expose security summary placeholders"
 
@@ -398,6 +407,18 @@ grep -q '.button-row' "${CSS}" \
 grep -q '.download-link' "${CSS}" \
   || fail "web UI CSS does not style portable download link"
 
+grep -q '.help-button' "${CSS}" \
+  || fail "web UI CSS does not style compact help controls"
+
+grep -q '.help-dialog' "${CSS}" \
+  || fail "web UI CSS does not style the help overlay"
+
+grep -q 'helpDialog.showModal()' "${JS}" \
+  || fail "web UI does not open contextual help overlay"
+
+grep -q 'action === "tls-export"' "${JS}" \
+  || fail "web UI does not reveal the Root CA download after export"
+
 grep -q '^input {' "${CSS}" \
   || fail "web UI CSS does not style input controls"
 
@@ -493,8 +514,11 @@ grep -q 'ConditionPathExists=/etc/obos/web.htpasswd' packaging/systemd/obos-open
   || fail "open bridge server service can start before onboarding credentials exist"
 
 # shellcheck disable=SC2016
-grep -q 'systemctl start "${SERVICE_NAME}"' scripts/obosctl \
+grep -q 'systemctl start --no-block "${SERVICE_NAME}"' scripts/obosctl \
   || fail "completed onboarding does not start open bridge server"
+
+grep -q 'window.location.replace("/obos/")' "${ONBOARDING_JS}" \
+  || fail "completed onboarding does not redirect immediately to login"
 
 grep -q 'mutationErrorMessage' "${JS}" \
   || fail "web UI does not expose actionable mutation errors"
