@@ -123,5 +123,19 @@
       </div>
       <p data-help-dialog-body></p>
     </dialog>
+    <dialog class="confirmation-dialog" data-confirm-dialog aria-labelledby="confirmation-dialog-title" aria-describedby="confirmation-dialog-body">
+      <div class="confirmation-dialog-heading">
+        <span class="confirmation-icon" aria-hidden="true">!</span>
+        <div>
+          <p class="eyebrow">Confirm action</p>
+          <h2 id="confirmation-dialog-title" data-confirm-dialog-title>Continue?</h2>
+        </div>
+      </div>
+      <p id="confirmation-dialog-body" data-confirm-dialog-body></p>
+      <form method="dialog" class="confirmation-actions">
+        <button type="submit" value="cancel" autofocus>Cancel</button>
+        <button class="primary-action" type="submit" value="confirm" data-confirm-dialog-accept>Continue</button>
+      </form>
+    </dialog>
   </body>
 </html>

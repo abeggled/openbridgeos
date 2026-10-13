@@ -117,6 +117,88 @@ button:disabled {
   background: rgb(16 24 32 / 48%);
 }
 
+.confirmation-dialog {
+  width: min(500px, calc(100% - 32px));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 24px;
+  box-shadow: 0 24px 64px rgb(22 32 36 / 28%);
+}
+
+.confirmation-dialog::backdrop {
+  background: rgb(16 24 32 / 55%);
+  backdrop-filter: blur(2px);
+}
+
+.confirmation-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.confirmation-dialog-heading h2 {
+  margin: 0;
+}
+
+.confirmation-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--accent-strong);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.confirmation-dialog[data-tone="warning"] .confirmation-icon {
+  background: #fff4d6;
+  color: var(--warn);
+}
+
+.confirmation-dialog[data-tone="danger"] .confirmation-icon {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.confirmation-dialog > p {
+  margin: 18px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.primary-action {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.primary-action:hover:not(:disabled) {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+}
+
+.confirmation-dialog[data-tone="danger"] .primary-action {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+.confirmation-dialog[data-tone="danger"] .primary-action:hover:not(:disabled) {
+  border-color: #8f1c13;
+  background: #8f1c13;
+}
+
 .help-dialog-heading {
   display: flex;
   align-items: center;

@@ -334,6 +334,15 @@ if grep -q '<span aria-hidden="true">R</span>' "${INDEX}"; then
   fail "overview still exposes the placeholder refresh letter"
 fi
 
+grep -q 'data-confirm-dialog' "${INDEX}" \
+  || fail "overview does not define the branded mutation confirmation dialog"
+
+grep -q 'data-confirm-dialog' "${DIAGNOSTICS}" \
+  || fail "diagnostics does not define the branded mutation confirmation dialog"
+
+grep -q '>Update Containers</button>' "${INDEX}" \
+  || fail "container-only update control is ambiguously labelled"
+
 grep -q 'data-mutation-action="start"' "${INDEX}" \
   || fail "web UI does not expose start mutation control"
 
@@ -399,6 +408,19 @@ grep -q 'unsupportedActions' "${JS}" \
 
 grep -q 'runMutation' "${JS}" \
   || fail "web UI script does not handle confirmed mutations"
+
+grep -q 'function confirmMutation' "${JS}" \
+  || fail "web UI does not provide application-styled mutation confirmations"
+
+grep -q 'confirmationDialog.showModal()' "${JS}" \
+  || fail "web UI does not open the mutation confirmation dialog"
+
+grep -q 'This does not update Debian packages or reboot the appliance' "${JS}" \
+  || fail "web UI update confirmation does not explain its container-only scope"
+
+if grep -q 'window.confirm' "${JS}"; then
+  fail "web UI still uses native browser confirmation prompts"
+fi
 
 grep -q 'Content-Type": "application/json"' "${JS}" \
   || fail "web UI mutations do not use JSON requests"
@@ -501,6 +523,9 @@ grep -q '.help-button' "${CSS}" \
 
 grep -q '.help-dialog' "${CSS}" \
   || fail "web UI CSS does not style the help overlay"
+
+grep -q '.confirmation-dialog' "${CSS}" \
+  || fail "web UI CSS does not style mutation confirmations"
 
 grep -q 'helpDialog.showModal()' "${JS}" \
   || fail "web UI does not open contextual help overlay"

@@ -28,12 +28,102 @@
   const helpDialogTitle = document.querySelector("[data-help-dialog-title]");
   const helpDialogBody = document.querySelector("[data-help-dialog-body]");
   const helpCloseButton = document.querySelector("[data-help-close]");
+  const confirmationDialog = document.querySelector("[data-confirm-dialog]");
+  const confirmationDialogTitle = document.querySelector("[data-confirm-dialog-title]");
+  const confirmationDialogBody = document.querySelector("[data-confirm-dialog-body]");
+  const confirmationDialogAccept = document.querySelector("[data-confirm-dialog-accept]");
   const hostIdentityTlsNotice = document.querySelector("[data-host-identity-tls-notice]");
   const securityFailureDetails = document.querySelector("[data-security-failure-details]");
   const securityFailures = document.querySelector("[data-security-failures]");
   const mvpFailureDetails = document.querySelector("[data-mvp-failure-details]");
   const mvpFailures = document.querySelector("[data-mvp-failures]");
   const unsupportedActions = new Set(["restore-apply-plan"]);
+  const actionConfirmations = {
+    start: {
+      title: "Start open bridge server?",
+      body: "Starts the managed OBS container stack and makes its services available.",
+      label: "Start",
+      tone: "default",
+    },
+    stop: {
+      title: "Stop open bridge server?",
+      body: "Stops the managed OBS container stack. Connected clients and automations will be interrupted until it is started again.",
+      label: "Stop OBS",
+      tone: "danger",
+    },
+    restart: {
+      title: "Restart open bridge server?",
+      body: "Restarts the OBS container stack. Expect a short service interruption while health checks recover.",
+      label: "Restart",
+      tone: "warning",
+    },
+    update: {
+      title: "Update OBS containers?",
+      body: "Creates a backup, pulls the configured container images, restarts OBS, and verifies local and HTTPS health. This does not update Debian packages or reboot the appliance.",
+      label: "Update Containers",
+      tone: "warning",
+    },
+    backup: {
+      title: "Create appliance backup?",
+      body: "Creates a new local backup of OBS data, MQTT state, configuration, identity, and TLS material.",
+      label: "Create Backup",
+      tone: "default",
+    },
+    "portable-export": {
+      title: "Create portable export?",
+      body: "Encrypts the latest appliance backup with the supplied passphrase and prepares it for download.",
+      label: "Create Export",
+      tone: "default",
+    },
+    "restore-stage": {
+      title: "Stage the latest backup?",
+      body: "Extracts the latest backup into private staging for inspection. It does not change the running appliance.",
+      label: "Stage Backup",
+      tone: "warning",
+    },
+    "portable-import-stage": {
+      title: "Stage the portable backup?",
+      body: "Decrypts the uploaded portable backup into private staging for inspection. It does not apply the backup.",
+      label: "Stage Import",
+      tone: "warning",
+    },
+    "mqtt-enable-lan": {
+      title: "Enable MQTT access from the LAN?",
+      body: "Exposes the MQTT listeners beyond localhost and causes the secure-default checks to fail. Restrict the source CIDR whenever possible.",
+      label: "Enable LAN Access",
+      tone: "danger",
+    },
+    "mqtt-disable-lan": {
+      title: "Return MQTT to localhost-only?",
+      body: "Removes external MQTT access and restores the secure localhost-only listener policy.",
+      label: "Disable LAN Access",
+      tone: "default",
+    },
+    "set-hostname": {
+      title: "Change the host identity?",
+      body: "Changes the appliance hostname and optional domain. The active TLS leaf remains unchanged until Renew Leaf is selected.",
+      label: "Set Host Identity",
+      tone: "warning",
+    },
+    "set-timezone": {
+      title: "Change the appliance timezone?",
+      body: "Applies the selected timezone to the operating system.",
+      label: "Set Timezone",
+      tone: "default",
+    },
+    "tls-renew-leaf": {
+      title: "Renew the TLS leaf certificate?",
+      body: "Issues a new server certificate for the current host identity and addresses, keeps the Root CA, and reloads nginx.",
+      label: "Renew Leaf",
+      tone: "warning",
+    },
+    "web-auth-rotate": {
+      title: "Rotate the console password?",
+      body: "Replaces the administrator password. The new password is shown once for 60 seconds and cannot be recovered later.",
+      label: "Rotate Password",
+      tone: "danger",
+    },
+  };
   const latestValues = new Map();
   let webAuthPasswordTimer;
 
@@ -551,13 +641,37 @@
 
   clearWebAuthPasswordButton?.addEventListener("click", clearWebAuthPassword);
 
+  function confirmMutation(action) {
+    if (!confirmationDialog || !confirmationDialogTitle || !confirmationDialogBody || !confirmationDialogAccept) {
+      return Promise.resolve(false);
+    }
+    const fallbackLabel = action.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+    const confirmation = actionConfirmations[action] || {
+      title: `Continue with ${fallbackLabel}?`,
+      body: "This action changes the appliance configuration or runtime state.",
+      label: "Continue",
+      tone: "warning",
+    };
+    confirmationDialogTitle.textContent = confirmation.title;
+    confirmationDialogBody.textContent = confirmation.body;
+    confirmationDialogAccept.textContent = confirmation.label;
+    confirmationDialog.dataset.tone = confirmation.tone;
+    confirmationDialog.returnValue = "cancel";
+    confirmationDialog.showModal();
+    return new Promise((resolve) => {
+      confirmationDialog.addEventListener("close", () => {
+        resolve(confirmationDialog.returnValue === "confirm");
+      }, { once: true });
+    });
+  }
+
   async function runMutation(button) {
     const action = button.dataset.mutationAction;
     const confirmToken = button.dataset.confirm;
     const statusTarget = button.dataset.mutationStatusTarget || action;
     const backupSource = button.dataset.mutationBackupFrom;
     const portableSource = button.dataset.mutationPortableFrom;
-    if (!action || !confirmToken || !window.confirm(`Confirm ${action}?`)) {
+    if (!action || !confirmToken) {
       return;
     }
 
@@ -618,6 +732,10 @@
         return;
       }
       body.passphrase = passphrase;
+    }
+
+    if (!await confirmMutation(action)) {
+      return;
     }
 
     button.disabled = true;

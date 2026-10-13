@@ -116,18 +116,18 @@ or clearly surfaced during first setup.
 
 ## Update Model
 
-Updates should be deliberate and recoverable:
+The implemented `obosctl update` and web-console **Update Containers** action
+are deliberately scoped to the OBS application stack:
 
-1. Check for available OS, runtime, and app updates.
-2. Show release notes or risk level where possible.
-3. Create or prompt for a backup.
-4. Pull new images.
-5. Restart the affected stack.
-6. Verify health checks.
-7. Keep enough state to show the previous version and last update result.
+1. Create a consistent appliance backup.
+2. Pull the configured container images.
+3. Restart the managed stack.
+4. Verify localhost and HTTPS health checks.
+5. Keep enough state to show the last successful update and rollback backup.
 
-Automatic unattended updates can be considered for security patches, but app
-updates should start as explicit user actions.
+It does not run APT, update the host kernel, or reboot the appliance. Debian
+security packages are handled separately by `unattended-upgrades`; automatic
+reboots remain disabled so the administrator controls maintenance timing.
 
 ## Web UI Agent Contract
 
