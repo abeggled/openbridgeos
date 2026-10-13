@@ -48,6 +48,10 @@ parsing human-oriented command output or writing appliance files directly.
 These commands print key-value records. The agent should reject unknown format
 versions instead of guessing.
 
+`obos-status-summary-v1` includes `obs_version`, taken from the running OBS
+health endpoint and restricted to a short, display-safe version token. It is
+`unknown` when OBS is stopped, unreachable, or returns an invalid value.
+
 `obos-release-update-v1` includes the installed version, latest signed version,
 availability state, and bounded `release_note_NNN` lines. Notes are returned
 only after Minisign verification of the manifest and SHA-256 verification of

@@ -93,6 +93,9 @@ grep -q 'data-agent-field="system-summary:default_route_present"' "${INDEX}" \
 grep -q 'data-agent-field="status-summary:service_active"' "${INDEX}" \
   || fail "web UI does not expose the systemd service state"
 
+grep -q 'data-agent-field="status-summary:obs_version"' "${INDEX}" \
+  || fail "web UI does not expose the running OBS version"
+
 if grep -q 'status-summary:systemd_active' "${INDEX}"; then
   fail "web UI references a nonexistent systemd status field"
 fi

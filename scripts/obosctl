@@ -228,6 +228,29 @@ health() {
   fi
 }
 
+read_obs_version() {
+  health_response=
+  if command -v curl >/dev/null 2>&1; then
+    health_response="$(curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" 2>/dev/null || true)"
+  elif command -v wget >/dev/null 2>&1; then
+    health_response="$(wget -q -T 5 -O - "${HEALTH_URL}" 2>/dev/null || true)"
+  fi
+
+  obs_version="$(printf '%s\n' "${health_response}" |
+    sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
+    head -n 1)"
+  case "${obs_version}" in
+    ""|*[!A-Za-z0-9._+~-]*) echo unknown ;;
+    *)
+      if [ "${#obs_version}" -le 128 ]; then
+        echo "${obs_version}"
+      else
+        echo unknown
+      fi
+      ;;
+  esac
+}
+
 system_summary() {
   hostname_value="$(hostname 2>/dev/null || true)"
   timezone_value=
@@ -384,8 +407,10 @@ status_summary() {
   fi
 
   health_local="failed"
+  obs_version="unknown"
   if health; then
     health_local="ok"
+    obs_version="$(read_obs_version)"
   else
     failed=1
   fi
@@ -407,6 +432,7 @@ format=obos-status-summary-v1
 app=${APP_NAME}
 service=${SERVICE_NAME}
 service_active=${service_active}
+obs_version=${obs_version}
 health_local=${health_local}
 health_https_proxy=${health_https_proxy}
 last_update_present=${last_update_present}

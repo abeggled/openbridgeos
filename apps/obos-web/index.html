@@ -41,6 +41,10 @@
             <dd data-agent-field="status-summary:service_active">pending</dd>
           </div>
           <div>
+            <dt>OBS version</dt>
+            <dd data-agent-field="status-summary:obs_version">pending</dd>
+          </div>
+          <div>
             <dt>Security baseline</dt>
             <dd data-agent-field="security-summary:result">pending</dd>
             <a class="status-link" href="/obos/diagnostics/">View diagnostics</a>
@@ -75,6 +79,10 @@
           <article>
             <span>Systemd <button class="help-button" type="button" aria-label="Help for Systemd" data-help-title="Systemd" data-help="Shows whether the operating-system service that manages the OBS containers is active. Active means systemd completed the managed Compose start successfully.">?</button></span>
             <strong data-agent-field="status-summary:service_active">pending</strong>
+          </article>
+          <article>
+            <span>OBS version <button class="help-button" type="button" aria-label="Help for OBS version" data-help-title="OBS version" data-help="Reports the version returned by the running open bridge server health endpoint. Unknown means OBS is stopped, unreachable, or did not return a valid version.">?</button></span>
+            <strong data-agent-field="status-summary:obs_version">pending</strong>
           </article>
           <article>
             <span>Local health <button class="help-button" type="button" aria-label="Help for local health" data-help-title="Local health" data-help="Checks the OBS health endpoint directly on localhost. OK confirms that the application responds without involving nginx or TLS.">?</button></span>
