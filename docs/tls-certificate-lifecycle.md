@@ -31,6 +31,11 @@ Technical MVP status:
 - confirmed CLI and authenticated web renewal are available through
   `sudo obosctl tls-renew-leaf --confirm tls-renew-leaf`
 - must preserve the existing local CA key and certificate
+- leaf certificates have a maximum validity of 90 days
+- `obos-tls-leaf-renewal.timer` checks daily and renews after certificate day
+  47 (when 43 days or fewer remain)
+- only the newest pre-change recovery backup is retained; older leaf backups
+  are removed after a successful renewal
 
 ### Local CA Rotation
 
@@ -111,6 +116,13 @@ client_reonboarding_required=yes|no
 notes=
 ```
 
-For the technical MVP, leaf renewal is CLI-only. Local CA rotation and imported
-public certificate workflows remain follow-up work unless a release explicitly
-includes the command, tests, and recovery documentation.
+For the technical MVP, leaf renewal is available through the confirmed CLI,
+the authenticated web console, and the automatic renewal timer. Local CA
+rotation and imported public certificate workflows remain follow-up work unless
+a release explicitly includes the command, tests, and recovery documentation.
+
+Changing the hostname or FQDN does not silently replace the active certificate.
+The web console displays this mismatch until **Renew Leaf** has issued a leaf
+containing the current host identity. The daily timer also renews a leaf after
+day 47 and immediately replaces legacy leaves whose validity exceeds the
+90-day maximum.

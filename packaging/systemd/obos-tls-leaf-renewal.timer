@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily OBOS TLS leaf certificate renewal check
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=1h
+Unit=obos-tls-leaf-renewal.service
+
+[Install]
+WantedBy=timers.target

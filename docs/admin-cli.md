@@ -439,10 +439,12 @@ rotating appliance identity implicitly. `tls-renew-leaf-plan` is non-destructive
 and verifies the current CA and leaf material before the confirmed CLI leaf
 renewal command is used. It reports whether renewal is due, confirms that the
 local CA is preserved, and records that client re-onboarding is not required for
-leaf-only renewal. `tls-renew-leaf` is a confirmed CLI-only command that backs
-up the current leaf material, creates a new leaf key and certificate with the
-existing local CA, refreshes the public trust export, and reloads nginx when it
-is active. `tls-status` checks the local CA and leaf
+leaf-only renewal. `tls-renew-leaf` is a confirmed command available to the CLI
+and authenticated web console. It backs up the current leaf material, creates a
+new leaf key and 90-day certificate with the existing local CA, refreshes the
+public trust export, and reloads nginx when it is active. A daily systemd timer
+renews after day 47; one previous leaf backup is retained and older copies are
+pruned. `tls-status` checks the local CA and leaf
 certificate status, including expiry warnings. `tls-summary` prints a stable
 key-value format for agents and the web UI with certificate presence,
 paths, subjects, issuers, expiry states, expiry warnings, and SHA-256

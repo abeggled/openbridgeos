@@ -1286,6 +1286,27 @@ grep -q 'trust_export_refreshed=' scripts/tls/renew-leaf-certificate.sh \
 grep -q 'systemctl reload nginx.service' scripts/tls/renew-leaf-certificate.sh \
   || fail "TLS leaf renewal must reload nginx when active"
 
+grep -q 'DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-90}"' scripts/tls/generate-tls-material.sh \
+  || fail "initial TLS leaf validity is not capped at 90 days"
+
+grep -q 'DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-90}"' scripts/tls/renew-leaf-certificate.sh \
+  || fail "renewed TLS leaf validity is not capped at 90 days"
+
+grep -q 'BACKUP_KEEP="${OBOS_TLS_LEAF_BACKUP_KEEP:-1}"' scripts/tls/renew-leaf-certificate.sh \
+  || fail "TLS leaf backup retention is not bounded"
+
+grep -q 'RENEW_AFTER_DAYS="${OBOS_TLS_RENEW_AFTER_DAYS:-47}"' scripts/tls/auto-renew-leaf-certificate.sh \
+  || fail "automatic TLS leaf renewal does not default to day 47"
+
+grep -q 'leaf_validity_exceeds_' scripts/tls/auto-renew-leaf-certificate.sh \
+  || fail "automatic TLS leaf renewal does not replace overlong legacy leaves"
+
+grep -q 'OnCalendar=daily' packaging/systemd/obos-tls-leaf-renewal.timer \
+  || fail "TLS leaf renewal timer is not scheduled daily"
+
+grep -q 'systemctl enable obos-tls-leaf-renewal.timer' scripts/bootstrap/provision-debian.sh \
+  || fail "TLS leaf renewal timer is not enabled during provisioning"
+
 grep -q 'action=tls-renew-leaf|mutating=true|confirm=tls-renew-leaf' scripts/agent/obos-agent.sh \
   || fail "TLS leaf renewal is not exposed as a confirmed agent mutation"
 

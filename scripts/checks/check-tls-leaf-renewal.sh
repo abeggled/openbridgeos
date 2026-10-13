@@ -70,6 +70,9 @@ OBOS_ALLOW_NON_ROOT_TLS_RENEWAL=1 \
   grep -q '^result=PASS$' \
   || fail "valid leaf renewal did not pass"
 
+openssl x509 -in "${TLS_DIR}/obos.local.crt" -noout -checkend $((89 * 24 * 60 * 60)) >/dev/null 2>&1 \
+  || fail "renewed leaf is not valid for the expected 90-day policy"
+
 new_ca_fingerprint="$(openssl x509 -in "${TLS_DIR}/obos-local-ca.crt" -noout -fingerprint -sha256)"
 new_leaf_fingerprint="$(openssl x509 -in "${TLS_DIR}/obos.local.crt" -noout -fingerprint -sha256)"
 
@@ -83,6 +86,20 @@ new_leaf_fingerprint="$(openssl x509 -in "${TLS_DIR}/obos.local.crt" -noout -fin
   || fail "trust export did not include leaf certificate"
 find "${TLS_DIR}/backups" -type f -name obos.local.key | grep -q . \
   || fail "pre-change leaf key backup was not created"
+
+renewal_count=0
+while [ "${renewal_count}" -lt 2 ]; do
+  OBOS_ALLOW_NON_ROOT_TLS_RENEWAL=1 \
+    OBOS_TLS_DIR="${TLS_DIR}" \
+    OBOS_TRUST_EXPORT_DIR="${TRUST_DIR}" \
+    OBOS_TLS_EXPORT_SCRIPT="${EXPORT_SCRIPT}" \
+    OBOS_TLS_RELOAD_NGINX=0 \
+    OBOS_TLS_LEAF_SUBJECT="//CN=obs.local" \
+    sh "${CHECKER}" --confirm tls-renew-leaf >/dev/null
+  renewal_count=$((renewal_count + 1))
+done
+[ "$(find "${TLS_DIR}/backups" -mindepth 1 -maxdepth 1 -type d -name 'leaf-*' | wc -l)" -eq 1 ] \
+  || fail "leaf backup retention did not prune older recovery copies"
 
 if OBOS_ALLOW_NON_ROOT_TLS_RENEWAL=1 OBOS_TLS_DIR="${TLS_DIR}" sh "${CHECKER}" >/dev/null 2>&1; then
   fail "leaf renewal accepted missing confirmation"

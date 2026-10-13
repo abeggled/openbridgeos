@@ -11,7 +11,7 @@ LEAF_EXT="${TLS_DIR}/obos.local.ext"
 IP_LIST="${TLS_DIR}/obos.local.ips"
 DNS_LIST="${TLS_DIR}/obos.local.dns"
 DAYS_CA="${OBOS_TLS_CA_DAYS:-3650}"
-DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-397}"
+DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-90}"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "generate-tls-material.sh must run as root" >&2

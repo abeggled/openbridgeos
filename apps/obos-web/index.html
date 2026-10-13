@@ -166,6 +166,9 @@
               <button type="button" data-mutation-action="set-timezone" data-confirm="set-timezone" data-mutation-status-target="host">Set Timezone</button>
             </div>
           </div>
+          <p class="inline-notice" data-host-identity-tls-notice hidden>
+            Host identity is not present in the active leaf certificate. The current certificate remains active until you select <strong>Renew Leaf</strong> in TLS Trust.
+          </p>
           <dl>
             <div><dt>Hostname</dt><dd data-agent-field="system-summary:hostname">pending</dd></div>
             <div><dt>Timezone</dt><dd data-agent-field="system-summary:timezone">pending</dd></div>
@@ -193,6 +196,9 @@
             <div><dt>Expiry warning</dt><dd data-agent-field="tls-summary:leaf_expiry_warning">pending</dd></div>
             <div><dt>Leaf DNS names</dt><dd data-agent-field="tls-summary:leaf_dns_names">pending</dd></div>
             <div><dt>Leaf IP addresses</dt><dd data-agent-field="tls-summary:leaf_ip_addresses">pending</dd></div>
+            <div><dt>Leaf validity policy <button class="help-button" type="button" aria-label="Help for leaf validity policy" data-help-title="Leaf validity policy" data-help="New leaf certificates are valid for at most 90 days. A daily timer renews the leaf after 47 days, while preserving the local Root CA.">?</button></dt><dd><span data-agent-field="tls-summary:leaf_validity_days">pending</span> days</dd></div>
+            <div><dt>Automatic renewal</dt><dd>after <span data-agent-field="tls-summary:leaf_renew_after_days">pending</span> days</dd></div>
+            <div><dt>Previous leaf backups</dt><dd data-agent-field="tls-summary:leaf_backup_keep">pending</dd></div>
             <div><dt>Trust bundle <button class="help-button" type="button" aria-label="Help for trust bundle" data-help-title="Trust bundle" data-help="True means public trust files were generated on the appliance. Use Download Root CA to retrieve the Root CA certificate; no private key is included.">?</button></dt><dd data-agent-field="tls-summary:trust_export_present">pending</dd></div>
             <div><dt>TLS action</dt><dd data-mutation-status="tls">ready</dd></div>
           </dl>
