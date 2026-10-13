@@ -504,6 +504,10 @@ OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}
   grep -q 'stdout=hostname-set:obos-test' \
   || fail "agent did not forward checked hostname"
 
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-hostname obos-test.example.test --confirm set-hostname |
+  grep -q 'stdout=hostname-set:obos-test.example.test' \
+  || fail "agent did not accept and forward a checked FQDN"
+
 if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-hostname '-bad' --confirm set-hostname >/dev/null 2>&1; then
   fail "agent accepted invalid hostname"
 fi
