@@ -99,7 +99,7 @@ set_nft_mqtt_block() {
   mode="$1"
   source_cidr="${2:-}"
   rule_prefix="$(mqtt_rule_prefix "${source_cidr}")"
-  tmp="${NFT_FILE}.tmp.$$"
+  tmp="${OBOS_NFT_TMP_FILE:-/etc/obos/nftables.conf.tmp.$$}"
 
   awk -v mode="${mode}" -v rule_prefix="${rule_prefix}" '
     /# OBOS MQTT LAN BEGIN/ {

@@ -131,6 +131,8 @@ grep -q '/srv/obos/backups' "${SERVICE}" \
   || fail "HTTP bridge service cannot write appliance backups"
 grep -q '/srv/obos/state' "${SERVICE}" \
   || fail "HTTP bridge service cannot write appliance state and public trust exports"
+grep -q '/etc/nftables.conf' "${SERVICE}" \
+  || fail "HTTP bridge service cannot apply confirmed MQTT firewall changes"
 if grep -q 'NoNewPrivileges=true' "${SERVICE}"; then
   fail "HTTP bridge service must not enable NoNewPrivileges while obos-agent uses sudo"
 fi
