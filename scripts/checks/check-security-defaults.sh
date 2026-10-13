@@ -296,8 +296,14 @@ grep -q 'application/octet-stream' scripts/agent/obos-agent-http.py \
 grep -q 'MAX_UPLOAD_BYTES' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not bound portable import uploads"
 
-grep -q 'ReadWritePaths=/srv/obos/state/portable-imports' packaging/systemd/obos-agent-http.service \
+grep -q 'ReadWritePaths=.*\/srv\/obos\/state\/portable-imports' packaging/systemd/obos-agent-http.service \
   || fail "HTTP bridge service does not restrict write access to portable imports"
+
+grep -q 'ReadWritePaths=.*\/etc\/obos' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge service cannot persist web authentication state"
+
+grep -q 'ReadWritePaths=.*\/srv\/obos\/state\/agent' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge service cannot persist its mutation audit log"
 
 grep -q 'install -d -m 0700 -o obos-agent -g obos-agent /srv/obos/state/portable-imports' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not create private portable import upload directory"
