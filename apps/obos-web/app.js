@@ -132,6 +132,21 @@
     return values;
   }
 
+  function mutationErrorMessage(text, fallback) {
+    const values = parseKeyValueText(text);
+    if (values.detail) {
+      return values.detail;
+    }
+    const stderr = text
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("stderr=") && line.length > "stderr=".length)
+      .map((line) => line.slice("stderr=".length));
+    if (stderr.length > 0) {
+      return stderr[stderr.length - 1];
+    }
+    return fallback;
+  }
+
   function renderLogs(lines) {
     if (!logOutput) {
       return;
@@ -255,7 +270,7 @@
       });
       const text = await response.text();
       if (!response.ok) {
-        throw new Error(text || `HTTP ${response.status}`);
+        throw new Error(mutationErrorMessage(text, `HTTP ${response.status}`));
       }
       loginForm.reset();
       const usernameInput = loginForm.querySelector('input[name="username"]');
@@ -506,7 +521,7 @@
       });
       const text = await response.text();
       if (!response.ok) {
-        throw new Error(text || `HTTP ${response.status}`);
+        throw new Error(mutationErrorMessage(text, `HTTP ${response.status}`));
       }
       if (action === "portable-export") {
         setPortableDownload(parseAgentResponse(text));
@@ -517,7 +532,7 @@
       setMutationStatus(statusTarget, "completed", "ok");
       void refresh();
     } catch (error) {
-      setMutationStatus(statusTarget, "failed", "error");
+      setMutationStatus(statusTarget, error.message || "failed", "error");
     } finally {
       button.disabled = false;
     }

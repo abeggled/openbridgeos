@@ -480,4 +480,22 @@ fi
 grep -q 'return 404;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not reject unknown obos static paths"
 
+grep -q 'auth_request /_obos_obs_access;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not gate OBS access on completed onboarding"
+
+grep -q 'proxy_pass http://127.0.0.1:8091/obos/api/v1/onboarding/access;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx onboarding access gate is not backed by the local agent"
+
+grep -q 'error_page 401 403 = @obos_onboarding_required;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not redirect blocked OBS requests to onboarding"
+
+grep -q 'ConditionPathExists=/etc/obos/web.htpasswd' packaging/systemd/obos-openbridgeserver.service \
+  || fail "open bridge server service can start before onboarding credentials exist"
+
+grep -q 'systemctl start "${SERVICE_NAME}"' scripts/obosctl \
+  || fail "completed onboarding does not start open bridge server"
+
+grep -q 'mutationErrorMessage' "${JS}" \
+  || fail "web UI does not expose actionable mutation errors"
+
 echo "obos-web: PASS"
