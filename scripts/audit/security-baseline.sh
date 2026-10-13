@@ -284,6 +284,19 @@ check_uuid_file "${APPLIANCE_ID_FILE}" 'appliance identifier'
 check_first_boot_marker
 check_file_mode "${WEB_AUTH_FILE}" 640
 check_file_mode "${WEB_AUTH_INFO_FILE}" 600
+check_grep '^format=obos-web-auth-info-v2$' "${WEB_AUTH_INFO_FILE}" 'web console auth metadata format'
+check_grep '^password_storage=hash-only$' "${WEB_AUTH_INFO_FILE}" 'web console password storage is hash-only'
+if grep -q '^OBOS_WEB_ADMIN_PASSWORD=' "${WEB_AUTH_INFO_FILE}" 2>/dev/null; then
+  fail 'web console metadata contains a recoverable password'
+else
+  pass 'web console metadata contains no recoverable password'
+fi
+# shellcheck disable=SC2016
+if grep -Eq '^[^:]+:\$6\$' "${WEB_AUTH_FILE}" 2>/dev/null; then
+  pass 'web console password uses SHA-512 crypt'
+else
+  fail 'web console password does not use SHA-512 crypt'
+fi
 check_file_mode /srv/obos 750
 check_file_mode "${TLS_DIR}" 700
 check_file_mode "${TLS_DIR}/obos-local-ca.key" 600

@@ -67,7 +67,7 @@
         <div class="metric-grid">
           <article>
             <span>Systemd</span>
-            <strong data-agent-field="status-summary:systemd_active">pending</strong>
+            <strong data-agent-field="status-summary:service_active">pending</strong>
           </article>
           <article>
             <span>Local health</span>
@@ -83,7 +83,7 @@
           </article>
           <article>
             <span>Rollback plan</span>
-            <strong data-agent-field="update-summary:last_update_present">pending</strong>
+            <strong data-agent-field="update-summary:rollback_backup_present">pending</strong>
           </article>
           <article>
             <span>Network</span>
@@ -147,9 +147,9 @@
             </div>
           </div>
           <dl>
-            <div><dt>Plain listener</dt><dd data-agent-field="mqtt-summary:plain_bind">pending</dd></div>
-            <div><dt>WebSocket listener</dt><dd data-agent-field="mqtt-summary:websocket_bind">pending</dd></div>
-            <div><dt>Firewall source</dt><dd data-agent-field="mqtt-summary:source_cidr">pending</dd></div>
+            <div><dt>Plain listener</dt><dd data-agent-field="mqtt-summary:mqtt_host_port">pending</dd></div>
+            <div><dt>WebSocket listener</dt><dd data-agent-field="mqtt-summary:mqtt_ws_host_port">pending</dd></div>
+            <div><dt>Firewall source</dt><dd data-agent-field="mqtt-summary:firewall_source">pending</dd></div>
             <div><dt>MQTT action</dt><dd data-mutation-status="mqtt">ready</dd></div>
           </dl>
         </article>
@@ -181,7 +181,7 @@
             </div>
           </div>
           <dl>
-            <div><dt>Local CA</dt><dd data-agent-field="tls-summary:ca_present">pending</dd></div>
+            <div><dt>Local CA</dt><dd data-agent-field="tls-summary:local_ca_present">pending</dd></div>
             <div><dt>CA fingerprint</dt><dd data-agent-field="tls-summary:local_ca_sha256_fingerprint">pending</dd></div>
             <div><dt>Leaf certificate</dt><dd data-agent-field="tls-summary:leaf_present">pending</dd></div>
             <div><dt>Leaf fingerprint</dt><dd data-agent-field="tls-summary:leaf_sha256_fingerprint">pending</dd></div>
@@ -209,7 +209,14 @@
             <div><dt>MVP fail</dt><dd data-agent-field="mvp-readiness-summary:fail_count">pending</dd></div>
             <div><dt>Agent audit entries</dt><dd data-agent-field="agent-audit-summary:entry_count">pending</dd></div>
             <div><dt>Console password</dt><dd data-mutation-status="web-auth">ready</dd></div>
-            <div><dt>New password</dt><dd class="secret-value" data-web-auth-password>not rotated</dd></div>
+            <div class="secret-notice" data-web-auth-secret hidden>
+              <dt>New password</dt>
+              <dd>
+                <code class="secret-value" data-web-auth-password></code>
+                <span>Shown once for 60 seconds. Save it now; the appliance stores only its hash.</span>
+                <button type="button" data-clear-web-auth-password>Dismiss</button>
+              </dd>
+            </div>
           </dl>
         </article>
 

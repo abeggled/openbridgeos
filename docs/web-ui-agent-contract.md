@@ -358,8 +358,11 @@ fail.
 
 Web console password rotation is available as an explicit confirmed mutation.
 The response contains the new generated password in the normal
-`obos-agent-response-v1` stdout block and must be shown only to the authenticated
-administrator who triggered the rotation.
+`obos-agent-response-v1` stdout block and is shown only to the authenticated
+administrator who triggered the rotation. The console removes it from the DOM
+after 60 seconds or immediately when dismissed, logged out, or returned to the
+login screen. The appliance persists only the password hash and non-secret
+account metadata. A successful rotation invalidates all other GUI sessions.
 
 ```text
 POST /obos/api/v1/actions/web-auth-rotate

@@ -57,14 +57,44 @@ read_password_file() {
 
 hash_password() {
   password="$1"
-  printf '%s\n' "${password}" | openssl passwd -apr1 -stdin
+  printf '%s\n' "${password}" | openssl passwd -6 -stdin
+}
+
+write_info_record() {
+  tmp_info="${WEB_AUTH_INFO_FILE}.tmp.$$"
+  {
+    echo "format=obos-web-auth-info-v2"
+    echo "OBOS_WEB_ADMIN_USER=${WEB_AUTH_USER}"
+    echo "password_storage=hash-only"
+    echo "updated_at=$(date -u +%Y%m%dT%H%M%SZ)"
+  } > "${tmp_info}"
+  install -m 0600 "${tmp_info}" "${WEB_AUTH_INFO_FILE}"
+  rm -f "${tmp_info}"
+}
+
+install_password_hash() {
+  password_hash="$1"
+  tmp_auth="${WEB_AUTH_FILE}.tmp.$$"
+  printf '%s:%s\n' "${WEB_AUTH_USER}" "${password_hash}" > "${tmp_auth}"
+  if getent group www-data >/dev/null 2>&1; then
+    install -m 0640 -o root -g www-data "${tmp_auth}" "${WEB_AUTH_FILE}"
+  else
+    install -m 0640 "${tmp_auth}" "${WEB_AUTH_FILE}"
+  fi
+  rm -f "${tmp_auth}"
 }
 
 install -d -m 0750 -o root -g www-data "${OBOS_ETC_DIR}"
 
-if [ "${MODE}" = generate ] && [ -f "${WEB_AUTH_FILE}" ] && [ -f "${WEB_AUTH_INFO_FILE}" ]; then
-  chmod 0640 "${WEB_AUTH_FILE}"
-  chmod 0600 "${WEB_AUTH_INFO_FILE}"
+if [ "${MODE}" = generate ] && [ -f "${WEB_AUTH_FILE}" ]; then
+  legacy_password="$(sed -n 's/^OBOS_WEB_ADMIN_PASSWORD=//p' "${WEB_AUTH_INFO_FILE}" 2>/dev/null | head -n 1)"
+  if [ -n "${legacy_password}" ]; then
+    install_password_hash "$(hash_password "${legacy_password}")"
+    unset legacy_password
+  else
+    chmod 0640 "${WEB_AUTH_FILE}"
+  fi
+  write_info_record
   echo "web auth already exists: ${WEB_AUTH_FILE}"
   exit 0
 fi
@@ -75,22 +105,8 @@ else
   password="$(secret)"
 fi
 password_hash="$(hash_password "${password}")"
-tmp_auth="${WEB_AUTH_FILE}.tmp.$$"
-tmp_info="${WEB_AUTH_INFO_FILE}.tmp.$$"
-
-printf '%s:%s\n' "${WEB_AUTH_USER}" "${password_hash}" > "${tmp_auth}"
-{
-  echo "OBOS_WEB_ADMIN_USER=${WEB_AUTH_USER}"
-  echo "OBOS_WEB_ADMIN_PASSWORD=${password}"
-} > "${tmp_info}"
-
-if getent group www-data >/dev/null 2>&1; then
-  install -m 0640 -o root -g www-data "${tmp_auth}" "${WEB_AUTH_FILE}"
-else
-  install -m 0640 "${tmp_auth}" "${WEB_AUTH_FILE}"
-fi
-install -m 0600 "${tmp_info}" "${WEB_AUTH_INFO_FILE}"
-rm -f "${tmp_auth}" "${tmp_info}"
+install_password_hash "${password_hash}"
+write_info_record
 
 cat <<EOF
 Web console authentication generated.

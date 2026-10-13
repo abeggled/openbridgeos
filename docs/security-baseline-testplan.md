@@ -180,6 +180,9 @@ Expected default baseline:
 ```sh
 sudo stat -c '%a %U:%G %n' /etc/obos /etc/obos/appliance-id /etc/obos/apps/openbridgeserver.env /etc/obos/tls
 sudo stat -c '%a %U:%G %n' /etc/obos/web.htpasswd /etc/obos/web-admin.env
+sudo grep '^password_storage=hash-only$' /etc/obos/web-admin.env
+sudo grep -Eq '^[^:]+:\$6\$' /etc/obos/web.htpasswd
+if sudo grep -q '^OBOS_WEB_ADMIN_PASSWORD=' /etc/obos/web-admin.env; then exit 1; fi
 sudo grep -E '^[0-9a-f-]{36}$' /etc/obos/appliance-id
 sudo grep -E '^(OBS_JWT_SECRET|OBS_MQTT_PASSWORD|OBS_HTTP_HOST_PORT)=' /etc/obos/apps/openbridgeserver.env
 sudo obosctl tls-info
@@ -193,6 +196,9 @@ Expected:
 - `/etc/obos/tls` mode `700`
 - `/etc/obos/web.htpasswd` mode `640`
 - `/etc/obos/web-admin.env` mode `600`
+- web console password storage reports `hash-only`
+- web console password hash uses SHA-512 crypt
+- web console metadata contains no recoverable password
 - appliance identifier present and UUID-shaped
 - JWT secret present and non-empty
 - MQTT password present and non-empty

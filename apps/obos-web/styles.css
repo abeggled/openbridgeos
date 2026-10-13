@@ -239,6 +239,15 @@ dd,
   color: var(--danger);
 }
 
+.secret-notice dd {
+  display: grid;
+  gap: 8px;
+}
+
+.secret-notice button {
+  justify-self: start;
+}
+
 .panel {
   border: 1px solid var(--line);
   border-radius: var(--radius);

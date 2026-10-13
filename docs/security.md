@@ -43,7 +43,7 @@ Target permissions:
 /etc/obos/appliance-id      root:root 0644
 /etc/obos/apps/*.env        root:root 0600
 /etc/obos/web.htpasswd      root:www-data 0640
-/etc/obos/web-admin.env     root:root 0600
+/etc/obos/web-admin.env     root:root 0600 (non-secret account metadata)
 /etc/obos/tls/              root:root 0700
 /srv/obos/                  root:root 0750
 /srv/obos/state/            root:root 0750
@@ -80,9 +80,11 @@ while stale marker timestamps cannot keep it closed, but a same-boot agent
 restart does not extend the window. If the setup window expires before
 credentials exist, rebooting opens a new window. If the required marker is
 missing while no console password exists, the local agent recreates the marker
-before opening the per-boot window. The credential record is stored root-only in
-`/etc/obos/web-admin.env`. Headless images may also export `OBOS-ONBOARDING.txt`
-to a boot-accessible partition, but that file must not contain a password.
+before opening the per-boot window. Only a SHA-512 password hash is stored in
+`/etc/obos/web.htpasswd`; the root-only `/etc/obos/web-admin.env` record contains
+account metadata but no password. Headless images may also export
+`OBOS-ONBOARDING.txt` to a boot-accessible partition, but that file must not
+contain a password.
 
 MQTT remains bound to localhost by default:
 

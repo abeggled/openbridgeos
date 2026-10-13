@@ -267,15 +267,21 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
 
     def verify_web_password(self, username, password):
         stored_hash = self.read_web_auth_hash(username)
-        if not stored_hash or not stored_hash.startswith("$apr1$"):
+        if not stored_hash:
             return False
         parts = stored_hash.split("$")
         if len(parts) < 4:
             return False
+        if stored_hash.startswith("$6$"):
+            algorithm = "-6"
+        elif stored_hash.startswith("$apr1$"):
+            algorithm = "-apr1"
+        else:
+            return False
         salt = parts[2]
         try:
             completed = subprocess.run(
-                ["openssl", "passwd", "-apr1", "-salt", salt, "-stdin"],
+                ["openssl", "passwd", algorithm, "-salt", salt, "-stdin"],
                 input=f"{password}\n",
                 check=False,
                 capture_output=True,
@@ -309,6 +315,20 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
                 pass
         secure = " Secure;" if SESSION_COOKIE_SECURE else ""
         return f"{SESSION_COOKIE}=; Path=/obos/; Max-Age=0;{secure} HttpOnly; SameSite=Strict"
+
+    def clear_other_sessions(self):
+        current_token = self.session_token()
+        try:
+            entries = os.listdir(SESSION_DIR)
+        except FileNotFoundError:
+            return
+        for entry in entries:
+            if not SESSION_RE.match(entry) or entry == current_token:
+                continue
+            try:
+                os.unlink(self.session_path(entry))
+            except OSError:
+                pass
 
     def handle_session_status(self, parsed):
         if parsed.query:
@@ -821,6 +841,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
                     pass
 
         status = 200 if completed.returncode == 0 else 502
+        if action == "web-auth-rotate" and completed.returncode == 0:
+            self.clear_other_sessions()
         self.send_text(status, completed.stdout)
 
     def do_OPTIONS(self):

@@ -186,6 +186,51 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  update-summary)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=update-summary
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-update-summary-v1
+stdout=last_update_present=true
+stdout=rollback_backup_present=true
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  backup-summary)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=backup-summary
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-backup-summary-v1
+stdout=latest_backup_present=true
+stdout=latest_backup=/srv/obos/backups/obos-openbridgeserver-test.tar.gz
+stdout=latest_backup_inspection=pass
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  backup-prune-plan)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=backup-prune-plan
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-backup-prune-plan-v1
+stdout=delete_candidate_count=0
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   backup-list)
     cat <<'RESPONSE'
 format=obos-agent-response-v1
@@ -239,6 +284,20 @@ timed_out=false
 stdout_begin
 stdout=format=obos-logs-tail-v1
 stdout=log=journal|test log line
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  restore-stage-summary|mqtt-summary|tls-summary|security-summary|mvp-readiness-summary|agent-audit-summary)
+    cat <<RESPONSE
+format=obos-agent-response-v1
+action=${1:-}
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-${1:-}-v1
+stdout=result=PASS
 stdout_end
 stderr_begin
 stderr_end
@@ -594,6 +653,26 @@ curl --fail --silent \
   grep -q 'authenticated=true' \
   || fail "session login did not authenticate"
 
+secondary_cookie_jar="${tmp_dir}/secondary-cookies.txt"
+curl -q --fail --silent \
+  --cookie-jar "${secondary_cookie_jar}" \
+  --header 'Content-Type: application/json' \
+  --data '{"username":"admin","password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/session/login |
+  grep -q 'authenticated=true' \
+  || fail "secondary session login did not authenticate"
+
+sha512_cookie_jar="${tmp_dir}/sha512-cookies.txt"
+password_hash="$(printf '%s\n' 'correct horse battery staple' | openssl passwd -6 -stdin)"
+printf 'admin:%s\n' "${password_hash}" > "${onboarding_state_dir}/web.htpasswd"
+curl -q --fail --silent \
+  --cookie-jar "${sha512_cookie_jar}" \
+  --header 'Content-Type: application/json' \
+  --data '{"username":"admin","password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/session/login |
+  grep -q 'authenticated=true' \
+  || fail "session login did not accept a SHA-512 password hash"
+
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/session/status |
   grep -q 'authenticated=true' \
   || fail "session status did not report authenticated"
@@ -605,6 +684,11 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/status-summary |
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/system-summary |
   grep -q 'stdout=hostname=obos-test' \
   || fail "HTTP bridge did not expose system summary"
+
+for gui_action in update-summary backup-summary backup-list backup-prune-plan restore-stage-summary mqtt-summary tls-summary security-summary mvp-readiness-summary agent-audit-summary logs-summary; do
+  curl --fail --silent "http://127.0.0.1:18091/obos/api/v1/actions/${gui_action}" >/dev/null \
+    || fail "HTTP bridge did not expose GUI action ${gui_action}"
+done
 
 curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/backup-list |
   grep -q 'stdout=backup_count=2' \
@@ -727,6 +811,15 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/web-auth-rotate |
   grep -q 'stdout=password=rotated-test-password' \
   || fail "HTTP bridge did not run confirmed web auth rotation"
+
+curl -q --fail --silent --cookie "${secondary_cookie_jar}" \
+  http://127.0.0.1:18091/obos/api/v1/session/status |
+  grep -q 'authenticated=false' \
+  || fail "web auth rotation did not invalidate another GUI session"
+
+curl --fail --silent http://127.0.0.1:18091/obos/api/v1/session/status |
+  grep -q 'authenticated=true' \
+  || fail "web auth rotation invalidated the initiating GUI session before password capture"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

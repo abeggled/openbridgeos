@@ -64,8 +64,8 @@ grep -q 'WEB_AUTH_FILE=' scripts/auth/generate-web-auth.sh \
 grep -q 'WEB_AUTH_INFO_FILE=' scripts/auth/generate-web-auth.sh \
   || fail "web console auth helper does not define credential record file"
 
-grep -q 'openssl passwd -apr1 -stdin' scripts/auth/generate-web-auth.sh \
-  || fail "web console auth helper does not hash passwords for nginx basic auth"
+grep -q 'openssl passwd -6 -stdin' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth helper does not use SHA-512 password hashes"
 
 # shellcheck disable=SC2016
 grep -q 'MODE="${1:-generate}"' scripts/auth/generate-web-auth.sh \
@@ -77,6 +77,13 @@ grep -q 'generate|rotate|set' scripts/auth/generate-web-auth.sh \
 # shellcheck disable=SC2016
 grep -q 'password=${password}' scripts/auth/generate-web-auth.sh \
   || fail "web console auth rotation does not print the new password intentionally"
+
+if grep -q 'echo "OBOS_WEB_ADMIN_PASSWORD=' scripts/auth/generate-web-auth.sh; then
+  fail "web console auth helper persists a recoverable password"
+fi
+
+grep -q 'password_storage=hash-only' scripts/auth/generate-web-auth.sh \
+  || fail "web console auth metadata does not declare hash-only storage"
 
 grep -q 'install -m 0640' scripts/auth/generate-web-auth.sh \
   || fail "web console auth password file is not installed with restrictive permissions"
@@ -93,6 +100,15 @@ grep -q 'SESSION_COOKIE = "obos_session"' scripts/agent/obos-agent-http.py \
 
 grep -q 'handle_session_login' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not expose GUI login handling"
+
+grep -q 'algorithm = "-6"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not verify SHA-512 password hashes"
+
+grep -q 'algorithm = "-apr1"' scripts/agent/obos-agent-http.py \
+  || fail "HTTP bridge does not preserve legacy password hash compatibility"
+
+grep -q 'clear_other_sessions' scripts/agent/obos-agent-http.py \
+  || fail "password rotation does not invalidate other GUI sessions"
 
 grep -q 'require_session' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not protect API calls with a session"
@@ -494,6 +510,9 @@ grep -q 'format=obos-update-rollback-stage-v1' scripts/obosctl \
 grep -q 'last_update_present=' scripts/obosctl \
   || fail "obosctl update summary does not report update presence"
 
+grep -q 'rollback_backup_present=' scripts/obosctl \
+  || fail "obosctl update summary does not report rollback backup readiness"
+
 grep -q 'health_https_proxy=ok' scripts/obosctl \
   || fail "obosctl update state does not record HTTPS proxy health"
 
@@ -799,6 +818,12 @@ grep -q 'check_file_mode "${WEB_AUTH_FILE}" 640' scripts/audit/security-baseline
 # shellcheck disable=SC2016
 grep -q 'check_file_mode "${WEB_AUTH_INFO_FILE}" 600' scripts/audit/security-baseline.sh \
   || fail "security baseline does not audit web console credential record permissions"
+
+grep -Fq 'web console metadata contains no recoverable password' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not reject recoverable web console passwords"
+
+grep -Fq 'web console password uses SHA-512 crypt' scripts/audit/security-baseline.sh \
+  || fail "security baseline does not require SHA-512 web console password hashes"
 
 grep -q 'WEB_AUTH_URL=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not define web console auth probe URL"
