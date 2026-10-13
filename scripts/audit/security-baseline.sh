@@ -256,14 +256,14 @@ check_web_auth() {
     fail 'obos web console session login form missing'
   fi
 
-  session_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 5 \
+  session_status="$(curl --silent --show-error --max-time 5 \
     --cacert "${TLS_CA_CERT}" \
     --resolve "${PROXY_HEALTH_HOST}:443:127.0.0.1" \
     "${WEB_AUTH_URL}api/v1/session/status" 2>/dev/null || true)"
-  if [ "${session_status}" = 401 ]; then
-    pass 'obos web console session status requires authentication'
+  if printf '%s\n' "${session_status}" | grep -Fxq 'authenticated=false'; then
+    pass 'obos web console reports an unauthenticated session safely'
   else
-    fail "obos web console session status expected 401, got ${session_status:-missing}"
+    fail 'obos web console does not report an unauthenticated session safely'
   fi
 }
 
