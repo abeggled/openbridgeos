@@ -12,7 +12,7 @@ BACKUP_KEEP="${OBOS_TLS_LEAF_BACKUP_KEEP:-1}"
 EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 RELOAD_NGINX="${OBOS_TLS_RELOAD_NGINX:-1}"
 ALLOW_NON_ROOT="${OBOS_ALLOW_NON_ROOT_TLS_RENEWAL:-0}"
-SUBJECT="${OBOS_TLS_LEAF_SUBJECT:-/CN=obs.local}"
+SUBJECT="${OBOS_TLS_LEAF_SUBJECT:-}"
 LOCK_FILE="${OBOS_TLS_RENEW_LOCK_FILE:-${TLS_DIR}/.leaf-renew.lock}"
 
 fail() {
@@ -106,14 +106,38 @@ fi
 
 openssl genrsa -out "${new_key}" 4096 >/dev/null 2>&1
 chmod 0600 "${new_key}"
-openssl req -new -key "${new_key}" -subj "${SUBJECT}" -out "${new_csr}" >/dev/null 2>&1
 : > "${ip_list}"
-hostname -I 2>/dev/null | tr ' ' '\n' > "${ip_list}" || true
+if command -v ip >/dev/null 2>&1; then
+  {
+    ip -o route show default 2>/dev/null || true
+    ip -o -6 route show default 2>/dev/null || true
+  } | awk '
+    {
+      for (i = 1; i <= NF; i++) {
+        if ($i == "dev") {
+          print $(i + 1)
+          break
+        }
+      }
+    }
+  ' | awk 'NF && !seen[$0]++' |
+    while IFS= read -r interface; do
+      ip -o addr show dev "${interface}" scope global 2>/dev/null || true
+    done |
+    awk '{ value=$4; sub(/\/.*/, "", value); if (value != "" && !seen[value]++) print value }' > "${ip_list}"
+else
+  hostname -I 2>/dev/null | tr ' ' '\n' > "${ip_list}" || true
+fi
 {
-  echo "obs.local"
-  hostname 2>/dev/null || true
   hostname -f 2>/dev/null || true
+  hostname 2>/dev/null || true
 } | awk 'NF && /^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$/ && !seen[$0]++' > "${dns_list}"
+if [ -z "${SUBJECT}" ]; then
+  leaf_common_name="$(sed -n '1p' "${dns_list}")"
+  [ -n "${leaf_common_name}" ] || leaf_common_name=localhost
+  SUBJECT="/CN=${leaf_common_name}"
+fi
+openssl req -new -key "${new_key}" -subj "${SUBJECT}" -out "${new_csr}" >/dev/null 2>&1
 
 {
   echo "authorityKeyIdentifier=keyid,issuer"

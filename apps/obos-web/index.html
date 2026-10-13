@@ -179,11 +179,9 @@
 
         <article class="panel">
           <div class="panel-heading">
-            <h2>TLS Trust <button class="help-button" type="button" aria-label="Help for TLS trust" data-help-title="TLS Trust" data-help="Initialize TLS creates missing material but never rotates existing trust. Renew Leaf preserves the Root CA while issuing a new server certificate for current DNS names and IP addresses. Prepare Public Export copies public certificates only; private keys never leave the protected TLS directory.">?</button></h2>
+            <h2>TLS Trust <button class="help-button" type="button" aria-label="Help for TLS trust" data-help-title="TLS Trust" data-help="TLS material and the public Root CA download are prepared automatically during first boot and after certificate renewal. Renew Leaf preserves the Root CA while immediately issuing a new server certificate for the current host identity and primary network addresses.">?</button></h2>
             <div class="button-row">
-              <button type="button" data-mutation-action="tls-generate" data-confirm="tls-generate" data-mutation-status-target="tls" title="Create the local CA and leaf only if they are missing">Initialize TLS</button>
               <button type="button" data-mutation-action="tls-renew-leaf" data-confirm="tls-renew-leaf" data-mutation-status-target="tls" title="Issue a new leaf for the current hostname, FQDN, and IP addresses">Renew Leaf</button>
-              <button type="button" data-mutation-action="tls-export" data-confirm="tls-export" data-mutation-status-target="tls" title="Prepare public certificates for download; private keys are never exported">Prepare Public Export</button>
               <a class="download-link" href="/obos/api/v1/downloads/trust-ca" data-ca-download hidden>Download Root CA</a>
             </div>
           </div>

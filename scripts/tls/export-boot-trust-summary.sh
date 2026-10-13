@@ -72,11 +72,12 @@ EOF
 install -m 0644 "${CA_EXPORT}" "${ca_target}"
 chmod 0644 "${summary_target}"
 
-cat > "${onboarding_target}" <<'EOF'
+onboarding_host="$(hostname -f 2>/dev/null || hostname 2>/dev/null || printf 'localhost')"
+cat > "${onboarding_target}" <<EOF
 open bridge operating system onboarding
 
 URL:
-- https://obs.local/obos/onboarding/
+- https://${onboarding_host}/obos/onboarding/
 
 Initial web console credentials:
 - username: admin

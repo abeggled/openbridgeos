@@ -96,6 +96,10 @@ Technical MVP status:
   boot-accessible partitions.
 - Every lifecycle operation must refresh `tls-summary` and public trust export
   material after success.
+- Leaf IP SAN discovery must use the default-route host interface and must not
+  include container bridge addresses.
+- Leaf DNS SANs must describe the configured host identity; legacy aliases must
+  not be retained without an active naming/discovery contract.
 - Failed lifecycle operations must leave nginx with the previous working
   certificate material.
 

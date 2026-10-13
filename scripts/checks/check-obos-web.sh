@@ -209,17 +209,9 @@ grep -q 'updateHostIdentityTlsNotice' "${JS}" \
 grep -q 'data-mutation-action="tls-renew-leaf"' "${INDEX}" \
   || fail "web UI does not expose confirmed leaf renewal"
 
-grep -q 'data-mutation-action="tls-generate"' "${INDEX}" \
-  || fail "web UI does not expose TLS generate mutation control"
-
-grep -q 'data-confirm="tls-generate"' "${INDEX}" \
-  || fail "web UI TLS generate mutation control does not carry confirmation token"
-
-grep -q 'data-mutation-action="tls-export"' "${INDEX}" \
-  || fail "web UI does not expose TLS export mutation control"
-
-grep -q 'data-confirm="tls-export"' "${INDEX}" \
-  || fail "web UI TLS export mutation control does not carry confirmation token"
+if grep -Eq 'data-mutation-action="tls-(generate|export)"' "${INDEX}"; then
+  fail "web UI exposes automatic TLS initialization or export as manual controls"
+fi
 
 grep -q 'data-mutation-status="tls"' "${INDEX}" \
   || fail "web UI does not expose TLS mutation status"
@@ -446,8 +438,9 @@ grep -q '.help-dialog' "${CSS}" \
 grep -q 'helpDialog.showModal()' "${JS}" \
   || fail "web UI does not open contextual help overlay"
 
-grep -q 'action === "tls-export"' "${JS}" \
-  || fail "web UI does not reveal the Root CA download after export"
+if grep -q 'action === "tls-export"' "${JS}"; then
+  fail "web UI retains unreachable manual TLS export handling"
+fi
 
 grep -q '^input {' "${CSS}" \
   || fail "web UI CSS does not style input controls"

@@ -8,13 +8,33 @@ TLS_DIR="${TMP_DIR}/tls"
 TRUST_DIR="${TMP_DIR}/trust"
 EXPORT_SCRIPT="${TMP_DIR}/export-trust-bundle.sh"
 CHECKER="scripts/tls/renew-leaf-certificate.sh"
+FIXTURE_BIN="${TMP_DIR}/bin"
 
 fail() {
   echo "tls leaf renewal fixture failed: $1" >&2
   exit 1
 }
 
-mkdir -p "${TLS_DIR}" "${TRUST_DIR}"
+mkdir -p "${TLS_DIR}" "${TRUST_DIR}" "${FIXTURE_BIN}"
+
+cat > "${FIXTURE_BIN}/hostname" <<'EOF'
+#!/usr/bin/env sh
+case "${1:-}" in
+  -f) echo "obos-unit.example.test" ;;
+  -I) echo "10.38.114.132 172.17.0.1" ;;
+  *) echo "obos-unit" ;;
+esac
+EOF
+cat > "${FIXTURE_BIN}/ip" <<'EOF'
+#!/usr/bin/env sh
+case "$*" in
+  "-o route show default") echo "default via 10.38.114.1 dev ens18" ;;
+  "-o -6 route show default") : ;;
+  "-o addr show dev ens18 scope global") echo "2: ens18 inet 10.38.114.132/24 brd 10.38.114.255 scope global ens18" ;;
+  *) exit 1 ;;
+esac
+EOF
+chmod 0755 "${FIXTURE_BIN}/hostname" "${FIXTURE_BIN}/ip"
 
 openssl genrsa -out "${TLS_DIR}/obos-local-ca.key" 2048 >/dev/null 2>&1
 openssl req -x509 -new -nodes \
@@ -66,6 +86,7 @@ OBOS_ALLOW_NON_ROOT_TLS_RENEWAL=1 \
   OBOS_TLS_EXPORT_SCRIPT="${EXPORT_SCRIPT}" \
   OBOS_TLS_RELOAD_NGINX=0 \
   OBOS_TLS_LEAF_SUBJECT="//CN=obs.local" \
+  PATH="${FIXTURE_BIN}:${PATH}" \
   sh "${CHECKER}" --confirm tls-renew-leaf |
   grep -q '^result=PASS$' \
   || fail "valid leaf renewal did not pass"
@@ -86,6 +107,16 @@ new_leaf_fingerprint="$(openssl x509 -in "${TLS_DIR}/obos.local.crt" -noout -fin
   || fail "trust export did not include leaf certificate"
 find "${TLS_DIR}/backups" -type f -name obos.local.key | grep -q . \
   || fail "pre-change leaf key backup was not created"
+grep -q '^DNS.1=obos-unit.example.test$' "${TLS_DIR}/obos.local.ext" \
+  || fail "current FQDN is not the first leaf DNS SAN"
+if grep -q 'obs.local' "${TLS_DIR}/obos.local.ext"; then
+  fail "legacy obs.local alias remained in renewed leaf SANs"
+fi
+grep -q '^IP.1=10.38.114.132$' "${TLS_DIR}/obos.local.ext" \
+  || fail "primary host address is missing from leaf SANs"
+if grep -Eq '172\.17\.|172\.18\.|172\.19\.' "${TLS_DIR}/obos.local.ext"; then
+  fail "container bridge address leaked into renewed leaf SANs"
+fi
 
 renewal_count=0
 while [ "${renewal_count}" -lt 2 ]; do
@@ -95,6 +126,7 @@ while [ "${renewal_count}" -lt 2 ]; do
     OBOS_TLS_EXPORT_SCRIPT="${EXPORT_SCRIPT}" \
     OBOS_TLS_RELOAD_NGINX=0 \
     OBOS_TLS_LEAF_SUBJECT="//CN=obs.local" \
+    PATH="${FIXTURE_BIN}:${PATH}" \
     sh "${CHECKER}" --confirm tls-renew-leaf >/dev/null
   renewal_count=$((renewal_count + 1))
 done
