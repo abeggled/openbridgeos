@@ -109,6 +109,7 @@ printf '%s\n' "${release_check_output}" | grep -q '^installed_version=0.0.0$' \
 printf '%s\n' "${release_check_output}" | grep -q '^release_notes_present=false$' \
   || fail "release preview claims unsigned release notes"
 
+# shellcheck disable=SC2016
 grep -q '\-Vm "${manifest}"' "${UPDATE_RELEASE}" \
   || fail "release updater does not verify the signed manifest"
 grep -q 'archive checksum mismatch' "${UPDATE_RELEASE}" \
