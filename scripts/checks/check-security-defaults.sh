@@ -1005,6 +1005,12 @@ grep -q 'scripts/update/update-obos-release.sh' scripts/bootstrap/provision-debi
 grep -q 'OBOS_RELEASE_MINISIGN_PUBLIC_KEY' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning cannot pin the OBOS release public key"
 
+grep -q 'packaging/update/obos-release.minisign.pub' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not pin the reviewed release public key"
+
+[ -s packaging/update/obos-release.minisign.pub ] \
+  || fail "reviewed release public key is missing"
+
 grep -q '20auto-upgrades' scripts/bootstrap/provision-debian.sh \
   || fail "apt periodic unattended upgrade config is not installed"
 
