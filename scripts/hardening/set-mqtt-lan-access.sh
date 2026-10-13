@@ -122,7 +122,13 @@ set_nft_mqtt_block() {
     { print }
   ' "${NFT_FILE}" > "${tmp}"
 
-  install -m 0644 "${tmp}" "${NFT_FILE}"
+  if command -v nft >/dev/null 2>&1; then
+    nft -c -f "${tmp}"
+  fi
+  # NFT_FILE is an individual writable bind path in the hardened HTTP agent.
+  # Replace its contents without renaming over that sandbox mount point.
+  cp "${tmp}" "${NFT_FILE}"
+  chmod 0644 "${NFT_FILE}"
   rm -f "${tmp}"
 }
 
