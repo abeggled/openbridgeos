@@ -492,6 +492,7 @@ grep -q 'error_page 401 403 = @obos_onboarding_required;' packaging/nginx/openbr
 grep -q 'ConditionPathExists=/etc/obos/web.htpasswd' packaging/systemd/obos-openbridgeserver.service \
   || fail "open bridge server service can start before onboarding credentials exist"
 
+# shellcheck disable=SC2016
 grep -q 'systemctl start "${SERVICE_NAME}"' scripts/obosctl \
   || fail "completed onboarding does not start open bridge server"
 
