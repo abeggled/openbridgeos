@@ -327,6 +327,9 @@ grep -q 'ReadWritePaths=.*\/srv\/obos\/state' packaging/systemd/obos-agent-http.
 grep -q 'ReadWritePaths=.*\/etc\/obos' packaging/systemd/obos-agent-http.service \
   || fail "HTTP bridge service cannot persist web authentication state"
 
+grep -q 'ReadWritePaths=.*\/etc\/nftables.conf' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge service cannot apply confirmed MQTT firewall changes"
+
 grep -q 'install -d -m 0700 -o obos-agent -g obos-agent /srv/obos/state/portable-imports' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not create private portable import upload directory"
 
@@ -998,6 +1001,9 @@ grep -q 'set-mqtt-lan-access.sh' scripts/bootstrap/provision-debian.sh \
 
 grep -q 'OBOS_MQTT_LAN_SOURCE_CIDR' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not support source CIDR restriction"
+
+grep -q 'OBOS_NFT_TMP_FILE:-/etc/obos/nftables.conf.tmp' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not stage firewall changes in its writable configuration directory"
 
 grep -q 'is_ipv4_cidr' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not validate IPv4 CIDR numerically"
