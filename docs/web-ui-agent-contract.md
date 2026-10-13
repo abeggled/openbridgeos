@@ -68,6 +68,7 @@ open bridge server systemd unit and Compose stack.
 | Create backup | `sudo obosctl backup` |
 | Prune old backups | `sudo obosctl backup-prune --confirm backup-prune` |
 | Generate TLS material | `sudo obosctl tls-generate` |
+| Renew TLS leaf certificate | `sudo obosctl tls-renew-leaf --confirm tls-renew-leaf` |
 | Export TLS trust bundle | `sudo obosctl tls-export` |
 | Rotate web console password | `sudo obosctl web-auth-rotate` |
 | Enable MQTT LAN access | `sudo obosctl mqtt-enable-lan [source-cidr]` |
@@ -92,6 +93,7 @@ obos-agent restore-stage <backup.tar.gz> --confirm restore-stage
 obos-agent set-hostname <hostname> --confirm set-hostname
 obos-agent set-timezone <timezone> --confirm set-timezone
 obos-agent tls-generate --confirm tls-generate
+obos-agent tls-renew-leaf --confirm tls-renew-leaf
 obos-agent tls-export --confirm tls-export
 obos-agent web-auth-rotate --confirm web-auth-rotate
 obos-agent mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
@@ -110,7 +112,7 @@ the configured restore staging directory.
 Restore apply planning uses the same stage path validation and remains
 non-destructive.
 Hostname and timezone changes are validated by `obos-agent` before crossing the
-sudo boundary. Hostnames accept a single DNS label; timezones accept installed
+sudo boundary. Hostnames accept a single DNS label or an FQDN; timezones accept installed
 IANA-style zone names such as `Europe/Zurich` or `UTC`.
 
 ## Restore Workflow
@@ -350,11 +352,18 @@ POST /obos/api/v1/actions/tls-export
 {"confirm":"tls-export"}
 ```
 
-TLS leaf renewal is intentionally not exposed through the HTTP bridge or web UI
-for the technical MVP. It is available only on the local CLI through
-`sudo obosctl tls-renew-leaf --confirm tls-renew-leaf` because it replaces live
-nginx certificate material and needs a recovery path if post-change HTTPS checks
-fail.
+TLS leaf renewal is exposed as an explicit confirmed mutation:
+
+```text
+POST /obos/api/v1/actions/tls-renew-leaf
+```
+
+```json
+{"confirm":"tls-renew-leaf"}
+```
+
+It preserves the local CA, backs up the previous leaf material, refreshes the
+public trust export, and reloads nginx only after the new certificate verifies.
 
 Web console password rotation is available as an explicit confirmed mutation.
 The response contains the new generated password in the normal

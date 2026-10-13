@@ -37,6 +37,15 @@ cert_not_after() {
   openssl x509 -in "${cert}" -noout -enddate | sed 's/^notAfter=//'
 }
 
+cert_san_values() {
+  cert="$1"
+  prefix="$2"
+  openssl x509 -in "${cert}" -noout -ext subjectAltName 2>/dev/null |
+    sed '1d' | tr ',' '\n' |
+    sed -n "s/^[[:space:]]*${prefix}://p" |
+    paste -sd, -
+}
+
 cert_summary() {
   cert="$1"
   label="$2"
@@ -63,6 +72,8 @@ cert_summary() {
   echo "${label}_issuer=$(cert_issuer "${cert}")"
   echo "${label}_not_after=$(cert_not_after "${cert}")"
   echo "${label}_sha256_fingerprint=$(cert_fingerprint "${cert}")"
+  echo "${label}_dns_names=$(cert_san_values "${cert}" DNS)"
+  echo "${label}_ip_addresses=$(cert_san_values "${cert}" 'IP Address')"
 
   warn_seconds=$((WARN_DAYS * 24 * 60 * 60))
   if openssl x509 -in "${cert}" -noout -checkend 0 >/dev/null 2>&1; then

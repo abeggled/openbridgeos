@@ -175,7 +175,8 @@ require_line "TLS_LEAF_RENEWAL_PLAN_SCRIPT=" scripts/obosctl
 require_line "TLS_LEAF_RENEWAL_SCRIPT=" scripts/obosctl
 require_line "plan-leaf-renewal.sh" scripts/bootstrap/provision-debian.sh
 require_line "renew-leaf-certificate.sh" scripts/bootstrap/provision-debian.sh
-require_line "TLS leaf renewal is intentionally not exposed through the HTTP bridge or web UI" docs/web-ui-agent-contract.md
+require_line "POST /obos/api/v1/actions/tls-renew-leaf" docs/web-ui-agent-contract.md
+require_line 'data-mutation-action="tls-renew-leaf"' apps/obos-web/index.html
 require_line "Raspberry Pi Network Installer" docs/image-release-validation.md
 require_line "CONFIG_BLK_DEV_NVME=y" docs/image-release-validation.md
 require_line "sudo obosctl tls-renew-leaf-plan" docs/image-release-validation.md

@@ -67,6 +67,7 @@ new_csr="${work_dir}/obos.local.csr"
 new_cert="${work_dir}/obos.local.crt"
 new_ext="${work_dir}/obos.local.ext"
 ip_list="${work_dir}/obos.local.ips"
+dns_list="${work_dir}/obos.local.dns"
 
 cleanup() {
   rm -rf "${work_dir}"
@@ -97,6 +98,11 @@ chmod 0600 "${new_key}"
 openssl req -new -key "${new_key}" -subj "${SUBJECT}" -out "${new_csr}" >/dev/null 2>&1
 : > "${ip_list}"
 hostname -I 2>/dev/null | tr ' ' '\n' > "${ip_list}" || true
+{
+  echo "obs.local"
+  hostname 2>/dev/null || true
+  hostname -f 2>/dev/null || true
+} | awk 'NF && /^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$/ && !seen[$0]++' > "${dns_list}"
 
 {
   echo "authorityKeyIdentifier=keyid,issuer"
@@ -106,7 +112,12 @@ hostname -I 2>/dev/null | tr ' ' '\n' > "${ip_list}" || true
   echo "subjectAltName=@alt_names"
   echo ""
   echo "[alt_names]"
-  echo "DNS.1=obs.local"
+  dns_index=1
+  while IFS= read -r dns_name; do
+    [ -n "${dns_name}" ] || continue
+    echo "DNS.${dns_index}=${dns_name}"
+    dns_index=$((dns_index + 1))
+  done < "${dns_list}"
   index=1
   while IFS= read -r ip; do
     [ -n "${ip}" ] || continue

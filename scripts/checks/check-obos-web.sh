@@ -49,6 +49,12 @@ grep -q 'id="host-name"' "${INDEX}" \
 grep -q 'id="host-timezone"' "${INDEX}" \
   || fail "web UI does not expose timezone input"
 
+grep -q 'id="host-domain"' "${INDEX}" \
+  || fail "web UI does not expose optional host domain input"
+
+grep -q 'list="timezone-options"' "${INDEX}" \
+  || fail "web UI timezone input is not searchable"
+
 grep -q 'data-mutation-action="set-hostname"' "${INDEX}" \
   || fail "web UI does not expose hostname mutation control"
 
@@ -179,8 +185,17 @@ grep -q 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' "${INDEX}" 
 grep -q 'data-agent-field="tls-summary:leaf_sha256_fingerprint"' "${INDEX}" \
   || fail "web UI does not expose leaf certificate fingerprint"
 
-grep -q 'data-agent-field="tls-summary:leaf_expiry_warning"' "${INDEX}" \
-  || fail "web UI does not expose leaf certificate expiry warning"
+grep -q 'data-agent-field="tls-summary:leaf_not_after"' "${INDEX}" \
+  || fail "web UI does not expose the leaf certificate expiry date"
+
+grep -q 'data-agent-field="tls-summary:leaf_dns_names"' "${INDEX}" \
+  || fail "web UI does not expose leaf DNS SANs"
+
+grep -q 'data-agent-field="tls-summary:leaf_ip_addresses"' "${INDEX}" \
+  || fail "web UI does not expose leaf IP SANs"
+
+grep -q 'data-mutation-action="tls-renew-leaf"' "${INDEX}" \
+  || fail "web UI does not expose confirmed leaf renewal"
 
 grep -q 'data-mutation-action="tls-generate"' "${INDEX}" \
   || fail "web UI does not expose TLS generate mutation control"
@@ -362,8 +377,11 @@ grep -q 'mqtt-enable-lan' "${JS}" \
 grep -q 'body.source_cidr = cidr' "${JS}" \
   || fail "web UI does not send optional MQTT source CIDR"
 
-grep -q 'body.hostname = hostname' "${JS}" \
-  || fail "web UI does not send hostname mutation payload"
+grep -q 'body.hostname = domain' "${JS}" \
+  || fail "web UI does not form the hostname mutation payload with an optional domain"
+
+grep -q 'Intl.supportedValuesOf' "${JS}" \
+  || fail "web UI does not populate searchable timezone choices"
 
 grep -q 'body.timezone = timezone' "${JS}" \
   || fail "web UI does not send timezone mutation payload"

@@ -260,17 +260,17 @@ system_summary() {
 validate_hostname() {
   hostname_value="$1"
   case "${hostname_value}" in
-    ""|.*|*-|*_)
+    ""|.*|*.|*..*|*-|*_)
       echo "hostname is invalid" >&2
       return 2
       ;;
   esac
-  if [ "${#hostname_value}" -gt 63 ]; then
+  if [ "${#hostname_value}" -gt 253 ]; then
     echo "hostname is too long" >&2
     return 2
   fi
   printf '%s\n' "${hostname_value}" |
-    grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' || {
+    grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$' || {
       echo "hostname contains unsupported characters" >&2
       return 2
     }

@@ -47,6 +47,7 @@ Mutating actions:
   portable-import-stage <portable-backup> <passphrase-file> --confirm portable-import-stage
   restore-stage <backup.tar.gz> --confirm restore-stage
   tls-generate --confirm tls-generate
+  tls-renew-leaf --confirm tls-renew-leaf
   tls-export --confirm tls-export
   web-auth-set <password-file> --confirm web-auth-set
   web-auth-rotate --confirm web-auth-rotate
@@ -112,13 +113,13 @@ validate_source_cidr() {
 validate_hostname() {
   hostname_value="$1"
   case "${hostname_value}" in
-    ""|.*|*-|*_)
+    ""|.*|*.|*..*|*-|*_)
       fail "set-hostname hostname is invalid"
       ;;
   esac
-  [ "${#hostname_value}" -le 63 ] || fail "set-hostname hostname is too long"
+  [ "${#hostname_value}" -le 253 ] || fail "set-hostname hostname is too long"
   printf '%s\n' "${hostname_value}" |
-    grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' \
+    grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$' \
     || fail "set-hostname hostname contains unsupported characters"
 }
 
@@ -350,6 +351,7 @@ action=portable-export|mutating=true|confirm=portable-export|required_arg=backup
 action=portable-import-stage|mutating=true|confirm=portable-import-stage|required_arg=portable-backup|required_arg=passphrase-file
 action=restore-stage|mutating=true|confirm=restore-stage|required_arg=backup-path
 action=tls-generate|mutating=true|confirm=tls-generate
+action=tls-renew-leaf|mutating=true|confirm=tls-renew-leaf
 action=tls-export|mutating=true|confirm=tls-export
 action=web-auth-set|mutating=true|confirm=web-auth-set|required_arg=password-file
 action=web-auth-rotate|mutating=true|confirm=web-auth-rotate
@@ -552,6 +554,10 @@ case "${1:-}" in
   tls-generate)
     require_confirm_args "$@"
     run_obosctl tls-generate "${MUTATION_TIMEOUT_SECONDS}" true tls-generate
+    ;;
+  tls-renew-leaf)
+    require_confirm_args "$@"
+    run_obosctl tls-renew-leaf "${MUTATION_TIMEOUT_SECONDS}" true tls-renew-leaf --confirm tls-renew-leaf
     ;;
   tls-export)
     require_confirm_args "$@"

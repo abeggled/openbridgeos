@@ -97,6 +97,7 @@ MUTATING_ACTIONS = {
     "stop": "stop",
     "tls-export": "tls-export",
     "tls-generate": "tls-generate",
+    "tls-renew-leaf": "tls-renew-leaf",
     "update": "update",
     "web-auth-set": "web-auth-set",
     "web-auth-rotate": "web-auth-rotate",

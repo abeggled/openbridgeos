@@ -28,7 +28,7 @@ Security impact:
 Technical MVP status:
 
 - non-destructive planning is available through `obosctl tls-renew-leaf-plan`
-- confirmed CLI renewal is available through
+- confirmed CLI and authenticated web renewal are available through
   `sudo obosctl tls-renew-leaf --confirm tls-renew-leaf`
 - must preserve the existing local CA key and certificate
 

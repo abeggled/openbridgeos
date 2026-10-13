@@ -156,11 +156,13 @@
 
         <article class="panel">
           <div class="panel-heading">
-            <h2>Host Basics <button class="help-button" type="button" aria-label="Help for host basics" data-help-title="Host Basics" data-help="Changes the Debian hostname and timezone used by logs, certificates, and administrative diagnostics.">?</button></h2>
+            <h2>Host Basics <button class="help-button" type="button" aria-label="Help for host basics" data-help-title="Host Basics" data-help="Set a short hostname and optional domain to form the system FQDN. Host identity changes do not silently replace certificates; use Renew Leaf afterward to issue a certificate containing the new DNS name.">?</button></h2>
             <div class="button-row">
               <input id="host-name" type="text" inputmode="text" autocomplete="off" placeholder="hostname">
-              <button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Set Hostname</button>
-              <input id="host-timezone" type="text" inputmode="text" autocomplete="off" placeholder="Europe/Zurich">
+              <input id="host-domain" type="text" inputmode="text" autocomplete="off" placeholder="domain (optional)">
+              <button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Set Host Identity</button>
+              <input id="host-timezone" type="text" inputmode="text" autocomplete="off" placeholder="Search timezone" list="timezone-options">
+              <datalist id="timezone-options"></datalist>
               <button type="button" data-mutation-action="set-timezone" data-confirm="set-timezone" data-mutation-status-target="host">Set Timezone</button>
             </div>
           </div>
@@ -174,10 +176,11 @@
 
         <article class="panel">
           <div class="panel-heading">
-            <h2>TLS Trust <button class="help-button" type="button" aria-label="Help for TLS trust" data-help-title="TLS Trust" data-help="OBOS maintains a private local Root CA and an appliance leaf certificate. Install only the exported Root CA on trusted client devices; never export or copy the private keys.">?</button></h2>
+            <h2>TLS Trust <button class="help-button" type="button" aria-label="Help for TLS trust" data-help-title="TLS Trust" data-help="Initialize TLS creates missing material but never rotates existing trust. Renew Leaf preserves the Root CA while issuing a new server certificate for current DNS names and IP addresses. Prepare Public Export copies public certificates only; private keys never leave the protected TLS directory.">?</button></h2>
             <div class="button-row">
-              <button type="button" data-mutation-action="tls-generate" data-confirm="tls-generate" data-mutation-status-target="tls">Generate</button>
-              <button type="button" data-mutation-action="tls-export" data-confirm="tls-export" data-mutation-status-target="tls">Export</button>
+              <button type="button" data-mutation-action="tls-generate" data-confirm="tls-generate" data-mutation-status-target="tls" title="Create the local CA and leaf only if they are missing">Initialize TLS</button>
+              <button type="button" data-mutation-action="tls-renew-leaf" data-confirm="tls-renew-leaf" data-mutation-status-target="tls" title="Issue a new leaf for the current hostname, FQDN, and IP addresses">Renew Leaf</button>
+              <button type="button" data-mutation-action="tls-export" data-confirm="tls-export" data-mutation-status-target="tls" title="Prepare public certificates for download; private keys are never exported">Prepare Public Export</button>
               <a class="download-link" href="/obos/api/v1/downloads/trust-ca" data-ca-download hidden>Download Root CA</a>
             </div>
           </div>
@@ -186,7 +189,10 @@
             <div><dt>CA fingerprint</dt><dd data-agent-field="tls-summary:local_ca_sha256_fingerprint">pending</dd></div>
             <div><dt>Leaf certificate <button class="help-button" type="button" aria-label="Help for leaf certificate" data-help-title="Leaf certificate" data-help="The HTTPS server certificate presented by this appliance. It is signed by the local Root CA and should not be installed as the trust anchor.">?</button></dt><dd data-agent-field="tls-summary:leaf_present">pending</dd></div>
             <div><dt>Leaf fingerprint</dt><dd data-agent-field="tls-summary:leaf_sha256_fingerprint">pending</dd></div>
-            <div><dt>Leaf expiry</dt><dd data-agent-field="tls-summary:leaf_expiry_warning">pending</dd></div>
+            <div><dt>Leaf valid until</dt><dd data-agent-field="tls-summary:leaf_not_after">pending</dd></div>
+            <div><dt>Expiry warning</dt><dd data-agent-field="tls-summary:leaf_expiry_warning">pending</dd></div>
+            <div><dt>Leaf DNS names</dt><dd data-agent-field="tls-summary:leaf_dns_names">pending</dd></div>
+            <div><dt>Leaf IP addresses</dt><dd data-agent-field="tls-summary:leaf_ip_addresses">pending</dd></div>
             <div><dt>Trust bundle <button class="help-button" type="button" aria-label="Help for trust bundle" data-help-title="Trust bundle" data-help="True means public trust files were generated on the appliance. Use Download Root CA to retrieve the Root CA certificate; no private key is included.">?</button></dt><dd data-agent-field="tls-summary:trust_export_present">pending</dd></div>
             <div><dt>TLS action</dt><dd data-mutation-status="tls">ready</dd></div>
           </dl>
