@@ -39,6 +39,8 @@ SESSION_COOKIE_SECURE = os.environ.get("OBOS_SESSION_COOKIE_SECURE", "true") == 
 API_PREFIX = "/obos/api/v1/actions/"
 ONBOARDING_PREFIX = "/obos/api/v1/onboarding/"
 DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"
+TRUST_CA_DOWNLOAD_PATH = "/obos/api/v1/downloads/trust-ca"
+TRUST_CA_FILE = os.environ.get("OBOS_TRUST_CA_FILE", "/srv/obos/state/trust/obos-local-ca.crt")
 UPLOAD_PREFIX = "/obos/api/v1/uploads/portable-import"
 SESSION_PREFIX = "/obos/api/v1/session/"
 ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -127,10 +129,10 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-    def send_file(self, status, path, filename):
+    def send_file(self, status, path, filename, content_type="application/octet-stream"):
         file_size = os.path.getsize(path)
         self.send_response(status)
-        self.send_header("Content-Type", "application/x-tar")
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
         self.send_header("Content-Length", str(file_size))
         self.send_header("Cache-Control", "no-store")
@@ -460,9 +462,21 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            self.send_file(200, real_artifact, filename)
+            self.send_file(200, real_artifact, filename, "application/x-tar")
         except OSError as exc:
             self.portable_download_error(502, "download-failed", str(exc))
+
+    def handle_trust_ca_download(self, parsed):
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        if not os.path.isfile(TRUST_CA_FILE):
+            self.send_text(404, error_envelope("download-not-found", "export the Root CA before downloading it"))
+            return
+        try:
+            self.send_file(200, TRUST_CA_FILE, "obos-local-ca.crt", "application/x-pem-file")
+        except OSError as exc:
+            self.send_text(502, error_envelope("download-failed", str(exc)))
 
     def handle_portable_upload(self, parsed):
         if parsed.query:
@@ -734,6 +748,9 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             return
         if parsed.path == DOWNLOAD_PREFIX:
             self.handle_portable_download(parsed)
+            return
+        if parsed.path == TRUST_CA_DOWNLOAD_PATH:
+            self.handle_trust_ca_download(parsed)
             return
 
         action, error = self.parse_action_path()

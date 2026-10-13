@@ -16,11 +16,17 @@
   const securityAuditButton = document.querySelector("[data-run-security-audit]");
   const mvpReadinessButton = document.querySelector("[data-run-mvp-readiness]");
   const portableDownloadLink = document.querySelector("[data-portable-download]");
+  const caDownloadLink = document.querySelector("[data-ca-download]");
   const portableUploadButton = document.querySelector("[data-upload-portable]");
   const webAuthPassword = document.querySelector("[data-web-auth-password]");
   const webAuthSecret = document.querySelector("[data-web-auth-secret]");
   const clearWebAuthPasswordButton = document.querySelector("[data-clear-web-auth-password]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
+  const helpButtons = Array.from(document.querySelectorAll("[data-help]"));
+  const helpDialog = document.querySelector("[data-help-dialog]");
+  const helpDialogTitle = document.querySelector("[data-help-dialog-title]");
+  const helpDialogBody = document.querySelector("[data-help-dialog-body]");
+  const helpCloseButton = document.querySelector("[data-help-close]");
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
   let webAuthPasswordTimer;
@@ -142,7 +148,7 @@
       .filter((line) => line.startsWith("stderr=") && line.length > "stderr=".length)
       .map((line) => line.slice("stderr=".length));
     if (stderr.length > 0) {
-      return stderr[stderr.length - 1];
+      return stderr.join(" | ");
     }
     return fallback;
   }
@@ -199,6 +205,9 @@
       }
       const values = parseAgentResponse(text);
       latestValues.set(action, values);
+      if (action === "tls-summary" && caDownloadLink) {
+        caDownloadLink.hidden = values.trust_export_present !== "true";
+      }
       for (const target of targets) {
         setField(target.element, values[target.key], "ok");
       }
@@ -526,6 +535,9 @@
       if (action === "portable-export") {
         setPortableDownload(parseAgentResponse(text));
       }
+      if (action === "tls-export" && caDownloadLink) {
+        caDownloadLink.hidden = false;
+      }
       if (action === "web-auth-rotate") {
         setWebAuthPassword(parseAgentResponse(text));
       }
@@ -541,6 +553,24 @@
   for (const button of mutationButtons) {
     button.addEventListener("click", () => runMutation(button));
   }
+
+  for (const button of helpButtons) {
+    button.addEventListener("click", () => {
+      if (!helpDialog || !helpDialogTitle || !helpDialogBody) {
+        return;
+      }
+      helpDialogTitle.textContent = button.dataset.helpTitle || "Help";
+      helpDialogBody.textContent = button.dataset.help || "";
+      helpDialog.showModal();
+    });
+  }
+
+  helpCloseButton?.addEventListener("click", () => helpDialog?.close());
+  helpDialog?.addEventListener("click", (event) => {
+    if (event.target === helpDialog) {
+      helpDialog.close();
+    }
+  });
 
   loginForm?.addEventListener("submit", login);
   logoutButton?.addEventListener("click", logout);

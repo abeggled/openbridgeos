@@ -73,10 +73,8 @@ form.addEventListener("submit", async (event) => {
     if (!response.ok) {
       throw new Error(text.trim() || "password setup failed");
     }
-    setStatus("Password set. Opening the console...", "ok");
-    window.setTimeout(() => {
-      window.location.replace("/obos/");
-    }, 1200);
+    setStatus("Password set. Opening login...", "ok");
+    window.location.replace("/obos/");
   } catch (error) {
     setStatus(error.message, "error");
     button.disabled = false;

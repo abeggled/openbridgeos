@@ -116,6 +116,9 @@ grep -q 'require_session' scripts/agent/obos-agent-http.py \
 grep -q 'SupplementaryGroups=www-data' packaging/systemd/obos-agent-http.service \
   || fail "HTTP bridge cannot read nginx htpasswd group file"
 
+grep -q '/srv/obos/state/trust' packaging/systemd/obos-agent-http.service \
+  || fail "HTTP bridge sandbox does not permit public trust exports"
+
 grep -q 'web-auth-rotate)' scripts/obosctl \
   || fail "obosctl does not expose web auth rotation"
 

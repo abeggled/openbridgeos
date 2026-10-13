@@ -89,6 +89,8 @@ grep -q 'passphrase' "${BRIDGE}" \
   || fail "bridge does not support portable export passphrase payload"
 grep -q 'DOWNLOAD_PREFIX = "/obos/api/v1/downloads/portable-export"' "${BRIDGE}" \
   || fail "bridge does not define the portable export download endpoint"
+grep -q 'TRUST_CA_DOWNLOAD_PATH = "/obos/api/v1/downloads/trust-ca"' "${BRIDGE}" \
+  || fail "bridge does not define the Root CA download endpoint"
 grep -q 'UPLOAD_PREFIX = "/obos/api/v1/uploads/portable-import"' "${BRIDGE}" \
   || fail "bridge does not define the portable import upload endpoint"
 grep -q 'PORTABLE_EXPORT_DIR' "${BRIDGE}" \
@@ -123,6 +125,8 @@ grep -q 'MemoryDenyWriteExecute=true' "${SERVICE}" \
   || fail "HTTP bridge service lacks memory hardening"
 grep -q 'SupplementaryGroups=www-data' "${SERVICE}" \
   || fail "HTTP bridge service cannot read the web auth hash"
+grep -q '/srv/obos/state/trust' "${SERVICE}" \
+  || fail "HTTP bridge service cannot write public trust exports"
 if grep -q 'NoNewPrivileges=true' "${SERVICE}"; then
   fail "HTTP bridge service must not enable NoNewPrivileges while obos-agent uses sudo"
 fi
@@ -152,7 +156,10 @@ portable_import_dir="/tmp/obos-portable-imports"
 onboarding_state_dir="/tmp/obos-onboarding-state"
 onboarding_window_state_file="${onboarding_state_dir}/window-state"
 session_state_dir="/tmp/obos-session-state"
+trust_ca_file="${tmp_dir}/obos-local-ca.crt"
 trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}" "${onboarding_state_dir}" "${session_state_dir}"' EXIT
+
+printf '%s\n' 'test public Root CA certificate' > "${trust_ca_file}"
 
 cat > "${tmp_dir}/obos-agent" <<'EOF'
 #!/usr/bin/env sh
@@ -523,6 +530,7 @@ OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
 OBOS_SESSION_DIR="${session_state_dir}" \
 OBOS_SESSION_COOKIE_SECURE=false \
+OBOS_TRUST_CA_FILE="${trust_ca_file}" \
 "${PYTHON_BIN}" "${BRIDGE}" &
 server_pid="$!"
 
@@ -571,6 +579,7 @@ OBOS_ONBOARDING_BOOT_AGE_SECONDS=301 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
 OBOS_SESSION_DIR="${session_state_dir}" \
 OBOS_SESSION_COOKIE_SECURE=false \
+OBOS_TRUST_CA_FILE="${trust_ca_file}" \
 "${PYTHON_BIN}" "${BRIDGE}" &
 server_pid="$!"
 
@@ -624,6 +633,7 @@ OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
 OBOS_SESSION_DIR="${session_state_dir}" \
 OBOS_SESSION_COOKIE_SECURE=false \
+OBOS_TRUST_CA_FILE="${trust_ca_file}" \
 "${PYTHON_BIN}" "${BRIDGE}" &
 server_pid="$!"
 
@@ -645,6 +655,9 @@ curl --fail --silent \
 
 status_code="$(curl --silent --output "${tmp_dir}/unauth-status.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/actions/status-summary)"
 [ "${status_code}" = 401 ] || fail "agent API allowed unauthenticated status access"
+
+status_code="$(curl --silent --output "${tmp_dir}/unauth-ca.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/downloads/trust-ca)"
+[ "${status_code}" = 401 ] || fail "agent API allowed unauthenticated Root CA download"
 
 password_hash="$(printf '%s\n' 'correct horse battery staple' | openssl passwd -apr1 -stdin)"
 printf 'admin:%s\n' "${password_hash}" > "${onboarding_state_dir}/web.htpasswd"
@@ -668,6 +681,12 @@ curl -q --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/session/login |
   grep -q 'authenticated=true' \
   || fail "secondary session login did not authenticate"
+
+curl -q --fail --silent \
+  --cookie "${secondary_cookie_jar}" \
+  http://127.0.0.1:18091/obos/api/v1/downloads/trust-ca |
+  grep -q 'test public Root CA certificate' \
+  || fail "HTTP bridge did not download the exported public Root CA"
 
 sha512_cookie_jar="${tmp_dir}/sha512-cookies.txt"
 password_hash="$(printf '%s\n' 'correct horse battery staple' | openssl passwd -6 -stdin)"
