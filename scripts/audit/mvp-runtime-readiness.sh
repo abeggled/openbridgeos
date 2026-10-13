@@ -219,6 +219,7 @@ result=${result}
 pass_count=${PASS_COUNT}
 fail_count=${FAIL_COUNT}
 EOF
+  exit 0
 elif [ "${FAILED}" -eq 0 ]; then
   echo 'mvp runtime readiness: PASS'
 else

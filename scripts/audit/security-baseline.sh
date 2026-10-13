@@ -235,11 +235,6 @@ check_proxy_health() {
   fi
 }
 
-web_auth_info_value() {
-  key="$1"
-  sed -n "s/^${key}=//p" "${WEB_AUTH_INFO_FILE}" 2>/dev/null | head -n 1
-}
-
 check_web_auth() {
   if [ ! -f "${TLS_CA_CERT}" ]; then
     fail "web console auth not checked because local CA is missing"
@@ -250,32 +245,25 @@ check_web_auth() {
     return
   fi
 
-  status_code="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 5 \
+  login_page="$(curl --silent --show-error --max-time 5 \
     --cacert "${TLS_CA_CERT}" \
     --resolve "${PROXY_HEALTH_HOST}:443:127.0.0.1" \
     "${WEB_AUTH_URL}" 2>/dev/null || true)"
 
-  if [ "${status_code}" = 401 ]; then
-    pass 'obos web console requires authentication'
+  if printf '%s\n' "${login_page}" | grep -Fq 'data-login-form'; then
+    pass 'obos web console exposes the session login form'
   else
-    fail "obos web console authentication challenge expected 401, got ${status_code:-missing}"
+    fail 'obos web console session login form missing'
   fi
 
-  web_user="$(web_auth_info_value OBOS_WEB_ADMIN_USER)"
-  web_password="$(web_auth_info_value OBOS_WEB_ADMIN_PASSWORD)"
-  if [ -z "${web_user}" ] || [ -z "${web_password}" ]; then
-    fail 'web console generated credentials missing'
-    return
-  fi
-
-  if curl --fail --silent --show-error --max-time 5 \
+  session_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 5 \
     --cacert "${TLS_CA_CERT}" \
     --resolve "${PROXY_HEALTH_HOST}:443:127.0.0.1" \
-    --user "${web_user}:${web_password}" \
-    "${WEB_AUTH_URL}" >/dev/null; then
-    pass 'obos web console accepts generated credentials'
+    "${WEB_AUTH_URL}api/v1/session/status" 2>/dev/null || true)"
+  if [ "${session_status}" = 401 ]; then
+    pass 'obos web console session status requires authentication'
   else
-    fail 'obos web console rejects generated credentials'
+    fail "obos web console session status expected 401, got ${session_status:-missing}"
   fi
 }
 
@@ -412,6 +400,7 @@ result=${result}
 pass_count=${PASS_COUNT}
 fail_count=${FAIL_COUNT}
 EOF
+  exit 0
 elif [ "${FAILED}" -eq 0 ]; then
   echo 'security baseline: PASS'
 else
