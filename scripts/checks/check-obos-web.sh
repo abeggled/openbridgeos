@@ -67,8 +67,8 @@ grep -q 'data-mutation-status="host"' "${INDEX}" \
 grep -q 'data-agent-field="system-summary:default_route_present"' "${INDEX}" \
   || fail "web UI does not expose network route status"
 
-grep -q 'data-agent-field="update-rollback-plan:backup_present"' "${INDEX}" \
-  || fail "web UI does not expose update rollback planning state"
+grep -q 'data-agent-field="update-summary:last_update_present"' "${INDEX}" \
+  || fail "web UI does not expose last update state"
 
 grep -q 'data-agent-field="backup-summary:' "${INDEX}" \
   || fail "web UI does not expose backup summary placeholders"
@@ -253,6 +253,18 @@ grep -q '/obos/api/v1/session/' "${JS}" \
 grep -q 'data-auth-screen' "${INDEX}" \
   || fail "web UI does not define an auth screen"
 
+grep -Fq '[hidden]' "${CSS}" \
+  || fail "web UI CSS does not preserve hidden element state"
+
+grep -Fq 'display: none !important;' "${CSS}" \
+  || fail "web UI CSS can override hidden element state"
+
+grep -q 'AbortController' "${JS}" \
+  || fail "web UI session requests do not have a bounded timeout"
+
+[ "$(grep -Fc 'void refresh();' "${JS}")" -ge 2 ] \
+  || fail "web UI login and session checks wait on background status refreshes"
+
 grep -q 'parseAgentResponse' "${JS}" \
   || fail "web UI does not parse the agent response envelope"
 
@@ -423,6 +435,9 @@ grep -q 'root /srv/obos/web;' packaging/nginx/openbridgeserver.conf \
 
 grep -q 'try_files /app.js =404;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web from /srv/obos/web"
+
+grep -Fq 'add_header Cache-Control "no-store" always;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx allows stale web application assets"
 
 if grep -q 'alias /srv/obos/' packaging/nginx/openbridgeserver.conf; then
   fail "nginx must not use prefix alias for obos static files"

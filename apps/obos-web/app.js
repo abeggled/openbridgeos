@@ -3,6 +3,7 @@
   const downloadBase = "/obos/api/v1/downloads/";
   const uploadBase = "/obos/api/v1/uploads/";
   const sessionBase = "/obos/api/v1/session/";
+  const sessionTimeoutMs = 10000;
   const authScreen = document.querySelector("[data-auth-screen]");
   const appShell = document.querySelector("[data-app-shell]");
   const loginForm = document.querySelector("[data-login-form]");
@@ -49,6 +50,21 @@
     }
     if (appShell) {
       appShell.hidden = false;
+    }
+  }
+
+  async function fetchSession(path, options = {}) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), sessionTimeoutMs);
+    try {
+      return await fetch(`${sessionBase}${path}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+        ...options,
+        signal: controller.signal,
+      });
+    } finally {
+      window.clearTimeout(timeout);
     }
   }
 
@@ -173,10 +189,7 @@
 
   async function checkSession() {
     try {
-      const response = await fetch(`${sessionBase}status`, {
-        cache: "no-store",
-        credentials: "same-origin",
-      });
+      const response = await fetchSession("status");
       const text = await response.text();
       if (response.status === 401) {
         showLogin();
@@ -188,7 +201,7 @@
       const values = parseKeyValueText(text);
       if (values.authenticated === "true") {
         showApp();
-        await refresh();
+        void refresh();
         return;
       }
       if (values.onboarding_required === "true") {
@@ -215,10 +228,8 @@
     button.disabled = true;
     setAuthStatus("Logging in...");
     try {
-      const response = await fetch(`${sessionBase}login`, {
+      const response = await fetchSession("login", {
         method: "POST",
-        cache: "no-store",
-        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
         },
@@ -234,7 +245,7 @@
         usernameInput.value = "admin";
       }
       showApp();
-      await refresh();
+      void refresh();
     } catch (error) {
       setAuthStatus("Login failed.", "error");
     } finally {
@@ -243,10 +254,8 @@
   }
 
   async function logout() {
-    await fetch(`${sessionBase}logout`, {
+    await fetchSession("logout", {
       method: "POST",
-      cache: "no-store",
-      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
       },

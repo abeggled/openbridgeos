@@ -51,8 +51,7 @@ esac
 '
 
 write_fake_command curl '
-echo "format=obos-agent-response-v1"
-echo "stdout=format=obos-status-summary-v1"
+printf "401"
 exit 0
 '
 
