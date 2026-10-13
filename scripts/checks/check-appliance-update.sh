@@ -40,6 +40,8 @@ if grep -q 'OBOS_RELEASE_MINISIGN_PASSWORD' "${RELEASE_WORKFLOW}"; then
 fi
 grep -q 'Refusing to replace existing release' "${RELEASE_WORKFLOW}" \
   || fail "release workflow can replace an existing release"
+grep -q 'packaging/update/obos-release.minisign.pub' "${RELEASE_WORKFLOW}" \
+  || fail "release workflow does not publish the release public key"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT HUP INT TERM

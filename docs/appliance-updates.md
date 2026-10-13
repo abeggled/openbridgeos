@@ -27,6 +27,7 @@ obos-update.tar.gz
 obos-update.manifest
 obos-update.manifest.minisig
 obos-update-notes.txt
+obos-release.minisign.pub
 ```
 
 Create the archive and manifest from a clean tagged checkout:
@@ -48,7 +49,7 @@ the same changes. The downloadable notes asset is authoritative for the
 appliance because its checksum is covered by the signed manifest.
 
 Create the tag from the exact clean commit used to produce the archive. Publish
-all four fixed-name assets plus the manifest signature in one release. A draft
+all five fixed-name assets in one release. A draft
 release is recommended until an upgrade from the previous appliance version has
 passed on the MVP VM.
 

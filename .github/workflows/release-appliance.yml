@@ -96,6 +96,7 @@ jobs:
             "${RELEASE_DIR}/obos-update.manifest"
             "${RELEASE_DIR}/obos-update.manifest.minisig"
             "${RELEASE_DIR}/obos-update-notes.txt"
+            "packaging/update/obos-release.minisign.pub"
             --target "${GITHUB_SHA}"
             --title "open bridge operating system ${RELEASE_VERSION}"
             --notes-file RELEASENOTES.md
