@@ -5,6 +5,7 @@ ENV_FILE="${OBOS_ENV_FILE:-/etc/obos/apps/openbridgeserver.env}"
 NFT_FILE="${OBOS_NFT_FILE:-/etc/nftables.conf}"
 SERVICE_NAME="${OBOS_SERVICE_NAME:-obos-openbridgeserver.service}"
 NFTABLES_SERVICE="${OBOS_NFTABLES_SERVICE:-nftables.service}"
+DOCKER_SERVICE="${OBOS_DOCKER_SERVICE:-docker.service}"
 
 usage() {
   cat <<'EOF'
@@ -137,6 +138,12 @@ reload_firewall() {
     systemctl restart "${NFTABLES_SERVICE}"
   elif command -v nft >/dev/null 2>&1; then
     nft -f "${NFT_FILE}"
+  fi
+
+  # Reloading the appliance ruleset removes Docker's dynamic nftables chains.
+  # Recreate them before Compose starts the managed application again.
+  if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet "${DOCKER_SERVICE}"; then
+    systemctl restart "${DOCKER_SERVICE}"
   fi
 }
 
