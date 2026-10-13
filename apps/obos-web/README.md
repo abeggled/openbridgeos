@@ -19,6 +19,12 @@ locally, and calls `obos-agent` rather than `obosctl` or a shell directly.
 The UI is expected to consume the allowlisted commands documented in
 `docs/web-ui-agent-contract.md`.
 
+The overview keeps day-to-day appliance controls and health indicators concise.
+Detailed security checks, technical readiness, bounded support logs, and console
+password rotation live on the authenticated `/obos/diagnostics/` page. Both
+pages use the same session API and shared script; no diagnostic data is rendered
+before the session check succeeds.
+
 Initial read-only panels:
 
 - appliance status
@@ -36,13 +42,13 @@ Initial read-only panels:
 The TLS trust panel surfaces certificate presence, SHA-256 fingerprints, expiry
 warning state, and trust bundle availability for onboarding and support.
 
-The security panel can refresh the non-destructive security baseline audit
-and technical MVP runtime readiness through read-only local agent endpoints. It
+The diagnostics security panel can refresh the non-destructive security baseline
+audit and technical runtime readiness through read-only local agent endpoints. It
 can also run the confirmed web console password rotation and shows the newly
 generated password from the response for the administrator who triggered the
 operation.
 
-The logs panel starts with metadata only. Raw log viewing remains disabled
+The diagnostics logs panel starts with metadata only. Raw log viewing remains disabled
 because service logs can contain sensitive operational data.
 
 Start, stop, restart, update, backup creation, restore staging, hostname and

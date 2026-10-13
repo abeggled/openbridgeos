@@ -574,7 +574,7 @@ grep -q 'check-obos-web.sh' .github/workflows/ci.yml \
 grep -q 'data-agent-field="security-summary:' apps/obos-web/index.html \
   || fail "obos-web does not surface security baseline data"
 
-grep -q 'data-agent-field="agent-audit-summary:' apps/obos-web/index.html \
+grep -q 'data-agent-field="agent-audit-summary:' apps/obos-web/diagnostics.html \
   || fail "obos-web does not surface agent audit data"
 
 grep -q 'OBOS_WEB_DIR="/srv/obos/web"' scripts/bootstrap/provision-debian.sh \

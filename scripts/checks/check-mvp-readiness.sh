@@ -256,7 +256,7 @@ require_line 'data-mutation-action="restore-stage"' apps/obos-web/index.html
 require_line 'data-agent-field="security-summary:result"' apps/obos-web/index.html
 require_line 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' apps/obos-web/index.html
 require_line 'data-agent-field="mqtt-summary:firewall_source"' apps/obos-web/index.html
-require_line 'data-load-logs' apps/obos-web/index.html
+require_line 'data-load-logs' apps/obos-web/diagnostics.html
 require_line 'data-mutation-action="mqtt-enable-lan"' apps/obos-web/index.html
 require_line 'data-mutation-action="mqtt-disable-lan"' apps/obos-web/index.html
 require_line 'data-mutation-action="tls-renew-leaf"' apps/obos-web/index.html

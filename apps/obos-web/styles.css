@@ -8,9 +8,12 @@
   --line: #d9e0e4;
   --accent: #0f766e;
   --accent-strong: #115e59;
+  --success: #08745b;
+  --success-bg: #e9f7f2;
   --warn: #a16207;
   --danger: #b42318;
-  --radius: 8px;
+  --danger-bg: #fff0ee;
+  --radius: 10px;
 }
 
 * {
@@ -38,6 +41,25 @@ button {
   font: inherit;
   font-weight: 700;
   padding: 0 12px;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+button:hover:not(:disabled),
+.download-link:hover {
+  border-color: var(--accent);
+  background: var(--surface-muted);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:focus-visible,
+input:focus-visible,
+.download-link:focus-visible,
+.app-nav a:focus-visible {
+  outline: 3px solid rgb(15 118 110 / 20%);
+  outline-offset: 2px;
 }
 
 .download-link {
@@ -172,7 +194,7 @@ input {
 }
 
 .shell {
-  width: min(1180px, calc(100% - 32px));
+  width: min(1280px, calc(100% - 32px));
   margin: 0 auto;
   padding: 24px 0 40px;
 }
@@ -183,6 +205,50 @@ input {
   gap: 24px;
   align-items: end;
   padding: 20px 0 24px;
+}
+
+.diagnostics-topbar {
+  align-items: center;
+}
+
+.app-nav {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.app-nav a {
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 11px;
+  text-decoration: none;
+}
+
+.app-nav a:hover,
+.app-nav a[aria-current="page"] {
+  background: var(--surface-muted);
+  color: var(--accent-strong);
+}
+
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.status-link {
+  display: inline-block;
+  margin-top: 7px;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.status-link:hover {
+  text-decoration: underline;
 }
 
 .eyebrow {
@@ -248,16 +314,21 @@ dd,
   font-size: 15px;
 }
 
-[data-agent-field][data-state="ok"] {
-  color: var(--accent-strong);
+[data-agent-field][data-state="ok"],
+[data-mutation-status][data-state="ok"] {
+  color: var(--success);
+  font-weight: 700;
 }
 
-[data-agent-field][data-state="loading"] {
+[data-agent-field][data-state="loading"],
+[data-mutation-status][data-state="loading"] {
   color: var(--muted);
 }
 
-[data-agent-field][data-state="error"] {
+[data-agent-field][data-state="error"],
+[data-mutation-status][data-state="error"] {
   color: var(--danger);
+  font-weight: 700;
 }
 
 .log-viewer {
@@ -309,7 +380,8 @@ dd,
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
-  padding: 16px;
+  padding: 18px;
+  box-shadow: 0 3px 14px rgb(22 32 36 / 5%);
 }
 
 .inline-notice {
@@ -356,7 +428,53 @@ dd,
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
   justify-content: flex-end;
+}
+
+.control-group {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
+
+.control-group > input {
+  min-width: 0;
+  flex: 1 1 150px;
+  border-radius: 0;
+}
+
+.control-group > :first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.control-group > :last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.control-group > * + * {
+  margin-left: -1px;
+}
+
+.control-group button,
+.control-group .download-link {
+  position: relative;
+  white-space: nowrap;
+}
+
+.icon-button svg {
+  display: block;
+}
+
+.icon-button:disabled svg {
+  animation: refresh-spin 900ms linear infinite;
+}
+
+@keyframes refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .icon-button {
@@ -370,6 +488,10 @@ dd,
 
 .grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.diagnostics-grid {
+  grid-template-columns: 1fr;
 }
 
 .wide {
@@ -407,6 +529,17 @@ dd,
   h1 {
     font-size: 28px;
   }
+
+  .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .button-row,
+  .page-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 600px) {
@@ -416,6 +549,10 @@ dd,
 
   .auth-panel h1 {
     font-size: 26px;
+  }
+
+  .control-group {
+    width: 100%;
   }
 }
 

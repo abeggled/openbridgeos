@@ -30,6 +30,10 @@
         <div>
           <p class="eyebrow">Appliance Console</p>
           <h1>open bridge operating system</h1>
+          <nav class="app-nav" aria-label="Console navigation">
+            <a href="/obos/" aria-current="page">Overview</a>
+            <a href="/obos/diagnostics/">System Diagnostics</a>
+          </nav>
         </div>
         <dl class="summary-strip" aria-label="Current appliance state">
           <div>
@@ -39,6 +43,7 @@
           <div>
             <dt>Security baseline</dt>
             <dd data-agent-field="security-summary:result">pending</dd>
+            <a class="status-link" href="/obos/diagnostics/">View diagnostics</a>
           </div>
           <div>
             <dt>MQTT LAN</dt>
@@ -60,7 +65,9 @@
             <button type="button" data-mutation-action="update" data-confirm="update" data-mutation-status-target="service-action">Update</button>
             <button type="button" data-logout>Logout</button>
             <button class="icon-button" type="button" aria-label="Refresh status" title="Refresh status" data-refresh-status>
-              <span aria-hidden="true">R</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                <path d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -102,9 +109,11 @@
             <h2>Backups <button class="help-button" type="button" aria-label="Help for backups" data-help-title="Backups" data-help="Creates appliance-local backups containing OBS data, MQTT state, configuration, appliance identity, and TLS private material. Portable exports add passphrase-based encryption for transfer.">?</button></h2>
             <div class="button-row">
               <button type="button" data-mutation-action="backup" data-confirm="backup" data-mutation-status-target="backup">Create Backup</button>
-              <input id="portable-passphrase" type="password" autocomplete="new-password" placeholder="export passphrase">
-              <button type="button" data-mutation-action="portable-export" data-confirm="portable-export" data-mutation-status-target="portable-export" data-mutation-backup-from="backup-summary:latest_backup">Portable Export</button>
-              <a class="download-link" href="#" data-portable-download hidden>Download</a>
+              <div class="control-group">
+                <input id="portable-passphrase" type="password" autocomplete="new-password" placeholder="export passphrase" aria-label="Portable export passphrase">
+                <button type="button" data-mutation-action="portable-export" data-confirm="portable-export" data-mutation-status-target="portable-export" data-mutation-backup-from="backup-summary:latest_backup">Portable Export</button>
+                <a class="download-link" href="#" data-portable-download hidden>Download</a>
+              </div>
             </div>
           </div>
           <dl>
@@ -122,10 +131,14 @@
             <h2>Restore <button class="help-button" type="button" aria-label="Help for restore" data-help-title="Restore" data-help="Restore is staged first and never applied directly from this web console. Inspect the staged result and use an explicitly confirmed CLI apply step.">?</button></h2>
             <div class="button-row">
               <button type="button" data-mutation-action="restore-stage" data-confirm="restore-stage" data-mutation-status-target="restore-stage" data-mutation-backup-from="backup-summary:latest_backup">Stage Latest</button>
-              <input id="portable-import-file" type="file" accept=".tar,application/x-tar">
-              <button type="button" data-upload-portable>Upload Portable</button>
-              <input id="portable-import-passphrase" type="password" autocomplete="new-password" placeholder="import passphrase">
-              <button type="button" data-mutation-action="portable-import-stage" data-confirm="portable-import-stage" data-mutation-status-target="portable-import" data-mutation-portable-from="portable-import-upload:portable_backup">Stage Portable</button>
+              <div class="control-group">
+                <input id="portable-import-file" type="file" accept=".tar,application/x-tar" aria-label="Portable backup file">
+                <button type="button" data-upload-portable>Upload Portable</button>
+              </div>
+              <div class="control-group">
+                <input id="portable-import-passphrase" type="password" autocomplete="new-password" placeholder="import passphrase" aria-label="Portable import passphrase">
+                <button type="button" data-mutation-action="portable-import-stage" data-confirm="portable-import-stage" data-mutation-status-target="portable-import" data-mutation-portable-from="portable-import-upload:portable_backup">Stage Portable</button>
+              </div>
             </div>
           </div>
           <dl>
@@ -141,8 +154,10 @@
           <div class="panel-heading">
             <h2>MQTT Exposure <button class="help-button" type="button" aria-label="Help for MQTT exposure" data-help-title="MQTT Exposure" data-help="MQTT is localhost-only by default. Enable LAN only when external clients require it, and restrict the source CIDR whenever possible.">?</button></h2>
             <div class="button-row">
-              <input id="mqtt-source-cidr" type="text" inputmode="text" autocomplete="off" placeholder="source CIDR">
-              <button type="button" data-mutation-action="mqtt-enable-lan" data-confirm="mqtt-enable-lan" data-mutation-status-target="mqtt">Enable LAN</button>
+              <div class="control-group">
+                <input id="mqtt-source-cidr" type="text" inputmode="text" autocomplete="off" placeholder="source CIDR" aria-label="MQTT source CIDR">
+                <button type="button" data-mutation-action="mqtt-enable-lan" data-confirm="mqtt-enable-lan" data-mutation-status-target="mqtt">Enable LAN</button>
+              </div>
               <button type="button" data-mutation-action="mqtt-disable-lan" data-confirm="mqtt-disable-lan" data-mutation-status-target="mqtt">Disable LAN</button>
             </div>
           </div>
@@ -158,12 +173,16 @@
           <div class="panel-heading">
             <h2>Host Basics <button class="help-button" type="button" aria-label="Help for host basics" data-help-title="Host Basics" data-help="Set a short hostname and optional domain to form the system FQDN. Host identity changes do not silently replace certificates; use Renew Leaf afterward to issue a certificate containing the new DNS name.">?</button></h2>
             <div class="button-row">
-              <input id="host-name" type="text" inputmode="text" autocomplete="off" placeholder="hostname">
-              <input id="host-domain" type="text" inputmode="text" autocomplete="off" placeholder="domain (optional)">
-              <button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Set Host Identity</button>
-              <input id="host-timezone" type="text" inputmode="text" autocomplete="off" placeholder="Search timezone" list="timezone-options">
+              <div class="control-group">
+                <input id="host-name" type="text" inputmode="text" autocomplete="off" placeholder="hostname" aria-label="Hostname">
+                <input id="host-domain" type="text" inputmode="text" autocomplete="off" placeholder="domain (optional)" aria-label="Domain">
+                <button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Set Host Identity</button>
+              </div>
+              <div class="control-group">
+                <input id="host-timezone" type="text" inputmode="text" autocomplete="off" placeholder="Search timezone" list="timezone-options" aria-label="Timezone">
+                <button type="button" data-mutation-action="set-timezone" data-confirm="set-timezone" data-mutation-status-target="host">Set Timezone</button>
+              </div>
               <datalist id="timezone-options"></datalist>
-              <button type="button" data-mutation-action="set-timezone" data-confirm="set-timezone" data-mutation-status-target="host">Set Timezone</button>
             </div>
           </div>
           <p class="inline-notice" data-host-identity-tls-notice hidden>
@@ -202,56 +221,6 @@
           </dl>
         </article>
 
-        <article class="panel wide">
-          <div class="panel-heading">
-            <h2>Security Baseline <button class="help-button" type="button" aria-label="Help for security baseline" data-help-title="Security Baseline" data-help="Checks host hardening, file permissions, firewall policy, TLS, service isolation, and configured exposure. MVP readiness additionally checks whether the complete technical appliance contract is available.">?</button></h2>
-            <div class="button-row">
-              <button type="button" data-run-security-audit>Run Audit</button>
-              <button type="button" data-run-mvp-readiness>Check Readiness</button>
-              <button type="button" data-mutation-action="web-auth-rotate" data-confirm="web-auth-rotate" data-mutation-status-target="web-auth">Rotate Console Password</button>
-            </div>
-          </div>
-          <dl class="inline-list">
-            <div><dt>Result</dt><dd data-agent-field="security-summary:result">pending</dd></div>
-            <div><dt>Pass</dt><dd data-agent-field="security-summary:pass_count">pending</dd></div>
-            <div><dt>Fail</dt><dd data-agent-field="security-summary:fail_count">pending</dd></div>
-            <div><dt>MVP readiness</dt><dd data-agent-field="mvp-readiness-summary:result">pending</dd></div>
-            <div><dt>MVP pass</dt><dd data-agent-field="mvp-readiness-summary:pass_count">pending</dd></div>
-            <div><dt>MVP fail</dt><dd data-agent-field="mvp-readiness-summary:fail_count">pending</dd></div>
-            <div><dt>Agent audit entries</dt><dd data-agent-field="agent-audit-summary:entry_count">pending</dd></div>
-            <div><dt>Console password</dt><dd data-mutation-status="web-auth">ready</dd></div>
-            <div class="secret-notice" data-web-auth-secret hidden>
-              <dt>New password</dt>
-              <dd>
-                <code class="secret-value" data-web-auth-password></code>
-                <span>Shown once for 60 seconds. Save it now; the appliance stores only its hash.</span>
-                <button type="button" data-clear-web-auth-password>Dismiss</button>
-              </dd>
-            </div>
-          </dl>
-          <div class="failure-details" data-security-failure-details hidden>
-            <h3>Failed security checks</h3>
-            <ul data-security-failures></ul>
-          </div>
-          <div class="failure-details" data-mvp-failure-details hidden>
-            <h3>Failed MVP readiness checks</h3>
-            <ul data-mvp-failures></ul>
-          </div>
-        </article>
-
-        <article class="panel wide">
-          <div class="panel-heading">
-            <h2>Logs <button class="help-button" type="button" aria-label="Help for logs" data-help-title="Logs" data-help="Displays a bounded recent tail from systemd and the OBS Compose stack. Raw unbounded logs are intentionally not exposed through the browser.">?</button></h2>
-            <button type="button" data-load-logs>View Logs</button>
-          </div>
-          <dl class="inline-list">
-            <div><dt>Raw logs exposed</dt><dd data-agent-field="logs-summary:raw_logs_exposed">pending</dd></div>
-            <div><dt>Bounded logs</dt><dd data-agent-field="logs-summary:bounded_logs_exposed">pending</dd></div>
-            <div><dt>Journal entries last hour</dt><dd data-agent-field="logs-summary:journal_entry_count_last_hour">pending</dd></div>
-            <div><dt>Docker available</dt><dd data-agent-field="logs-summary:docker_present">pending</dd></div>
-          </dl>
-          <pre class="log-viewer" data-log-output>not loaded</pre>
-        </article>
       </section>
     </main>
     <dialog class="help-dialog" data-help-dialog aria-labelledby="help-dialog-title">

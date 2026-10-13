@@ -136,10 +136,12 @@ The appliance web UI should use a local allowlisted agent around stable
 [web-ui-agent-contract.md](web-ui-agent-contract.md).
 
 `apps/obos-web` is a static appliance console installed below `/srv/obos/web`.
-nginx serves it below `/obos/` on the same HTTPS origin while leaving `/` for
-open bridge server. `/visu/` is proxied to the open bridge server visual
-interface. `/obos/` provides a GUI login, and `/obos/api/` is protected by a
-server-side session cookie issued by the local agent bridge.
+nginx serves its operational overview below `/obos/` and its authenticated
+security, readiness, and support view below `/obos/diagnostics/` on the same
+HTTPS origin while leaving `/` for open bridge server. `/visu/` is proxied to
+the open bridge server visual interface. Both console pages provide the same GUI
+login, and `/obos/api/` is protected by a server-side session cookie issued by
+the local agent bridge.
 
 The web console reads status, host basics, update state, backups, restore
 staging, MQTT exposure, TLS trust, logs metadata, security baseline, technical
