@@ -877,6 +877,12 @@ grep -q 'format=obos-security-baseline-summary-v1' scripts/audit/security-baseli
 grep -q 'fail_count=' scripts/audit/security-baseline.sh \
   || fail "security baseline summary does not report failure count"
 
+grep -q 'failure_%d=%s' scripts/audit/security-baseline.sh \
+  || fail "security baseline summary does not report individual failures"
+
+grep -q 'failure_%d=%s' scripts/audit/mvp-runtime-readiness.sh \
+  || fail "MVP readiness summary does not report individual failures"
+
 grep -q 'PROXY_HEALTH_HOST=' scripts/audit/security-baseline.sh \
   || fail "security baseline does not verify HTTPS proxy hostname"
 

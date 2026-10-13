@@ -144,5 +144,7 @@ if ! PATH="${FAKE_BIN}:$PATH" \
 fi
 grep -q '^result=FAIL$' "${TMP_DIR}/fail.out" \
   || fail "restore apply mutation exposure did not produce FAIL summary"
+grep -q '^failure_1=agent does not expose restore apply mutation$' "${TMP_DIR}/fail.out" \
+  || fail "failed readiness check detail is missing from summary"
 
 echo "mvp runtime readiness fixture: PASS"

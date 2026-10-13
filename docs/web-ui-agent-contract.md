@@ -219,6 +219,12 @@ The bridge exposes read-only endpoints for `actions`,
 `restore-stage-summary`, `mqtt-summary`, `tls-summary`, `security-summary`,
 `mvp-readiness-summary`, and `agent-audit-summary`.
 
+Security and MVP readiness summaries include ordered `failure_N=<description>`
+records when checks fail. The web console renders these descriptions directly
+below the corresponding counters and hides the detail sections when no checks
+fail. Descriptions identify checks and observed states but must not contain
+credentials, private keys, tokens, or raw configuration secrets.
+
 Confirmed HTTP mutations require `Content-Type: application/json` and a body
 containing only the expected fields, for example:
 

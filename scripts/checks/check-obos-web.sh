@@ -246,6 +246,18 @@ grep -q 'data-run-mvp-readiness' "${INDEX}" \
 grep -q 'data-run-security-audit' "${INDEX}" \
   || fail "web UI does not expose security audit refresh control"
 
+grep -q 'data-security-failure-details hidden' "${INDEX}" \
+  || fail "web UI does not expose hidden security failure details"
+
+grep -q 'data-mvp-failure-details hidden' "${INDEX}" \
+  || fail "web UI does not expose hidden MVP failure details"
+
+grep -q 'function renderFailures' "${JS}" \
+  || fail "web UI does not render individual failed checks"
+
+grep -Fq '/^failure_\d+$/' "${JS}" \
+  || fail "web UI does not restrict detail rendering to failure records"
+
 grep -q 'data-mutation-action="web-auth-rotate"' "${INDEX}" \
   || fail "web UI does not expose web auth rotation control"
 
