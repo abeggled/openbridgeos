@@ -50,7 +50,8 @@ if [ -f "${FIRST_BOOT_MARKER}" ]; then
   exit 0
 fi
 
-install -d -m 0750 "${OBOS_ETC_DIR}" "${OBOS_ETC_DIR}/apps" "${OBOS_STATE_DIR}"
+install -d -m 0750 -o root -g www-data "${OBOS_ETC_DIR}"
+install -d -m 0750 "${OBOS_ETC_DIR}/apps" "${OBOS_STATE_DIR}"
 install -d -m 0750 "${OBOS_APP_DIR}" "${OBOS_APP_DIR}/data" "${OBOS_APP_DIR}/mqtt"
 install -d -m 0770 "${OBOS_APP_DIR}/mqtt/passwd" "${OBOS_APP_DIR}/mqtt/data" "${OBOS_APP_DIR}/mqtt/log"
 install -d -m 0700 -o obos-agent -g obos-agent "${OBOS_STATE_DIR}/onboarding"

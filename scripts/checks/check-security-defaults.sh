@@ -555,6 +555,17 @@ grep -q 'OBOS_WEB_DIR="/srv/obos/web"' scripts/bootstrap/provision-debian.sh \
 grep -q 'install -d -m 0750 -g www-data /srv/obos' scripts/bootstrap/provision-debian.sh \
   || fail "nginx cannot traverse /srv/obos while preserving 0750 mode"
 
+grep -q 'install -d -m 0750 -o root -g www-data /etc/obos' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not make web authentication state traversable"
+
+# shellcheck disable=SC2016
+grep -q 'install -d -m 0750 -o root -g www-data "${OBOS_ETC_DIR}"' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not preserve web authentication directory traversal"
+
+# shellcheck disable=SC2016
+grep -q 'install -d -m 0750 -o root -g www-data "${OBOS_ETC_DIR}"' scripts/auth/generate-web-auth.sh \
+  || fail "web authentication updates do not preserve directory traversal"
+
 grep -q 'install -d -m 0750 -o root -g obos-agent /srv/obos/state' scripts/bootstrap/provision-debian.sh \
   || fail "obos-agent cannot traverse the private state directory"
 

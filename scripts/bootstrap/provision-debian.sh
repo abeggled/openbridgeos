@@ -37,7 +37,8 @@ fi
 
 install -d -m 0755 "${OBOS_SHARE_DIR}/apps/openbridgeserver"
 install -d -m 0755 "${OBOS_LIB_DIR}"
-install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d /etc/systemd/network
+install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d /etc/systemd/network
+install -d -m 0750 -o root -g www-data /etc/obos
 install -d -m 0750 -g www-data /srv/obos
 install -d -m 0750 /srv/obos/apps /srv/obos/backups
 # The HTTP bridge runs as obos-agent and owns private directories below

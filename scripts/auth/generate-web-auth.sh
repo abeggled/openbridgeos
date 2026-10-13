@@ -60,7 +60,7 @@ hash_password() {
   printf '%s\n' "${password}" | openssl passwd -apr1 -stdin
 }
 
-install -d -m 0750 "${OBOS_ETC_DIR}"
+install -d -m 0750 -o root -g www-data "${OBOS_ETC_DIR}"
 
 if [ "${MODE}" = generate ] && [ -f "${WEB_AUTH_FILE}" ] && [ -f "${WEB_AUTH_INFO_FILE}" ]; then
   chmod 0640 "${WEB_AUTH_FILE}"
