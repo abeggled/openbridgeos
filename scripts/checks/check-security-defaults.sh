@@ -1286,15 +1286,19 @@ grep -q 'trust_export_refreshed=' scripts/tls/renew-leaf-certificate.sh \
 grep -q 'systemctl reload nginx.service' scripts/tls/renew-leaf-certificate.sh \
   || fail "TLS leaf renewal must reload nginx when active"
 
+# shellcheck disable=SC2016
 grep -q 'DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-90}"' scripts/tls/generate-tls-material.sh \
   || fail "initial TLS leaf validity is not capped at 90 days"
 
+# shellcheck disable=SC2016
 grep -q 'DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-90}"' scripts/tls/renew-leaf-certificate.sh \
   || fail "renewed TLS leaf validity is not capped at 90 days"
 
+# shellcheck disable=SC2016
 grep -q 'BACKUP_KEEP="${OBOS_TLS_LEAF_BACKUP_KEEP:-1}"' scripts/tls/renew-leaf-certificate.sh \
   || fail "TLS leaf backup retention is not bounded"
 
+# shellcheck disable=SC2016
 grep -q 'RENEW_AFTER_DAYS="${OBOS_TLS_RENEW_AFTER_DAYS:-47}"' scripts/tls/auto-renew-leaf-certificate.sh \
   || fail "automatic TLS leaf renewal does not default to day 47"
 
