@@ -549,6 +549,9 @@ grep -q 'OBOS_WEB_DIR="/srv/obos/web"' scripts/bootstrap/provision-debian.sh \
 grep -q 'install -d -m 0750 -g www-data /srv/obos' scripts/bootstrap/provision-debian.sh \
   || fail "nginx cannot traverse /srv/obos while preserving 0750 mode"
 
+grep -q 'install -d -m 0750 -o root -g obos-agent /srv/obos/state' scripts/bootstrap/provision-debian.sh \
+  || fail "obos-agent cannot traverse the private state directory"
+
 grep -q 'apps/obos-web/index.html' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web index"
 

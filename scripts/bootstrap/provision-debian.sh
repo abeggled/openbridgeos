@@ -39,7 +39,11 @@ install -d -m 0755 "${OBOS_SHARE_DIR}/apps/openbridgeserver"
 install -d -m 0755 "${OBOS_LIB_DIR}"
 install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos /etc/obos/apps /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/sudoers.d /etc/systemd/network
 install -d -m 0750 -g www-data /srv/obos
-install -d -m 0750 /srv/obos/apps /srv/obos/backups /srv/obos/state
+install -d -m 0750 /srv/obos/apps /srv/obos/backups
+# The HTTP bridge runs as obos-agent and owns private directories below
+# /srv/obos/state. Keep the parent root-owned, but make it traversable by the
+# agent group so onboarding markers and session state are actually reachable.
+install -d -m 0750 -o root -g obos-agent /srv/obos/state
 install -d -m 0755 "${OBOS_WEB_DIR}"
 install -d -m 0755 "${OBOS_ONBOARDING_DIR}"
 install -d -m 0750 -o obos-agent -g obos-agent /srv/obos/state/agent
