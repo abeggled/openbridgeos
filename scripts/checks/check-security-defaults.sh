@@ -1013,6 +1013,13 @@ grep -q 'nft -c -f "${tmp}"' scripts/hardening/set-mqtt-lan-access.sh \
 grep -q 'cp "${tmp}" "${NFT_FILE}"' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not preserve its sandbox-mounted firewall target"
 
+grep -q 'DOCKER_SERVICE=' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not define the Docker service dependency"
+
+# shellcheck disable=SC2016
+grep -q 'systemctl restart "${DOCKER_SERVICE}"' scripts/hardening/set-mqtt-lan-access.sh \
+  || fail "MQTT LAN helper does not restore Docker firewall chains after nftables reload"
+
 grep -q 'is_ipv4_cidr' scripts/hardening/set-mqtt-lan-access.sh \
   || fail "MQTT LAN helper does not validate IPv4 CIDR numerically"
 
