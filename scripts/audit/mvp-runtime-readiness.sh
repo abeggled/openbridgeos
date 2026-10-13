@@ -123,21 +123,19 @@ check_summary_format() {
   check_output_contains "${label}" "format=${expected_format}" "$@"
 }
 
-check_http_agent_status() {
+check_http_agent_auth() {
   if command -v curl >/dev/null 2>&1; then
-    output="$(curl --fail --silent --show-error --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null)"
+    status="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null)"
     exit_code=$?
   else
-    output=
+    status=
     exit_code=1
   fi
 
-  if [ "${exit_code}" -eq 0 ] &&
-    printf '%s\n' "${output}" | grep -Fq 'format=obos-agent-response-v1' &&
-    printf '%s\n' "${output}" | grep -Fq 'stdout=format=obos-status-summary-v1'; then
-    pass "obos-agent HTTP bridge returns appliance status"
+  if [ "${exit_code}" -eq 0 ] && [ "${status}" = 401 ]; then
+    pass "obos-agent HTTP bridge enforces session authentication"
   else
-    fail "obos-agent HTTP bridge does not return appliance status"
+    fail "obos-agent HTTP bridge does not enforce session authentication"
   fi
 }
 
@@ -207,7 +205,7 @@ check_output_contains "agent exposes portable export planning" "action=portable-
 check_output_contains "agent exposes portable import planning" "action=portable-import-plan|mutating=false|required_arg=portable-backup" "${OBOS_AGENT}" actions
 check_output_contains "agent exposes restore apply planning only" "action=restore-apply-plan|mutating=false|required_arg=stage-dir" "${OBOS_AGENT}" actions
 check_output_not_contains_line "agent does not expose restore apply mutation" '^action=restore-apply\|' "${OBOS_AGENT}" actions
-check_http_agent_status
+check_http_agent_auth
 
 if [ "${SUMMARY_MODE}" -eq 1 ]; then
   if [ "${FAILED}" -eq 0 ]; then

@@ -387,11 +387,11 @@ fi
 check_proxy_health
 check_web_auth
 
-if command -v curl >/dev/null 2>&1 && curl --fail --silent --show-error --max-time 5 "${AGENT_HTTP_URL}" |
-  grep -q 'format=obos-agent-response-v1'; then
-  pass 'obos-agent HTTP bridge status endpoint reachable on localhost'
+agent_http_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null || true)"
+if [ "${agent_http_status}" = 401 ]; then
+  pass 'obos-agent HTTP bridge rejects unauthenticated localhost requests'
 else
-  fail 'obos-agent HTTP bridge status endpoint unreachable on localhost'
+  fail 'obos-agent HTTP bridge does not enforce session authentication on localhost'
 fi
 
 if [ -d "${APP_DIR}/data" ]; then
