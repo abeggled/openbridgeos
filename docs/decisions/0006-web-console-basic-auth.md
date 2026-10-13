@@ -40,11 +40,11 @@ Per-appliance-instance credentials use:
 
 - username defaults to `admin`
 - password is set by the administrator during first web onboarding
-- password hash is stored in `/etc/obos/web.htpasswd`
-- the credential record is stored in `/etc/obos/web-admin.env`
+- SHA-512 password hash is stored in `/etc/obos/web.htpasswd`
+- non-secret account metadata is stored in `/etc/obos/web-admin.env`
 
 The password file is readable by the local agent bridge and not world-readable.
-The credential record is root-only and treated as sensitive.
+The metadata record is root-only and must not contain a recoverable password.
 
 For headless onboarding, first boot may write `OBOS-ONBOARDING.txt` to a
 writable boot-accessible partition. That file points to the onboarding URL and
@@ -56,7 +56,8 @@ must not contain a password.
 - The MVP uses a small local session implementation instead of browser Basic
   Auth so the user experience matches an appliance GUI.
 - Password rotation is an explicit confirmed workflow through `obosctl` and
-  `obos-agent`; the web UI can add a polished display later.
+  `obos-agent`; the web UI exposes the generated password once and removes it
+  from the DOM after 60 seconds.
 - The unauthenticated onboarding endpoint is only available before credentials
   exist. Test appliances should be attached to a trusted setup network until
   onboarding is complete.

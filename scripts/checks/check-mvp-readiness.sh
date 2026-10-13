@@ -152,7 +152,7 @@ require_line "require_session" scripts/agent/obos-agent-http.py
 require_line "/obos/api/v1/session/" apps/obos-web/app.js
 require_line "location /visu/" packaging/nginx/openbridgeserver.conf
 require_line "proxy_pass http://127.0.0.1:8080/visu/;" packaging/nginx/openbridgeserver.conf
-require_line "openssl passwd -apr1 -stdin" scripts/auth/generate-web-auth.sh
+require_line "openssl passwd -6 -stdin" scripts/auth/generate-web-auth.sh
 require_line "web-auth-rotate)" scripts/obosctl
 require_line "web-auth-set)" scripts/obosctl
 require_line "action=web-auth-rotate|mutating=true|confirm=web-auth-rotate" scripts/agent/obos-agent.sh
@@ -254,7 +254,7 @@ require_line 'data-mutation-action="portable-import-stage"' apps/obos-web/index.
 require_line 'data-mutation-action="restore-stage"' apps/obos-web/index.html
 require_line 'data-agent-field="security-summary:result"' apps/obos-web/index.html
 require_line 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' apps/obos-web/index.html
-require_line 'data-agent-field="mqtt-summary:source_cidr"' apps/obos-web/index.html
+require_line 'data-agent-field="mqtt-summary:firewall_source"' apps/obos-web/index.html
 require_line 'data-load-logs' apps/obos-web/index.html
 require_line 'data-mutation-action="mqtt-enable-lan"' apps/obos-web/index.html
 require_line 'data-mutation-action="mqtt-disable-lan"' apps/obos-web/index.html

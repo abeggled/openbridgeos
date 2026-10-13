@@ -67,6 +67,16 @@ grep -q 'data-mutation-status="host"' "${INDEX}" \
 grep -q 'data-agent-field="system-summary:default_route_present"' "${INDEX}" \
   || fail "web UI does not expose network route status"
 
+grep -q 'data-agent-field="status-summary:service_active"' "${INDEX}" \
+  || fail "web UI does not expose the systemd service state"
+
+if grep -q 'status-summary:systemd_active' "${INDEX}"; then
+  fail "web UI references a nonexistent systemd status field"
+fi
+
+grep -q 'data-agent-field="update-summary:rollback_backup_present"' "${INDEX}" \
+  || fail "web UI does not expose update rollback readiness"
+
 grep -q 'data-agent-field="update-summary:last_update_present"' "${INDEX}" \
   || fail "web UI does not expose last update state"
 
@@ -130,6 +140,15 @@ grep -q 'data-mutation-portable-from="portable-import-upload:portable_backup"' "
 grep -q 'data-agent-field="mqtt-summary:' "${INDEX}" \
   || fail "web UI does not expose MQTT summary placeholders"
 
+grep -q 'data-agent-field="mqtt-summary:mqtt_host_port"' "${INDEX}" \
+  || fail "web UI does not expose the MQTT plain listener"
+
+grep -q 'data-agent-field="mqtt-summary:mqtt_ws_host_port"' "${INDEX}" \
+  || fail "web UI does not expose the MQTT websocket listener"
+
+grep -q 'data-agent-field="mqtt-summary:firewall_source"' "${INDEX}" \
+  || fail "web UI does not expose the MQTT firewall source"
+
 grep -q 'id="mqtt-source-cidr"' "${INDEX}" \
   || fail "web UI does not expose MQTT source CIDR input"
 
@@ -150,6 +169,9 @@ grep -q 'data-mutation-status="mqtt"' "${INDEX}" \
 
 grep -q 'data-agent-field="tls-summary:' "${INDEX}" \
   || fail "web UI does not expose TLS summary placeholders"
+
+grep -q 'data-agent-field="tls-summary:local_ca_present"' "${INDEX}" \
+  || fail "web UI does not expose local CA presence"
 
 grep -q 'data-agent-field="tls-summary:local_ca_sha256_fingerprint"' "${INDEX}" \
   || fail "web UI does not expose local CA fingerprint"
@@ -207,6 +229,12 @@ grep -q 'data-mutation-status="web-auth"' "${INDEX}" \
 
 grep -q 'data-web-auth-password' "${INDEX}" \
   || fail "web UI does not expose one-time rotated password output"
+
+grep -q 'data-web-auth-secret hidden' "${INDEX}" \
+  || fail "web UI rotated password output is not hidden by default"
+
+grep -q 'data-clear-web-auth-password' "${INDEX}" \
+  || fail "web UI does not allow immediate password dismissal"
 
 grep -q 'data-agent-field="logs-summary:raw_logs_exposed"' "${INDEX}" \
   || fail "web UI does not expose log exposure status"
@@ -348,6 +376,12 @@ grep -q 'security-summary", "agent-audit-summary' "${JS}" \
 
 grep -q 'setWebAuthPassword' "${JS}" \
   || fail "web UI does not render rotated web auth password"
+
+grep -q 'window.setTimeout(clearWebAuthPassword, 60000)' "${JS}" \
+  || fail "web UI does not clear the rotated password after one minute"
+
+grep -q 'clearWebAuthPasswordButton' "${JS}" \
+  || fail "web UI does not wire rotated password dismissal"
 
 grep -q 'action === "web-auth-rotate"' "${JS}" \
   || fail "web UI does not handle web auth rotation response"

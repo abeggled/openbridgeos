@@ -18,9 +18,26 @@
   const portableDownloadLink = document.querySelector("[data-portable-download]");
   const portableUploadButton = document.querySelector("[data-upload-portable]");
   const webAuthPassword = document.querySelector("[data-web-auth-password]");
+  const webAuthSecret = document.querySelector("[data-web-auth-secret]");
+  const clearWebAuthPasswordButton = document.querySelector("[data-clear-web-auth-password]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const unsupportedActions = new Set(["restore-apply-plan"]);
   const latestValues = new Map();
+  let webAuthPasswordTimer;
+
+  function clearWebAuthPassword() {
+    if (webAuthPasswordTimer) {
+      window.clearTimeout(webAuthPasswordTimer);
+      webAuthPasswordTimer = undefined;
+    }
+    if (webAuthPassword) {
+      webAuthPassword.textContent = "";
+      delete webAuthPassword.dataset.state;
+    }
+    if (webAuthSecret) {
+      webAuthSecret.hidden = true;
+    }
+  }
 
   function setAuthStatus(message, state = "") {
     if (!authStatus) {
@@ -35,6 +52,7 @@
   }
 
   function showLogin(message = "Login required.", state = "") {
+    clearWebAuthPassword();
     if (authScreen) {
       authScreen.hidden = false;
     }
@@ -394,12 +412,17 @@
   }
 
   function setWebAuthPassword(values) {
-    if (!webAuthPassword) {
+    clearWebAuthPassword();
+    if (!webAuthPassword || !webAuthSecret || !values.password) {
       return;
     }
-    webAuthPassword.textContent = values.password || "unavailable";
-    webAuthPassword.dataset.state = values.password ? "ok" : "error";
+    webAuthPassword.textContent = values.password;
+    webAuthPassword.dataset.state = "ok";
+    webAuthSecret.hidden = false;
+    webAuthPasswordTimer = window.setTimeout(clearWebAuthPassword, 60000);
   }
+
+  clearWebAuthPasswordButton?.addEventListener("click", clearWebAuthPassword);
 
   async function runMutation(button) {
     const action = button.dataset.mutationAction;
@@ -492,7 +515,7 @@
         setWebAuthPassword(parseAgentResponse(text));
       }
       setMutationStatus(statusTarget, "completed", "ok");
-      await refresh();
+      void refresh();
     } catch (error) {
       setMutationStatus(statusTarget, "failed", "error");
     } finally {

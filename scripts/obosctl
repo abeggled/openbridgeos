@@ -1494,10 +1494,17 @@ update_summary() {
 
   if [ ! -f "${LAST_UPDATE_FILE}" ]; then
     echo "last_update_present=false"
+    echo "rollback_backup_present=false"
     return 0
   fi
 
   echo "last_update_present=true"
+  backup_path="$(key_value backup "${LAST_UPDATE_FILE}")"
+  if [ -n "${backup_path}" ] && [ -f "${backup_path}" ]; then
+    echo "rollback_backup_present=true"
+  else
+    echo "rollback_backup_present=false"
+  fi
   sed 's/^/last_update_/' "${LAST_UPDATE_FILE}"
 }
 

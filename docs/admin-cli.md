@@ -453,8 +453,10 @@ certificate paths, and SHA-256 fingerprints.
 mounted boot partition when one is available.
 
 `web-auth-rotate` rotates the generated web console login password and
-prints the new password once. Store it in a password manager; the command also
-updates `/etc/obos/web.htpasswd` and `/etc/obos/web-admin.env`.
+prints the new password once. Store it in a password manager. The appliance
+stores only a SHA-512 password hash in `/etc/obos/web.htpasswd`;
+`/etc/obos/web-admin.env` contains non-secret account metadata and never the
+password itself.
 
 The trust bundle contains the local CA certificate, the current leaf
 certificate, and a text summary. It does not contain private keys. Verify the CA
