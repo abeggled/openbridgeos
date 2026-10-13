@@ -70,6 +70,9 @@ jobs:
       - name: obos-web
         run: sh scripts/checks/check-obos-web.sh
 
+      - name: OBS version summary
+        run: sh scripts/checks/check-obs-version.sh
+
       - name: Appliance update
         run: sh scripts/checks/check-appliance-update.sh
 
