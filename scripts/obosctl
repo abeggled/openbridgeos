@@ -1629,6 +1629,8 @@ case "${1:-}" in
     validate_onboarding_password_file "${password_file}"
     run_helper "${WEB_AUTH_SCRIPT}" set "${password_file}"
     rm -f "${password_file}"
+    systemctl start "${SERVICE_NAME}"
+    echo "open bridge server start: PASS"
     ;;
   agent-audit-summary)
     shift

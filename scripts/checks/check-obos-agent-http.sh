@@ -633,6 +633,9 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/onboarding/status |
   grep -q 'onboarding_required=true' \
   || fail "onboarding status endpoint did not report active onboarding"
 
+status_code="$(curl --silent --output "${tmp_dir}/onboarding-access.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/onboarding/access)"
+[ "${status_code}" = 403 ] || fail "OBS access gate allowed access before onboarding completed"
+
 curl --fail --silent \
   --header 'Content-Type: application/json' \
   --data '{"password":"correct horse battery staple"}' \
@@ -645,6 +648,10 @@ status_code="$(curl --silent --output "${tmp_dir}/unauth-status.out" --write-out
 
 password_hash="$(printf '%s\n' 'correct horse battery staple' | openssl passwd -apr1 -stdin)"
 printf 'admin:%s\n' "${password_hash}" > "${onboarding_state_dir}/web.htpasswd"
+rm -f "${onboarding_state_dir}/onboarding-required"
+
+status_code="$(curl --silent --output "${tmp_dir}/completed-access.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/onboarding/access)"
+[ "${status_code}" = 204 ] || fail "OBS access gate remained closed after onboarding completed"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

@@ -655,6 +655,16 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             "admin_user=admin\n",
         )
 
+    def handle_onboarding_access(self, parsed):
+        """Authorize the nginx OBS proxy only after onboarding is complete."""
+        if parsed.query:
+            self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
+            return
+        if os.path.exists(WEB_AUTH_FILE) and not os.path.exists(ONBOARDING_REQUIRED_FILE):
+            self.send_text(204, "")
+            return
+        self.send_text(403, error_envelope("onboarding-required", "complete OBOS onboarding before accessing OBS"))
+
     def handle_onboarding_web_auth(self, parsed):
         if parsed.query:
             self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
@@ -716,6 +726,9 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             return
         if parsed.path == f"{ONBOARDING_PREFIX}status":
             self.handle_onboarding_status(parsed)
+            return
+        if parsed.path == f"{ONBOARDING_PREFIX}access":
+            self.handle_onboarding_access(parsed)
             return
         if not self.require_session():
             return

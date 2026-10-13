@@ -3,6 +3,7 @@ Description=open bridge server managed by open bridge operating system
 Requires=docker.service
 Wants=network-online.target
 After=network-online.target docker.service obos-first-boot.service
+ConditionPathExists=/etc/obos/web.htpasswd
 
 [Service]
 Type=oneshot
