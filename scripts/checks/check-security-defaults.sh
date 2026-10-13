@@ -589,6 +589,7 @@ grep -q 'format=obos-status-summary-v1' scripts/obosctl \
 grep -Fq 'health_https_proxy=${health_https_proxy}' scripts/obosctl \
   || fail "obosctl status summary does not report HTTPS proxy health"
 
+# shellcheck disable=SC2016
 grep -Fq 'obs_version=${obs_version}' scripts/obosctl \
   || fail "obosctl status summary does not report the running OBS version"
 
