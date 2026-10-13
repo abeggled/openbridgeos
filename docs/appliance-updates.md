@@ -65,6 +65,22 @@ path from that file. After the MVP upgrade passes, promote the same release to a
 normal release and remove the override file; subsequent appliances use
 `releases/latest/download` again.
 
+## GitHub Release Workflow
+
+The manually dispatched `Release appliance update` workflow builds, signs,
+verifies, and publishes the fixed-name assets from the selected `main` commit.
+It uses the GitHub environment `release` and requires these environment
+secrets:
+
+```text
+OBOS_RELEASE_MINISIGN_SECRET_KEY
+OBOS_RELEASE_MINISIGN_PASSWORD
+```
+
+The workflow refuses to replace an existing tag or release. Start it from the
+GitHub Actions page with the exact version and keep `prerelease` enabled for the
+MVP validation run.
+
 ## Trust Bootstrap
 
 The release signing public key must be pinned in the appliance image; it is
