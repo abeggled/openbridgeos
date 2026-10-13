@@ -56,6 +56,7 @@ install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/compose.yaml" "${OBOS_APP_SO
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/mosquitto.conf" "${OBOS_APP_SOURCE}/mosquitto.conf"
 install -m 0644 "${REPO_ROOT}/apps/openbridgeserver/obos-app.yaml" "${OBOS_APP_SOURCE}/obos-app.yaml"
 install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR}/index.html"
+install -m 0644 "${REPO_ROOT}/apps/obos-web/diagnostics.html" "${OBOS_WEB_DIR}/diagnostics.html"
 install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR}/styles.css"
 install -m 0644 "${REPO_ROOT}/apps/obos-web/app.js" "${OBOS_WEB_DIR}/app.js"
 install -m 0644 "${REPO_ROOT}/apps/obos-onboarding/index.html" "${OBOS_ONBOARDING_DIR}/index.html"

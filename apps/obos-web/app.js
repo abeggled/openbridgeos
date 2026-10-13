@@ -204,6 +204,44 @@
     element.dataset.state = state;
   }
 
+  function fieldState(action, key, value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    const expectedValues = {
+      "status-summary:service_active": "active",
+      "status-summary:health_local": "ok",
+      "status-summary:health_https_proxy": "ok",
+      "system-summary:default_route_present": "true",
+      "security-summary:result": "pass",
+      "security-summary:fail_count": "0",
+      "mvp-readiness-summary:result": "pass",
+      "mvp-readiness-summary:fail_count": "0",
+      "mqtt-summary:lan_enabled": "false",
+      "mqtt-summary:firewall_source": "disabled",
+      "tls-summary:local_ca_present": "true",
+      "tls-summary:leaf_present": "true",
+      "tls-summary:leaf_expiry_state": "valid",
+      "tls-summary:leaf_expiry_warning": "none",
+      "tls-summary:trust_export_present": "true",
+      "logs-summary:raw_logs_exposed": "false",
+      "logs-summary:bounded_logs_exposed": "true",
+      "logs-summary:docker_present": "true",
+    };
+    const fieldName = `${action}:${key}`;
+    if (Object.prototype.hasOwnProperty.call(expectedValues, fieldName)) {
+      return normalized === expectedValues[fieldName] ? "ok" : "error";
+    }
+    if (action === "mqtt-summary" && ["mqtt_host_port", "mqtt_ws_host_port"].includes(key)) {
+      return normalized.startsWith("127.0.0.1:") ? "ok" : "error";
+    }
+    if (["fail", "failed", "error", "unavailable", "expired", "missing", "unparseable"].includes(normalized)) {
+      return "error";
+    }
+    if (["pass", "ok", "active", "valid", "none", "ready", "completed", "true"].includes(normalized)) {
+      return "ok";
+    }
+    return "neutral";
+  }
+
   function updateHostIdentityTlsNotice() {
     if (!hostIdentityTlsNotice) {
       return;
@@ -268,7 +306,7 @@
         caDownloadLink.hidden = values.trust_export_present !== "true";
       }
       for (const target of targets) {
-        setField(target.element, values[target.key], "ok");
+        setField(target.element, values[target.key], fieldState(action, target.key, values[target.key]));
       }
     } catch (error) {
       if (action === "security-summary") {

@@ -220,10 +220,12 @@ The bridge exposes read-only endpoints for `actions`,
 `mvp-readiness-summary`, and `agent-audit-summary`.
 
 Security and MVP readiness summaries include ordered `failure_N=<description>`
-records when checks fail. The web console renders these descriptions directly
-below the corresponding counters and hides the detail sections when no checks
-fail. Descriptions identify checks and observed states but must not contain
-credentials, private keys, tokens, or raw configuration secrets.
+records when checks fail. The authenticated `/obos/diagnostics/` page renders
+these descriptions directly below the corresponding counters and hides the
+detail sections when no checks fail. The overview links to that page while
+retaining only the compact security result. Descriptions identify checks and
+observed states but must not contain credentials, private keys, tokens, or raw
+configuration secrets.
 
 Confirmed HTTP mutations require `Content-Type: application/json` and a body
 containing only the expected fields, for example:

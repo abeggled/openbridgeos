@@ -4,6 +4,7 @@ set -eu
 WEB_DIR="apps/obos-web"
 ONBOARDING_DIR="apps/obos-onboarding"
 INDEX="${WEB_DIR}/index.html"
+DIAGNOSTICS="${WEB_DIR}/diagnostics.html"
 CSS="${WEB_DIR}/styles.css"
 JS="${WEB_DIR}/app.js"
 ONBOARDING_INDEX="${ONBOARDING_DIR}/index.html"
@@ -16,6 +17,7 @@ fail() {
 }
 
 [ -f "${INDEX}" ] || fail "index.html missing"
+[ -f "${DIAGNOSTICS}" ] || fail "diagnostics.html missing"
 [ -f "${CSS}" ] || fail "styles.css missing"
 [ -f "${JS}" ] || fail "app.js missing"
 [ -f "${ONBOARDING_INDEX}" ] || fail "onboarding UI index missing"
@@ -30,6 +32,21 @@ grep -q 'data-login-form' "${INDEX}" \
 
 grep -q 'data-logout' "${INDEX}" \
   || fail "web UI does not expose logout"
+
+grep -q '<main class="shell" data-app-shell hidden>' "${DIAGNOSTICS}" \
+  || fail "diagnostics UI does not define an authenticated application shell"
+
+grep -q 'data-login-form' "${DIAGNOSTICS}" \
+  || fail "diagnostics UI does not use the appliance login"
+
+grep -q 'data-logout' "${DIAGNOSTICS}" \
+  || fail "diagnostics UI does not expose logout"
+
+grep -q 'href="/obos/diagnostics/"' "${INDEX}" \
+  || fail "overview does not link to system diagnostics"
+
+grep -q 'href="/obos/"' "${DIAGNOSTICS}" \
+  || fail "system diagnostics does not link back to overview"
 
 grep -q 'open bridge operating system' "${INDEX}" \
   || fail "web UI does not use product name"
@@ -225,31 +242,34 @@ grep -q 'data-help-dialog' "${INDEX}" \
 grep -q 'data-help-title' "${INDEX}" \
   || fail "web UI does not expose contextual help controls"
 
+grep -q 'data-help-dialog' "${DIAGNOSTICS}" \
+  || fail "diagnostics UI does not define contextual help overlay"
+
 grep -q 'data-agent-field="security-summary:' "${INDEX}" \
   || fail "web UI does not expose security summary placeholders"
 
-grep -q 'data-agent-field="agent-audit-summary:' "${INDEX}" \
+grep -q 'data-agent-field="agent-audit-summary:' "${DIAGNOSTICS}" \
   || fail "web UI does not expose agent audit summary placeholders"
 
-grep -q 'data-agent-field="mvp-readiness-summary:result"' "${INDEX}" \
+grep -q 'data-agent-field="mvp-readiness-summary:result"' "${DIAGNOSTICS}" \
   || fail "web UI does not expose MVP readiness result"
 
-grep -q 'data-agent-field="mvp-readiness-summary:pass_count"' "${INDEX}" \
+grep -q 'data-agent-field="mvp-readiness-summary:pass_count"' "${DIAGNOSTICS}" \
   || fail "web UI does not expose MVP readiness pass count"
 
-grep -q 'data-agent-field="mvp-readiness-summary:fail_count"' "${INDEX}" \
+grep -q 'data-agent-field="mvp-readiness-summary:fail_count"' "${DIAGNOSTICS}" \
   || fail "web UI does not expose MVP readiness fail count"
 
-grep -q 'data-run-mvp-readiness' "${INDEX}" \
+grep -q 'data-run-mvp-readiness' "${DIAGNOSTICS}" \
   || fail "web UI does not expose MVP readiness refresh control"
 
-grep -q 'data-run-security-audit' "${INDEX}" \
+grep -q 'data-run-security-audit' "${DIAGNOSTICS}" \
   || fail "web UI does not expose security audit refresh control"
 
-grep -q 'data-security-failure-details hidden' "${INDEX}" \
+grep -q 'data-security-failure-details hidden' "${DIAGNOSTICS}" \
   || fail "web UI does not expose hidden security failure details"
 
-grep -q 'data-mvp-failure-details hidden' "${INDEX}" \
+grep -q 'data-mvp-failure-details hidden' "${DIAGNOSTICS}" \
   || fail "web UI does not expose hidden MVP failure details"
 
 grep -q 'function renderFailures' "${JS}" \
@@ -258,44 +278,61 @@ grep -q 'function renderFailures' "${JS}" \
 grep -Fq '/^failure_\d+$/' "${JS}" \
   || fail "web UI does not restrict detail rendering to failure records"
 
-grep -q 'data-mutation-action="web-auth-rotate"' "${INDEX}" \
+grep -q 'data-mutation-action="web-auth-rotate"' "${DIAGNOSTICS}" \
   || fail "web UI does not expose web auth rotation control"
 
-grep -q 'data-confirm="web-auth-rotate"' "${INDEX}" \
+grep -q 'data-confirm="web-auth-rotate"' "${DIAGNOSTICS}" \
   || fail "web UI web auth rotation control does not carry confirmation token"
 
-grep -q 'data-mutation-status="web-auth"' "${INDEX}" \
+grep -q 'data-mutation-status="web-auth"' "${DIAGNOSTICS}" \
   || fail "web UI does not expose web auth rotation status"
 
-grep -q 'data-web-auth-password' "${INDEX}" \
+grep -q 'data-web-auth-password' "${DIAGNOSTICS}" \
   || fail "web UI does not expose one-time rotated password output"
 
-grep -q 'data-web-auth-secret hidden' "${INDEX}" \
+grep -q 'data-web-auth-secret hidden' "${DIAGNOSTICS}" \
   || fail "web UI rotated password output is not hidden by default"
 
-grep -q 'data-clear-web-auth-password' "${INDEX}" \
+grep -q 'data-clear-web-auth-password' "${DIAGNOSTICS}" \
   || fail "web UI does not allow immediate password dismissal"
 
-grep -q 'data-agent-field="logs-summary:raw_logs_exposed"' "${INDEX}" \
+grep -q 'data-agent-field="logs-summary:raw_logs_exposed"' "${DIAGNOSTICS}" \
   || fail "web UI does not expose log exposure status"
 
-grep -q 'data-agent-field="logs-summary:bounded_logs_exposed"' "${INDEX}" \
+grep -q 'data-agent-field="logs-summary:bounded_logs_exposed"' "${DIAGNOSTICS}" \
   || fail "web UI does not expose bounded log availability"
 
-grep -q 'data-agent-field="logs-summary:journal_entry_count_last_hour"' "${INDEX}" \
+grep -q 'data-agent-field="logs-summary:journal_entry_count_last_hour"' "${DIAGNOSTICS}" \
   || fail "web UI does not expose recent journal entry count"
 
-grep -q 'data-load-logs' "${INDEX}" \
+grep -q 'data-load-logs' "${DIAGNOSTICS}" \
   || fail "web UI does not expose bounded log loading control"
 
-grep -q 'data-log-output' "${INDEX}" \
+grep -q 'data-log-output' "${DIAGNOSTICS}" \
   || fail "web UI does not expose bounded log output"
+
+if grep -Eq 'data-(run-security-audit|run-mvp-readiness|load-logs)' "${INDEX}"; then
+  fail "overview still contains diagnostic-only controls"
+fi
 
 grep -q '<script src="./app.js" defer></script>' "${INDEX}" \
   || fail "web UI does not load app.js"
 
+grep -q '<script src="../app.js" defer></script>' "${DIAGNOSTICS}" \
+  || fail "diagnostics UI does not load the shared application script"
+
 grep -q 'data-refresh-status' "${INDEX}" \
   || fail "web UI does not expose refresh control"
+
+grep -q 'aria-label="Refresh status"' "${INDEX}" \
+  || fail "overview refresh control does not have an accessible label"
+
+grep -q '<svg aria-hidden="true"' "${INDEX}" \
+  || fail "overview does not use a refresh icon"
+
+if grep -q '<span aria-hidden="true">R</span>' "${INDEX}"; then
+  fail "overview still exposes the placeholder refresh letter"
+fi
 
 grep -q 'data-mutation-action="start"' "${INDEX}" \
   || fail "web UI does not expose start mutation control"
@@ -347,6 +384,15 @@ grep -q 'renderLogs' "${JS}" \
 
 grep -q 'data-agent-field' "${JS}" \
   || fail "web UI script does not target agent fields"
+
+grep -q 'function fieldState' "${JS}" \
+  || fail "web UI does not classify operational values semantically"
+
+grep -q 'mqtt-summary:lan_enabled.*false' "${JS}" \
+  || fail "web UI does not treat localhost-only MQTT as the secure expected state"
+
+grep -q 'security-summary:result.*pass' "${JS}" \
+  || fail "web UI does not classify security baseline results"
 
 grep -q 'unsupportedActions' "${JS}" \
   || fail "web UI script does not keep unsupported actions explicit"
@@ -438,6 +484,15 @@ grep -q '.secret-value' "${CSS}" \
 grep -q '.button-row' "${CSS}" \
   || fail "web UI CSS does not define action button row layout"
 
+grep -q '.control-group' "${CSS}" \
+  || fail "web UI CSS does not keep related inputs and buttons together"
+
+grep -q '\[data-agent-field\]\[data-state="ok"\]' "${CSS}" \
+  || fail "web UI CSS does not style expected states"
+
+grep -q '\[data-agent-field\]\[data-state="error"\]' "${CSS}" \
+  || fail "web UI CSS does not style deviations"
+
 grep -q '.download-link' "${CSS}" \
   || fail "web UI CSS does not style portable download link"
 
@@ -487,6 +542,10 @@ grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/index.html" "${OBOS_WEB_DIR
   || fail "provisioning does not install obos-web index"
 
 # shellcheck disable=SC2016
+grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/diagnostics.html" "${OBOS_WEB_DIR}/diagnostics.html"' scripts/bootstrap/provision-debian.sh \
+  || fail "provisioning does not install obos-web diagnostics"
+
+# shellcheck disable=SC2016
 grep -q 'install -m 0644 "${REPO_ROOT}/apps/obos-web/styles.css" "${OBOS_WEB_DIR}/styles.css"' scripts/bootstrap/provision-debian.sh \
   || fail "provisioning does not install obos-web styles"
 
@@ -522,6 +581,12 @@ fi
 
 grep -q 'root /srv/obos/web;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web index directly"
+
+grep -q 'location = /obos/diagnostics/' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not expose the diagnostics page"
+
+grep -q 'try_files /diagnostics.html =404;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx does not serve the diagnostics document"
 
 grep -q 'try_files /app.js =404;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not serve obos-web from /srv/obos/web"

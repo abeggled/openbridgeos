@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>System Diagnostics · open bridge operating system</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../app.js" defer></script>
+  </head>
+  <body>
+    <section class="auth-shell" data-auth-screen aria-labelledby="login-title">
+      <form class="auth-panel" data-login-form>
+        <p class="eyebrow">Appliance Login</p>
+        <h1 id="login-title">open bridge operating system</h1>
+        <label>
+          User
+          <input name="username" type="text" value="admin" autocomplete="username" required>
+        </label>
+        <label>
+          Password
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Login</button>
+        <p class="auth-status" data-auth-status>Checking session...</p>
+      </form>
+    </section>
+
+    <main class="shell" data-app-shell hidden>
+      <header class="topbar diagnostics-topbar" aria-label="System diagnostics overview">
+        <div>
+          <p class="eyebrow">Appliance Console</p>
+          <h1>System Diagnostics</h1>
+          <nav class="app-nav" aria-label="Console navigation">
+            <a href="/obos/">Overview</a>
+            <a href="/obos/diagnostics/" aria-current="page">System Diagnostics</a>
+          </nav>
+        </div>
+        <div class="page-actions">
+          <button type="button" data-logout>Logout</button>
+          <button class="icon-button" type="button" aria-label="Refresh diagnostics" title="Refresh diagnostics" data-refresh-status>
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+              <path d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="grid diagnostics-grid" aria-label="Diagnostic panels">
+        <article class="panel wide">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Policy and readiness</p>
+              <h2>Security &amp; System Readiness <button class="help-button" type="button" aria-label="Help for system readiness" data-help-title="Security and System Readiness" data-help="Security Baseline checks hardening, permissions, firewall policy, TLS, service isolation, and configured exposure. System Readiness validates the complete appliance runtime contract used for release and support diagnostics.">?</button></h2>
+            </div>
+            <div class="button-row">
+              <button type="button" data-run-security-audit>Run Security Audit</button>
+              <button type="button" data-run-mvp-readiness>Check System Readiness</button>
+            </div>
+          </div>
+          <dl class="inline-list">
+            <div><dt>Security result</dt><dd data-agent-field="security-summary:result">pending</dd></div>
+            <div><dt>Security pass</dt><dd data-agent-field="security-summary:pass_count">pending</dd></div>
+            <div><dt>Security fail</dt><dd data-agent-field="security-summary:fail_count">pending</dd></div>
+            <div><dt>System readiness</dt><dd data-agent-field="mvp-readiness-summary:result">pending</dd></div>
+            <div><dt>Readiness pass</dt><dd data-agent-field="mvp-readiness-summary:pass_count">pending</dd></div>
+            <div><dt>Readiness fail</dt><dd data-agent-field="mvp-readiness-summary:fail_count">pending</dd></div>
+            <div><dt>Agent audit entries</dt><dd data-agent-field="agent-audit-summary:entry_count">pending</dd></div>
+          </dl>
+          <div class="failure-details" data-security-failure-details hidden>
+            <h3>Failed security checks</h3>
+            <ul data-security-failures></ul>
+          </div>
+          <div class="failure-details" data-mvp-failure-details hidden>
+            <h3>Failed system readiness checks</h3>
+            <ul data-mvp-failures></ul>
+          </div>
+        </article>
+
+        <article class="panel wide">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Support</p>
+              <h2>Logs <button class="help-button" type="button" aria-label="Help for logs" data-help-title="Logs" data-help="Displays a bounded recent tail from systemd and the OBS Compose stack. Raw unbounded logs are intentionally not exposed through the browser.">?</button></h2>
+            </div>
+            <button type="button" data-load-logs>View Recent Logs</button>
+          </div>
+          <dl class="inline-list">
+            <div><dt>Raw logs exposed</dt><dd data-agent-field="logs-summary:raw_logs_exposed">pending</dd></div>
+            <div><dt>Bounded logs</dt><dd data-agent-field="logs-summary:bounded_logs_exposed">pending</dd></div>
+            <div><dt>Journal entries last hour</dt><dd data-agent-field="logs-summary:journal_entry_count_last_hour">pending</dd></div>
+            <div><dt>Docker available</dt><dd data-agent-field="logs-summary:docker_present">pending</dd></div>
+          </dl>
+          <pre class="log-viewer" data-log-output>not loaded</pre>
+        </article>
+
+        <article class="panel wide">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Console access</p>
+              <h2>Administrator Password</h2>
+            </div>
+            <button type="button" data-mutation-action="web-auth-rotate" data-confirm="web-auth-rotate" data-mutation-status-target="web-auth">Rotate Console Password</button>
+          </div>
+          <dl>
+            <div><dt>Rotation status</dt><dd data-mutation-status="web-auth">ready</dd></div>
+            <div class="secret-notice" data-web-auth-secret hidden>
+              <dt>New password</dt>
+              <dd>
+                <code class="secret-value" data-web-auth-password></code>
+                <span>Shown once for 60 seconds. Save it now; the appliance stores only its hash.</span>
+                <button type="button" data-clear-web-auth-password>Dismiss</button>
+              </dd>
+            </div>
+          </dl>
+        </article>
+      </section>
+    </main>
+
+    <dialog class="help-dialog" data-help-dialog aria-labelledby="help-dialog-title">
+      <div class="help-dialog-heading">
+        <h2 id="help-dialog-title" data-help-dialog-title>Help</h2>
+        <button class="help-close" type="button" aria-label="Close help" data-help-close>×</button>
+      </div>
+      <p data-help-dialog-body></p>
+    </dialog>
+  </body>
+</html>
