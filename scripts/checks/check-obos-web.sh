@@ -354,6 +354,12 @@ grep -q 'update-summary:last_update_obos_release_status' "${INDEX}" \
 
 grep -q 'update-release-summary:available_version' "${INDEX}" \
   || fail "web UI does not show the signed release preview version"
+grep -q 'release-channel-summary:release_channel' "${INDEX}" \
+  || fail "web UI does not show the configured release channel"
+grep -q 'data-mutation-action="set-release-channel"' "${INDEX}" \
+  || fail "web UI does not expose confirmed release channel selection"
+grep -q 'body.release_channel = releaseChannel' "${JS}" \
+  || fail "web UI does not send the selected allowlisted release channel"
 
 grep -q 'data-release-notes' "${INDEX}" \
   || fail "web UI does not define a signed release notes panel"

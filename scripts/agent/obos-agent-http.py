@@ -92,6 +92,7 @@ READ_ONLY_ACTIONS = {
     "system-summary",
     "update-summary",
     "update-release-summary",
+    "release-channel-summary",
     "update-rollback-plan",
     "backup-summary",
     "backup-list",
@@ -121,6 +122,7 @@ MUTATING_ACTIONS = {
     "tls-generate": "tls-generate",
     "tls-renew-leaf": "tls-renew-leaf",
     "update": "update",
+    "set-release-channel": "set-release-channel",
     "web-auth-set": "web-auth-set",
     "web-auth-rotate": "web-auth-rotate",
 }
@@ -494,6 +496,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             expected_fields.add("hostname")
         if action == "set-timezone":
             expected_fields.add("timezone")
+        if action == "set-release-channel":
+            expected_fields.add("release_channel")
         payload, error = self.read_json_body(expected_fields)
         if error:
             return None, error
@@ -529,6 +533,10 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             timezone = payload.get("timezone")
             if not isinstance(timezone, str) or not timezone or timezone.startswith("-"):
                 return None, (400, error_envelope("invalid-timezone", "timezone is invalid"))
+        if action == "set-release-channel":
+            release_channel = payload.get("release_channel")
+            if release_channel not in {"stable", "prerelease"}:
+                return None, (400, error_envelope("invalid-release-channel", "release_channel must be stable or prerelease"))
         return payload, None
 
     def portable_download_error(self, status, error, detail):
@@ -972,6 +980,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             args = [action, payload["hostname"], "--confirm", payload["confirm"]]
         if action == "set-timezone":
             args = [action, payload["timezone"], "--confirm", payload["confirm"]]
+        if action == "set-release-channel":
+            args = [action, payload["release_channel"], "--confirm", payload["confirm"]]
 
         try:
             timeout_seconds = AGENT_UPDATE_TIMEOUT_SECONDS if action == "update" else AGENT_MUTATION_TIMEOUT_SECONDS

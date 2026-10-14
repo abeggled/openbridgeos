@@ -59,18 +59,22 @@ all five fixed-name assets in one release. A draft
 release is recommended until an upgrade from the previous appliance version has
 passed on the MVP VM.
 
-For an end-to-end MVP test without changing the stable `latest` channel, publish
-`2026.10.0` as a GitHub prerelease and put this exact single line in
-`/etc/obos/update/release-base-url` on the MVP appliance:
+The authenticated web console and `obosctl set-release-channel` select either
+the normal `stable` release or the newest non-draft `prerelease`. The setting is
+stored in `/etc/obos/update/release-channel`. Prerelease discovery uses the
+official repository's GitHub Releases API, strictly validates the selected tag,
+and then applies the same mandatory Minisign and checksum verification as the
+stable channel.
+
+The legacy exact-release override remains supported for upgraded installations.
+It consists of an official URL in `/etc/obos/update/release-base-url`, for example:
 
 ```text
 https://github.com/abeggled/openbridgeos/releases/download/2026.10.0
 ```
 
 The updater accepts only the official `abeggled/openbridgeos` GitHub release
-path from that file. After the MVP upgrade passes, promote the same release to a
-normal release and remove the override file; subsequent appliances use
-`releases/latest/download` again.
+path from that file. Selecting either named channel removes this override.
 
 ## GitHub Release Workflow
 

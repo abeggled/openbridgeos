@@ -5,6 +5,7 @@ Cmnd_Alias OBOS_AGENT_READONLY = \
   /usr/bin/obosctl system-summary, \
   /usr/bin/obosctl update-summary, \
   /usr/bin/obosctl update-release-summary, \
+  /usr/bin/obosctl release-channel-summary, \
   /usr/bin/obosctl update-rollback-plan, \
   /usr/bin/obosctl backup-summary, \
   /usr/bin/obosctl backup-list, \
@@ -27,6 +28,8 @@ Cmnd_Alias OBOS_AGENT_MUTATIONS = \
   /usr/bin/obosctl stop, \
   /usr/bin/obosctl restart, \
   /usr/bin/obosctl update, \
+  /usr/bin/obosctl set-release-channel stable --confirm set-release-channel, \
+  /usr/bin/obosctl set-release-channel prerelease --confirm set-release-channel, \
   /usr/bin/obosctl backup, \
   /usr/bin/obosctl backup-prune --confirm backup-prune, \
   /usr/bin/obosctl portable-export *, \

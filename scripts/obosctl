@@ -34,6 +34,8 @@ MVP_READINESS_SCRIPT="${OBOS_MVP_READINESS_SCRIPT:-/usr/lib/obos/mvp-runtime-rea
 WEB_AUTH_SCRIPT="${OBOS_WEB_AUTH_SCRIPT:-/usr/lib/obos/generate-web-auth.sh}"
 HOST_UPDATE_SCRIPT="${OBOS_HOST_UPDATE_SCRIPT:-/usr/lib/obos/update-host.sh}"
 OBOS_RELEASE_UPDATE_SCRIPT="${OBOS_RELEASE_UPDATE_SCRIPT:-/usr/lib/obos/update-obos-release.sh}"
+RELEASE_CHANNEL_FILE="${OBOS_RELEASE_CHANNEL_FILE:-/etc/obos/update/release-channel}"
+RELEASE_BASE_URL_FILE="${OBOS_RELEASE_BASE_URL_FILE:-/etc/obos/update/release-base-url}"
 SYSTEMD_RUN="${OBOS_SYSTEMD_RUN:-systemd-run}"
 REBOOT_DELAY_SECONDS="${OBOS_REBOOT_DELAY_SECONDS:-60}"
 BOOT_ID_FILE="${OBOS_BOOT_ID_FILE:-/proc/sys/kernel/random/boot_id}"
@@ -64,6 +66,10 @@ Commands:
   update-summary    Print machine-readable last update status
   update-release-summary
                     Check the signed latest release and print its release notes
+  release-channel-summary
+                    Print the configured stable or prerelease update channel
+  set-release-channel
+                    Select stable or prerelease updates after explicit confirmation
   update-rollback-plan
                     Print the non-destructive rollback plan for the last update
   update-rollback-stage
@@ -1785,6 +1791,52 @@ update_release_summary() {
   run_helper "${OBOS_RELEASE_UPDATE_SCRIPT}" check
 }
 
+release_channel_summary() {
+  channel=stable
+  source=default
+  if [ -s "${RELEASE_BASE_URL_FILE}" ]; then
+    channel=pinned
+    source=legacy-release-base-url
+  elif [ -s "${RELEASE_CHANNEL_FILE}" ]; then
+    channel="$(sed -n '1p' "${RELEASE_CHANNEL_FILE}")"
+    source=configured
+  fi
+  case "${channel}" in
+    stable|prerelease|pinned) ;;
+    *) channel=invalid ;;
+  esac
+  echo "format=obos-release-channel-v1"
+  echo "release_channel=${channel}"
+  echo "release_channel_source=${source}"
+}
+
+set_release_channel() {
+  require_root set-release-channel
+  channel="${1:-}"
+  confirm_flag="${2:-}"
+  confirm_token="${3:-}"
+  if [ "$#" -ne 3 ] || [ "${confirm_flag}" != --confirm ] || [ "${confirm_token}" != set-release-channel ]; then
+    echo "usage: obosctl set-release-channel <stable|prerelease> --confirm set-release-channel" >&2
+    return 2
+  fi
+  case "${channel}" in
+    stable|prerelease) ;;
+    *) echo "release channel must be stable or prerelease" >&2; return 2 ;;
+  esac
+  channel_dir="$(dirname -- "${RELEASE_CHANNEL_FILE}")"
+  install -d -m 0755 "${channel_dir}"
+  channel_tmp="$(mktemp "${channel_dir}/release-channel.XXXXXX")"
+  trap 'rm -f "${channel_tmp}"' EXIT HUP INT TERM
+  printf '%s\n' "${channel}" > "${channel_tmp}"
+  chmod 0644 "${channel_tmp}"
+  mv -f "${channel_tmp}" "${RELEASE_CHANNEL_FILE}"
+  rm -f "${RELEASE_BASE_URL_FILE}"
+  trap - EXIT HUP INT TERM
+  echo "format=obos-release-channel-v1"
+  echo "release_channel=${channel}"
+  echo "release_channel_source=configured"
+}
+
 update_rollback_plan() {
   require_root update-rollback-plan
   if [ ! -f "${LAST_UPDATE_FILE}" ]; then
@@ -1940,6 +1992,13 @@ case "${1:-}" in
     ;;
   update-release-summary)
     update_release_summary
+    ;;
+  release-channel-summary)
+    release_channel_summary
+    ;;
+  set-release-channel)
+    shift
+    set_release_channel "$@"
     ;;
   update-rollback-plan)
     update_rollback_plan

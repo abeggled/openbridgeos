@@ -30,6 +30,7 @@ parsing human-oriented command output or writing appliance files directly.
 | Host basics | `obosctl system-summary` | `obos-system-summary-v1` |
 | Last update | `obosctl update-summary` | `obos-update-summary-v1` |
 | Signed release preview and notes | `sudo obosctl update-release-summary` | `obos-release-update-v1` |
+| Configured release channel | `sudo obosctl release-channel-summary` | `obos-release-channel-v1` |
 | Last update rollback plan | `sudo obosctl update-rollback-plan` | `obos-update-rollback-plan-v1` |
 | Latest backup | `obosctl backup-summary` | `obos-backup-summary-v1` |
 | Backup inventory | `obosctl backup-list` | `obos-backup-list-v1` |
@@ -73,6 +74,7 @@ open bridge server systemd unit and Compose stack.
 | Stop open bridge server | `sudo obosctl stop` |
 | Restart open bridge server | `sudo obosctl restart` |
 | Update complete appliance | `sudo obosctl update` |
+| Select update channel | `sudo obosctl set-release-channel <stable\|prerelease> --confirm set-release-channel` |
 | Set appliance hostname | `sudo obosctl set-hostname <hostname>` |
 | Set appliance timezone | `sudo obosctl set-timezone <timezone>` |
 | Create backup | `sudo obosctl backup` |
@@ -95,6 +97,7 @@ obos-agent start --confirm start
 obos-agent stop --confirm stop
 obos-agent restart --confirm restart
 obos-agent update --confirm update
+obos-agent set-release-channel <stable|prerelease> --confirm set-release-channel
 obos-agent backup --confirm backup
 obos-agent backup-prune --confirm backup-prune
 obos-agent portable-export <backup.tar.gz> <passphrase-file> --confirm portable-export

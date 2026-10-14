@@ -106,7 +106,7 @@
           </article>
           <article>
             <span>Release channel</span>
-            <strong data-agent-field="update-release-summary:release_status">pending</strong>
+            <strong data-agent-field="release-channel-summary:release_channel">pending</strong>
           </article>
           <article>
             <span>Installed OBOS</span>
@@ -138,7 +138,18 @@
           </article>
         </div>
         <section class="release-preview" aria-labelledby="release-preview-title">
-          <h3 id="release-preview-title">Release notes <button class="help-button" type="button" aria-label="Help for release notes" data-help-title="Signed release notes" data-help="These notes are downloaded from the latest GitHub release and accepted only when their checksum is covered by the valid Minisign-signed update manifest. They are shown before update confirmation.">?</button></h3>
+          <div class="panel-heading">
+            <h3 id="release-preview-title">Release notes <button class="help-button" type="button" aria-label="Help for release notes" data-help-title="Signed release notes" data-help="These notes are downloaded from the selected GitHub release channel and accepted only when their checksum is covered by the valid Minisign-signed update manifest. They are shown before update confirmation.">?</button></h3>
+            <div class="control-group">
+              <label for="release-channel">Update channel</label>
+              <select id="release-channel" aria-label="Update channel">
+                <option value="stable">Stable</option>
+                <option value="prerelease">Prerelease</option>
+              </select>
+              <button type="button" data-mutation-action="set-release-channel" data-confirm="set-release-channel" data-mutation-status-target="release-channel">Apply Channel</button>
+              <strong data-mutation-status="release-channel">ready</strong>
+            </div>
+          </div>
           <pre data-release-notes>No signed release notes are available.</pre>
         </section>
       </section>
