@@ -158,6 +158,10 @@ grep -q 'action=web-auth-rotate|mutating=true|confirm=web-auth-rotate' "${AGENT}
   || fail "web-auth-rotate action is not listed as a confirmed mutation"
 grep -q 'action=web-auth-set|mutating=true|confirm=web-auth-set|required_arg=password-file' "${AGENT}" \
   || fail "web-auth-set action is not listed as a confirmed mutation"
+grep -q 'action=system-credentials-reveal|mutating=true|confirm=system-credentials-reveal' "${AGENT}" \
+  || fail "system credential reveal is not listed as an audited mutation"
+grep -q 'action=system-credentials-rotate|mutating=true|confirm=system-credentials-rotate' "${AGENT}" \
+  || fail "system credential rotation is not listed as an audited mutation"
 # shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent' scripts/bootstrap/provision-debian.sh \
   || fail "agent is not installed during provisioning"
@@ -215,6 +219,10 @@ grep -q '/usr/bin/obosctl web-auth-rotate' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow web auth rotation"
 grep -q '/usr/bin/obosctl web-auth-set \*' packaging/sudoers/obos-agent \
   || fail "agent sudoers policy does not allow initial web auth setup"
+grep -q '/usr/bin/obosctl system-credentials-reveal --confirm system-credentials-reveal' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not narrowly allow system credential reveal"
+grep -q '/usr/bin/obosctl system-credentials-rotate --confirm system-credentials-rotate' packaging/sudoers/obos-agent \
+  || fail "agent sudoers policy does not narrowly allow system credential rotation"
 grep -q '/srv/obos/state/agent/obos-agent-audit.log' packaging/logrotate/obos-agent \
   || fail "agent audit logrotate policy does not target the audit log"
 grep -q 'create 0640 obos-agent obos-agent' packaging/logrotate/obos-agent \
@@ -340,6 +348,14 @@ case "$1" in
     echo "format=obos-web-auth-v1"
     echo "mode=set"
     echo "password-file=${2:-missing}"
+    exit 0
+    ;;
+  system-credentials-reveal|system-credentials-rotate)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "${1:-}" ] || exit 2
+    echo "format=obos-system-credentials-v1"
+    echo "mode=${1#system-credentials-}"
+    echo "root_password=fixture-root-password"
+    echo "obos_password=fixture-obos-password"
     exit 0
     ;;
   mqtt-enable-lan)
@@ -554,6 +570,22 @@ OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}
 
 grep -q 'format=obos-agent-audit-v1|.*|action=web-auth-rotate|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
   || fail "agent did not audit confirmed web auth rotation"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" system-credentials-reveal --confirm system-credentials-reveal |
+  grep -q 'stdout=root_password=fixture-root-password' \
+  || fail "agent did not run confirmed system credential reveal"
+grep -q 'format=obos-agent-audit-v1|.*|action=system-credentials-reveal|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not audit system credential reveal"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" system-credentials-rotate --confirm system-credentials-rotate |
+  grep -q 'stdout=mode=rotate' \
+  || fail "agent did not run confirmed system credential rotation"
+grep -q 'format=obos-agent-audit-v1|.*|action=system-credentials-rotate|exit_code=0|timed_out=false' "${tmp_dir}/agent-audit.log" \
+  || fail "agent did not audit system credential rotation"
+
+if OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" system-credentials-reveal >/dev/null 2>&1; then
+  fail "agent accepted system credential reveal without explicit confirmation"
+fi
 
 password_file="/srv/obos/state/onboarding/obos-web-password-test"
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" web-auth-set "${password_file}" --confirm web-auth-set |

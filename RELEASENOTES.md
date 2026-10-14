@@ -1,4 +1,18 @@
 # Changes
+## 2026.10.6-rc.4
+### New features ✨
+* Start the amd64 appliance installer automatically after a five-second BIOS or UEFI countdown while retaining explicit advanced and rescue options.
+* Automatically partition and install GRUB when exactly one eligible internal disk is present, after one destructive confirmation that shows the disk device, model, and size.
+* Generate different per-device passwords for the Linux `root` and `obos` recovery users on the target system and show the `obos` password before the installer reboots.
+* Reveal or rotate both Linux recovery passwords under System Diagnostics only after the current web-admin password is entered again.
+### Security fixes 🔒
+* Stop automatic installation without selecting a real disk when zero or multiple eligible target disks are detected.
+* Store recovery credentials root-only, exclude them from normal status, logs, releases, and backups, and audit every reveal or rotation without logging the secrets.
+### Fixes 🐞
+* Disable stale installer `cdrom:` APT sources before appliance updates and create signed Debian network sources when the install medium was the only configured source.
+### Operational notes 🔔
+* Existing RC.3 appliances can install this update through the prerelease channel; the repaired host-update helper is installed before the Debian package refresh runs.
+
 ## 2026.10.6-rc.3
 ### Breaking changes 🚨
 * Remove the one-time setup-token requirement from initial web onboarding so setup no longer requires console or boot-media access.

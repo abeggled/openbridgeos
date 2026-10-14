@@ -66,21 +66,25 @@ Für einen Mini-PC oder ein anderes dediziertes amd64-System wird
 1. Die ISO als Image auf einen USB-Stick schreiben; die ISO-Datei nicht bloss
    auf den Stick kopieren. Das Zielsystem von diesem Stick starten, vorzugsweise
    im UEFI-Modus.
-2. Im OBOS-Bootmenü **`Start installer`** auswählen. Für eine dauerhafte
-   Installation nicht `Live system (amd64)` wählen; damit startet nur das
-   temporäre Live-System. `Advanced install options` wird nur für Text-,
-   Experten-, barrierefreie oder Rettungsinstallation benötigt.
-3. Den grafischen Debian-Installer abschliessen: Sprache, Region, Tastatur,
-   kabelgebundenes Netzwerk und ein lokales Linux-Administrationskonto
-   festlegen. Für eine dedizierte Appliance die geführte Partitionierung mit
-   der gesamten, richtigen Zielplatte wählen und das Schreiben der Änderungen
-   bestätigen. GRUB bei entsprechender Rückfrage auf dieser Platte
-   installieren.
-4. Nach Abschluss der Installation den USB-Stick entfernen und von der
+2. Fünf Sekunden warten. **`Start installer`** startet automatisch; nur für
+   die erweiterten manuellen oder Rettungsoptionen während des Countdowns eine
+   Taste drücken.
+3. Ist genau eine geeignete interne Platte mit mindestens 8 GiB vorhanden,
+   Gerätename, Modell und Grösse in der einmaligen Löschwarnung prüfen und
+   bestätigen. OBOS partitioniert danach die gesamte Platte und installiert
+   GRUB für BIOS oder UEFI automatisch. Bei mehreren geeigneten Platten wählt
+   der Installer niemals selbst: die übrigen Platten trennen oder über
+   **Advanced install options** die Zielplatte ausdrücklich auswählen.
+4. Das auf dem Abschlussbildschirm angezeigte individuelle Recovery-Passwort
+   des Benutzers `obos` speichern. Den USB-Stick entfernen und von der
    installierten Platte neu starten.
 
-Das lokale Linux-Konto dient der Wiederherstellung direkt am Gerät und ist
-nicht mit dem OBOS-Webbenutzer `admin` identisch.
+Jede Installation erzeugt unterschiedliche Passwörter für die Linux-Benutzer
+`root` und `obos`. Diese sind vom OBOS-Webbenutzer `admin` getrennt. Nach dem
+Web-Onboarding können beide Recovery-Passwörter unter **System Diagnostics →
+System Credentials** nach erneuter Eingabe des aktuellen Web-Admin-Passworts
+angezeigt oder rotiert werden. Jede Anzeige und Rotation wird ohne die
+Passwortwerte protokolliert.
 
 ### x86_64-VM: QCOW2
 

@@ -55,6 +55,8 @@ Mutating actions:
   tls-export --confirm tls-export
   web-auth-set <password-file> --confirm web-auth-set
   web-auth-rotate --confirm web-auth-rotate
+  system-credentials-reveal --confirm system-credentials-reveal
+  system-credentials-rotate --confirm system-credentials-rotate
   mqtt-enable-lan [source-cidr] --confirm mqtt-enable-lan
   mqtt-disable-lan --confirm mqtt-disable-lan
   set-hostname <hostname> --confirm set-hostname
@@ -374,6 +376,8 @@ action=tls-renew-leaf|mutating=true|confirm=tls-renew-leaf
 action=tls-export|mutating=true|confirm=tls-export
 action=web-auth-set|mutating=true|confirm=web-auth-set|required_arg=password-file
 action=web-auth-rotate|mutating=true|confirm=web-auth-rotate
+action=system-credentials-reveal|mutating=true|confirm=system-credentials-reveal
+action=system-credentials-rotate|mutating=true|confirm=system-credentials-rotate
 action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_arg=source-cidr
 action=mqtt-disable-lan|mutating=true|confirm=mqtt-disable-lan
 action=set-hostname|mutating=true|confirm=set-hostname|required_arg=hostname
@@ -597,6 +601,14 @@ case "${1:-}" in
   web-auth-rotate)
     require_confirm_args "$@"
     run_obosctl web-auth-rotate "${MUTATION_TIMEOUT_SECONDS}" true web-auth-rotate
+    ;;
+  system-credentials-reveal)
+    require_confirm_args "$@"
+    run_obosctl system-credentials-reveal "${MUTATION_TIMEOUT_SECONDS}" true system-credentials-reveal --confirm system-credentials-reveal
+    ;;
+  system-credentials-rotate)
+    require_confirm_args "$@"
+    run_obosctl system-credentials-rotate "${MUTATION_TIMEOUT_SECONDS}" true system-credentials-rotate --confirm system-credentials-rotate
     ;;
   web-auth-set)
     require_web_auth_set_args "$@"

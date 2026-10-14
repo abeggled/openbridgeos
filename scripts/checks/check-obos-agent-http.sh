@@ -55,6 +55,10 @@ grep -q '"web-auth-rotate": "web-auth-rotate"' "${BRIDGE}" \
   || fail "web-auth-rotate mutation is not exposed with a matching confirmation token"
 grep -q '"web-auth-set": "web-auth-set"' "${BRIDGE}" \
   || fail "web-auth-set mutation is not exposed with a matching confirmation token"
+grep -q '"system-credentials-reveal": "system-credentials-reveal"' "${BRIDGE}" \
+  || fail "system credential reveal is not exposed with a matching confirmation token"
+grep -q '"system-credentials-rotate": "system-credentials-rotate"' "${BRIDGE}" \
+  || fail "system credential rotation is not exposed with a matching confirmation token"
 grep -q '"update": "update"' "${BRIDGE}" \
   || fail "update mutation is not exposed with a matching confirmation token"
 grep -q '"system-summary"' "${BRIDGE}" \
@@ -530,6 +534,23 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  system-credentials-reveal|system-credentials-rotate)
+    [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "${1:-}" ] || exit 2
+    cat <<RESPONSE
+format=obos-agent-response-v1
+action=${1:-}
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-system-credentials-v1
+stdout=mode=${1#system-credentials-}
+stdout=root_password=fixture-root-password-123
+stdout=obos_password=fixture-obos-password-456
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   set-hostname)
     [ "${2:-}" = "obos-test" ] || exit 2
     [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "set-hostname" ] || exit 2
@@ -970,6 +991,39 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/tls-export |
   grep -q 'stdout=tls-export:ok' \
   || fail "HTTP bridge did not run confirmed TLS export mutation"
+
+status_code="$(curl -q --silent --output "${tmp_dir}/unauth-system-credentials.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"system-credentials-reveal","admin_password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/system-credentials-reveal)"
+[ "${status_code}" = 401 ] || fail "system credentials were exposed without a GUI session"
+
+status_code="$(curl --silent --output "${tmp_dir}/wrong-system-reauth.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"system-credentials-reveal","admin_password":"wrong password"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/system-credentials-reveal)"
+[ "${status_code}" = 401 ] || fail "system credential reveal accepted an invalid current admin password"
+grep -q 'reauth-failed' "${tmp_dir}/wrong-system-reauth.out" \
+  || fail "system credential re-authentication failure omitted its marker"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"system-credentials-reveal","admin_password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/system-credentials-reveal > "${tmp_dir}/system-credentials-reveal.out"
+grep -q 'stdout=root_password=fixture-root-password-123' "${tmp_dir}/system-credentials-reveal.out" \
+  || fail "re-authenticated system credential reveal omitted the root password"
+grep -q 'stdout=obos_password=fixture-obos-password-456' "${tmp_dir}/system-credentials-reveal.out" \
+  || fail "re-authenticated system credential reveal omitted the obos password"
+if grep -q 'correct horse battery staple' "${tmp_dir}/system-credentials-reveal.out"; then
+  fail "HTTP bridge reflected the web-admin password"
+fi
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"system-credentials-rotate","admin_password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/system-credentials-rotate |
+  grep -q 'stdout=mode=rotate' \
+  || fail "re-authenticated system credential rotation was not executed"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

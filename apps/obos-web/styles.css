@@ -540,6 +540,10 @@ dd,
   justify-self: start;
 }
 
+.credential-actions input {
+  min-width: min(260px, 100%);
+}
+
 .panel {
   min-width: 0;
   border: 1px solid var(--line);

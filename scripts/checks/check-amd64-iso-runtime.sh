@@ -22,6 +22,8 @@ grep -Fq 'sh "${RUNTIME_CHECK}" "${BUILD_DIR}" "${RUNTIME_PACKAGES}"' "${BUILDER
   || fail "ISO builder does not validate the installed-system runtime"
 
 mkdir -p "${TMP_DIR}/build/binary/live" \
+  "${TMP_DIR}/build/binary/boot/grub" \
+  "${TMP_DIR}/build/binary/install/gtk" \
   "${TMP_DIR}/build/chroot/usr/bin" \
   "${TMP_DIR}/build/chroot/usr/sbin" \
   "${TMP_DIR}/build/chroot/etc/nginx/sites-available"
@@ -29,6 +31,24 @@ mkdir -p "${TMP_DIR}/build/binary/live" \
 : > "${TMP_DIR}/build/chroot/usr/bin/python3"
 : > "${TMP_DIR}/build/chroot/usr/sbin/nginx"
 chmod +x "${TMP_DIR}/build/chroot/usr/bin/python3" "${TMP_DIR}/build/chroot/usr/sbin/nginx"
+cp packaging/images/amd64-installer/bootloaders/grub-pc/config.cfg \
+  "${TMP_DIR}/build/binary/boot/grub/config.cfg"
+cp packaging/images/amd64-installer/bootloaders/grub-pc/grub.cfg \
+  "${TMP_DIR}/build/binary/boot/grub/grub.cfg"
+sed 's|@KERNEL_GI@|/install/gtk/vmlinuz|; s|@INITRD_GI@|/install/gtk/initrd.gz|' \
+  packaging/images/amd64-installer/bootloaders/grub-pc/install_start_gui.cfg \
+  > "${TMP_DIR}/build/binary/boot/grub/install_start.cfg"
+cp packaging/images/amd64-installer/preseed.cfg \
+  "${TMP_DIR}/build/binary/install/preseed.cfg"
+mkdir -p "${TMP_DIR}/initrd/usr/lib/obos-installer" \
+  "${TMP_DIR}/initrd/usr/share/obos-installer"
+cp packaging/images/amd64-installer/select-target-disk.sh \
+  packaging/images/amd64-installer/finalize.sh \
+  "${TMP_DIR}/initrd/usr/lib/obos-installer/"
+cp packaging/images/amd64-installer/installer.templates \
+  "${TMP_DIR}/initrd/usr/share/obos-installer/"
+(cd "${TMP_DIR}/initrd" && find usr -print | cpio -o -H newc 2>/dev/null | gzip -c) \
+  > "${TMP_DIR}/build/binary/install/gtk/initrd.gz"
 
 while IFS= read -r package; do
   printf '%s\t1.0\n' "${package}"

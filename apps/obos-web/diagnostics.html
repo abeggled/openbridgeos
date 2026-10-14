@@ -113,6 +113,34 @@
             </div>
           </dl>
         </article>
+
+        <article class="panel wide">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Local recovery</p>
+              <h2>System Credentials <button class="help-button" type="button" aria-label="Help for system credentials" data-help-title="System Credentials" data-help="These per-device Linux credentials are separate from the web user admin. Enter the current web-admin password again before revealing or rotating them. Every reveal and rotation is written to the mutation audit log without recording either secret.">?</button></h2>
+            </div>
+            <div class="button-row credential-actions">
+              <input id="system-credentials-admin-password" type="password" autocomplete="current-password" placeholder="current admin password" aria-label="Current web administrator password">
+              <button type="button" data-mutation-action="system-credentials-reveal" data-confirm="system-credentials-reveal" data-mutation-status-target="system-credentials">Reveal</button>
+              <button type="button" data-mutation-action="system-credentials-rotate" data-confirm="system-credentials-rotate" data-mutation-status-target="system-credentials">Rotate</button>
+            </div>
+          </div>
+          <dl>
+            <div><dt>Credential status</dt><dd data-mutation-status="system-credentials">ready</dd></div>
+            <div class="secret-notice" data-system-credentials-secret hidden>
+              <dt>Recovery credentials</dt>
+              <dd>
+                <span>Linux user <code>root</code></span>
+                <code class="secret-value" data-system-root-password></code>
+                <span>Linux recovery user <code>obos</code></span>
+                <code class="secret-value" data-system-obos-password></code>
+                <span>Hidden automatically after 60 seconds. These are not the web-admin credentials.</span>
+                <button type="button" data-clear-system-credentials>Dismiss</button>
+              </dd>
+            </div>
+          </dl>
+        </article>
       </section>
     </main>
 

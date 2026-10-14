@@ -72,6 +72,7 @@ for script in \
   scripts/bootstrap/first-boot.sh \
   scripts/bootstrap/install-openbridgeserver-app.sh \
   scripts/auth/generate-web-auth.sh \
+  scripts/auth/manage-system-credentials.sh \
   scripts/hardening/apply-host-hardening.sh \
   scripts/hardening/enable-ssh.sh \
   scripts/hardening/set-mqtt-lan-access.sh \
@@ -86,10 +87,17 @@ for script in \
   scripts/tls/export-trust-bundle.sh \
   scripts/tls/export-boot-trust-summary.sh \
   scripts/update/update-host.sh \
+  scripts/update/disable-install-media-sources.sh \
   scripts/update/update-obos-release.sh \
   scripts/update/install-update-bundle.sh; do
   install -m 0755 "${RELEASE_ROOT}/${script}" "${OBOS_LIB_DIR}/$(basename -- "${script}")"
 done
+
+# Existing appliances predate the recovery account. Create its per-device
+# credentials while the signed release bundle is being installed, outside the
+# first-boot service sandbox. Fresh images already contain the account and get
+# their passwords only on the target device.
+"${OBOS_LIB_DIR}/manage-system-credentials.sh" ensure >/dev/null
 
 for unit in \
   obos-first-boot.service \

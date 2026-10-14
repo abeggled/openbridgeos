@@ -44,6 +44,12 @@ grep -q 'Refusing to replace existing release' "${RELEASE_WORKFLOW}" \
   || fail "release workflow can replace an existing release"
 grep -q 'packaging/update/obos-release.minisign.pub' "${RELEASE_WORKFLOW}" \
   || fail "release workflow does not publish the release public key"
+grep -q 'scripts/update/disable-install-media-sources.sh' "${INSTALL_BUNDLE}" \
+  || fail "in-place updates do not install the CD-ROM source repair helper"
+grep -q 'scripts/auth/manage-system-credentials.sh' "${INSTALL_BUNDLE}" \
+  || fail "in-place updates do not install system credential management"
+grep -q 'manage-system-credentials.sh.*ensure' "${INSTALL_BUNDLE}" \
+  || fail "in-place updates do not initialize per-device recovery credentials"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT HUP INT TERM
@@ -52,7 +58,25 @@ modules_dir="${tmp_dir}/modules"
 current_modules_dir="${tmp_dir}/modules-current"
 apt_log="${tmp_dir}/apt.log"
 pending_nginx_config="${tmp_dir}/openbridgeserver.conf.pending"
+apt_etc_dir="${tmp_dir}/apt"
 mkdir -p "${mock_bin}" "${modules_dir}/6.12.0-obos" "${current_modules_dir}/6.12.0-obos"
+mkdir -p "${apt_etc_dir}/sources.list.d"
+
+cat > "${apt_etc_dir}/sources.list" <<'EOF'
+deb cdrom:[Debian GNU/Linux 13 _Trixie_]/ trixie main
+deb https://deb.debian.org/debian trixie main
+EOF
+cat > "${apt_etc_dir}/sources.list.d/mixed.sources" <<'EOF'
+Types: deb
+URIs: cdrom:[Debian GNU/Linux 13 _Trixie_]
+Suites: trixie
+Components: main
+
+Types: deb
+URIs: https://security.debian.org/debian-security
+Suites: trixie-security
+Components: main
+EOF
 
 cat > "${mock_bin}/id" <<'EOF'
 #!/bin/sh
@@ -84,6 +108,8 @@ output="$(
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
   OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_DISABLE_INSTALL_MEDIA_SOURCES="${UPDATE_HOST%/update-host.sh}/disable-install-media-sources.sh" \
+  OBOS_APT_ETC_DIR="${apt_etc_dir}" \
   sh "${UPDATE_HOST}"
 )"
 
@@ -97,6 +123,25 @@ grep -q 'DPkg::Lock::Timeout=300 update' "${apt_log}" \
   || fail "APT metadata refresh is missing lock timeout"
 grep -q -- '--no-remove full-upgrade' "${apt_log}" \
   || fail "APT full upgrade is not protected against package removals"
+if grep -R -Eq '^[[:space:]]*deb(-src)?[[:space:]].*cdrom:|^URIs:.*cdrom:' "${apt_etc_dir}"; then
+  fail "installer CD-ROM APT source was not disabled before update"
+fi
+grep -Fq 'https://deb.debian.org/debian' "${apt_etc_dir}/sources.list" \
+  || fail "network APT source was removed with the installer source"
+grep -Fq 'https://security.debian.org/debian-security' "${apt_etc_dir}/sources.list.d/mixed.sources" \
+  || fail "network deb822 stanza was removed with the installer source"
+
+fallback_apt_etc_dir="${tmp_dir}/fallback-apt"
+mkdir -p "${fallback_apt_etc_dir}/sources.list.d"
+printf '%s\n' 'deb cdrom:[Debian GNU/Linux 13 _Trixie_]/ trixie main' > "${fallback_apt_etc_dir}/sources.list"
+printf '%s\n' 'VERSION_CODENAME=trixie' > "${tmp_dir}/os-release"
+OBOS_APT_ETC_DIR="${fallback_apt_etc_dir}" \
+OBOS_OS_RELEASE_FILE="${tmp_dir}/os-release" \
+sh scripts/update/disable-install-media-sources.sh >/dev/null
+grep -Fq 'URIs: https://deb.debian.org/debian' "${fallback_apt_etc_dir}/sources.list.d/obos-debian.sources" \
+  || fail "network Debian source was not created when the installer source was the only source"
+grep -Fq 'Suites: trixie-security' "${fallback_apt_etc_dir}/sources.list.d/obos-debian.sources" \
+  || fail "network Debian security source was not created"
 
 touch "${tmp_dir}/reboot-required"
 output="$(

@@ -63,20 +63,22 @@ amd64 machine:
 
 1. Write the ISO to a USB stick as an image; do not copy the ISO file onto the
    stick. Boot the target from that stick, preferably in UEFI mode.
-2. In the OBOS boot menu, select **`Start installer`**. Do not select
-   `Live system (amd64)` for a permanent installation; it only starts the
-   temporary live environment. `Advanced install options` is only needed for
-   the text, expert, accessibility, or rescue installer.
-3. Complete the graphical Debian installer: select language, location,
-   keyboard, wired network, and a local Linux administrator account. For a
-   dedicated appliance, choose guided partitioning with the entire correct
-   target disk and confirm writing the changes. Install GRUB on that disk when
-   prompted.
-4. When installation finishes, remove the USB stick and reboot from the
-   installed disk.
+2. Wait five seconds. **`Start installer`** starts automatically; press a key
+   during the countdown only to open the advanced manual or rescue options.
+3. If exactly one eligible internal disk of at least 8 GiB is present, verify
+   its device name, model, and size in the single destructive warning and
+   confirm it. OBOS then partitions the complete disk and installs GRUB for
+   BIOS or UEFI automatically. The installer never selects between multiple
+   eligible disks: disconnect the other disks or restart into **Advanced
+   install options** and select the intended target explicitly.
+4. Save the individual `obos` recovery password shown on the final installer
+   screen. Remove the USB stick and reboot from the installed disk.
 
-The local Linux account is for recovery at the machine and is separate from
-the OBOS web user `admin`.
+Each installation generates different passwords for the Linux users `root`
+and `obos`. They are separate from the OBOS web user `admin`. After web
+onboarding, open **System Diagnostics → System Credentials** and enter the
+current web-admin password again to reveal or rotate both recovery passwords.
+Every reveal and rotation is audited without logging the passwords.
 
 ### x86_64 Virtual Machine: QCOW2
 
