@@ -7,6 +7,7 @@ OUTPUT_DIR="${OBOS_IMAGE_OUTPUT_DIR:-dist/images}"
 REPO_ROOT="${OBOS_REPO_ROOT:-$(cd -- "$(dirname -- "$0")/../.." && pwd)}"
 REPO_NAME="$(basename -- "${REPO_ROOT}")"
 RELEASE_BUILD="${OBOS_RELEASE_BUILD:-0}"
+IMAGE_VERSION="${OBOS_IMAGE_VERSION:-}"
 VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
 CHECK_RPI_BUILD_HOST="${REPO_ROOT}/scripts/images/check-rpi4-arm64-build-host.sh"
 CHECK_RPI_KERNEL_CONFIG="${REPO_ROOT}/scripts/images/check-rpi-kernel-config.sh"
@@ -225,6 +226,8 @@ OBOS_IMAGE_DEFAULT_SSH=
 
 if [ "${RELEASE_BUILD}" = "1" ]; then
   require_clean_release_repo
+  printf '%s\n' "${IMAGE_VERSION}" | grep -Eq '^[0-9]+([.][0-9]+){1,3}([+~-][A-Za-z0-9.]+)?$' \
+    || fail "release builds require a valid OBOS_IMAGE_VERSION"
 fi
 
 require_command basename
@@ -250,7 +253,8 @@ require_command xz
 
 mkdir -p "${WORK_DIR}" "${OUTPUT_DIR}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-RAW_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-${STAMP}.img"
+IMAGE_ID="${IMAGE_VERSION:-${STAMP}}"
+RAW_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-${IMAGE_ID}.img"
 XZ_IMAGE="${RAW_IMAGE}.xz"
 LATEST_XZ_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-latest.img.xz"
 MANIFEST="${XZ_IMAGE}.manifest"
@@ -291,7 +295,7 @@ copy_repo_into_root "${BUILD_ROOT}"
 mount --bind /dev "${BUILD_ROOT}/dev"
 mount -t proc proc "${BUILD_ROOT}/proc"
 mount -t sysfs sysfs "${BUILD_ROOT}/sys"
-chroot "${BUILD_ROOT}" /bin/sh -c "cd /opt/openbridgeos/${REPO_NAME} && OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 sh ${OBOS_PROVISION_SCRIPT} /opt/openbridgeos/${REPO_NAME}"
+chroot "${BUILD_ROOT}" /bin/sh -c "cd /opt/openbridgeos/${REPO_NAME} && OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 OBOS_IMAGE_BUILD=1 OBOS_VERSION=${IMAGE_ID} sh ${OBOS_PROVISION_SCRIPT} /opt/openbridgeos/${REPO_NAME}"
 umount "${BUILD_ROOT}/proc"
 umount "${BUILD_ROOT}/sys"
 umount "${BUILD_ROOT}/dev"

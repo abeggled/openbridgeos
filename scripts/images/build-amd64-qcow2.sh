@@ -10,6 +10,7 @@ IMAGE_REPO_DIR="/opt/openbridgeos/${REPO_NAME}"
 BASE_IMAGE="${OBOS_QCOW2_BASE_IMAGE:-}"
 BASE_IMAGE_SHA256="${OBOS_QCOW2_BASE_IMAGE_SHA256:-}"
 RELEASE_BUILD="${OBOS_RELEASE_BUILD:-0}"
+IMAGE_VERSION="${OBOS_IMAGE_VERSION:-}"
 VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
 CHECK_AMD64_BUILD_HOST="${REPO_ROOT}/scripts/images/check-amd64-qcow2-build-host.sh"
 CHECK_QCOW2_MANIFEST="${REPO_ROOT}/scripts/images/check-qcow2-manifest.sh"
@@ -70,6 +71,8 @@ verify_release_build_inputs() {
 
   if [ "${RELEASE_BUILD}" = "1" ]; then
     require_clean_release_repo
+    printf '%s\n' "${IMAGE_VERSION}" | grep -Eq '^[0-9]+([.][0-9]+){1,3}([+~-][A-Za-z0-9.]+)?$' \
+      || fail "release builds require a valid OBOS_IMAGE_VERSION"
   fi
 }
 
@@ -128,7 +131,6 @@ EOF
 [ -f "${CHECK_QCOW2_MANIFEST}" ] || fail "missing manifest checker: ${CHECK_QCOW2_MANIFEST}"
 run_build_host_preflight
 sh "${VALIDATE_IMAGE_PROFILES}" "${PROFILE_FILE}" >/dev/null
-verify_release_build_inputs
 
 OBOS_IMAGE_PROFILE=
 OBOS_IMAGE_ARCH=
@@ -137,12 +139,18 @@ OBOS_OUTPUT_FORMAT=
 OBOS_PROVISION_SCRIPT=
 OBOS_FIRST_BOOT_SERVICE=
 OBOS_QCOW2_BASE_IMAGE_URL=
+OBOS_QCOW2_BASE_IMAGE_SHA256=
 OBOS_QCOW2_MIN_SIZE=
 OBOS_QCOW2_BUILDER=
 OBOS_IMAGE_DEFAULT_SSH=
 
 # shellcheck disable=SC1090
 . "${PROFILE_FILE}"
+
+if [ -z "${BASE_IMAGE_SHA256}" ]; then
+  BASE_IMAGE_SHA256="${OBOS_QCOW2_BASE_IMAGE_SHA256}"
+fi
+verify_release_build_inputs
 
 [ "${OBOS_IMAGE_PROFILE}" = "amd64-vm" ] || fail "profile must be amd64-vm"
 [ "${OBOS_IMAGE_ARCH}" = "amd64" ] || fail "profile architecture must be amd64"
@@ -175,7 +183,8 @@ fi
 verify_base_image_hash "${BASE_IMAGE}"
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-OUTPUT_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-${STAMP}.qcow2"
+IMAGE_ID="${IMAGE_VERSION:-${STAMP}}"
+OUTPUT_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-${IMAGE_ID}.qcow2"
 LATEST_IMAGE="${OUTPUT_DIR}/obos-${OBOS_IMAGE_PROFILE}-latest.qcow2"
 MANIFEST="${OUTPUT_IMAGE}.manifest"
 LATEST_MANIFEST="${LATEST_IMAGE}.manifest"
@@ -199,7 +208,7 @@ tar -C "${REPO_ROOT}" \
 virt-customize -a "${OUTPUT_IMAGE}" \
   --mkdir /opt/openbridgeos \
   --copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos" \
-  --run-command "cd ${IMAGE_REPO_DIR} && OBOS_DISABLE_SSH=1 sh ${OBOS_PROVISION_SCRIPT} ${IMAGE_REPO_DIR}" \
+  --run-command "cd ${IMAGE_REPO_DIR} && OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 OBOS_IMAGE_BUILD=1 OBOS_VERSION=${IMAGE_ID} sh ${OBOS_PROVISION_SCRIPT} ${IMAGE_REPO_DIR}" \
   --run-command "systemctl enable ${OBOS_FIRST_BOOT_SERVICE}" \
   --run-command "rm -f /srv/obos/state/first-boot.done" \
   --run-command "truncate -s 0 /etc/machine-id" \

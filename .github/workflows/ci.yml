@@ -91,6 +91,12 @@ jobs:
       - name: Image profile fixture
         run: sh scripts/checks/check-image-profiles.sh
 
+      - name: amd64 installer ISO manifest fixture
+        run: sh scripts/checks/check-amd64-iso-manifest.sh
+
+      - name: Release asset size fixture
+        run: sh scripts/checks/check-release-asset-size.sh
+
       - name: Image build plan fixture
         run: sh scripts/checks/check-image-build-plan.sh
 

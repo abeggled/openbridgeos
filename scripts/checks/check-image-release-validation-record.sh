@@ -11,6 +11,28 @@ fail() {
   exit 1
 }
 
+cat > "${TMP_DIR}/iso.record" <<'EOF'
+format=obos-image-release-validation-v1
+release_candidate=2026.06-test
+profile=amd64-installer
+artifact=dist/images/obos-amd64-installer-test.iso
+manifest=dist/images/obos-amd64-installer-test.iso.manifest
+signature_verified=yes
+checksums_verified=yes
+platform=bare-metal
+hardware_or_vm=hardware
+boot_media=usb
+network_installer_used=no
+first_boot_completed=yes
+ssh_default_disabled=yes
+security_summary_result=PASS
+mvp_readiness_result=PASS
+tls_leaf_renewal_plan_result=PASS
+tls_trust_exported=yes
+rollback_stage_result=PASS
+notes=fixture
+EOF
+
 cat > "${TMP_DIR}/amd64.record" <<'EOF'
 format=obos-image-release-validation-v1
 release_candidate=2026.06-test
@@ -55,6 +77,9 @@ rollback_stage_result=PASS
 notes=fixture
 EOF
 
+sh "${CHECKER}" "${TMP_DIR}/iso.record" | grep -q '^result=PASS$' \
+  || fail "valid installer ISO record did not pass"
+
 sh "${CHECKER}" "${TMP_DIR}/amd64.record" | grep -q '^result=PASS$' \
   || fail "valid amd64 record did not pass"
 
@@ -71,6 +96,12 @@ cp "${TMP_DIR}/rpi.record" "${TMP_DIR}/bad-rpi-network-installer.record"
 sed -i 's/^network_installer_used=yes$/network_installer_used=no/' "${TMP_DIR}/bad-rpi-network-installer.record"
 if sh "${CHECKER}" "${TMP_DIR}/bad-rpi-network-installer.record" >/dev/null 2>&1; then
   fail "rpi record without Network Installer validation was accepted"
+fi
+
+cp "${TMP_DIR}/iso.record" "${TMP_DIR}/bad-iso-boot.record"
+sed -i 's/^boot_media=usb$/boot_media=nvme/' "${TMP_DIR}/bad-iso-boot.record"
+if sh "${CHECKER}" "${TMP_DIR}/bad-iso-boot.record" >/dev/null 2>&1; then
+  fail "installer ISO record with unsupported boot media was accepted"
 fi
 
 cp "${TMP_DIR}/rpi.record" "${TMP_DIR}/bad-rpi-boot.record"

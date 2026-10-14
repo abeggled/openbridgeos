@@ -6,6 +6,7 @@ STRICT_SIGNATURE="${OBOS_RELEASE_SIGNATURE_STRICT:-0}"
 MINISIGN_PUBLIC_KEY="${OBOS_RELEASE_MINISIGN_PUBLIC_KEY:-}"
 SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 CHECK_QCOW2_MANIFEST="${SCRIPT_DIR}/check-qcow2-manifest.sh"
+CHECK_AMD64_ISO_MANIFEST="${SCRIPT_DIR}/check-amd64-iso-manifest.sh"
 CHECK_RPI_IMAGE_MANIFEST="${SCRIPT_DIR}/check-rpi-image-manifest.sh"
 
 fail() {
@@ -110,6 +111,9 @@ check_image_manifest() {
   [ -f "${manifest_file}" ] || fail "image manifest missing: ${manifest_file}"
   format="$(manifest_value format "${manifest_file}")"
   case "${format}" in
+    obos-amd64-iso-build-v1)
+      OBOS_MANIFEST_STRICT_FILES="${STRICT_FILES}" sh "${CHECK_AMD64_ISO_MANIFEST}" "${manifest_file}" >/dev/null
+      ;;
     obos-qcow2-build-v1)
       OBOS_MANIFEST_STRICT_FILES="${STRICT_FILES}" sh "${CHECK_QCOW2_MANIFEST}" "${manifest_file}" >/dev/null
       ;;
@@ -154,6 +158,7 @@ case "${artifact_count}" in
   0) fail "artifact_count must be greater than zero" ;;
 esac
 
+amd64_installer_seen=0
 amd64_vm_seen=0
 rpi4_arm64_seen=0
 
@@ -169,6 +174,10 @@ while [ "${i}" -le "${artifact_count}" ]; do
   [ -n "${image}" ] || fail "${prefix}_image must not be empty"
   [ -n "${checksum_file}" ] || fail "${prefix}_checksum_file must not be empty"
   case "${profile}" in
+    amd64-installer)
+      [ "${amd64_installer_seen}" -eq 0 ] || fail "duplicate release artifact profile: amd64-installer"
+      amd64_installer_seen=1
+      ;;
     amd64-vm)
       [ "${amd64_vm_seen}" -eq 0 ] || fail "duplicate release artifact profile: amd64-vm"
       amd64_vm_seen=1
@@ -183,6 +192,7 @@ while [ "${i}" -le "${artifact_count}" ]; do
   i=$((i + 1))
 done
 
+[ "${amd64_installer_seen}" -eq 1 ] || fail "amd64-installer release artifact missing"
 [ "${amd64_vm_seen}" -eq 1 ] || fail "amd64-vm release artifact missing"
 [ "${rpi4_arm64_seen}" -eq 1 ] || fail "rpi4-arm64 release artifact missing"
 

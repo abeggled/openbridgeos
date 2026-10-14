@@ -102,6 +102,7 @@ Create one validation record template per profile:
 
 ```sh
 sh scripts/images/print-image-validation-record-template.sh amd64-vm > validation-amd64-vm.record
+sh scripts/images/print-image-validation-record-template.sh amd64-installer > validation-amd64-installer.record
 sh scripts/images/print-image-validation-record-template.sh rpi4-arm64 > validation-rpi4-arm64.record
 ```
 
@@ -112,6 +113,7 @@ Check each completed validation record:
 
 ```sh
 sh scripts/images/check-image-release-validation-record.sh validation-amd64-vm.record
+sh scripts/images/check-image-release-validation-record.sh validation-amd64-installer.record
 sh scripts/images/check-image-release-validation-record.sh validation-rpi4-arm64.record
 ```
 
@@ -121,6 +123,7 @@ Check the complete release candidate:
 OBOS_RELEASE_MINISIGN_PUBLIC_KEY='<minisign-public-key>' \
   sh scripts/images/check-release-candidate.sh \
     dist/images/obos-release.manifest \
+    validation-amd64-installer.record \
     validation-amd64-vm.record \
     validation-rpi4-arm64.record
 ```

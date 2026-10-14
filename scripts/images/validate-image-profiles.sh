@@ -42,9 +42,15 @@ validate_profile() {
   OBOS_RPI_REQUIRED_TOOLS=
   OBOS_KERNEL_REQUIRED_CONFIG=
   OBOS_QCOW2_BASE_IMAGE_URL=
+  OBOS_QCOW2_BASE_IMAGE_SHA256=
   OBOS_QCOW2_MIN_SIZE=
   OBOS_QCOW2_BUILDER=
   OBOS_QCOW2_REQUIRED_TOOLS=
+  OBOS_ISO_BUILDER=
+  OBOS_ISO_BOOTLOADERS=
+  OBOS_ISO_INSTALLER_MODE=
+  OBOS_ISO_HYBRID=
+  OBOS_ISO_REQUIRED_TOOLS=
   OBOS_IMAGE_DEFAULT_SSH=
 
   # shellcheck disable=SC1090
@@ -90,6 +96,8 @@ validate_profile() {
       || fail "${profile_file}: qcow2 profile must define OBOS_QCOW2_BASE_IMAGE_URL"
     [ -n "${OBOS_QCOW2_MIN_SIZE}" ] \
       || fail "${profile_file}: qcow2 profile must define OBOS_QCOW2_MIN_SIZE"
+    printf '%s\n' "${OBOS_QCOW2_BASE_IMAGE_SHA256}" | grep -Eq '^[a-f0-9]{64}$' \
+      || fail "${profile_file}: qcow2 base image SHA-256 must be pinned"
     [ "${OBOS_QCOW2_BUILDER}" = "virt-customize" ] \
       || fail "${profile_file}: qcow2 profile must use virt-customize builder"
     contains_csv_value "${OBOS_QCOW2_REQUIRED_TOOLS}" qemu-img \
@@ -100,6 +108,35 @@ validate_profile() {
       || fail "${profile_file}: qcow2 required tools must include virt-sysprep"
     [ "${OBOS_IMAGE_DEFAULT_SSH}" = "disabled" ] \
       || fail "${profile_file}: qcow2 image default SSH policy must be disabled"
+  fi
+
+  if [ "${OBOS_IMAGE_KIND}" = "installer-iso" ]; then
+    [ "${OBOS_IMAGE_ARCH}" = "amd64" ] \
+      || fail "${profile_file}: installer ISO must be amd64"
+    [ "${OBOS_OUTPUT_FORMAT}" = "iso" ] \
+      || fail "${profile_file}: installer ISO output must be iso"
+    [ "${OBOS_IMAGE_EXTENSION}" = "iso" ] \
+      || fail "${profile_file}: installer ISO extension must be iso"
+    [ "${OBOS_ISO_BUILDER}" = "live-build" ] \
+      || fail "${profile_file}: installer ISO must use live-build"
+    [ "${OBOS_ISO_INSTALLER_MODE}" = "live" ] \
+      || fail "${profile_file}: installer ISO must install the provisioned live filesystem"
+    [ "${OBOS_ISO_HYBRID}" = "true" ] \
+      || fail "${profile_file}: installer ISO must be hybrid"
+    contains_csv_value "${OBOS_BOOT_TARGET}" bios \
+      || fail "${profile_file}: installer ISO must boot via BIOS"
+    contains_csv_value "${OBOS_BOOT_TARGET}" uefi \
+      || fail "${profile_file}: installer ISO must boot via UEFI"
+    contains_csv_value "${OBOS_ISO_BOOTLOADERS}" grub-pc \
+      || fail "${profile_file}: installer ISO must include grub-pc"
+    contains_csv_value "${OBOS_ISO_BOOTLOADERS}" grub-efi \
+      || fail "${profile_file}: installer ISO must include grub-efi"
+    contains_csv_value "${OBOS_ISO_REQUIRED_TOOLS}" lb \
+      || fail "${profile_file}: installer ISO tools must include lb"
+    contains_csv_value "${OBOS_ISO_REQUIRED_TOOLS}" xorriso \
+      || fail "${profile_file}: installer ISO tools must include xorriso"
+    [ "${OBOS_IMAGE_DEFAULT_SSH}" = "disabled" ] \
+      || fail "${profile_file}: installer ISO default SSH policy must be disabled"
   fi
 
   if [ "${OBOS_IMAGE_KIND}" = "rpi-image" ]; then

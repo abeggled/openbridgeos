@@ -8,9 +8,17 @@ fail() {
   exit 1
 }
 
-[ -n "${profile}" ] || fail "usage: $0 <amd64-vm|rpi4-arm64>"
+[ -n "${profile}" ] || fail "usage: $0 <amd64-installer|amd64-vm|rpi4-arm64>"
 
 case "${profile}" in
+  amd64-installer)
+    artifact="dist/images/obos-amd64-installer-latest.iso"
+    manifest="dist/images/obos-amd64-installer-latest.iso.manifest"
+    platform="<bare-metal-platform>"
+    hardware_or_vm="hardware"
+    boot_media="<usb|optical>"
+    network_installer_used="no"
+    ;;
   amd64-vm)
     artifact="dist/images/obos-amd64-vm-latest.qcow2"
     manifest="dist/images/obos-amd64-vm-latest.qcow2.manifest"

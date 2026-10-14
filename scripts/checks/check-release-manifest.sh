@@ -87,12 +87,48 @@ EOF
   printf '%s\n' "${manifest_file}"
 }
 
+write_amd64_iso_manifest() {
+  image_file="${TMP_DIR}/obos-amd64-installer-test.iso"
+  checksum_file="${image_file}.sha256"
+  manifest_file="${image_file}.manifest"
+  printf 'test amd64 installer ISO\n' > "${image_file}"
+  sha256sum "${image_file}" > "${checksum_file}"
+  image_sha256="$(cut -d ' ' -f 1 < "${checksum_file}")"
+
+  cat > "${manifest_file}" <<EOF
+format=obos-amd64-iso-build-v1
+created_at=20260604T000000Z
+profile=amd64-installer
+architecture=amd64
+debian_release=trixie
+output_format=iso
+image_extension=iso
+hybrid=true
+boot_targets=bios,uefi
+installer_mode=live
+release_build=1
+image=${image_file}
+checksum_file=${checksum_file}
+image_sha256=${image_sha256}
+provision_script=scripts/bootstrap/provision-debian.sh
+first_boot_service=obos-first-boot.service
+repo_revision=test-revision
+repo_dirty=false
+ssh_default=disabled
+first_boot_pending=true
+contains_secrets=false
+EOF
+  printf '%s\n' "${manifest_file}"
+}
+
 QCOW2_MANIFEST="$(write_qcow2_manifest)"
 RPI_MANIFEST="$(write_rpi_manifest)"
+AMD64_ISO_MANIFEST="$(write_amd64_iso_manifest)"
 RELEASE_MANIFEST="${TMP_DIR}/obos-release.manifest"
 
 OBOS_REPO_ROOT="$(pwd)" OBOS_MANIFEST_STRICT_FILES=1 \
-  sh scripts/images/create-release-manifest.sh "${RELEASE_MANIFEST}" "${QCOW2_MANIFEST}" "${RPI_MANIFEST}" >/dev/null
+  sh scripts/images/create-release-manifest.sh "${RELEASE_MANIFEST}" \
+    "${QCOW2_MANIFEST}" "${RPI_MANIFEST}" "${AMD64_ISO_MANIFEST}" >/dev/null
 
 SIGNATURE_FILE="${RELEASE_MANIFEST}.minisig"
 printf 'unverified fixture signature\n' > "${SIGNATURE_FILE}"
@@ -124,15 +160,17 @@ grep -q '^signature_required=true$' "${RELEASE_MANIFEST}" \
   || fail "release manifest signature requirement missing"
 grep -q '^signature_type=minisign$' "${RELEASE_MANIFEST}" \
   || fail "release manifest signature type missing"
-grep -q '^artifact_count=2$' "${RELEASE_MANIFEST}" \
+grep -q '^artifact_count=3$' "${RELEASE_MANIFEST}" \
   || fail "release manifest artifact count missing"
 grep -q '^artifact_1_profile=amd64-vm$' "${RELEASE_MANIFEST}" \
   || fail "qcow2 artifact profile missing"
 grep -q '^artifact_2_profile=rpi4-arm64$' "${RELEASE_MANIFEST}" \
   || fail "rpi artifact profile missing"
+grep -q '^artifact_3_profile=amd64-installer$' "${RELEASE_MANIFEST}" \
+  || fail "amd64 installer artifact profile missing"
 
 missing_rpi_manifest="${TMP_DIR}/missing-rpi-release.manifest"
-awk '$1 != "artifact_count=2" && $1 !~ /^artifact_2_/ { print }' "${RELEASE_MANIFEST}" > "${missing_rpi_manifest}"
+awk '$1 != "artifact_count=3" && $1 !~ /^artifact_[23]_/ { print }' "${RELEASE_MANIFEST}" > "${missing_rpi_manifest}"
 printf 'artifact_count=1\n' >> "${missing_rpi_manifest}"
 if OBOS_MANIFEST_STRICT_FILES=1 sh scripts/images/check-release-manifest.sh "${missing_rpi_manifest}" >/dev/null 2>&1; then
   fail "release manifest missing rpi4-arm64 was accepted"

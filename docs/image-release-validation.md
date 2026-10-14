@@ -154,6 +154,7 @@ Print a profile-specific validation record template:
 
 ```sh
 sh scripts/images/print-image-validation-record-template.sh amd64-vm > validation-amd64-vm.record
+sh scripts/images/print-image-validation-record-template.sh amd64-installer > validation-amd64-installer.record
 sh scripts/images/print-image-validation-record-template.sh rpi4-arm64 > validation-rpi4-arm64.record
 ```
 
@@ -172,6 +173,7 @@ Validate the complete release candidate before publication:
 ```sh
 sh scripts/images/check-release-candidate.sh \
   dist/images/obos-release.manifest \
+  validation-amd64-installer.record \
   validation-amd64-vm.record \
   validation-rpi4-arm64.record
 ```
@@ -181,13 +183,14 @@ sh scripts/images/check-release-candidate.sh \
 A technical MVP test image is ready only when:
 
 - release artifact integrity passes
+- the hybrid installer ISO boots and installs on an amd64 BIOS or UEFI system
 - the qcow2 image passes VM validation
 - the Raspberry Pi image passes hardware validation
 - Raspberry Pi Network Installer compatibility is validated
 - the recovery drill reaches a passing restore apply plan
 - client trust onboarding is validated for at least one administrator client
 - `check-release-candidate.sh` passes with the release manifest and validation
-  records for `amd64-vm` and `rpi4-arm64`
+  records for `amd64-installer`, `amd64-vm`, and `rpi4-arm64`
 
 For broad release publication, also run
 `OBOS_REQUIRE_PINNED_IMAGES=1 scripts/images/check-compose-image-pinning.sh` so

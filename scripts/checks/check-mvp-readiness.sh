@@ -38,11 +38,13 @@ require_file scripts/checks/check-mvp-runtime-readiness.sh
 require_file apps/obos-web/index.html
 require_file apps/obos-web/app.js
 require_file packaging/images/profiles/amd64-vm.env
+require_file packaging/images/profiles/amd64-installer.env
 require_file packaging/images/profiles/rpi4-arm64.env
 require_file scripts/images/pull-and-build.sh
 require_file scripts/images/build-amd64-qcow2.sh
 require_file scripts/images/check-amd64-qcow2-build-host.sh
 require_file scripts/images/build-rpi4-arm64-image.sh
+require_file scripts/images/build-amd64-installer-iso.sh
 require_file scripts/checks/check-image-profiles.sh
 require_file scripts/images/smoke-test-amd64-qcow2.sh
 require_file scripts/images/check-rpi-boot-files.sh
@@ -210,11 +212,12 @@ require_line "cross-checks validation records against the" docs/release-signing.
 require_line "release-notes-template.md" docs/release-signing.md
 require_line "release notes include the required validation records and known gaps" docs/release-signing.md
 require_line "format=obos-release-candidate-check-v1" scripts/images/check-release-candidate.sh
+require_line "amd64-installer validation record missing" scripts/images/check-release-candidate.sh
 require_line "amd64-vm validation record missing" scripts/images/check-release-candidate.sh
 require_line "rpi4-arm64 validation record missing" scripts/images/check-release-candidate.sh
 require_line "validation record does not match release manifest artifact" scripts/images/check-release-candidate.sh
 require_line "duplicate amd64-vm validation record" scripts/images/check-release-candidate.sh
-require_line "release candidate must have exactly two validation records" scripts/images/check-release-candidate.sh
+require_line "release candidate must have exactly three validation records" scripts/images/check-release-candidate.sh
 require_line "format=obos-compose-image-pinning-v1" scripts/images/check-compose-image-pinning.sh
 require_line "OBOS_REQUIRE_PINNED_IMAGES" scripts/images/check-compose-image-pinning.sh
 require_line "OBOS_REQUIRE_PINNED_IMAGES=1" docs/hardening.md
@@ -229,6 +232,7 @@ require_line "check-release-evidence-bundle.sh" docs/technical-mvp-handoff.md
 require_line "/usr/lib/obos/mvp-runtime-readiness.sh summary" docs/technical-mvp-handoff.md
 require_line "format=obos-release-evidence-bundle-check-v1" scripts/images/check-release-evidence-bundle.sh
 require_line "release-notes.md" scripts/images/check-release-evidence-bundle.sh
+require_line "validation-amd64-installer.record" scripts/images/check-release-evidence-bundle.sh
 require_line "validation-amd64-vm.record" scripts/images/check-release-evidence-bundle.sh
 require_line "validation-rpi4-arm64.record" scripts/images/check-release-evidence-bundle.sh
 require_line "obos-release.manifest.minisig" scripts/images/check-release-evidence-bundle.sh
@@ -283,7 +287,7 @@ require_line "docker.io" scripts/bootstrap/provision-debian.sh
 # shellcheck disable=SC2016
 require_line '--copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos"' scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016
-require_line 'OBOS_DISABLE_SSH=1 sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-amd64-qcow2.sh
+require_line 'OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 OBOS_IMAGE_BUILD=1 OBOS_VERSION=${IMAGE_ID} sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016
 require_line 'sh "${CHECK_QCOW2_MANIFEST}" "${MANIFEST}"' scripts/images/build-amd64-qcow2.sh
 require_line "qcow2_contract:" scripts/images/print-image-build-plan.sh
@@ -309,7 +313,7 @@ require_line "CHECK_RPI_BOOT_FILES=" scripts/images/build-rpi4-arm64-image.sh
 require_line "write_initramfs_modules" scripts/images/build-rpi4-arm64-image.sh
 require_line "pcie-brcmstb" scripts/images/check-rpi-boot-files.sh
 # shellcheck disable=SC2016
-require_line 'OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-rpi4-arm64-image.sh
+require_line 'OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 OBOS_IMAGE_BUILD=1 OBOS_VERSION=${IMAGE_ID} sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-rpi4-arm64-image.sh
 # shellcheck disable=SC2016
 require_line 'APPLY_RUNTIME="${OBOS_APPLY_RUNTIME_HARDENING:-1}"' scripts/hardening/apply-host-hardening.sh
 # shellcheck disable=SC2016

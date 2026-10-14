@@ -13,10 +13,11 @@ fail() {
 
 usage() {
   cat <<'EOF'
-usage: scripts/images/pull-and-build.sh <amd64|arm64|all> [git-ref]
+usage: scripts/images/pull-and-build.sh <iso|amd64|arm64|all> [git-ref]
 
 Examples:
   scripts/images/pull-and-build.sh amd64
+  scripts/images/pull-and-build.sh iso
   scripts/images/pull-and-build.sh arm64 codex/web-onboarding-password
   scripts/images/pull-and-build.sh all codex/web-onboarding-password
 
@@ -78,6 +79,14 @@ build_amd64() {
   (cd "${REPO_ROOT}" && sh scripts/images/check-qcow2-manifest.sh dist/images/obos-amd64-vm-latest.qcow2.manifest)
 }
 
+build_iso() {
+  echo "pull and build: building amd64 installer ISO"
+  (cd "${REPO_ROOT}" && sudo_cmd sh scripts/images/check-amd64-iso-build-host.sh)
+  (cd "${REPO_ROOT}" && sudo_cmd sh scripts/images/build-amd64-installer-iso.sh)
+  (cd "${REPO_ROOT}" && sh scripts/images/check-amd64-iso-manifest.sh dist/images/obos-amd64-installer-latest.iso.manifest)
+  (cd "${REPO_ROOT}" && sha256sum -c dist/images/obos-amd64-installer-latest.iso.sha256)
+}
+
 latest_rpi_root() {
   find "${REPO_ROOT}/build/images/rpi4-arm64" -maxdepth 1 -type d -name 'rootfs-*' -printf '%T@ %p\n' 2>/dev/null |
     sort -nr |
@@ -102,12 +111,17 @@ case "$(printf '%s' "${TARGET}" | tr '[:upper:]' '[:lower:]')" in
     update_repo
     build_amd64
     ;;
+  iso)
+    update_repo
+    build_iso
+    ;;
   arm64)
     update_repo
     build_arm64
     ;;
   all)
     update_repo
+    build_iso
     build_amd64
     build_arm64
     ;;
