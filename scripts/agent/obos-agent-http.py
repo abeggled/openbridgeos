@@ -34,7 +34,6 @@ PORTABLE_IMPORT_DIR = os.environ.get("OBOS_PORTABLE_IMPORT_DIR", "/srv/obos/stat
 ONBOARDING_STATE_DIR = os.environ.get("OBOS_ONBOARDING_STATE_DIR", "/srv/obos/state/onboarding")
 ONBOARDING_REQUIRED_FILE = os.environ.get("OBOS_ONBOARDING_REQUIRED_FILE", "/srv/obos/state/onboarding/onboarding-required")
 ONBOARDING_WINDOW_STATE_FILE = os.environ.get("OBOS_ONBOARDING_WINDOW_STATE_FILE", "/srv/obos/state/onboarding/window-state")
-ONBOARDING_TOKEN_FILE = os.environ.get("OBOS_ONBOARDING_TOKEN_FILE", "/srv/obos/state/onboarding/setup-token")
 ONBOARDING_WINDOW_SECONDS = int(os.environ.get("OBOS_ONBOARDING_WINDOW_SECONDS", "300"))
 WEB_AUTH_FILE = os.environ.get("OBOS_WEB_AUTH_FILE", "/etc/obos/web.htpasswd")
 SESSION_DIR = os.environ.get("OBOS_SESSION_DIR", "/srv/obos/state/sessions")
@@ -800,26 +799,13 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             self.send_text(410, error_envelope("onboarding-closed", "initial web onboarding is not active"))
             return
 
-        payload, body_error = self.read_json_body({"password", "setup_token"})
+        payload, body_error = self.read_json_body({"password"})
         if body_error:
             self.send_text(*body_error)
             return
         password = payload.get("password")
-        setup_token = payload.get("setup_token")
         if not isinstance(password, str) or len(password) < 12:
             self.send_text(400, error_envelope("invalid-password", "password must be at least 12 characters"))
-            return
-        if not isinstance(setup_token, str) or not setup_token:
-            self.send_text(400, error_envelope("invalid-setup-token", "setup token is required"))
-            return
-        try:
-            with open(ONBOARDING_TOKEN_FILE, "r", encoding="utf-8") as handle:
-                expected_setup_token = handle.readline().strip()
-        except OSError:
-            self.send_text(503, error_envelope("setup-token-unavailable", "setup token is unavailable"))
-            return
-        if not expected_setup_token or not hmac.compare_digest(setup_token, expected_setup_token):
-            self.send_text(403, error_envelope("invalid-setup-token", "setup token is invalid"))
             return
 
         password_file = None

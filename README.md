@@ -108,11 +108,11 @@ compatible 64-bit board:
 After the first boot, allow several minutes for provisioning. Find the DHCP
 address in the router or hypervisor and open
 `https://<device-ip>/obos/onboarding/`. A certificate warning is expected until
-the per-appliance OBOS CA has been trusted. Use the one-time setup token from
-`OBOS-ONBOARDING.txt` on the boot-accessible partition and create the password
-for the web user `admin` (at least 12 characters). Remove the onboarding file
-afterwards. If the five-minute onboarding window has expired, reboot the
-appliance to open a new window.
+the per-appliance OBOS CA has been trusted. Create the password for the web user
+`admin` directly in the browser (at least 12 characters); no console login or
+setup token is required. Keep the appliance on a trusted setup network until
+this step is complete. If the five-minute onboarding window has expired, reboot
+the appliance to open a new window.
 
 ## Development Install
 
@@ -146,9 +146,9 @@ sudo /usr/lib/obos/mvp-runtime-readiness.sh
 See [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).
 
 The web console and `/obos/api/` bridge are protected by a server-side GUI
-session. On first boot, the administrator sets the initial password using a
-random one-time setup token. Headless images write that token to the
-boot-accessible `OBOS-ONBOARDING.txt` file; remove that file after onboarding.
+browser-only onboarding flow. The flow is available for five minutes per boot
+until the first password has been set, so initial setup must take place on a
+trusted local network.
 
 ## TLS Trust
 
