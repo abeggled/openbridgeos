@@ -1,4 +1,9 @@
 # Changes
+## 2026.10.4
+### Fixes 🐞
+* Separate Host Identity and Timezone controls into two full-width rows for clearer administration.
+* Treat a final stable version as newer than its matching release candidate during channel transitions.
+
 ## 2026.10.4-rc.1
 ### Fixes 🐞
 * Separate Host Identity and Timezone controls into two full-width rows for clearer administration.

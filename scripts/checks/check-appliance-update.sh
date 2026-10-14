@@ -297,6 +297,44 @@ if printf '%s\n' "${filtered_release_output}" | grep -q 'already installed and m
   fail "release preview included notes for the installed release"
 fi
 
+cat > "${release_fixture}/obos-update-notes.txt" <<'EOF'
+# Changes
+## 2026.10.4
+### Fixes 🐞
+* stable promotion
+## 2026.10.4-rc.1
+### Fixes 🐞
+* installed release candidate
+EOF
+notes_fixture_sha="$(sha256sum "${release_fixture}/obos-update-notes.txt" | awk '{print $1}')"
+cat > "${release_fixture}/obos-update.manifest" <<EOF
+format=obos-update-release-v1
+version=2026.10.4
+revision=0123456789abcdef0123456789abcdef01234567
+archive=obos-update.tar.gz
+archive_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+root_dir=openbridgeos
+notes=obos-update-notes.txt
+notes_sha256=${notes_fixture_sha}
+EOF
+printf '%s\n' '2026.10.4-rc.1' > "${tmp_dir}/installed-version"
+stable_promotion_output="$(
+  OBOS_CURL="${release_fixture_curl}" \
+  OBOS_MINISIGN=true \
+  OBOS_TEST_RELEASE_FIXTURE="${release_fixture}" \
+  OBOS_RELEASE_BASE_URL=https://github.com/abeggled/openbridgeos/releases/download/2026.10.4 \
+  OBOS_RELEASE_PUBLIC_KEY_FILE="${tmp_dir}/fixture-public-key" \
+  OBOS_VERSION_FILE="${tmp_dir}/installed-version" \
+  sh "${UPDATE_RELEASE}" check
+)"
+printf '%s\n' "${stable_promotion_output}" | grep -q '^update_available=true$' \
+  || fail "stable release was not newer than its release candidate"
+printf '%s\n' "${stable_promotion_output}" | grep -q 'stable promotion' \
+  || fail "stable promotion notes were not shown after a release candidate"
+if printf '%s\n' "${stable_promotion_output}" | grep -q 'installed release candidate'; then
+  fail "release preview repeated notes for the installed release candidate"
+fi
+
 # shellcheck disable=SC2016
 grep -q '\-Vm "${manifest}"' "${UPDATE_RELEASE}" \
   || fail "release updater does not verify the signed manifest"
