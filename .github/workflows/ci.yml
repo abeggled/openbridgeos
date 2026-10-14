@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install checks
         run: |
@@ -57,6 +57,9 @@ jobs:
 
       - name: Security defaults
         run: sh scripts/checks/check-security-defaults.sh
+
+      - name: Archive safety
+        run: sh scripts/checks/check-archive-safety.sh
 
       - name: Web UI agent contract
         run: sh scripts/checks/check-web-ui-agent-contract.sh

@@ -20,7 +20,8 @@ DEFAULT_PROXY_HEALTH_HOST="$(hostname -f 2>/dev/null || hostname 2>/dev/null || 
 PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-${DEFAULT_PROXY_HEALTH_HOST}}"
 PROXY_HEALTH_URL="${OBOS_PROXY_HEALTH_URL:-https://${PROXY_HEALTH_HOST}/api/v1/system/health}"
 WEB_AUTH_URL="${OBOS_WEB_AUTH_URL:-https://${PROXY_HEALTH_HOST}/obos/}"
-AGENT_HTTP_URL="${OBOS_AGENT_HTTP_URL:-http://127.0.0.1:8091/obos/api/v1/actions/status-summary}"
+AGENT_HTTP_URL="${OBOS_AGENT_HTTP_URL:-http://localhost/obos/api/v1/actions/status-summary}"
+AGENT_HTTP_SOCKET="${OBOS_AGENT_HTTP_SOCKET-/run/obos-agent-http/agent.sock}"
 TLS_CA_CERT="${OBOS_TLS_CA_CERT:-${TLS_DIR}/obos-local-ca.crt}"
 NGINX_PROXY_CONF="${OBOS_NGINX_PROXY_CONF:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
 AGENT_AUDIT_DIR="${OBOS_AGENT_AUDIT_DIR:-${STATE_DIR}/agent}"
@@ -368,7 +369,7 @@ check_grep '^OBS_MQTT_PASSWORD=.' "${ENV_FILE}" 'OBS MQTT password exists'
 check_grep 'ssl_certificate /etc/obos/tls/obos.local.crt;' "${NGINX_PROXY_CONF}" 'nginx uses obos TLS certificate'
 check_grep 'proxy_pass http://127.0.0.1:8080;' "${NGINX_PROXY_CONF}" 'nginx proxies to localhost open bridge server'
 check_grep 'location /obos/api/' "${NGINX_PROXY_CONF}" 'nginx exposes obos agent HTTP bridge path'
-check_grep 'proxy_pass http://127.0.0.1:8091;' "${NGINX_PROXY_CONF}" 'nginx proxies obos agent HTTP bridge to localhost'
+check_grep 'proxy_pass http://unix:/run/obos-agent-http/agent.sock:;' "${NGINX_PROXY_CONF}" 'nginx proxies obos agent HTTP bridge over a private Unix socket'
 check_grep 'location /visu/' "${NGINX_PROXY_CONF}" 'nginx exposes open bridge server visu path'
 check_grep 'proxy_pass http://127.0.0.1:8080/visu/;' "${NGINX_PROXY_CONF}" 'nginx proxies visu to localhost open bridge server'
 check_grep 'server_tokens off;' "${NGINX_PROXY_CONF}" 'nginx server token disclosure disabled'
@@ -397,11 +398,15 @@ fi
 check_proxy_health
 check_web_auth
 
-agent_http_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null || true)"
-if [ "${agent_http_status}" = 401 ]; then
-  pass 'obos-agent HTTP bridge rejects unauthenticated localhost requests'
+if [ -n "${AGENT_HTTP_SOCKET}" ]; then
+  agent_http_status="$(curl --unix-socket "${AGENT_HTTP_SOCKET}" --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null || true)"
 else
-  fail 'obos-agent HTTP bridge does not enforce session authentication on localhost'
+  agent_http_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null || true)"
+fi
+if [ "${agent_http_status}" = 401 ]; then
+  pass 'obos-agent HTTP bridge rejects unauthenticated Unix-socket requests'
+else
+  fail 'obos-agent HTTP bridge does not enforce session authentication on its Unix socket'
 fi
 
 if [ -d "${APP_DIR}/data" ]; then

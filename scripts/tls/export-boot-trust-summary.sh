@@ -8,6 +8,7 @@ BOOT_TRUST_DIR="${OBOS_BOOT_TRUST_DIR:-}"
 SUMMARY_NAME="${OBOS_BOOT_TRUST_SUMMARY_NAME:-OBOS-TRUST.txt}"
 CA_NAME="${OBOS_BOOT_TRUST_CA_NAME:-OBOS-LOCAL-CA.crt}"
 ONBOARDING_NAME="${OBOS_BOOT_ONBOARDING_NAME:-OBOS-ONBOARDING.txt}"
+ONBOARDING_TOKEN_FILE="${OBOS_ONBOARDING_TOKEN_FILE:-/srv/obos/state/onboarding/setup-token}"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "export-boot-trust-summary.sh must run as root" >&2
@@ -73,6 +74,7 @@ install -m 0644 "${CA_EXPORT}" "${ca_target}"
 chmod 0644 "${summary_target}"
 
 onboarding_host="$(hostname -f 2>/dev/null || hostname 2>/dev/null || printf 'localhost')"
+setup_token="$(sed -n '1p' "${ONBOARDING_TOKEN_FILE}" 2>/dev/null || true)"
 cat > "${onboarding_target}" <<EOF
 open bridge operating system onboarding
 
@@ -82,9 +84,12 @@ URL:
 Initial web console credentials:
 - username: admin
 - password: set during first web onboarding
+- one-time setup token: ${setup_token:-unavailable; use the local console}
 
 Security note:
 - This file does not contain a password.
+- The setup token is valid only until the first administrator password is set.
+- Treat this boot-accessible file as sensitive and remove it after onboarding.
 - Keep the appliance on a trusted setup network until onboarding is complete.
 EOF
 chmod 0644 "${onboarding_target}"
@@ -97,5 +102,6 @@ Files:
 - ${ca_target}
 - ${onboarding_target}
 
-No private keys or passwords were exported.
+No private keys or passwords were exported. The one-time onboarding token is
+included only in the boot-accessible onboarding file.
 EOF

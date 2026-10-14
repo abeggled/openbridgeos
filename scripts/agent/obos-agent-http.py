@@ -4,15 +4,19 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from datetime import datetime, UTC
 import hmac
+import ipaddress
 import json
 import os
 import re
 import secrets
+import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from http.cookies import SimpleCookie
+from socketserver import ThreadingMixIn, UnixStreamServer
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 
@@ -30,12 +34,17 @@ PORTABLE_IMPORT_DIR = os.environ.get("OBOS_PORTABLE_IMPORT_DIR", "/srv/obos/stat
 ONBOARDING_STATE_DIR = os.environ.get("OBOS_ONBOARDING_STATE_DIR", "/srv/obos/state/onboarding")
 ONBOARDING_REQUIRED_FILE = os.environ.get("OBOS_ONBOARDING_REQUIRED_FILE", "/srv/obos/state/onboarding/onboarding-required")
 ONBOARDING_WINDOW_STATE_FILE = os.environ.get("OBOS_ONBOARDING_WINDOW_STATE_FILE", "/srv/obos/state/onboarding/window-state")
+ONBOARDING_TOKEN_FILE = os.environ.get("OBOS_ONBOARDING_TOKEN_FILE", "/srv/obos/state/onboarding/setup-token")
 ONBOARDING_WINDOW_SECONDS = int(os.environ.get("OBOS_ONBOARDING_WINDOW_SECONDS", "300"))
 WEB_AUTH_FILE = os.environ.get("OBOS_WEB_AUTH_FILE", "/etc/obos/web.htpasswd")
 SESSION_DIR = os.environ.get("OBOS_SESSION_DIR", "/srv/obos/state/sessions")
 SESSION_COOKIE = "obos_session"
 SESSION_SECONDS = int(os.environ.get("OBOS_SESSION_SECONDS", str(8 * 60 * 60)))
 SESSION_COOKIE_SECURE = os.environ.get("OBOS_SESSION_COOKIE_SECURE", "true") == "true"
+LOGIN_FAILURE_LIMIT = int(os.environ.get("OBOS_LOGIN_FAILURE_LIMIT", "5"))
+LOGIN_FAILURE_WINDOW_SECONDS = int(os.environ.get("OBOS_LOGIN_FAILURE_WINDOW_SECONDS", "300"))
+LOGIN_LOCKOUT_SECONDS = int(os.environ.get("OBOS_LOGIN_LOCKOUT_SECONDS", "300"))
+LOGIN_STATE_LIMIT = int(os.environ.get("OBOS_LOGIN_STATE_LIMIT", "4096"))
 
 API_PREFIX = "/obos/api/v1/actions/"
 ONBOARDING_PREFIX = "/obos/api/v1/onboarding/"
@@ -48,6 +57,17 @@ ACTION_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{32,128}$")
 PORTABLE_EXPORT_FILENAME_RE = re.compile(r"^obos-portable-[A-Za-z0-9T._-]+\.tar$")
 PORTABLE_UPLOAD_FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.tar$")
+LOGIN_FAILURES = {}
+LOGIN_FAILURES_LOCK = threading.Lock()
+ONBOARDING_LOCK = threading.Lock()
+
+if min(
+    LOGIN_FAILURE_LIMIT,
+    LOGIN_FAILURE_WINDOW_SECONDS,
+    LOGIN_LOCKOUT_SECONDS,
+    LOGIN_STATE_LIMIT,
+) <= 0:
+    raise SystemExit("login rate-limit settings must be positive integers")
 
 
 def read_boot_age_seconds():
@@ -118,7 +138,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
     server_version = "obos-agent-http/0.1"
 
     def log_message(self, fmt, *args):
-        sys.stderr.write("%s - - [%s] %s\n" % (self.client_address[0], self.log_date_time_string(), fmt % args))
+        peer = self.client_address[0] if isinstance(self.client_address, tuple) else "local-unix"
+        sys.stderr.write("%s - - [%s] %s\n" % (peer, self.log_date_time_string(), fmt % args))
 
     def send_text(self, status, body, headers=None):
         encoded = body.encode("utf-8")
@@ -298,6 +319,65 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         candidate_hash = completed.stdout.strip()
         return completed.returncode == 0 and hmac.compare_digest(candidate_hash, stored_hash)
 
+    def login_client_key(self):
+        """Return the nginx-supplied client IP, falling back to the TCP peer."""
+        peer = self.client_address[0] if isinstance(self.client_address, tuple) else "local-unix"
+        forwarded = self.headers.get("X-Forwarded-For", "")
+        if getattr(self.server, "trusted_proxy_headers", False) and forwarded:
+            candidate = forwarded.split(",", 1)[0].strip()
+            try:
+                return str(ipaddress.ip_address(candidate))
+            except ValueError:
+                pass
+        return peer
+
+    def login_retry_after(self, client_key):
+        now = time.monotonic()
+        with LOGIN_FAILURES_LOCK:
+            state = LOGIN_FAILURES.get(client_key)
+            if not state:
+                return 0
+            attempts = [
+                attempt for attempt in state["attempts"]
+                if now - attempt < LOGIN_FAILURE_WINDOW_SECONDS
+            ]
+            locked_until = state["locked_until"]
+            if locked_until <= now and not attempts:
+                LOGIN_FAILURES.pop(client_key, None)
+                return 0
+            state["attempts"] = attempts
+            if locked_until > now:
+                return max(1, int(locked_until - now + 0.999))
+            return 0
+
+    def record_login_failure(self, client_key):
+        now = time.monotonic()
+        with LOGIN_FAILURES_LOCK:
+            if client_key not in LOGIN_FAILURES and len(LOGIN_FAILURES) >= LOGIN_STATE_LIMIT:
+                oldest_key = min(
+                    LOGIN_FAILURES,
+                    key=lambda key: LOGIN_FAILURES[key]["last_seen"],
+                )
+                LOGIN_FAILURES.pop(oldest_key, None)
+            state = LOGIN_FAILURES.setdefault(
+                client_key,
+                {"attempts": [], "locked_until": 0.0, "last_seen": now},
+            )
+            state["last_seen"] = now
+            state["attempts"] = [
+                attempt for attempt in state["attempts"]
+                if now - attempt < LOGIN_FAILURE_WINDOW_SECONDS
+            ]
+            state["attempts"].append(now)
+            if len(state["attempts"]) >= LOGIN_FAILURE_LIMIT:
+                state["locked_until"] = now + LOGIN_LOCKOUT_SECONDS
+                return LOGIN_LOCKOUT_SECONDS
+            return 0
+
+    def clear_login_failures(self, client_key):
+        with LOGIN_FAILURES_LOCK:
+            LOGIN_FAILURES.pop(client_key, None)
+
     def create_session(self):
         os.makedirs(SESSION_DIR, mode=0o700, exist_ok=True)
         self.cleanup_sessions()
@@ -355,6 +435,15 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         if parsed.query:
             self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
             return
+        client_key = self.login_client_key()
+        retry_after = self.login_retry_after(client_key)
+        if retry_after:
+            self.send_text(
+                429,
+                error_envelope("login-rate-limited", "too many failed login attempts"),
+                [("Retry-After", str(retry_after))],
+            )
+            return
         payload, error = self.read_json_body({"username", "password"})
         if error:
             self.send_text(*error)
@@ -365,8 +454,17 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             self.send_text(400, error_envelope("invalid-login", "username and password are required"))
             return
         if not self.verify_web_password(username, password):
-            self.send_text(401, error_envelope("invalid-login", "invalid username or password"))
+            retry_after = self.record_login_failure(client_key)
+            if retry_after:
+                self.send_text(
+                    429,
+                    error_envelope("login-rate-limited", "too many failed login attempts"),
+                    [("Retry-After", str(retry_after))],
+                )
+            else:
+                self.send_text(401, error_envelope("invalid-login", "invalid username or password"))
             return
+        self.clear_login_failures(client_key)
         try:
             expires, cookie = self.create_session()
         except OSError as exc:
@@ -686,17 +784,34 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         if parsed.query:
             self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
             return
+        with ONBOARDING_LOCK:
+            self.handle_onboarding_web_auth_locked()
+
+    def handle_onboarding_web_auth_locked(self):
         if not self.onboarding_required():
             self.send_text(410, error_envelope("onboarding-closed", "initial web onboarding is not active"))
             return
 
-        payload, body_error = self.read_json_body({"password"})
+        payload, body_error = self.read_json_body({"password", "setup_token"})
         if body_error:
             self.send_text(*body_error)
             return
         password = payload.get("password")
+        setup_token = payload.get("setup_token")
         if not isinstance(password, str) or len(password) < 12:
             self.send_text(400, error_envelope("invalid-password", "password must be at least 12 characters"))
+            return
+        if not isinstance(setup_token, str) or not setup_token:
+            self.send_text(400, error_envelope("invalid-setup-token", "setup token is required"))
+            return
+        try:
+            with open(ONBOARDING_TOKEN_FILE, "r", encoding="utf-8") as handle:
+                expected_setup_token = handle.readline().strip()
+        except OSError:
+            self.send_text(503, error_envelope("setup-token-unavailable", "setup token is unavailable"))
+            return
+        if not expected_setup_token or not hmac.compare_digest(setup_token, expected_setup_token):
+            self.send_text(403, error_envelope("invalid-setup-token", "setup token is invalid"))
             return
 
         password_file = None
@@ -883,10 +998,32 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         self.send_text(405, error_envelope("method-not-allowed", "CORS preflight is not enabled"))
 
 
+class ThreadingUnixHTTPServer(ThreadingMixIn, UnixStreamServer):
+    daemon_threads = True
+
+
 def main():
-    if BIND_HOST != "127.0.0.1":
-        raise SystemExit("OBOS_AGENT_HTTP_BIND must be 127.0.0.1")
-    server = ThreadingHTTPServer((BIND_HOST, BIND_PORT), AgentBridgeHandler)
+    socket_path = os.environ.get("OBOS_AGENT_HTTP_SOCKET", "")
+    if socket_path:
+        if not os.path.isabs(socket_path):
+            raise SystemExit("OBOS_AGENT_HTTP_SOCKET must be an absolute path")
+        socket_dir = os.path.dirname(socket_path)
+        os.makedirs(socket_dir, mode=0o750, exist_ok=True)
+        try:
+            current = os.lstat(socket_path)
+            if not stat.S_ISSOCK(current.st_mode):
+                raise SystemExit("OBOS_AGENT_HTTP_SOCKET exists and is not a socket")
+            os.unlink(socket_path)
+        except FileNotFoundError:
+            pass
+        server = ThreadingUnixHTTPServer(socket_path, AgentBridgeHandler)
+        server.trusted_proxy_headers = True
+        os.chmod(socket_path, 0o660)
+    else:
+        if BIND_HOST != "127.0.0.1":
+            raise SystemExit("OBOS_AGENT_HTTP_BIND must be 127.0.0.1")
+        server = ThreadingHTTPServer((BIND_HOST, BIND_PORT), AgentBridgeHandler)
+        server.trusted_proxy_headers = False
     server.serve_forever()
 
 

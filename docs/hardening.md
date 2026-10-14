@@ -206,7 +206,6 @@ documented in [release-signing.md](release-signing.md). The concrete production
 release key remains a separate release operation to finalize before broad
 distribution.
 
-Compose image digest pinning is checked by
-`scripts/images/check-compose-image-pinning.sh`. The technical MVP can report
-unpinned images, while broad release publication should run the check with
-`OBOS_REQUIRE_PINNED_IMAGES=1`.
+Production Compose images are pinned to immutable multi-architecture manifest
+digests. `scripts/images/check-compose-image-pinning.sh` verifies that property;
+broad release publication must run it with `OBOS_REQUIRE_PINNED_IMAGES=1`.

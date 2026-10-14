@@ -153,7 +153,8 @@ the local agent bridge.
 The web console reads status, host basics, update state, backups, restore
 staging, MQTT exposure, TLS trust, logs metadata, security baseline, technical
 MVP readiness, and agent audit state through `obos-agent-http.service`. The
-bridge binds to `127.0.0.1:8091`, is exposed by nginx below `/obos/api/`, calls
+bridge listens on the private `/run/obos-agent-http/agent.sock` Unix socket, is
+exposed by nginx below `/obos/api/`, calls
 the installed `obos-agent` binary, and never exposes a raw shell.
 
 Confirmed HTTP mutations are enabled only for allowlisted workflows: service
