@@ -381,9 +381,12 @@ tls_line="$(grep -n '<h2>TLS Trust ' "${INDEX}" | cut -d: -f1)"
 mqtt_line="$(grep -n '<h2>MQTT Service ' "${INDEX}" | cut -d: -f1)"
 backup_line="$(grep -n '<h2>Backups ' "${INDEX}" | cut -d: -f1)"
 restore_line="$(grep -n '<h2>Restore ' "${INDEX}" | cut -d: -f1)"
-[ "${host_line}" -lt "${tls_line}" ] && [ "${tls_line}" -lt "${mqtt_line}" ] \
-  && [ "${mqtt_line}" -lt "${backup_line}" ] && [ "${backup_line}" -lt "${restore_line}" ] \
-  || fail "operational panels are not ordered host, TLS, services, backup, restore"
+if ! { [ "${host_line}" -lt "${tls_line}" ] \
+  && [ "${tls_line}" -lt "${mqtt_line}" ] \
+  && [ "${mqtt_line}" -lt "${backup_line}" ] \
+  && [ "${backup_line}" -lt "${restore_line}" ]; }; then
+  fail "operational panels are not ordered host, TLS, services, backup, restore"
+fi
 
 grep -q 'Available signed OBOS release' "${JS}" \
   || fail "update confirmation does not include the signed release preview"
