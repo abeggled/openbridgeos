@@ -153,5 +153,8 @@ grep -q 'release archive contains unsafe paths' "${UPDATE_RELEASE}" \
   || fail "release updater does not reject unsafe archive paths"
 grep -q '/etc/obos/version' "${INSTALL_BUNDLE}" \
   || fail "update bundle installer does not record the installed OBOS version"
+if grep -q 'systemctl reload nginx.service' "${INSTALL_BUNDLE}"; then
+  fail "update bundle installer activates reboot-dependent nginx changes before reboot"
+fi
 
 echo "appliance update fixture: PASS"

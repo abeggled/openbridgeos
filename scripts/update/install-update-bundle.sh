@@ -90,7 +90,6 @@ printf '%s\n' "${VERSION}" > /etc/obos/version
 chmod 0644 /etc/obos/version
 systemctl daemon-reload
 nginx -t
-systemctl reload nginx.service
 
 echo "format=obos-update-bundle-install-v1"
 echo "version=${VERSION}"

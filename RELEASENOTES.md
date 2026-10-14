@@ -1,7 +1,7 @@
 # Changes
 ## 2026.10.1
 ### Breaking changes 🚨
-* none
+* Production OpenBridgeServer and Mosquitto images are now pinned to reviewed immutable digests. The legacy `OBS_IMAGE_TAG` environment override is no longer applied; installations that intentionally used a custom OBS image must review the pinned image before updating.
 ### New features ✨
 * Show the running OpenBridgeServer version in the appliance console.
 * Publish the reviewed Minisign release verification key with release assets.
@@ -16,8 +16,8 @@
 ### Fixes 🐞
 * Allow first-boot provisioning to export headless onboarding information to supported boot partitions under the systemd sandbox.
 * Add regression coverage for archive extraction, login throttling, concurrent onboarding, proxy-header spoofing, and release pinning.
-### Known Issues 🔔
-* Existing appliances require a reboot after installation so the new agent socket and service sandbox take effect.
+### Operational notes 🔔
+* Existing appliances reboot after installation so the new agent socket, nginx routing, and service sandbox take effect together. The installer validates the new nginx configuration but intentionally defers its activation until that reboot.
 * OpenBridgeServer browser-token storage remains an upstream hardening item.
 
 ### Release verification
