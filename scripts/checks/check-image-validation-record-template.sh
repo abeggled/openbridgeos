@@ -8,8 +8,16 @@ fail() {
   exit 1
 }
 
+iso_output="$(sh "${SCRIPT}" amd64-installer)"
 amd64_output="$(sh "${SCRIPT}" amd64-vm)"
 rpi_output="$(sh "${SCRIPT}" rpi4-arm64)"
+
+printf '%s\n' "${iso_output}" | grep -q '^profile=amd64-installer$' \
+  || fail "installer ISO template profile missing"
+printf '%s\n' "${iso_output}" | grep -q '^boot_media=<usb|optical>$' \
+  || fail "installer ISO template should prompt for USB or optical media"
+printf '%s\n' "${iso_output}" | grep -q '^network_installer_used=no$' \
+  || fail "installer ISO template should not use Network Installer"
 
 printf '%s\n' "${amd64_output}" | grep -q '^profile=amd64-vm$' \
   || fail "amd64 template profile missing"

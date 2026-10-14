@@ -34,9 +34,15 @@ OBOS_RPI_ROOT_PARTITION_LABEL=
 OBOS_RPI_REQUIRED_TOOLS=
 OBOS_KERNEL_REQUIRED_CONFIG=
 OBOS_QCOW2_BASE_IMAGE_URL=
+OBOS_QCOW2_BASE_IMAGE_SHA256=
 OBOS_QCOW2_MIN_SIZE=
 OBOS_QCOW2_BUILDER=
 OBOS_QCOW2_REQUIRED_TOOLS=
+OBOS_ISO_BUILDER=
+OBOS_ISO_BOOTLOADERS=
+OBOS_ISO_INSTALLER_MODE=
+OBOS_ISO_HYBRID=
+OBOS_ISO_REQUIRED_TOOLS=
 OBOS_IMAGE_DEFAULT_SSH=
 OBOS_NOTES=
 
@@ -67,10 +73,16 @@ rpi_root_partition_label=${OBOS_RPI_ROOT_PARTITION_LABEL:-n/a}
 rpi_required_tools=${OBOS_RPI_REQUIRED_TOOLS:-n/a}
 kernel_required_config=${OBOS_KERNEL_REQUIRED_CONFIG:-n/a}
 qcow2_base_image_url=${OBOS_QCOW2_BASE_IMAGE_URL:-n/a}
+qcow2_base_image_sha256=${OBOS_QCOW2_BASE_IMAGE_SHA256:-n/a}
 qcow2_min_size=${OBOS_QCOW2_MIN_SIZE:-n/a}
 qcow2_builder=${OBOS_QCOW2_BUILDER:-n/a}
 qcow2_required_tools=${OBOS_QCOW2_REQUIRED_TOOLS:-n/a}
 default_ssh=${OBOS_IMAGE_DEFAULT_SSH:-n/a}
+iso_builder=${OBOS_ISO_BUILDER:-n/a}
+iso_bootloaders=${OBOS_ISO_BOOTLOADERS:-n/a}
+iso_installer_mode=${OBOS_ISO_INSTALLER_MODE:-n/a}
+iso_hybrid=${OBOS_ISO_HYBRID:-false}
+iso_required_tools=${OBOS_ISO_REQUIRED_TOOLS:-n/a}
 notes=${OBOS_NOTES}
 
 build_contract:
@@ -90,6 +102,18 @@ qcow2_contract:
   - customize with: ${OBOS_QCOW2_BUILDER}
   - require tools: ${OBOS_QCOW2_REQUIRED_TOOLS}
   - resize image to at least: ${OBOS_QCOW2_MIN_SIZE}
+  - keep SSH default: ${OBOS_IMAGE_DEFAULT_SSH}
+EOF
+fi
+
+if [ "${OBOS_IMAGE_KIND}" = "installer-iso" ]; then
+  cat <<EOF
+iso_contract:
+  - build a hybrid installation image with: ${OBOS_ISO_BUILDER}
+  - boot targets: ${OBOS_BOOT_TARGET}
+  - bootloaders: ${OBOS_ISO_BOOTLOADERS}
+  - install the provisioned live filesystem with installer mode: ${OBOS_ISO_INSTALLER_MODE}
+  - require tools: ${OBOS_ISO_REQUIRED_TOOLS}
   - keep SSH default: ${OBOS_IMAGE_DEFAULT_SSH}
 EOF
 fi

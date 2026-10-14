@@ -13,6 +13,15 @@ OBOS_APP_SOURCE="${OBOS_SHARE_DIR}/apps/openbridgeserver"
 OBOS_WEB_DIR="/srv/obos/web"
 OBOS_ONBOARDING_DIR="/srv/obos/onboarding"
 OBOS_VERSION="${OBOS_VERSION:-0.0.0}"
+OBOS_IMAGE_BUILD="${OBOS_IMAGE_BUILD:-0}"
+
+case "${OBOS_IMAGE_BUILD}" in
+  0|1) ;;
+  *)
+    echo "OBOS_IMAGE_BUILD must be 0 or 1" >&2
+    exit 1
+    ;;
+esac
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -115,9 +124,7 @@ ln -sf /etc/nginx/sites-available/obos-openbridgeserver.conf /etc/nginx/sites-en
 "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh" "${OBOS_APP_SOURCE}"
 "${OBOS_LIB_DIR}/apply-host-hardening.sh"
 
-systemctl daemon-reload
 systemctl enable systemd-networkd.service
-systemctl restart docker.service
 systemctl enable docker.service
 systemctl enable nginx.service
 systemctl enable obos-agent-http.service
@@ -126,6 +133,11 @@ systemctl enable obos-openbridgeserver.service
 systemctl enable obos-tls-leaf-renewal.timer
 systemctl enable apt-daily.timer
 systemctl enable apt-daily-upgrade.timer
+
+if [ "${OBOS_IMAGE_BUILD}" = "0" ]; then
+  systemctl daemon-reload
+  systemctl restart docker.service
+fi
 
 # Do not run first boot during image creation. Secrets and TLS material must be
 # generated on the target appliance instance, not in the build environment.

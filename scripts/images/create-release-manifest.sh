@@ -72,7 +72,7 @@ for image_manifest in "$@"; do
   [ -f "${image_manifest}" ] || fail "image manifest missing: ${image_manifest}"
   format="$(manifest_value format "${image_manifest}")"
   case "${format}" in
-    obos-qcow2-build-v1|obos-rpi-image-build-v1) ;;
+    obos-amd64-iso-build-v1|obos-qcow2-build-v1|obos-rpi-image-build-v1) ;;
     *) fail "unsupported image manifest format: ${format}" ;;
   esac
 

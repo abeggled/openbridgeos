@@ -5,10 +5,10 @@ must assemble manually.
 
 ## Artifacts
 
-Planned artifacts:
+Release artifacts:
 
 - `amd64` VM image for Proxmox, Hyper-V, VirtualBox, and bare-metal testing
-- `amd64` ISO or installer image
+- bootable hybrid `amd64` installer ISO for BIOS and UEFI systems
 - `arm64` Raspberry Pi 4+ SD/USB/NVMe image
 
 ## Build Principles
@@ -35,6 +35,7 @@ Current profiles:
 
 ```text
 amd64-vm.env      Debian Trixie amd64 VM image profile, qcow2 output
+amd64-installer.env Debian Trixie amd64 installer profile, hybrid ISO output
 rpi4-arm64.env    Debian Trixie arm64 Raspberry Pi 4+ image profile, raw img.xz output
 ```
 
@@ -73,16 +74,18 @@ Print the current build contract for a profile with:
 
 ```sh
 sh scripts/images/print-image-build-plan.sh packaging/images/profiles/amd64-vm.env
+sh scripts/images/print-image-build-plan.sh packaging/images/profiles/amd64-installer.env
 sh scripts/images/print-image-build-plan.sh packaging/images/profiles/rpi4-arm64.env
 ```
 
 ## Pull and Build Helper
 
 For repeated MVP build iterations, use the generic helper to update a git ref and
-build one or both image targets:
+build one or all image targets:
 
 ```sh
 scripts/images/pull-and-build.sh amd64 codex/web-onboarding-password
+scripts/images/pull-and-build.sh iso codex/web-onboarding-password
 scripts/images/pull-and-build.sh arm64 codex/web-onboarding-password
 scripts/images/pull-and-build.sh all codex/web-onboarding-password
 ```
@@ -91,6 +94,41 @@ Without a git ref, the helper updates the current branch with `git pull
 --ff-only`. It runs the build-host preflight and post-build manifest checks for
 each selected target, and uses `sudo` for image build steps when it is not
 already running as root.
+
+## amd64 Installer ISO
+
+The installer profile builds a Debian Trixie hybrid ISO with `live-build`. It
+boots through GRUB on BIOS and UEFI systems and uses Debian's live installer to
+copy the provisioned OBOS filesystem to the target disk. Build it on Debian or
+Ubuntu with:
+
+```sh
+sudo apt-get install --no-install-recommends live-build xorriso
+sudo scripts/images/build-amd64-installer-iso.sh
+```
+
+Release builds set both the immutable versioned filename and release metadata:
+
+```sh
+sudo OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION=2026.10.6-rc.1 \
+  scripts/images/build-amd64-installer-iso.sh
+```
+
+The builder emits the ISO, its SHA-256 checksum, and an
+`obos-amd64-iso-build-v1` provenance manifest. Release builds require a clean
+Git tree and never create appliance secrets; machine identity, credentials, and
+TLS material remain first-boot tasks.
+
+## Automated GitHub Release Images
+
+The manually dispatched release workflow builds the installer ISO, amd64 qcow2
+image, and compressed Raspberry Pi image in isolated jobs. Publication only
+starts after all three builds and their manifest, checksum, and GitHub asset
+size checks pass. The release then contains the three images, per-image
+checksums and provenance manifests, plus one signed aggregate image manifest.
+
+Each release asset is kept below GitHub's 2 GiB per-file limit. A failed image
+job leaves no partial GitHub release behind.
 
 ## Build Contract
 

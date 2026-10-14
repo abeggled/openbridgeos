@@ -87,6 +87,40 @@ EOF
   printf '%s\n' "${manifest_file}"
 }
 
+write_iso_manifest() {
+  image_file="${TMP_DIR}/obos-amd64-installer-test.iso"
+  checksum_file="${image_file}.sha256"
+  manifest_file="${image_file}.manifest"
+  printf 'test installer image\n' > "${image_file}"
+  sha256sum "${image_file}" > "${checksum_file}"
+  image_sha256="$(cut -d ' ' -f 1 < "${checksum_file}")"
+
+  cat > "${manifest_file}" <<EOF
+format=obos-amd64-iso-build-v1
+created_at=20260604T000000Z
+profile=amd64-installer
+architecture=amd64
+debian_release=trixie
+output_format=iso
+image_extension=iso
+hybrid=true
+boot_targets=bios,uefi
+installer_mode=live
+release_build=1
+image=${image_file}
+checksum_file=${checksum_file}
+image_sha256=${image_sha256}
+provision_script=scripts/bootstrap/provision-debian.sh
+first_boot_service=obos-first-boot.service
+repo_revision=test-revision
+repo_dirty=false
+ssh_default=disabled
+first_boot_pending=true
+contains_secrets=false
+EOF
+  printf '%s\n' "${manifest_file}"
+}
+
 write_validation_record() {
   record_file="$1"
   profile="$2"
@@ -120,46 +154,50 @@ notes=fixture
 EOF
 }
 
+ISO_MANIFEST="$(write_iso_manifest)"
 QCOW2_MANIFEST="$(write_qcow2_manifest)"
 RPI_MANIFEST="$(write_rpi_manifest)"
 RELEASE_MANIFEST="${TMP_DIR}/obos-release.manifest"
 
 OBOS_REPO_ROOT="$(pwd)" OBOS_MANIFEST_STRICT_FILES=1 \
-  sh scripts/images/create-release-manifest.sh "${RELEASE_MANIFEST}" "${QCOW2_MANIFEST}" "${RPI_MANIFEST}" >/dev/null
+  sh scripts/images/create-release-manifest.sh "${RELEASE_MANIFEST}" "${ISO_MANIFEST}" "${QCOW2_MANIFEST}" "${RPI_MANIFEST}" >/dev/null
 
 printf 'fixture signature\n' > "${RELEASE_MANIFEST}.minisig"
 
+ISO_RECORD="${TMP_DIR}/iso.record"
 AMD64_RECORD="${TMP_DIR}/amd64.record"
 RPI_RECORD="${TMP_DIR}/rpi.record"
 
+write_validation_record "${ISO_RECORD}" amd64-installer \
+  "${TMP_DIR}/obos-amd64-installer-test.iso" "${ISO_MANIFEST}" bare-metal hardware usb no
 write_validation_record "${AMD64_RECORD}" amd64-vm \
   "${TMP_DIR}/obos-amd64-vm-test.qcow2" "${QCOW2_MANIFEST}" proxmox vm virtual-disk no
 write_validation_record "${RPI_RECORD}" rpi4-arm64 \
   "${TMP_DIR}/obos-rpi4-arm64-test.img.xz" "${RPI_MANIFEST}" raspberry-pi-4 hardware nvme yes
 
-sh "${CHECKER}" "${RELEASE_MANIFEST}" "${AMD64_RECORD}" "${RPI_RECORD}" |
+sh "${CHECKER}" "${RELEASE_MANIFEST}" "${ISO_RECORD}" "${AMD64_RECORD}" "${RPI_RECORD}" |
   grep -q '^result=PASS$' \
   || fail "valid release candidate did not pass"
 
-if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${AMD64_RECORD}" >/dev/null 2>&1; then
+if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${ISO_RECORD}" "${AMD64_RECORD}" >/dev/null 2>&1; then
   fail "release candidate without rpi validation was accepted"
 fi
 
 DUPLICATE_AMD64_RECORD="${TMP_DIR}/duplicate-amd64.record"
 cp "${AMD64_RECORD}" "${DUPLICATE_AMD64_RECORD}"
-if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${AMD64_RECORD}" "${RPI_RECORD}" "${DUPLICATE_AMD64_RECORD}" >/dev/null 2>&1; then
+if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${ISO_RECORD}" "${AMD64_RECORD}" "${RPI_RECORD}" "${DUPLICATE_AMD64_RECORD}" >/dev/null 2>&1; then
   fail "release candidate with duplicate amd64 validation was accepted"
 fi
 
 BAD_RECORD="${TMP_DIR}/bad-artifact.record"
 cp "${AMD64_RECORD}" "${BAD_RECORD}"
 sed -i 's#^artifact=.*$#artifact=/tmp/not-in-release.qcow2#' "${BAD_RECORD}"
-if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${BAD_RECORD}" "${RPI_RECORD}" >/dev/null 2>&1; then
+if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${ISO_RECORD}" "${BAD_RECORD}" "${RPI_RECORD}" >/dev/null 2>&1; then
   fail "validation record for artifact outside release manifest was accepted"
 fi
 
 rm -f "${RELEASE_MANIFEST}.minisig"
-if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${AMD64_RECORD}" "${RPI_RECORD}" >/dev/null 2>&1; then
+if sh "${CHECKER}" "${RELEASE_MANIFEST}" "${ISO_RECORD}" "${AMD64_RECORD}" "${RPI_RECORD}" >/dev/null 2>&1; then
   fail "release candidate without signature was accepted"
 fi
 

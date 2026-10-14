@@ -9,6 +9,7 @@ fail() {
 }
 
 amd64_output="$(sh "${SCRIPT}" packaging/images/profiles/amd64-vm.env)"
+amd64_iso_output="$(sh "${SCRIPT}" packaging/images/profiles/amd64-installer.env)"
 rpi_output="$(sh "${SCRIPT}" packaging/images/profiles/rpi4-arm64.env)"
 
 printf '%s\n' "${amd64_output}" | grep -q '^profile=amd64-vm$' \
@@ -19,6 +20,15 @@ printf '%s\n' "${amd64_output}" | grep -q '^default_ssh=disabled$' \
   || fail "amd64 SSH default missing"
 printf '%s\n' "${amd64_output}" | grep -q 'qcow2_contract:' \
   || fail "amd64 qcow2 contract missing"
+
+printf '%s\n' "${amd64_iso_output}" | grep -q '^profile=amd64-installer$' \
+  || fail "amd64 installer profile missing"
+printf '%s\n' "${amd64_iso_output}" | grep -q '^output_format=iso$' \
+  || fail "amd64 installer output format missing"
+printf '%s\n' "${amd64_iso_output}" | grep -q '^iso_installer_mode=live$' \
+  || fail "amd64 installer mode missing"
+printf '%s\n' "${amd64_iso_output}" | grep -q 'iso_contract:' \
+  || fail "amd64 installer contract missing"
 
 printf '%s\n' "${rpi_output}" | grep -q '^profile=rpi4-arm64$' \
   || fail "rpi profile missing"

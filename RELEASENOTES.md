@@ -1,4 +1,14 @@
 # Changes
+## 2026.10.6-rc.1
+### New features ✨
+* Publish a bootable amd64 installer ISO, an amd64 qcow2 VM disk, and a compressed Raspberry Pi 4+ arm64 SD/USB/NVMe image with every release.
+* Build all installation images directly in GitHub Actions from the exact release commit.
+### Security fixes 🔒
+* Pin the Debian amd64 base image by immutable URL and SHA-256 digest for reproducible release builds.
+* Publish per-image checksums and provenance manifests plus a signed aggregate image manifest; release publication is blocked unless every image validates and stays within GitHub's asset-size limit.
+### Operational notes 🔔
+* The x64 ISO supports BIOS and UEFI boot. The Raspberry Pi artifact is intended for direct flashing to SD, USB, or NVMe media.
+
 ## 2026.10.5
 ### Fixes 🐞
 * Publish the final Host Settings layout on a forward-only version so appliances running `2026.10.4-rc.1` can return to the stable channel without manual intervention.

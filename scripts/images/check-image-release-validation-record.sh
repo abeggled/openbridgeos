@@ -64,6 +64,13 @@ require_any network_installer_used yes no
 
 profile="$(value profile)"
 case "${profile}" in
+  amd64-installer)
+    require_value network_installer_used no
+    case "$(value boot_media)" in
+      usb|optical) ;;
+      *) fail "amd64-installer boot_media must be usb or optical" ;;
+    esac
+    ;;
   amd64-vm)
     require_value network_installer_used no
     ;;

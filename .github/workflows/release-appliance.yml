@@ -1,10 +1,10 @@
-name: Release appliance update
+name: Release appliance update and installation images
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Release version and tag, for example 2026.10.0
+        description: Release version and tag, for example 2026.10.6
         required: true
         type: string
       prerelease:
@@ -20,25 +20,127 @@ concurrency:
   group: appliance-release-${{ inputs.version }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  RELEASE_VERSION: ${{ inputs.version }}
+
 jobs:
-  release:
+  amd64-installer:
+    name: Build amd64 installer ISO
     if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout exact release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install ISO builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends live-build xorriso
+      - name: Build and validate ISO
+        run: |
+          sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
+            scripts/images/build-amd64-installer-iso.sh
+          sudo chown -R "$(id -u):$(id -g)" dist/images
+          sh scripts/images/check-release-asset-size.sh \
+            "dist/images/obos-amd64-installer-${RELEASE_VERSION}.iso"
+      - name: Stage ISO release files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: amd64-installer
+          path: |
+            dist/images/obos-amd64-installer-${{ inputs.version }}.iso
+            dist/images/obos-amd64-installer-${{ inputs.version }}.iso.sha256
+            dist/images/obos-amd64-installer-${{ inputs.version }}.iso.manifest
+          compression-level: 0
+          if-no-files-found: error
+
+  amd64-vm:
+    name: Build amd64 qcow2 image
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout exact release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install qcow2 builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ca-certificates curl libguestfs-tools qemu-utils
+      - name: Build and validate qcow2 image
+        run: |
+          sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
+            scripts/images/build-amd64-qcow2.sh
+          sudo chown -R "$(id -u):$(id -g)" dist/images
+          sh scripts/images/check-release-asset-size.sh \
+            "dist/images/obos-amd64-vm-${RELEASE_VERSION}.qcow2"
+      - name: Stage qcow2 release files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: amd64-vm
+          path: |
+            dist/images/obos-amd64-vm-${{ inputs.version }}.qcow2
+            dist/images/obos-amd64-vm-${{ inputs.version }}.qcow2.sha256
+            dist/images/obos-amd64-vm-${{ inputs.version }}.qcow2.manifest
+          compression-level: 0
+          if-no-files-found: error
+
+  rpi4-arm64:
+    name: Build Raspberry Pi 4+ arm64 image
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - name: Checkout exact release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install Raspberry Pi image builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            binfmt-support debootstrap dosfstools e2fsprogs fdisk mount parted \
+            qemu-user-static tar util-linux xz-utils
+          sudo update-binfmts --enable qemu-aarch64
+      - name: Build and validate Raspberry Pi image
+        run: |
+          sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
+            scripts/images/build-rpi4-arm64-image.sh
+          sudo chown -R "$(id -u):$(id -g)" dist/images
+          sh scripts/images/check-release-asset-size.sh \
+            "dist/images/obos-rpi4-arm64-${RELEASE_VERSION}.img.xz"
+      - name: Stage Raspberry Pi release files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: rpi4-arm64
+          path: |
+            dist/images/obos-rpi4-arm64-${{ inputs.version }}.img.xz
+            dist/images/obos-rpi4-arm64-${{ inputs.version }}.img.xz.sha256
+            dist/images/obos-rpi4-arm64-${{ inputs.version }}.img.xz.manifest
+          compression-level: 0
+          if-no-files-found: error
+
+  release:
+    name: Sign and publish complete release
+    if: github.ref == 'refs/heads/main'
+    needs: [amd64-installer, amd64-vm, rpi4-arm64]
     runs-on: ubuntu-24.04
     environment: release
     permissions:
       contents: write
     env:
       GH_TOKEN: ${{ github.token }}
-      RELEASE_VERSION: ${{ inputs.version }}
       RELEASE_PRERELEASE: ${{ inputs.prerelease }}
       OBOS_RELEASE_MINISIGN_SECRET_KEY: ${{ secrets.OBOS_RELEASE_MINISIGN_SECRET_KEY }}
-
     steps:
       - name: Checkout exact release commit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-
+      - name: Download validated image files
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: '*'
+          path: dist/images
+          merge-multiple: true
       - name: Validate release request
         shell: bash
         run: |
@@ -55,13 +157,11 @@ jobs:
             echo "Refusing to replace existing release ${RELEASE_VERSION}" >&2
             exit 1
           fi
-
       - name: Install release signing tool
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends minisign
-
-      - name: Build signed appliance update assets
+      - name: Build and sign release manifests
         shell: bash
         run: |
           set -euo pipefail
@@ -71,21 +171,30 @@ jobs:
           install -m 0600 /dev/null "${key_file}"
           printf '%s\n' "${OBOS_RELEASE_MINISIGN_SECRET_KEY}" > "${key_file}"
           sh scripts/update/create-update-bundle.sh \
-            "${RELEASE_VERSION}" \
-            "${release_dir}" \
-            RELEASENOTES.md
+            "${RELEASE_VERSION}" "${release_dir}" RELEASENOTES.md
           minisign -Sm "${release_dir}/obos-update.manifest" \
             -s "${key_file}" \
-            -W \
-            -t "OBOS appliance release ${RELEASE_VERSION}"
+            -W -t "OBOS appliance release ${RELEASE_VERSION}"
           minisign -Vm "${release_dir}/obos-update.manifest" \
             -p packaging/update/obos-release.minisign.pub
-          sha256sum \
-            "${release_dir}/obos-update.tar.gz" \
-            "${release_dir}/obos-update-notes.txt" \
-            "${release_dir}/obos-update.manifest"
+          sh scripts/images/create-release-manifest.sh \
+            "dist/images/obos-images-${RELEASE_VERSION}.manifest" \
+            "dist/images/obos-amd64-installer-${RELEASE_VERSION}.iso.manifest" \
+            "dist/images/obos-amd64-vm-${RELEASE_VERSION}.qcow2.manifest" \
+            "dist/images/obos-rpi4-arm64-${RELEASE_VERSION}.img.xz.manifest"
+          minisign -Sm "dist/images/obos-images-${RELEASE_VERSION}.manifest" \
+            -s "${key_file}" \
+            -W -t "OBOS installation images ${RELEASE_VERSION}"
+          public_key="$(sed -n '2p' packaging/update/obos-release.minisign.pub)"
+          OBOS_RELEASE_SIGNATURE_STRICT=1 OBOS_RELEASE_MINISIGN_PUBLIC_KEY="${public_key}" \
+            sh scripts/images/check-release-manifest.sh \
+              "dist/images/obos-images-${RELEASE_VERSION}.manifest"
+          sha256sum -c dist/images/*.sha256
+          sh scripts/images/check-release-asset-size.sh \
+            "dist/images/obos-amd64-installer-${RELEASE_VERSION}.iso" \
+            "dist/images/obos-amd64-vm-${RELEASE_VERSION}.qcow2" \
+            "dist/images/obos-rpi4-arm64-${RELEASE_VERSION}.img.xz"
           echo "RELEASE_DIR=${release_dir}" >> "${GITHUB_ENV}"
-
       - name: Publish immutable GitHub release
         shell: bash
         run: |
@@ -96,12 +205,13 @@ jobs:
             "${RELEASE_DIR}/obos-update.manifest"
             "${RELEASE_DIR}/obos-update.manifest.minisig"
             "${RELEASE_DIR}/obos-update-notes.txt"
-            "packaging/update/obos-release.minisign.pub"
+            packaging/update/obos-release.minisign.pub
+            dist/images/*
             --target "${GITHUB_SHA}"
             --title "open bridge operating system ${RELEASE_VERSION}"
             --notes-file RELEASENOTES.md
           )
-          if [[ "${RELEASE_PRERELEASE}" == "true" ]]; then
+          if [[ "${RELEASE_PRERELEASE}" == true ]]; then
             release_args+=(--prerelease)
           fi
           gh release create "${release_args[@]}"

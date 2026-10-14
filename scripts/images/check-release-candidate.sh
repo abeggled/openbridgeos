@@ -39,7 +39,7 @@ release_artifact_match() {
   return 1
 }
 
-[ "$#" -ge 3 ] || fail "usage: $0 <release-manifest> <validation-record> <validation-record> [validation-record...]"
+[ "$#" -ge 4 ] || fail "usage: $0 <release-manifest> <validation-record> <validation-record> <validation-record> [validation-record...]"
 
 release_manifest="$1"
 shift
@@ -52,6 +52,7 @@ OBOS_MANIFEST_STRICT_FILES="${OBOS_MANIFEST_STRICT_FILES:-1}" \
   OBOS_RELEASE_MINISIGN_PUBLIC_KEY="${OBOS_RELEASE_MINISIGN_PUBLIC_KEY:-}" \
   sh "${CHECK_RELEASE_MANIFEST}" "${release_manifest}" >/dev/null
 
+amd64_installer_validated=false
 amd64_validated=false
 rpi_validated=false
 record_count=0
@@ -65,6 +66,11 @@ for record in "$@"; do
   release_artifact_match "${profile}" "${artifact}" "${manifest}" \
     || fail "validation record does not match release manifest artifact: ${record}"
   case "${profile}" in
+    amd64-installer)
+      [ "${amd64_installer_validated}" = "false" ] \
+        || fail "duplicate amd64-installer validation record: ${record}"
+      amd64_installer_validated=true
+      ;;
     amd64-vm)
       [ "${amd64_validated}" = "false" ] \
         || fail "duplicate amd64-vm validation record: ${record}"
@@ -80,13 +86,15 @@ for record in "$@"; do
   record_count=$((record_count + 1))
 done
 
+[ "${amd64_installer_validated}" = "true" ] || fail "amd64-installer validation record missing"
 [ "${amd64_validated}" = "true" ] || fail "amd64-vm validation record missing"
 [ "${rpi_validated}" = "true" ] || fail "rpi4-arm64 validation record missing"
-[ "${record_count}" -eq 2 ] || fail "release candidate must have exactly two validation records"
+[ "${record_count}" -eq 3 ] || fail "release candidate must have exactly three validation records"
 
 echo "format=obos-release-candidate-check-v1"
 echo "release_manifest=${release_manifest}"
 echo "validation_record_count=${record_count}"
+echo "amd64_installer_validated=${amd64_installer_validated}"
 echo "amd64_vm_validated=${amd64_validated}"
 echo "rpi4_arm64_validated=${rpi_validated}"
 echo "result=PASS"

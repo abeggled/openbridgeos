@@ -91,6 +91,40 @@ EOF
   printf '%s\n' "${manifest_file}"
 }
 
+write_iso_manifest() {
+  image_file="${BUNDLE_DIR}/obos-amd64-installer-test.iso"
+  checksum_file="${image_file}.sha256"
+  manifest_file="${image_file}.manifest"
+  printf 'test installer image\n' > "${image_file}"
+  sha256sum "${image_file}" > "${checksum_file}"
+  image_sha256="$(cut -d ' ' -f 1 < "${checksum_file}")"
+
+  cat > "${manifest_file}" <<EOF
+format=obos-amd64-iso-build-v1
+created_at=20260604T000000Z
+profile=amd64-installer
+architecture=amd64
+debian_release=trixie
+output_format=iso
+image_extension=iso
+hybrid=true
+boot_targets=bios,uefi
+installer_mode=live
+release_build=1
+image=${image_file}
+checksum_file=${checksum_file}
+image_sha256=${image_sha256}
+provision_script=scripts/bootstrap/provision-debian.sh
+first_boot_service=obos-first-boot.service
+repo_revision=test-revision
+repo_dirty=false
+ssh_default=disabled
+first_boot_pending=true
+contains_secrets=false
+EOF
+  printf '%s\n' "${manifest_file}"
+}
+
 write_validation_record() {
   record_file="$1"
   profile="$2"
@@ -138,16 +172,19 @@ exit 0
 EOF
 chmod 0755 "${FAKE_BIN}/minisign"
 
+ISO_MANIFEST="$(write_iso_manifest)"
 QCOW2_MANIFEST="$(write_qcow2_manifest)"
 RPI_MANIFEST="$(write_rpi_manifest)"
 RELEASE_MANIFEST="${BUNDLE_DIR}/obos-release.manifest"
 
 OBOS_REPO_ROOT="$(pwd)" OBOS_MANIFEST_STRICT_FILES=1 \
-  sh scripts/images/create-release-manifest.sh "${RELEASE_MANIFEST}" "${QCOW2_MANIFEST}" "${RPI_MANIFEST}" >/dev/null
+  sh scripts/images/create-release-manifest.sh "${RELEASE_MANIFEST}" "${ISO_MANIFEST}" "${QCOW2_MANIFEST}" "${RPI_MANIFEST}" >/dev/null
 
 printf 'fixture signature\n' > "${RELEASE_MANIFEST}.minisig"
 printf 'RWQfixturepublickey\n' > "${BUNDLE_DIR}/obos-release.minisign.pub"
 
+write_validation_record "${BUNDLE_DIR}/validation-amd64-installer.record" amd64-installer \
+  "${BUNDLE_DIR}/obos-amd64-installer-test.iso" "${ISO_MANIFEST}" bare-metal hardware usb no
 write_validation_record "${BUNDLE_DIR}/validation-amd64-vm.record" amd64-vm \
   "${BUNDLE_DIR}/obos-amd64-vm-test.qcow2" "${QCOW2_MANIFEST}" proxmox vm virtual-disk no
 write_validation_record "${BUNDLE_DIR}/validation-rpi4-arm64.record" rpi4-arm64 \
@@ -161,10 +198,12 @@ signature=obos-release.manifest.minisig
 release_public_key=obos-release.minisign.pub
 profile=amd64-vm
 profile=rpi4-arm64
+profile=amd64-installer
 minisign_public_key=RWQfixturepublickey
 minisign_public_key_fingerprint=fixture
 validation-amd64-vm.record
 validation-rpi4-arm64.record
+validation-amd64-installer.record
 tls_leaf_renewal_plan_result=PASS
 compose_image_pinning=not_run
 

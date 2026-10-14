@@ -32,7 +32,8 @@ replace_line() {
   mv "${file}.tmp" "${file}"
 }
 
-sh "${CHECKER}" packaging/images/profiles/amd64-vm.env packaging/images/profiles/rpi4-arm64.env >/dev/null
+sh "${CHECKER}" packaging/images/profiles/amd64-installer.env \
+  packaging/images/profiles/amd64-vm.env packaging/images/profiles/rpi4-arm64.env >/dev/null
 
 bad_ssh_profile="${TMP_DIR}/bad-ssh.env"
 cp packaging/images/profiles/amd64-vm.env "${bad_ssh_profile}"
@@ -46,6 +47,13 @@ cp packaging/images/profiles/amd64-vm.env "${bad_provisioner_profile}"
 replace_line OBOS_PROVISION_SCRIPT scripts/bootstrap/other.sh "${bad_provisioner_profile}"
 if sh "${CHECKER}" "${bad_provisioner_profile}" >/dev/null 2>&1; then
   fail "profile with wrong provisioner was accepted"
+fi
+
+bad_iso_profile="${TMP_DIR}/bad-iso.env"
+cp packaging/images/profiles/amd64-installer.env "${bad_iso_profile}"
+replace_line OBOS_ISO_INSTALLER_MODE none "${bad_iso_profile}"
+if sh "${CHECKER}" "${bad_iso_profile}" >/dev/null 2>&1; then
+  fail "installer ISO without live installer mode was accepted"
 fi
 
 bad_rpi_nvme_profile="${TMP_DIR}/bad-rpi-nvme.env"

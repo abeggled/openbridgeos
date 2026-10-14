@@ -66,6 +66,7 @@ After image validation records are completed, run the release candidate gate:
 OBOS_RELEASE_MINISIGN_PUBLIC_KEY='<minisign-public-key>' \
   sh scripts/images/check-release-candidate.sh \
     dist/images/obos-release.manifest \
+    validation-amd64-installer.record \
     validation-amd64-vm.record \
     validation-rpi4-arm64.record
 ```
