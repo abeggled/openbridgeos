@@ -6,6 +6,7 @@ REBOOT_REQUIRED_FILE="${OBOS_REBOOT_REQUIRED_FILE:-/var/run/reboot-required}"
 MODULES_DIR="${OBOS_MODULES_DIR:-/lib/modules}"
 UNAME="${OBOS_UNAME:-uname}"
 UPDATE_LOG_FILE="${OBOS_UPDATE_LOG_FILE:-/var/log/obos-update.log}"
+PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-/etc/obos/update/openbridgeserver.conf.pending}"
 
 fail() {
   echo "host update failed: $1" >&2
@@ -50,6 +51,9 @@ if [ -e "${REBOOT_REQUIRED_FILE}" ]; then
 elif [ -n "${latest_kernel}" ] && [ "${latest_kernel}" != "${running_kernel}" ]; then
   reboot_required=true
   reboot_reason=kernel-changed
+elif [ -s "${PENDING_NGINX_CONFIG}" ]; then
+  reboot_required=true
+  reboot_reason=obos-release-pending
 fi
 
 echo "format=obos-host-update-v1"

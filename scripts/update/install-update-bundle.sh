@@ -11,6 +11,9 @@ OBOS_SHARE_DIR="/usr/share/obos"
 OBOS_WEB_DIR="/srv/obos/web"
 OBOS_ONBOARDING_DIR="/srv/obos/onboarding"
 APP_SOURCE="${OBOS_SHARE_DIR}/apps/openbridgeserver"
+PENDING_NGINX_CONFIG="/etc/obos/update/openbridgeserver.conf.pending"
+ACTIVE_NGINX_CONFIG="/etc/nginx/sites-available/obos-openbridgeserver.conf"
+AGENT_HTTP_COMPAT_ENV="/etc/obos/update/agent-http-compat.env"
 
 for required in \
   apps/openbridgeserver/compose.yaml \
@@ -29,6 +32,19 @@ done
 install -d -m 0755 "${APP_SOURCE}" "${OBOS_LIB_DIR}" "${OBOS_WEB_DIR}" "${OBOS_ONBOARDING_DIR}"
 install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos/update /etc/nginx/sites-available /etc/sudoers.d /etc/systemd/network /etc/systemd/system
 
+if [ -f "${ACTIVE_NGINX_CONFIG}" ] && grep -Fq 'proxy_pass http://127.0.0.1:8091' "${ACTIVE_NGINX_CONFIG}"; then
+  compat_tmp="$(mktemp "${AGENT_HTTP_COMPAT_ENV}.XXXXXX")"
+  cat > "${compat_tmp}" <<'EOF'
+OBOS_AGENT_HTTP_SOCKET=
+OBOS_AGENT_HTTP_BIND=127.0.0.1
+OBOS_AGENT_HTTP_PORT=8091
+EOF
+  chmod 0600 "${compat_tmp}"
+  mv "${compat_tmp}" "${AGENT_HTTP_COMPAT_ENV}"
+else
+  rm -f "${AGENT_HTTP_COMPAT_ENV}"
+fi
+
 install -m 0644 "${RELEASE_ROOT}/apps/openbridgeserver/compose.yaml" "${APP_SOURCE}/compose.yaml"
 install -m 0644 "${RELEASE_ROOT}/apps/openbridgeserver/mosquitto.conf" "${APP_SOURCE}/mosquitto.conf"
 install -m 0644 "${RELEASE_ROOT}/apps/openbridgeserver/obos-app.yaml" "${APP_SOURCE}/obos-app.yaml"
@@ -46,7 +62,6 @@ install -m 0644 "${RELEASE_ROOT}/packaging/docker/daemon.json" /etc/docker/daemo
 install -m 0644 "${RELEASE_ROOT}/packaging/logrotate/obos-agent" /etc/logrotate.d/obos-agent
 install -m 0644 "${RELEASE_ROOT}/packaging/nftables/obos.nft" /etc/nftables.conf
 install -m 0644 "${RELEASE_ROOT}/packaging/network/20-obos-dhcp.network" /etc/systemd/network/20-obos-dhcp.network
-install -m 0644 "${RELEASE_ROOT}/packaging/nginx/openbridgeserver.conf" /etc/nginx/sites-available/obos-openbridgeserver.conf
 install -m 0440 "${RELEASE_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent
 install -m 0644 "${RELEASE_ROOT}/packaging/sysctl/99-obos-hardening.conf" /etc/sysctl.d/99-obos-hardening.conf
 
@@ -86,11 +101,23 @@ for unit in \
 done
 
 "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh" "${APP_SOURCE}"
+install -m 0644 "${RELEASE_ROOT}/packaging/nginx/openbridgeserver.conf" "${PENDING_NGINX_CONFIG}"
+systemctl daemon-reload
+validation_config="$(mktemp /run/obos-nginx-validation.XXXXXX)"
+trap 'rm -f "${validation_config}"' EXIT HUP INT TERM
+cat > "${validation_config}" <<EOF
+pid /run/obos-nginx-validation.pid;
+events {}
+http {
+  include /etc/nginx/mime.types;
+  include ${PENDING_NGINX_CONFIG};
+}
+EOF
+nginx -t -c "${validation_config}"
+rm -f "${validation_config}"
+trap - EXIT HUP INT TERM
 printf '%s\n' "${VERSION}" > /etc/obos/version
 chmod 0644 /etc/obos/version
-systemctl daemon-reload
-nginx -t
-systemctl reload nginx.service
 
 echo "format=obos-update-bundle-install-v1"
 echo "version=${VERSION}"

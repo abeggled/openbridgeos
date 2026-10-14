@@ -1,4 +1,29 @@
 # Changes
+## 2026.10.1
+### Breaking changes 🚨
+* Production OpenBridgeServer and Mosquitto images are now pinned to reviewed immutable digests. The legacy `OBS_IMAGE_TAG` environment override is no longer applied; installations that intentionally used a custom OBS image must review the pinned image before updating.
+### New features ✨
+* Show the running OpenBridgeServer version in the appliance console.
+* Publish the reviewed Minisign release verification key with release assets.
+### Security fixes 🔒
+* Reject unsafe, ambiguous, oversized, linked, and special-file archive members before privileged extraction.
+* Rate-limit failed administrator logins per verified client address.
+* Require a locally generated one-time token before the initial administrator password can be set.
+* Pin production container images and the CI checkout action to immutable digests or commits.
+* Serialize one-time onboarding, reject untrusted forwarded-address headers, and create onboarding state files without following symlinks.
+* Move the nginx-to-agent connection to a private Unix socket.
+* Enable HSTS, a scoped Content Security Policy for `/obos`, and modern AEAD-only TLS 1.2 cipher suites.
+### Fixes 🐞
+* Allow first-boot provisioning to export headless onboarding information to supported boot partitions under the systemd sandbox.
+* Add regression coverage for archive extraction, login throttling, concurrent onboarding, proxy-header spoofing, and release pinning.
+### Operational notes 🔔
+* Existing appliances reboot after installation so the new agent socket, nginx routing, and service sandbox take effect together. The installer validates and stages the new nginx configuration without replacing the active configuration; first-boot activation is therefore coordinated with the reboot and falls back to the prior TCP-compatible pair if full validation fails.
+* OpenBridgeServer browser-token storage remains an upstream hardening item.
+
+### Release verification
+* Minisign public key ID: `1D3C747967BE7F02`
+* Public key: `RWQCf75neXQ8HR0B7VAbOhEJ/3A/iL7BKj/3+l/4gZ+Z+aqazNEcMW/I`
+
 ## 2026.10.0
 ### Breaking changes 🚨
 * none

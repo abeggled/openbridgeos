@@ -4,6 +4,7 @@ set -eu
 UPDATE_HOST="scripts/update/update-host.sh"
 UPDATE_RELEASE="scripts/update/update-obos-release.sh"
 INSTALL_BUNDLE="scripts/update/install-update-bundle.sh"
+FIRST_BOOT="scripts/bootstrap/first-boot.sh"
 PUBLIC_KEY="packaging/update/obos-release.minisign.pub"
 RELEASE_WORKFLOW=".github/workflows/release-appliance.yml"
 
@@ -15,6 +16,7 @@ fail() {
 [ -f "${UPDATE_HOST}" ] || fail "host update helper missing"
 [ -f "${UPDATE_RELEASE}" ] || fail "OBOS release update helper missing"
 [ -f "${INSTALL_BUNDLE}" ] || fail "OBOS update bundle installer missing"
+[ -f "${FIRST_BOOT}" ] || fail "first boot helper missing"
 [ -s "${PUBLIC_KEY}" ] || fail "pinned OBOS release public key missing"
 [ -s "${RELEASE_WORKFLOW}" ] || fail "GitHub appliance release workflow missing"
 [ "$(wc -l < "${PUBLIC_KEY}")" -eq 2 ] || fail "pinned release public key has an unexpected format"
@@ -47,8 +49,10 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT HUP INT TERM
 mock_bin="${tmp_dir}/bin"
 modules_dir="${tmp_dir}/modules"
+current_modules_dir="${tmp_dir}/modules-current"
 apt_log="${tmp_dir}/apt.log"
-mkdir -p "${mock_bin}" "${modules_dir}/6.12.0-obos"
+pending_nginx_config="${tmp_dir}/openbridgeserver.conf.pending"
+mkdir -p "${mock_bin}" "${modules_dir}/6.12.0-obos" "${current_modules_dir}/6.12.0-obos"
 
 cat > "${mock_bin}/id" <<'EOF'
 #!/bin/sh
@@ -65,7 +69,12 @@ cat > "${mock_bin}/uname" <<'EOF'
 [ "${1:-}" = "-r" ] && printf '6.12.0-obos\n'
 EOF
 
-chmod +x "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname"
+cat > "${mock_bin}/nginx" <<'EOF'
+#!/bin/sh
+[ "${OBOS_TEST_NGINX_FAIL:-false}" != true ]
+EOF
+
+chmod +x "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname" "${mock_bin}/nginx"
 
 output="$(
   PATH="${mock_bin}:${PATH}" \
@@ -74,6 +83,7 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
   sh "${UPDATE_HOST}"
 )"
 
@@ -96,6 +106,7 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_required=true$' \
@@ -112,10 +123,27 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_reason=kernel-changed$' \
   || fail "newly installed kernel does not require reboot"
+
+printf 'staged nginx configuration\n' > "${pending_nginx_config}"
+output="$(
+  PATH="${mock_bin}:${PATH}" \
+  OBOS_APT_GET=apt-get \
+  OBOS_UNAME=uname \
+  OBOS_MODULES_DIR="${current_modules_dir}" \
+  OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
+  OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  sh "${UPDATE_HOST}"
+)"
+printf '%s\n' "${output}" | grep -q '^reboot_required=true$' \
+  || fail "staged nginx configuration does not require reboot"
+printf '%s\n' "${output}" | grep -q '^reboot_reason=obos-release-pending$' \
+  || fail "staged nginx configuration reboot reason is missing"
 
 release_output="$(
   PATH="${mock_bin}:${PATH}" \
@@ -153,5 +181,114 @@ grep -q 'release archive contains unsafe paths' "${UPDATE_RELEASE}" \
   || fail "release updater does not reject unsafe archive paths"
 grep -q '/etc/obos/version' "${INSTALL_BUNDLE}" \
   || fail "update bundle installer does not record the installed OBOS version"
+grep -q 'PENDING_NGINX_CONFIG="/etc/obos/update/openbridgeserver.conf.pending"' "${INSTALL_BUNDLE}" \
+  || fail "update bundle installer does not stage reboot-dependent nginx configuration"
+# shellcheck disable=SC2016
+grep -Fq 'include ${PENDING_NGINX_CONFIG};' "${INSTALL_BUNDLE}" \
+  || fail "update bundle installer does not validate the staged nginx configuration"
+pending_install_line="$(grep -n 'packaging/nginx/openbridgeserver.conf.*PENDING_NGINX_CONFIG' "${INSTALL_BUNDLE}" | cut -d: -f1)"
+coordinated_install_line="$(grep -n 'install-openbridgeserver-app.sh.*APP_SOURCE' "${INSTALL_BUNDLE}" | cut -d: -f1)"
+[ "${pending_install_line}" -gt "${coordinated_install_line}" ] \
+  || fail "update bundle stages nginx before coordinated files finish installing"
+compat_install_line="$(grep -n 'compat_tmp=.*AGENT_HTTP_COMPAT_ENV' "${INSTALL_BUNDLE}" | cut -d: -f1)"
+agent_unit_install_line="$(grep -n '^for unit in' "${INSTALL_BUNDLE}" | cut -d: -f1)"
+[ "${compat_install_line}" -lt "${agent_unit_install_line}" ] \
+  || fail "update bundle installs agent units before preserving listener compatibility"
+grep -q 'finalize_pending_nginx_config' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not activate staged nginx configuration"
+grep -q 'EnvironmentFile=-/etc/obos/update/agent-http-compat.env' packaging/systemd/obos-agent-http.service \
+  || fail "agent service cannot enter the nginx rollback compatibility mode"
+grep -q '/etc/nginx/sites-available' packaging/systemd/obos-first-boot.service \
+  || fail "first boot sandbox cannot activate staged nginx configuration"
+if grep -q 'systemctl reload nginx.service' "${INSTALL_BUNDLE}"; then
+  fail "update bundle installer activates reboot-dependent nginx changes before reboot"
+fi
+
+first_boot_etc="${tmp_dir}/first-boot-etc"
+first_boot_state="${tmp_dir}/first-boot-state"
+active_nginx_config="${tmp_dir}/nginx/active.conf"
+pending_nginx_config="${first_boot_etc}/update/openbridgeserver.conf.pending"
+previous_nginx_config="${first_boot_etc}/update/openbridgeserver.conf.previous"
+agent_http_compat_env="${first_boot_etc}/update/agent-http-compat.env"
+mkdir -p "${first_boot_etc}/update" "${first_boot_state}" "$(dirname -- "${active_nginx_config}")"
+printf 'configured web auth\n' > "${first_boot_etc}/web.htpasswd"
+printf 'first boot complete\n' > "${first_boot_state}/first-boot.done"
+printf 'old nginx config\n' > "${active_nginx_config}"
+printf 'new nginx config\n' > "${pending_nginx_config}"
+printf 'stale compatibility mode\n' > "${agent_http_compat_env}"
+PATH="${mock_bin}:${PATH}" \
+OBOS_ETC_DIR="${first_boot_etc}" \
+OBOS_STATE_DIR="${first_boot_state}" \
+OBOS_APP_DIR="${tmp_dir}/app" \
+OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
+OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+OBOS_AGENT_HTTP_COMPAT_ENV="${agent_http_compat_env}" \
+sh "${FIRST_BOOT}"
+grep -q '^new nginx config$' "${active_nginx_config}" \
+  || fail "first boot did not activate the staged nginx configuration"
+[ ! -e "${pending_nginx_config}" ] \
+  || fail "first boot retained an activated nginx configuration"
+[ ! -e "${agent_http_compat_env}" ] \
+  || fail "first boot retained agent compatibility mode after successful activation"
+
+printf 'proxy_pass http://127.0.0.1:8091;\n' > "${active_nginx_config}"
+printf 'invalid nginx config\n' > "${pending_nginx_config}"
+if PATH="${mock_bin}:${PATH}" \
+  OBOS_TEST_NGINX_FAIL=true \
+  OBOS_ETC_DIR="${first_boot_etc}" \
+  OBOS_STATE_DIR="${first_boot_state}" \
+  OBOS_APP_DIR="${tmp_dir}/app" \
+  OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+  OBOS_AGENT_HTTP_COMPAT_ENV="${agent_http_compat_env}" \
+  sh "${FIRST_BOOT}" >/dev/null 2>&1; then
+  fail "first boot accepted an invalid staged nginx configuration"
+fi
+grep -q '^proxy_pass http://127.0.0.1:8091;$' "${active_nginx_config}" \
+  || fail "first boot did not restore nginx configuration after validation failure"
+[ -s "${pending_nginx_config}" ] \
+  || fail "first boot discarded a failed staged nginx configuration"
+grep -q '^OBOS_AGENT_HTTP_SOCKET=$' "${agent_http_compat_env}" \
+  || fail "first boot did not enable TCP agent compatibility after nginx rollback"
+
+rm -f "${previous_nginx_config}"
+printf 'proxy_pass http://unix:/run/obos-agent-http/agent.sock:;\n' > "${active_nginx_config}"
+printf 'invalid replacement nginx config\n' > "${pending_nginx_config}"
+if PATH="${mock_bin}:${PATH}" \
+  OBOS_TEST_NGINX_FAIL=true \
+  OBOS_ETC_DIR="${first_boot_etc}" \
+  OBOS_STATE_DIR="${first_boot_state}" \
+  OBOS_APP_DIR="${tmp_dir}/app" \
+  OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+  OBOS_AGENT_HTTP_COMPAT_ENV="${agent_http_compat_env}" \
+  sh "${FIRST_BOOT}" >/dev/null 2>&1; then
+  fail "first boot accepted a conflicting replacement nginx configuration"
+fi
+grep -q '^proxy_pass http://unix:/run/obos-agent-http/agent.sock:;$' "${active_nginx_config}" \
+  || fail "first boot did not preserve the prior socket nginx configuration"
+[ ! -e "${agent_http_compat_env}" ] \
+  || fail "first boot enabled TCP compatibility for a socket-based nginx rollback"
+
+printf 'proxy_pass http://127.0.0.1:8091;\n' > "${previous_nginx_config}"
+printf 'interrupted invalid nginx config\n' > "${active_nginx_config}"
+printf 'invalid replacement nginx config\n' > "${pending_nginx_config}"
+if PATH="${mock_bin}:${PATH}" \
+  OBOS_TEST_NGINX_FAIL=true \
+  OBOS_ETC_DIR="${first_boot_etc}" \
+  OBOS_STATE_DIR="${first_boot_state}" \
+  OBOS_APP_DIR="${tmp_dir}/app" \
+  OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+  OBOS_AGENT_HTTP_COMPAT_ENV="${agent_http_compat_env}" \
+  sh "${FIRST_BOOT}" >/dev/null 2>&1; then
+  fail "first boot accepted an interrupted invalid nginx activation"
+fi
+grep -q '^proxy_pass http://127.0.0.1:8091;$' "${active_nginx_config}" \
+  || fail "first boot overwrote the known-good nginx recovery copy"
 
 echo "appliance update fixture: PASS"

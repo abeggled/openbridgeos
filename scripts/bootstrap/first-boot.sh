@@ -13,6 +13,10 @@ BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-sum
 ONBOARDING_REQUIRED_FILE="${OBOS_ONBOARDING_REQUIRED_FILE:-${OBOS_STATE_DIR}/onboarding/onboarding-required}"
 ONBOARDING_TOKEN_FILE="${OBOS_ONBOARDING_TOKEN_FILE:-${OBOS_STATE_DIR}/onboarding/setup-token}"
 WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-${OBOS_ETC_DIR}/web.htpasswd}"
+PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbridgeserver.conf.pending}"
+ACTIVE_NGINX_CONFIG="${OBOS_ACTIVE_NGINX_CONFIG:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
+PREVIOUS_NGINX_CONFIG="${OBOS_PREVIOUS_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbridgeserver.conf.previous}"
+AGENT_HTTP_COMPAT_ENV="${OBOS_AGENT_HTTP_COMPAT_ENV:-${OBOS_ETC_DIR}/update/agent-http-compat.env}"
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -30,6 +34,41 @@ uuid() {
   else
     openssl rand -hex 16 | sed 's/^\(.\{8\}\)\(.\{4\}\)\(.\{4\}\)\(.\{4\}\)\(.\{12\}\)$/\1-\2-\3-\4-\5/'
   fi
+}
+
+finalize_pending_nginx_config() {
+  [ -s "${PENDING_NGINX_CONFIG}" ] || return 0
+  install -d -m 0755 "$(dirname -- "${ACTIVE_NGINX_CONFIG}")"
+  had_previous=false
+  if [ -s "${PREVIOUS_NGINX_CONFIG}" ]; then
+    had_previous=true
+  elif [ -f "${ACTIVE_NGINX_CONFIG}" ]; then
+    install -m 0644 "${ACTIVE_NGINX_CONFIG}" "${PREVIOUS_NGINX_CONFIG}"
+    had_previous=true
+  fi
+  install -m 0644 "${PENDING_NGINX_CONFIG}" "${ACTIVE_NGINX_CONFIG}"
+  if ! nginx -t; then
+    if [ "${had_previous}" = true ]; then
+      install -m 0644 "${PREVIOUS_NGINX_CONFIG}" "${ACTIVE_NGINX_CONFIG}"
+    else
+      rm -f "${ACTIVE_NGINX_CONFIG}"
+    fi
+    if [ "${had_previous}" = true ] && grep -Fq 'proxy_pass http://127.0.0.1:8091' "${ACTIVE_NGINX_CONFIG}"; then
+      compat_tmp="$(mktemp "${AGENT_HTTP_COMPAT_ENV}.XXXXXX")"
+      cat > "${compat_tmp}" <<'EOF'
+OBOS_AGENT_HTTP_SOCKET=
+OBOS_AGENT_HTTP_BIND=127.0.0.1
+OBOS_AGENT_HTTP_PORT=8091
+EOF
+      chmod 0600 "${compat_tmp}"
+      mv "${compat_tmp}" "${AGENT_HTTP_COMPAT_ENV}"
+    else
+      rm -f "${AGENT_HTTP_COMPAT_ENV}"
+    fi
+    echo "first boot: pending nginx configuration failed validation" >&2
+    return 1
+  fi
+  rm -f "${PENDING_NGINX_CONFIG}" "${PREVIOUS_NGINX_CONFIG}" "${AGENT_HTTP_COMPAT_ENV}"
 }
 
 refresh_onboarding_window() {
@@ -79,6 +118,8 @@ replace_private_file(sys.argv[1], required)
 replace_private_file(sys.argv[2], token)
 PY
 }
+
+finalize_pending_nginx_config
 
 if [ -f "${FIRST_BOOT_MARKER}" ]; then
   if [ ! -f "${WEB_AUTH_FILE}" ]; then
