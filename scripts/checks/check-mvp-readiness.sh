@@ -287,9 +287,6 @@ require_line "docker.io" scripts/bootstrap/provision-debian.sh
 # shellcheck disable=SC2016
 require_line '--copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos"' scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016
-require_line '--append-line "/etc/hosts:${BUILD_RESOLVER_IPV4} deb.debian.org # obos-build-resolver"' scripts/images/build-amd64-qcow2.sh
-require_line "sed -i '/# obos-build-resolver\$/d' /etc/hosts" scripts/images/build-amd64-qcow2.sh
-# shellcheck disable=SC2016
 require_line 'OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 OBOS_IMAGE_BUILD=1 OBOS_VERSION=${IMAGE_ID} sh ${OBOS_PROVISION_SCRIPT}' scripts/images/build-amd64-qcow2.sh
 # shellcheck disable=SC2016
 require_line 'sh "${CHECK_QCOW2_MANIFEST}" "${MANIFEST}"' scripts/images/build-amd64-qcow2.sh
