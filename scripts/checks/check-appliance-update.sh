@@ -4,6 +4,7 @@ set -eu
 UPDATE_HOST="scripts/update/update-host.sh"
 UPDATE_RELEASE="scripts/update/update-obos-release.sh"
 INSTALL_BUNDLE="scripts/update/install-update-bundle.sh"
+FIRST_BOOT="scripts/bootstrap/first-boot.sh"
 PUBLIC_KEY="packaging/update/obos-release.minisign.pub"
 RELEASE_WORKFLOW=".github/workflows/release-appliance.yml"
 
@@ -15,6 +16,7 @@ fail() {
 [ -f "${UPDATE_HOST}" ] || fail "host update helper missing"
 [ -f "${UPDATE_RELEASE}" ] || fail "OBOS release update helper missing"
 [ -f "${INSTALL_BUNDLE}" ] || fail "OBOS update bundle installer missing"
+[ -f "${FIRST_BOOT}" ] || fail "first boot helper missing"
 [ -s "${PUBLIC_KEY}" ] || fail "pinned OBOS release public key missing"
 [ -s "${RELEASE_WORKFLOW}" ] || fail "GitHub appliance release workflow missing"
 [ "$(wc -l < "${PUBLIC_KEY}")" -eq 2 ] || fail "pinned release public key has an unexpected format"
@@ -67,7 +69,12 @@ cat > "${mock_bin}/uname" <<'EOF'
 [ "${1:-}" = "-r" ] && printf '6.12.0-obos\n'
 EOF
 
-chmod +x "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname"
+cat > "${mock_bin}/nginx" <<'EOF'
+#!/bin/sh
+[ "${OBOS_TEST_NGINX_FAIL:-false}" != true ]
+EOF
+
+chmod +x "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname" "${mock_bin}/nginx"
 
 output="$(
   PATH="${mock_bin}:${PATH}" \
@@ -186,5 +193,46 @@ grep -q '/etc/nginx/sites-available' packaging/systemd/obos-first-boot.service \
 if grep -q 'systemctl reload nginx.service' "${INSTALL_BUNDLE}"; then
   fail "update bundle installer activates reboot-dependent nginx changes before reboot"
 fi
+
+first_boot_etc="${tmp_dir}/first-boot-etc"
+first_boot_state="${tmp_dir}/first-boot-state"
+active_nginx_config="${tmp_dir}/nginx/active.conf"
+pending_nginx_config="${first_boot_etc}/update/openbridgeserver.conf.pending"
+previous_nginx_config="${first_boot_etc}/update/openbridgeserver.conf.previous"
+mkdir -p "${first_boot_etc}/update" "${first_boot_state}" "$(dirname -- "${active_nginx_config}")"
+printf 'configured web auth\n' > "${first_boot_etc}/web.htpasswd"
+printf 'first boot complete\n' > "${first_boot_state}/first-boot.done"
+printf 'old nginx config\n' > "${active_nginx_config}"
+printf 'new nginx config\n' > "${pending_nginx_config}"
+PATH="${mock_bin}:${PATH}" \
+OBOS_ETC_DIR="${first_boot_etc}" \
+OBOS_STATE_DIR="${first_boot_state}" \
+OBOS_APP_DIR="${tmp_dir}/app" \
+OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
+OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+sh "${FIRST_BOOT}"
+grep -q '^new nginx config$' "${active_nginx_config}" \
+  || fail "first boot did not activate the staged nginx configuration"
+[ ! -e "${pending_nginx_config}" ] \
+  || fail "first boot retained an activated nginx configuration"
+
+printf 'old nginx config\n' > "${active_nginx_config}"
+printf 'invalid nginx config\n' > "${pending_nginx_config}"
+if PATH="${mock_bin}:${PATH}" \
+  OBOS_TEST_NGINX_FAIL=true \
+  OBOS_ETC_DIR="${first_boot_etc}" \
+  OBOS_STATE_DIR="${first_boot_state}" \
+  OBOS_APP_DIR="${tmp_dir}/app" \
+  OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+  sh "${FIRST_BOOT}" >/dev/null 2>&1; then
+  fail "first boot accepted an invalid staged nginx configuration"
+fi
+grep -q '^old nginx config$' "${active_nginx_config}" \
+  || fail "first boot did not restore nginx configuration after validation failure"
+[ -s "${pending_nginx_config}" ] \
+  || fail "first boot discarded a failed staged nginx configuration"
 
 echo "appliance update fixture: PASS"
