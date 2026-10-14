@@ -37,6 +37,8 @@ OBOS_RELEASE_UPDATE_SCRIPT="${OBOS_RELEASE_UPDATE_SCRIPT:-/usr/lib/obos/update-o
 SYSTEMD_RUN="${OBOS_SYSTEMD_RUN:-systemd-run}"
 REBOOT_DELAY_SECONDS="${OBOS_REBOOT_DELAY_SECONDS:-60}"
 BOOT_ID_FILE="${OBOS_BOOT_ID_FILE:-/proc/sys/kernel/random/boot_id}"
+ARCHIVE_MAX_MEMBERS="${OBOS_ARCHIVE_MAX_MEMBERS:-100000}"
+RESTORE_MAX_UNPACKED_BYTES="${OBOS_RESTORE_MAX_UNPACKED_BYTES:-10737418240}"
 
 usage() {
   cat <<'EOF'
@@ -164,6 +166,89 @@ key_value() {
       }
     }
   ' "${file}" || true
+}
+
+validate_archive_members() {
+  archive="$1"
+  profile="$2"
+  env_name="$(basename -- "${ENV_FILE}")"
+
+  command -v python3 >/dev/null 2>&1 || {
+    echo "archive validation requires python3" >&2
+    return 1
+  }
+
+  python3 - "${archive}" "${profile}" "${env_name}" "${ARCHIVE_MAX_MEMBERS}" "${RESTORE_MAX_UNPACKED_BYTES}" <<'PY'
+import pathlib
+import sys
+import tarfile
+
+archive, profile, env_name, max_members_raw, max_bytes_raw = sys.argv[1:]
+try:
+    max_members = int(max_members_raw)
+    max_bytes = int(max_bytes_raw)
+    if max_members <= 0 or max_bytes <= 0:
+        raise ValueError
+except ValueError:
+    print("archive validation limits must be positive integers", file=sys.stderr)
+    raise SystemExit(1)
+
+allowed_backup_roots = {
+    "obos-backup-manifest.txt",
+    "appliance-id",
+    env_name,
+    "data",
+    "mqtt",
+    "compose.yaml",
+    "mosquitto.conf",
+    "obos-app.yaml",
+    "tls",
+}
+required_portable = {"metadata.txt", "payload.tar.gz.gpg"}
+seen = set()
+regular_files = set()
+unpacked_bytes = 0
+
+try:
+    with tarfile.open(archive, "r:*") as handle:
+        for count, member in enumerate(handle, start=1):
+            if count > max_members:
+                raise ValueError("archive contains too many members")
+            path = pathlib.PurePosixPath(member.name)
+            if (
+                not member.name
+                or path.is_absolute()
+                or member.name.startswith("/")
+                or any(part in {"", ".", ".."} for part in path.parts)
+            ):
+                raise ValueError(f"unsafe archive path: {member.name!r}")
+            normalized = path.as_posix().rstrip("/")
+            if normalized in seen:
+                raise ValueError(f"duplicate archive member: {normalized}")
+            seen.add(normalized)
+            if not (member.isfile() or member.isdir()):
+                raise ValueError(f"unsupported archive member type: {normalized}")
+            if member.isfile():
+                regular_files.add(normalized)
+                unpacked_bytes += member.size
+                if unpacked_bytes > max_bytes:
+                    raise ValueError("archive exceeds the uncompressed size limit")
+            root = path.parts[0]
+            if profile == "backup" and root not in allowed_backup_roots:
+                raise ValueError(f"unexpected backup archive root: {root}")
+            if profile == "portable" and normalized not in required_portable:
+                raise ValueError(f"unexpected portable archive member: {normalized}")
+except (OSError, tarfile.TarError, ValueError) as exc:
+    print(f"unsafe archive: {exc}", file=sys.stderr)
+    raise SystemExit(1)
+
+if profile == "portable" and regular_files != required_portable:
+    print("unsafe archive: portable archive must contain exactly metadata.txt and payload.tar.gz.gpg", file=sys.stderr)
+    raise SystemExit(1)
+if profile not in {"backup", "portable"}:
+    print(f"unsafe archive: unknown validation profile: {profile}", file=sys.stderr)
+    raise SystemExit(1)
+PY
 }
 
 compose() {
@@ -899,6 +984,10 @@ portable_import_stage() {
     echo "portable import stage: sha256sum is required" >&2
     return 1
   }
+  if ! validate_archive_members "${portable_path}" portable; then
+    echo "portable import stage: portable backup contains unsafe members" >&2
+    return 1
+  fi
 
   install -d -m 0700 "${PORTABLE_IMPORT_DIR}"
   stage_dir="$(mktemp -d "${PORTABLE_IMPORT_DIR}/import.XXXXXXXX")"
@@ -924,7 +1013,7 @@ portable_import_stage() {
     return 1
   }
 
-  tar -xf "${portable_path}" -C "${extract_dir}" metadata.txt payload.tar.gz.gpg
+  tar -xf "${portable_path}" --no-same-owner --no-same-permissions -C "${extract_dir}" metadata.txt payload.tar.gz.gpg
   metadata_file="${extract_dir}/metadata.txt"
   payload_file="${extract_dir}/payload.tar.gz.gpg"
   grep -qx 'format=obos-portable-backup-v1' "${metadata_file}" || {
@@ -1031,6 +1120,10 @@ restore_inspect() {
     echo "backup archive not found: ${archive}" >&2
     return 1
   }
+  if ! validate_archive_members "${archive}" backup; then
+    echo "backup archive contains unsafe members" >&2
+    return 1
+  fi
 
   list_file="$(mktemp)"
   if ! tar -tzf "${archive}" > "${list_file}"; then
@@ -1155,7 +1248,7 @@ restore_stage() {
   install -d -m 0700 "${RESTORE_STAGE_DIR}"
   stage_dir="$(mktemp -d "${RESTORE_STAGE_DIR}/restore.XXXXXXXX")"
   chmod 0700 "${stage_dir}"
-  tar -xzf "${archive}" -C "${stage_dir}"
+  tar -xzf "${archive}" --no-same-owner --no-same-permissions -C "${stage_dir}"
   stage_manifest="${stage_dir}/obos-restore-stage.txt"
   staged_at="$(date -u +%Y%m%dT%H%M%SZ)"
   tls_private_keys="missing"

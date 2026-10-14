@@ -1,6 +1,6 @@
 services:
   mosquitto:
-    image: eclipse-mosquitto:2
+    image: eclipse-mosquitto@sha256:38c0da4f2ef84284d47b3b3eeea1cb3bdeabe81ee10caf0cd5c5ff61ee3ea408
     restart: unless-stopped
     init: true
     pids_limit: 128
@@ -51,7 +51,7 @@ services:
       retries: 3
 
   obs:
-    image: ghcr.io/abeggled/openbridgeserver:${OBS_IMAGE_TAG:-latest}
+    image: ghcr.io/abeggled/openbridgeserver@sha256:89bf4189f32f11bd1b08797771899210c3e761efb853acd436d995035edb43e0
     restart: unless-stopped
     init: true
     pids_limit: 256

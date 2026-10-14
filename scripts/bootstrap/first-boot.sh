@@ -11,6 +11,7 @@ TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-mate
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
 ONBOARDING_REQUIRED_FILE="${OBOS_ONBOARDING_REQUIRED_FILE:-${OBOS_STATE_DIR}/onboarding/onboarding-required}"
+ONBOARDING_TOKEN_FILE="${OBOS_ONBOARDING_TOKEN_FILE:-${OBOS_STATE_DIR}/onboarding/setup-token}"
 WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-${OBOS_ETC_DIR}/web.htpasswd}"
 
 secret() {
@@ -41,11 +42,21 @@ refresh_onboarding_window() {
   } > "${ONBOARDING_REQUIRED_FILE}"
   chown obos-agent:obos-agent "${ONBOARDING_REQUIRED_FILE}" 2>/dev/null || true
   chmod 0600 "${ONBOARDING_REQUIRED_FILE}"
+  if [ ! -s "${ONBOARDING_TOKEN_FILE}" ]; then
+    token_tmp="${ONBOARDING_TOKEN_FILE}.$$"
+    secret > "${token_tmp}"
+    chown obos-agent:obos-agent "${token_tmp}" 2>/dev/null || true
+    chmod 0600 "${token_tmp}"
+    mv -f "${token_tmp}" "${ONBOARDING_TOKEN_FILE}"
+  fi
 }
 
 if [ -f "${FIRST_BOOT_MARKER}" ]; then
   if [ ! -f "${WEB_AUTH_FILE}" ]; then
     refresh_onboarding_window
+    if [ -x "${BOOT_TRUST_SCRIPT}" ]; then
+      "${BOOT_TRUST_SCRIPT}"
+    fi
   fi
   exit 0
 fi
@@ -64,7 +75,6 @@ chmod 0644 "${APPLIANCE_ID_FILE}"
 if [ ! -f "${ENV_FILE}" ]; then
   umask 077
   cat > "${ENV_FILE}" <<EOF
-OBS_IMAGE_TAG=latest
 OBS_HTTP_HOST_PORT=127.0.0.1:8080
 OBS_MQTT_HOST_PORT=127.0.0.1:1883
 OBS_MQTT_WS_HOST_PORT=127.0.0.1:9001

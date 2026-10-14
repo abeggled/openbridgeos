@@ -31,6 +31,15 @@ grep -q 'window_basis=agent_start_per_boot_id' scripts/bootstrap/first-boot.sh \
 grep -q 'refresh_onboarding_window' scripts/bootstrap/first-boot.sh \
   || fail "first boot does not reopen onboarding after reboot when no password exists"
 
+grep -q 'ONBOARDING_TOKEN_FILE' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not generate a one-time onboarding token"
+
+grep -q 'setup_token' scripts/agent/obos-agent-http.py \
+  || fail "onboarding endpoint does not verify a one-time setup token"
+
+grep -q 'one-time setup token:' scripts/tls/export-boot-trust-summary.sh \
+  || fail "boot onboarding file does not expose the physical setup token"
+
 ! grep -q 'ConditionPathExists=!/srv/obos/state/first-boot.done' packaging/systemd/obos-first-boot.service \
   || fail "first boot unit prevents onboarding window refresh after reboot"
 

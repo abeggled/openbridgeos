@@ -79,10 +79,10 @@ sudo /usr/lib/obos/mvp-runtime-readiness.sh
 
 See [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).
 
-The web console and `/obos/api/` bridge are protected with per-appliance-instance
-Basic Auth credentials generated on first boot. On headless images, the initial
-credential may be written to the boot-accessible `OBOS-ONBOARDING.txt` file;
-remove that file after onboarding.
+The web console and `/obos/api/` bridge are protected by a server-side GUI
+session. On first boot, the administrator sets the initial password using a
+random one-time setup token. Headless images write that token to the
+boot-accessible `OBOS-ONBOARDING.txt` file; remove that file after onboarding.
 
 ## TLS Trust
 

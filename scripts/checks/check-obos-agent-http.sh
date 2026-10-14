@@ -111,6 +111,8 @@ grep -q 'SESSION_COOKIE = "obos_session"' "${BRIDGE}" \
   || fail "HTTP bridge does not define a GUI session cookie"
 grep -q 'handle_session_login' "${BRIDGE}" \
   || fail "HTTP bridge does not expose session login"
+grep -q 'login-rate-limited' "${BRIDGE}" \
+  || fail "HTTP bridge does not rate-limit failed logins"
 grep -q 'require_session' "${BRIDGE}" \
   || fail "HTTP bridge does not protect API endpoints with sessions"
 if grep -q 'Access-Control-Allow-Origin' "${BRIDGE}"; then
@@ -163,6 +165,7 @@ portable_export_dir="/tmp/obos-portable-exports"
 portable_import_dir="/tmp/obos-portable-imports"
 onboarding_state_dir="/tmp/obos-onboarding-state"
 onboarding_window_state_file="${onboarding_state_dir}/window-state"
+onboarding_token_file="${onboarding_state_dir}/setup-token"
 session_state_dir="/tmp/obos-session-state"
 trust_ca_file="${tmp_dir}/obos-local-ca.crt"
 trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}" "${onboarding_state_dir}" "${session_state_dir}"' EXIT
@@ -543,6 +546,7 @@ mkdir -p "${portable_export_dir}"
 printf 'encrypted portable fixture\n' > "${portable_export_dir}/obos-portable-test.tar"
 mkdir -p "${portable_import_dir}"
 mkdir -p "${onboarding_state_dir}"
+printf 'fixture-setup-token\n' > "${onboarding_token_file}"
 mkdir -p "${session_state_dir}"
 
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
@@ -553,6 +557,7 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
+OBOS_ONBOARDING_TOKEN_FILE="${onboarding_token_file}" \
 OBOS_ONBOARDING_BOOT_ID=self-heal-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
@@ -602,6 +607,7 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
+OBOS_ONBOARDING_TOKEN_FILE="${onboarding_token_file}" \
 OBOS_ONBOARDING_BOOT_ID=expired-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=301 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
@@ -629,6 +635,7 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
+OBOS_ONBOARDING_TOKEN_FILE="${onboarding_token_file}" \
 OBOS_ONBOARDING_BOOT_ID=fresh-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=301 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
@@ -656,6 +663,7 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
+OBOS_ONBOARDING_TOKEN_FILE="${onboarding_token_file}" \
 OBOS_ONBOARDING_BOOT_ID=active-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
@@ -674,9 +682,17 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/onboarding/status |
 status_code="$(curl --silent --output "${tmp_dir}/onboarding-access.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/onboarding/access)"
 [ "${status_code}" = 403 ] || fail "OBS access gate allowed access before onboarding completed"
 
+status_code="$(curl --silent --output "${tmp_dir}/invalid-setup-token.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"password":"correct horse battery staple","setup_token":"wrong-token"}' \
+  http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth)"
+[ "${status_code}" = 403 ] || fail "onboarding accepted an invalid setup token"
+grep -q 'invalid-setup-token' "${tmp_dir}/invalid-setup-token.out" \
+  || fail "invalid onboarding setup token response omitted its error marker"
+
 curl --fail --silent \
   --header 'Content-Type: application/json' \
-  --data '{"password":"correct horse battery staple"}' \
+  --data '{"password":"correct horse battery staple","setup_token":"fixture-setup-token"}' \
   http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth |
   grep -q 'stdout=web auth set: PASS' \
   || fail "onboarding web auth endpoint did not set the initial password"
@@ -693,6 +709,40 @@ rm -f "${onboarding_state_dir}/onboarding-required"
 
 status_code="$(curl --silent --output "${tmp_dir}/completed-access.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/onboarding/access)"
 [ "${status_code}" = 204 ] || fail "OBS access gate remained closed after onboarding completed"
+
+attempt=1
+while [ "${attempt}" -lt 5 ]; do
+  status_code="$(curl -q --silent --output "${tmp_dir}/failed-login-${attempt}.out" --write-out '%{http_code}' \
+    --header 'X-Forwarded-For: 192.0.2.10' \
+    --header 'Content-Type: application/json' \
+    --data '{"username":"admin","password":"wrong password"}' \
+    http://127.0.0.1:18091/obos/api/v1/session/login)"
+  [ "${status_code}" = 401 ] || fail "failed login ${attempt} was not rejected normally"
+  attempt=$((attempt + 1))
+done
+status_code="$(curl -q --silent --dump-header "${tmp_dir}/rate-limit.headers" --output "${tmp_dir}/rate-limit.out" --write-out '%{http_code}' \
+  --header 'X-Forwarded-For: 192.0.2.10' \
+  --header 'Content-Type: application/json' \
+  --data '{"username":"admin","password":"wrong password"}' \
+  http://127.0.0.1:18091/obos/api/v1/session/login)"
+[ "${status_code}" = 429 ] || fail "repeated failed logins were not rate-limited"
+grep -qi '^Retry-After:' "${tmp_dir}/rate-limit.headers" \
+  || fail "rate-limited login response omitted Retry-After"
+grep -q 'login-rate-limited' "${tmp_dir}/rate-limit.out" \
+  || fail "rate-limited login response omitted its error marker"
+status_code="$(curl -q --silent --output "${tmp_dir}/locked-correct-login.out" --write-out '%{http_code}' \
+  --header 'X-Forwarded-For: 192.0.2.10' \
+  --header 'Content-Type: application/json' \
+  --data '{"username":"admin","password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/session/login)"
+[ "${status_code}" = 429 ] || fail "locked client bypassed rate limiting with a correct password"
+curl -q --fail --silent \
+  --header 'X-Forwarded-For: 192.0.2.11' \
+  --header 'Content-Type: application/json' \
+  --data '{"username":"admin","password":"correct horse battery staple"}' \
+  http://127.0.0.1:18091/obos/api/v1/session/login |
+  grep -q 'authenticated=true' \
+  || fail "login rate limit incorrectly blocked a different client"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \
