@@ -33,14 +33,23 @@ jobs:
     steps:
       - name: Checkout exact release commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Install ISO builder
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends live-build xorriso
+      - name: Pull pinned Debian ISO build environment
+        run: docker pull debian:trixie-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f
       - name: Build and validate ISO
         run: |
-          sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
-            scripts/images/build-amd64-installer-iso.sh
+          sudo docker run --rm --privileged \
+            -e OBOS_RELEASE_BUILD=1 \
+            -e OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
+            -v "${GITHUB_WORKSPACE}:/work" \
+            -w /work \
+            debian:trixie-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f \
+            sh -ec '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              apt-get install -y --no-install-recommends ca-certificates git live-build xorriso
+              git config --global --add safe.directory /work
+              sh scripts/images/build-amd64-installer-iso.sh
+            '
           sudo chown -R "$(id -u):$(id -g)" dist/images
           sh scripts/images/check-release-asset-size.sh \
             "dist/images/obos-amd64-installer-${RELEASE_VERSION}.iso"
@@ -70,7 +79,7 @@ jobs:
       - name: Build and validate qcow2 image
         run: |
           sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
-            scripts/images/build-amd64-qcow2.sh
+            sh scripts/images/build-amd64-qcow2.sh
           sudo chown -R "$(id -u):$(id -g)" dist/images
           sh scripts/images/check-release-asset-size.sh \
             "dist/images/obos-amd64-vm-${RELEASE_VERSION}.qcow2"
@@ -103,7 +112,7 @@ jobs:
       - name: Build and validate Raspberry Pi image
         run: |
           sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
-            scripts/images/build-rpi4-arm64-image.sh
+            sh scripts/images/build-rpi4-arm64-image.sh
           sudo chown -R "$(id -u):$(id -g)" dist/images
           sh scripts/images/check-release-asset-size.sh \
             "dist/images/obos-rpi4-arm64-${RELEASE_VERSION}.img.xz"
