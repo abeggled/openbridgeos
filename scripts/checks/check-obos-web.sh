@@ -654,11 +654,12 @@ grep -q '/obos/api/v1/onboarding/status' "${ONBOARDING_JS}" \
 grep -q '/obos/api/v1/onboarding/web-auth' "${ONBOARDING_JS}" \
   || fail "onboarding UI does not set the initial web password"
 
-grep -q 'name="setup_token"' "${ONBOARDING_INDEX}" \
-  || fail "onboarding UI does not require the one-time setup token"
+if grep -q 'name="setup_token"' "${ONBOARDING_INDEX}"; then
+  fail "onboarding UI still requires a setup token"
+fi
 
-grep -q 'setup_token: setupToken' "${ONBOARDING_JS}" \
-  || fail "onboarding UI does not submit the one-time setup token"
+grep -q 'JSON.stringify({ password })' "${ONBOARDING_JS}" \
+  || fail "onboarding UI does not submit browser-selected password only"
 
 grep -q 'location \^~ /obos/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not expose obos-web under /obos/"

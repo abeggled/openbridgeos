@@ -47,7 +47,6 @@ async function checkStatus() {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = new FormData(form);
-  const setupToken = String(data.get("setup_token") || "");
   const password = String(data.get("password") || "");
   const passwordConfirm = String(data.get("password_confirm") || "");
   if (password.length < 12) {
@@ -68,7 +67,7 @@ form.addEventListener("submit", async (event) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ password, setup_token: setupToken }),
+      body: JSON.stringify({ password }),
     });
     const text = await response.text();
     if (!response.ok) {

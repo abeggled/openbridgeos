@@ -11,7 +11,7 @@ TLS_GENERATE_SCRIPT="${OBOS_TLS_GENERATE_SCRIPT:-/usr/lib/obos/generate-tls-mate
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
 ONBOARDING_REQUIRED_FILE="${OBOS_ONBOARDING_REQUIRED_FILE:-${OBOS_STATE_DIR}/onboarding/onboarding-required}"
-ONBOARDING_TOKEN_FILE="${OBOS_ONBOARDING_TOKEN_FILE:-${OBOS_STATE_DIR}/onboarding/setup-token}"
+LEGACY_ONBOARDING_TOKEN_FILE="${OBOS_LEGACY_ONBOARDING_TOKEN_FILE:-${OBOS_STATE_DIR}/onboarding/setup-token}"
 WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-${OBOS_ETC_DIR}/web.htpasswd}"
 PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbridgeserver.conf.pending}"
 ACTIVE_NGINX_CONFIG="${OBOS_ACTIVE_NGINX_CONFIG:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
@@ -73,12 +73,12 @@ EOF
 
 refresh_onboarding_window() {
   install -d -m 0700 -o obos-agent -g obos-agent "${OBOS_STATE_DIR}/onboarding"
-  python3 - "${ONBOARDING_REQUIRED_FILE}" "${ONBOARDING_TOKEN_FILE}" <<'PY'
+  rm -f "${LEGACY_ONBOARDING_TOKEN_FILE}"
+  python3 - "${ONBOARDING_REQUIRED_FILE}" <<'PY'
 from datetime import datetime, timezone
 import grp
 import os
 import pwd
-import secrets
 import sys
 
 owner_uid = pwd.getpwnam("obos-agent").pw_uid
@@ -113,9 +113,7 @@ required = (
     "window_seconds=300\n"
     "window_basis=agent_start_per_boot_id\n"
 ).encode("ascii")
-token = f"{secrets.token_urlsafe(48)}\n".encode("ascii")
 replace_private_file(sys.argv[1], required)
-replace_private_file(sys.argv[2], token)
 PY
 }
 

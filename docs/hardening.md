@@ -81,7 +81,9 @@ exists, the local agent recreates that marker before evaluating the window. The
 SHA-512 password hash is stored in `/etc/obos/web.htpasswd`.
 `/etc/obos/web-admin.env` is a root-only metadata record and contains no
 recoverable password. `OBOS-ONBOARDING.txt` may point to the onboarding URL,
-but it must not contain a password.
+but it must not contain a password or another secret. Initial onboarding is a
+browser-only, first-client-wins flow by product decision. Keep an uninitialized
+appliance on a trusted local network until the administrator password is set.
 
 The default proxy config is installed from:
 

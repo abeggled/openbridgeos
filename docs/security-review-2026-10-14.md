@@ -75,6 +75,13 @@ Korrektur:
 - Token wird nach erfolgreichem Onboarding aus dem Appliance-State gelöscht
 - UI- und API-Negativtest für falsche Tokens
 
+Spätere Produktentscheidung: Diese Korrektur wird ab `2026.10.6-rc.3` bewusst
+zurückgenommen, weil eine Konsolen- oder Bootmedieninteraktion für die
+Zielgruppe nicht praktikabel ist. Das Onboarding funktioniert seither rein im
+Browser innerhalb eines fünfminütigen Fensters pro Boot. Damit besteht erneut
+ein First-Client-wins-Risiko im lokalen Netz; uninitialisierte Appliances dürfen
+daher nur in einem vertrauenswürdigen Einrichtungsnetz betrieben werden.
+
 ### P2-04: Veränderliche Supply-Chain-Referenzen
 
 Die Produktions-Compose-Datei referenzierte `eclipse-mosquitto:2` und

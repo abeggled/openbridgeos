@@ -5,7 +5,7 @@ OBOS_ETC_DIR="${OBOS_ETC_DIR:-/etc/obos}"
 WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-${OBOS_ETC_DIR}/web.htpasswd}"
 WEB_AUTH_INFO_FILE="${OBOS_WEB_AUTH_INFO_FILE:-${OBOS_ETC_DIR}/web-admin.env}"
 ONBOARDING_REQUIRED_FILE="${OBOS_ONBOARDING_REQUIRED_FILE:-/srv/obos/state/onboarding/onboarding-required}"
-ONBOARDING_TOKEN_FILE="${OBOS_ONBOARDING_TOKEN_FILE:-/srv/obos/state/onboarding/setup-token}"
+LEGACY_ONBOARDING_TOKEN_FILE="${OBOS_LEGACY_ONBOARDING_TOKEN_FILE:-/srv/obos/state/onboarding/setup-token}"
 WEB_AUTH_USER="${OBOS_WEB_AUTH_USER:-admin}"
 MODE="${1:-generate}"
 PASSWORD_FILE="${2:-}"
@@ -127,7 +127,7 @@ EOF
 fi
 
 if [ "${MODE}" = set ]; then
-  rm -f "${ONBOARDING_REQUIRED_FILE}" "${ONBOARDING_TOKEN_FILE}"
+  rm -f "${ONBOARDING_REQUIRED_FILE}" "${LEGACY_ONBOARDING_TOKEN_FILE}"
   cat <<'EOF'
 web auth set: PASS
 EOF

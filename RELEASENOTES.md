@@ -1,4 +1,12 @@
 # Changes
+## 2026.10.6-rc.3
+### Breaking changes 🚨
+* Remove the one-time setup-token requirement from initial web onboarding so setup no longer requires console or boot-media access.
+### Fixes 🐞
+* Let non-technical administrators create the first `admin` password entirely in the browser.
+### Operational notes 🔔
+* Keep an uninitialized appliance on a trusted local setup network; the browser-only first-client-wins setup window remains limited to five minutes per boot and closes permanently when the password is set.
+
 ## 2026.10.6-rc.2
 ### Fixes 🐞
 * Keep all OBOS runtime packages in amd64 ISO installations instead of allowing the Debian live installer to remove packages installed by the provisioning hook.

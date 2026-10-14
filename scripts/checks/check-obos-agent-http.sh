@@ -175,7 +175,6 @@ portable_export_dir="/tmp/obos-portable-exports"
 portable_import_dir="/tmp/obos-portable-imports"
 onboarding_state_dir="/tmp/obos-onboarding-state"
 onboarding_window_state_file="${onboarding_state_dir}/window-state"
-onboarding_token_file="${onboarding_state_dir}/setup-token"
 session_state_dir="/tmp/obos-session-state"
 trust_ca_file="${tmp_dir}/obos-local-ca.crt"
 trap 'if [ -n "${server_pid:-}" ]; then kill "${server_pid}" 2>/dev/null || true; fi; rm -rf "${tmp_dir}" "${portable_export_dir}" "${portable_import_dir}" "${onboarding_state_dir}" "${session_state_dir}"' EXIT
@@ -590,7 +589,6 @@ mkdir -p "${portable_export_dir}"
 printf 'encrypted portable fixture\n' > "${portable_export_dir}/obos-portable-test.tar"
 mkdir -p "${portable_import_dir}"
 mkdir -p "${onboarding_state_dir}"
-printf 'fixture-setup-token\n' > "${onboarding_token_file}"
 mkdir -p "${session_state_dir}"
 
 OBOS_AGENT_PATH="${tmp_dir}/obos-agent" \
@@ -601,7 +599,6 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
-OBOS_ONBOARDING_TOKEN_FILE="${onboarding_token_file}" \
 OBOS_ONBOARDING_BOOT_ID=self-heal-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
@@ -651,7 +648,6 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
-OBOS_ONBOARDING_TOKEN_FILE="${onboarding_token_file}" \
 OBOS_ONBOARDING_BOOT_ID=expired-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=301 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
@@ -679,7 +675,6 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
-OBOS_ONBOARDING_TOKEN_FILE="${onboarding_token_file}" \
 OBOS_ONBOARDING_BOOT_ID=fresh-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=301 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
@@ -707,7 +702,6 @@ OBOS_PORTABLE_IMPORT_DIR=/tmp/obos-portable-imports \
 OBOS_ONBOARDING_STATE_DIR="${onboarding_state_dir}" \
 OBOS_ONBOARDING_REQUIRED_FILE="${onboarding_state_dir}/onboarding-required" \
 OBOS_ONBOARDING_WINDOW_STATE_FILE="${onboarding_window_state_file}" \
-OBOS_ONBOARDING_TOKEN_FILE="${onboarding_token_file}" \
 OBOS_ONBOARDING_BOOT_ID=active-boot \
 OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
@@ -728,22 +722,20 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/onboarding/status |
 status_code="$(curl --silent --output "${tmp_dir}/onboarding-access.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/onboarding/access)"
 [ "${status_code}" = 403 ] || fail "OBS access gate allowed access before onboarding completed"
 
-status_code="$(curl --silent --output "${tmp_dir}/invalid-setup-token.out" --write-out '%{http_code}' \
+status_code="$(curl --silent --output "${tmp_dir}/obsolete-setup-token.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \
   --data '{"password":"correct horse battery staple","setup_token":"wrong-token"}' \
   http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth)"
-[ "${status_code}" = 403 ] || fail "onboarding accepted an invalid setup token"
-grep -q 'invalid-setup-token' "${tmp_dir}/invalid-setup-token.out" \
-  || fail "invalid onboarding setup token response omitted its error marker"
+[ "${status_code}" = 400 ] || fail "onboarding accepted the obsolete setup token field"
 
 curl --silent --output "${tmp_dir}/concurrent-onboarding-1.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \
-  --data '{"password":"correct horse battery staple","setup_token":"fixture-setup-token"}' \
+  --data '{"password":"correct horse battery staple"}' \
   http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth > "${tmp_dir}/concurrent-onboarding-1.code" &
 onboarding_pid_1="$!"
 curl --silent --output "${tmp_dir}/concurrent-onboarding-2.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \
-  --data '{"password":"another secure password","setup_token":"fixture-setup-token"}' \
+  --data '{"password":"another secure password"}' \
   http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth > "${tmp_dir}/concurrent-onboarding-2.code" &
 onboarding_pid_2="$!"
 wait "${onboarding_pid_1}"

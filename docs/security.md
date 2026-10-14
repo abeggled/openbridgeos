@@ -84,11 +84,11 @@ before opening the per-boot window. Only a SHA-512 password hash is stored in
 `/etc/obos/web.htpasswd`; the root-only `/etc/obos/web-admin.env` record contains
 account metadata but no password. Headless images may also export
 `OBOS-ONBOARDING.txt` to a boot-accessible partition, but that file must not
-contain a password. Setting the first password additionally requires a random,
-one-time setup token generated locally on first boot. The token is available in
-the boot-accessible onboarding file or from the local console, is never exposed
-by the unauthenticated HTTP status endpoint, and is deleted from appliance state
-as soon as the first password is installed.
+contain a password or another secret. Initial password creation deliberately
+requires no console login or setup token so non-technical administrators can
+complete setup entirely in the browser. The resulting first-client-wins risk is
+bounded by the five-minute per-boot window and the requirement to keep an
+uninitialized appliance on a trusted local setup network.
 
 Normal console login applies a per-client failed-attempt window and temporary
 lockout. nginx overwrites the forwarded client address before proxying through a

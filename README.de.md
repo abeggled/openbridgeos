@@ -113,11 +113,12 @@ Nach dem ersten Start einige Minuten für die Provisionierung warten. Die
 DHCP-Adresse im Router oder Hypervisor ermitteln und
 `https://<Geräte-IP>/obos/onboarding/` öffnen. Eine Zertifikatswarnung ist zu
 erwarten, bis die gerätespezifische OBOS-CA als vertrauenswürdig hinterlegt
-wurde. Den einmaligen Setup-Token aus `OBOS-ONBOARDING.txt` auf der
-boot-zugänglichen Partition verwenden und das Passwort für den Webbenutzer
-`admin` festlegen (mindestens 12 Zeichen). Anschliessend die Onboarding-Datei
-entfernen. Ist das fünfminütige Onboarding-Fenster abgelaufen, öffnet ein
-Neustart der Appliance ein neues Fenster.
+wurde. Das Passwort für den Webbenutzer `admin` direkt im Browser festlegen
+(mindestens 12 Zeichen); eine Konsolenanmeldung oder ein Setup-Token ist nicht
+erforderlich. Die Appliance bis zum Abschluss dieses Schritts nur in einem
+vertrauenswürdigen Einrichtungsnetz betreiben. Ist das fünfminütige
+Onboarding-Fenster abgelaufen, öffnet ein Neustart der Appliance ein neues
+Fenster.
 
 ## Entwicklungsinstallation
 
@@ -152,9 +153,9 @@ Siehe [docs/security-baseline-testplan.md](docs/security-baseline-testplan.md).
 
 Die Weboberfläche und die `/obos/api/` Bridge sind durch eine serverseitige
 GUI-Session geschützt. Beim ersten Boot setzt die Administration das initiale
-Passwort mit einem zufälligen Einmal-Setup-Token. Headless Images schreiben
-diesen Token in die boot-zugängliche Datei `OBOS-ONBOARDING.txt`; diese Datei
-nach dem Onboarding entfernen.
+Passwort in einem reinen Browser-Onboarding. Dieses ist bis zum Setzen des
+ersten Passworts während fünf Minuten pro Boot verfügbar; die Ersteinrichtung
+muss deshalb in einem vertrauenswürdigen lokalen Netz stattfinden.
 
 ## TLS Trust
 
