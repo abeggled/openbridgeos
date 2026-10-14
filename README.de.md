@@ -49,6 +49,76 @@ Siehe [docs/architecture.md](docs/architecture.md),
 [docs/hardening.md](docs/hardening.md) und
 [docs/decisions/0001-target-debian-trixie.md](docs/decisions/0001-target-debian-trixie.md).
 
+## Release-Image installieren
+
+Das passende Artefakt und die zugehörige `.sha256`-Datei unter
+[GitHub Releases](https://github.com/abeggled/openbridgeos/releases)
+herunterladen. Vor der Verwendung die Ausgabe von `sha256sum <Artefakt>` mit
+dem Hash in der heruntergeladenen Prüfsummendatei vergleichen. Bei der
+ISO-Installation und beim Raspberry-Pi-Image wird das gewählte Zielmedium
+gelöscht; deshalb das Ziel sorgfältig prüfen.
+
+### x86_64-Hardware: Installer-ISO
+
+Für einen Mini-PC oder ein anderes dediziertes amd64-System wird
+`obos-amd64-installer-<Version>.iso` verwendet:
+
+1. Die ISO als Image auf einen USB-Stick schreiben; die ISO-Datei nicht bloss
+   auf den Stick kopieren. Das Zielsystem von diesem Stick starten, vorzugsweise
+   im UEFI-Modus.
+2. Im OBOS-Bootmenü **`Start installer`** auswählen. Für eine dauerhafte
+   Installation nicht `Live system (amd64)` wählen; damit startet nur das
+   temporäre Live-System. `Advanced install options` wird nur für Text-,
+   Experten-, barrierefreie oder Rettungsinstallation benötigt.
+3. Den grafischen Debian-Installer abschliessen: Sprache, Region, Tastatur,
+   kabelgebundenes Netzwerk und ein lokales Linux-Administrationskonto
+   festlegen. Für eine dedizierte Appliance die geführte Partitionierung mit
+   der gesamten, richtigen Zielplatte wählen und das Schreiben der Änderungen
+   bestätigen. GRUB bei entsprechender Rückfrage auf dieser Platte
+   installieren.
+4. Nach Abschluss der Installation den USB-Stick entfernen und von der
+   installierten Platte neu starten.
+
+Das lokale Linux-Konto dient der Wiederherstellung direkt am Gerät und ist
+nicht mit dem OBOS-Webbenutzer `admin` identisch.
+
+### x86_64-VM: QCOW2
+
+Für Proxmox oder einen anderen QEMU/KVM-kompatiblen Hypervisor wird
+`obos-amd64-vm-<Version>.qcow2` verwendet:
+
+1. Eine VM mit UEFI-Firmware, mindestens 2 CPU-Kernen, 4 GB RAM, einem
+   gebridgten Netzwerkadapter mit DHCP und ohne Installer-ISO erstellen.
+2. Die QCOW2-Datei als vorhandene Systemplatte importieren, als VirtIO/SCSI
+   einbinden und als erstes Boot-Gerät konfigurieren. Mindestens 16 GB, für den
+   Produktivbetrieb besser 32 GB, zuweisen.
+3. Die VM starten. Es gibt kein Installer-Menü; die vorbereitete Platte startet
+   direkt und führt die First-Boot-Provisionierung aus.
+
+### Raspberry Pi 4+: ARM64-Image
+
+Für einen Raspberry Pi 4, Pi 5 oder ein neueres kompatibles 64-Bit-Board wird
+`obos-rpi4-arm64-<Version>.img.xz` verwendet:
+
+1. Im Raspberry Pi Imager **Use custom** wählen, die komprimierte `.img.xz`-
+   Datei auswählen und auf die vorgesehene SD-Karte, USB-SSD oder das
+   NVMe-Laufwerk schreiben. Alternativ kann Balena Etcher verwendet werden.
+2. Das Medium einsetzen, kabelgebundenes Ethernet anschliessen und den
+   Raspberry Pi einschalten. Es gibt kein Installer-Menü; das Image startet
+   direkt und führt die First-Boot-Provisionierung aus.
+
+### Erste Web-Einrichtung
+
+Nach dem ersten Start einige Minuten für die Provisionierung warten. Die
+DHCP-Adresse im Router oder Hypervisor ermitteln und
+`https://<Geräte-IP>/obos/onboarding/` öffnen. Eine Zertifikatswarnung ist zu
+erwarten, bis die gerätespezifische OBOS-CA als vertrauenswürdig hinterlegt
+wurde. Den einmaligen Setup-Token aus `OBOS-ONBOARDING.txt` auf der
+boot-zugänglichen Partition verwenden und das Passwort für den Webbenutzer
+`admin` festlegen (mindestens 12 Zeichen). Anschliessend die Onboarding-Datei
+entfernen. Ist das fünfminütige Onboarding-Fenster abgelaufen, öffnet ein
+Neustart der Appliance ein neues Fenster.
+
 ## Entwicklungsinstallation
 
 Der erste Entwicklungspfad zielt auf einen frischen Debian-13-Host:
