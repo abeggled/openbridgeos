@@ -40,7 +40,9 @@ finalize_pending_nginx_config() {
   [ -s "${PENDING_NGINX_CONFIG}" ] || return 0
   install -d -m 0755 "$(dirname -- "${ACTIVE_NGINX_CONFIG}")"
   had_previous=false
-  if [ -f "${ACTIVE_NGINX_CONFIG}" ]; then
+  if [ -s "${PREVIOUS_NGINX_CONFIG}" ]; then
+    had_previous=true
+  elif [ -f "${ACTIVE_NGINX_CONFIG}" ]; then
     install -m 0644 "${ACTIVE_NGINX_CONFIG}" "${PREVIOUS_NGINX_CONFIG}"
     had_previous=true
   fi

@@ -12,6 +12,8 @@ OBOS_WEB_DIR="/srv/obos/web"
 OBOS_ONBOARDING_DIR="/srv/obos/onboarding"
 APP_SOURCE="${OBOS_SHARE_DIR}/apps/openbridgeserver"
 PENDING_NGINX_CONFIG="/etc/obos/update/openbridgeserver.conf.pending"
+ACTIVE_NGINX_CONFIG="/etc/nginx/sites-available/obos-openbridgeserver.conf"
+AGENT_HTTP_COMPAT_ENV="/etc/obos/update/agent-http-compat.env"
 
 for required in \
   apps/openbridgeserver/compose.yaml \
@@ -29,6 +31,19 @@ done
 
 install -d -m 0755 "${APP_SOURCE}" "${OBOS_LIB_DIR}" "${OBOS_WEB_DIR}" "${OBOS_ONBOARDING_DIR}"
 install -d -m 0755 /etc/apt/apt.conf.d /etc/docker /etc/logrotate.d /etc/obos/update /etc/nginx/sites-available /etc/sudoers.d /etc/systemd/network /etc/systemd/system
+
+if [ -f "${ACTIVE_NGINX_CONFIG}" ] && grep -Fq 'proxy_pass http://127.0.0.1:8091' "${ACTIVE_NGINX_CONFIG}"; then
+  compat_tmp="$(mktemp "${AGENT_HTTP_COMPAT_ENV}.XXXXXX")"
+  cat > "${compat_tmp}" <<'EOF'
+OBOS_AGENT_HTTP_SOCKET=
+OBOS_AGENT_HTTP_BIND=127.0.0.1
+OBOS_AGENT_HTTP_PORT=8091
+EOF
+  chmod 0600 "${compat_tmp}"
+  mv "${compat_tmp}" "${AGENT_HTTP_COMPAT_ENV}"
+else
+  rm -f "${AGENT_HTTP_COMPAT_ENV}"
+fi
 
 install -m 0644 "${RELEASE_ROOT}/apps/openbridgeserver/compose.yaml" "${APP_SOURCE}/compose.yaml"
 install -m 0644 "${RELEASE_ROOT}/apps/openbridgeserver/mosquitto.conf" "${APP_SOURCE}/mosquitto.conf"

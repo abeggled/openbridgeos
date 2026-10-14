@@ -190,6 +190,10 @@ pending_install_line="$(grep -n 'packaging/nginx/openbridgeserver.conf.*PENDING_
 coordinated_install_line="$(grep -n 'install-openbridgeserver-app.sh.*APP_SOURCE' "${INSTALL_BUNDLE}" | cut -d: -f1)"
 [ "${pending_install_line}" -gt "${coordinated_install_line}" ] \
   || fail "update bundle stages nginx before coordinated files finish installing"
+compat_install_line="$(grep -n 'compat_tmp=.*AGENT_HTTP_COMPAT_ENV' "${INSTALL_BUNDLE}" | cut -d: -f1)"
+agent_unit_install_line="$(grep -n '^for unit in' "${INSTALL_BUNDLE}" | cut -d: -f1)"
+[ "${compat_install_line}" -lt "${agent_unit_install_line}" ] \
+  || fail "update bundle installs agent units before preserving listener compatibility"
 grep -q 'finalize_pending_nginx_config' scripts/bootstrap/first-boot.sh \
   || fail "first boot does not activate staged nginx configuration"
 grep -q 'EnvironmentFile=-/etc/obos/update/agent-http-compat.env' packaging/systemd/obos-agent-http.service \
@@ -249,6 +253,7 @@ grep -q '^proxy_pass http://127.0.0.1:8091;$' "${active_nginx_config}" \
 grep -q '^OBOS_AGENT_HTTP_SOCKET=$' "${agent_http_compat_env}" \
   || fail "first boot did not enable TCP agent compatibility after nginx rollback"
 
+rm -f "${previous_nginx_config}"
 printf 'proxy_pass http://unix:/run/obos-agent-http/agent.sock:;\n' > "${active_nginx_config}"
 printf 'invalid replacement nginx config\n' > "${pending_nginx_config}"
 if PATH="${mock_bin}:${PATH}" \
@@ -267,5 +272,23 @@ grep -q '^proxy_pass http://unix:/run/obos-agent-http/agent.sock:;$' "${active_n
   || fail "first boot did not preserve the prior socket nginx configuration"
 [ ! -e "${agent_http_compat_env}" ] \
   || fail "first boot enabled TCP compatibility for a socket-based nginx rollback"
+
+printf 'proxy_pass http://127.0.0.1:8091;\n' > "${previous_nginx_config}"
+printf 'interrupted invalid nginx config\n' > "${active_nginx_config}"
+printf 'invalid replacement nginx config\n' > "${pending_nginx_config}"
+if PATH="${mock_bin}:${PATH}" \
+  OBOS_TEST_NGINX_FAIL=true \
+  OBOS_ETC_DIR="${first_boot_etc}" \
+  OBOS_STATE_DIR="${first_boot_state}" \
+  OBOS_APP_DIR="${tmp_dir}/app" \
+  OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+  OBOS_AGENT_HTTP_COMPAT_ENV="${agent_http_compat_env}" \
+  sh "${FIRST_BOOT}" >/dev/null 2>&1; then
+  fail "first boot accepted an interrupted invalid nginx activation"
+fi
+grep -q '^proxy_pass http://127.0.0.1:8091;$' "${active_nginx_config}" \
+  || fail "first boot overwrote the known-good nginx recovery copy"
 
 echo "appliance update fixture: PASS"
