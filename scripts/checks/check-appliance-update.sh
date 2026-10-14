@@ -48,6 +48,9 @@ trap 'rm -rf "${tmp_dir}"' EXIT HUP INT TERM
 mock_bin="${tmp_dir}/bin"
 modules_dir="${tmp_dir}/modules"
 apt_log="${tmp_dir}/apt.log"
+policy_log="${tmp_dir}/policy.log"
+policy_rc_d="${tmp_dir}/policy-rc.d"
+restart_inhibit_file="${tmp_dir}/run/inhibit-service-restarts"
 mkdir -p "${mock_bin}" "${modules_dir}/6.12.0-obos"
 
 cat > "${mock_bin}/id" <<'EOF'
@@ -55,8 +58,16 @@ cat > "${mock_bin}/id" <<'EOF'
 [ "${1:-}" = "-u" ] && printf '0\n'
 EOF
 
+cat > "${policy_rc_d}" <<EOF
+#!/bin/sh
+printf 'original-policy-called\\n' >> "${policy_log}"
+exit 0
+EOF
+
 cat > "${mock_bin}/apt-get" <<EOF
 #!/bin/sh
+"${policy_rc_d}" nginx upgrade
+[ "\$?" -eq 101 ] || exit 3
 printf '%s\n' "\$*" >> "${apt_log}"
 EOF
 
@@ -65,7 +76,7 @@ cat > "${mock_bin}/uname" <<'EOF'
 [ "${1:-}" = "-r" ] && printf '6.12.0-obos\n'
 EOF
 
-chmod +x "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname"
+chmod +x "${policy_rc_d}" "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname"
 
 output="$(
   PATH="${mock_bin}:${PATH}" \
@@ -74,6 +85,8 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
+  OBOS_POLICY_RC_D="${policy_rc_d}" \
+  OBOS_SERVICE_RESTART_INHIBIT_FILE="${restart_inhibit_file}" \
   sh "${UPDATE_HOST}"
 )"
 
@@ -87,6 +100,11 @@ grep -q 'DPkg::Lock::Timeout=300 update' "${apt_log}" \
   || fail "APT metadata refresh is missing lock timeout"
 grep -q -- '--no-remove full-upgrade' "${apt_log}" \
   || fail "APT full upgrade is not protected against package removals"
+if [ ! -x "${policy_rc_d}" ] || ! grep -q 'original-policy-called' "${policy_rc_d}"; then
+  fail "existing service restart policy was not restored after APT"
+fi
+[ ! -e "${restart_inhibit_file}" ] \
+  || fail "service restart inhibition marker remained after APT"
 
 touch "${tmp_dir}/reboot-required"
 output="$(
@@ -96,6 +114,8 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
+  OBOS_POLICY_RC_D="${policy_rc_d}" \
+  OBOS_SERVICE_RESTART_INHIBIT_FILE="${restart_inhibit_file}" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_required=true$' \
@@ -112,6 +132,8 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
+  OBOS_POLICY_RC_D="${policy_rc_d}" \
+  OBOS_SERVICE_RESTART_INHIBIT_FILE="${restart_inhibit_file}" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_reason=kernel-changed$' \

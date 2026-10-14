@@ -17,7 +17,7 @@
 * Allow first-boot provisioning to export headless onboarding information to supported boot partitions under the systemd sandbox.
 * Add regression coverage for archive extraction, login throttling, concurrent onboarding, proxy-header spoofing, and release pinning.
 ### Operational notes 🔔
-* Existing appliances reboot after installation so the new agent socket, nginx routing, and service sandbox take effect together. The installer validates the new nginx configuration but intentionally defers its activation until that reboot.
+* Existing appliances reboot after installation so the new agent socket, nginx routing, and service sandbox take effect together. The installer validates the new nginx configuration and temporarily inhibits package-maintainer nginx restarts so activation is safely deferred until that reboot.
 * OpenBridgeServer browser-token storage remains an upstream hardening item.
 
 ### Release verification
