@@ -1815,10 +1815,10 @@ set_release_channel() {
   channel="${1:-}"
   confirm_flag="${2:-}"
   confirm_token="${3:-}"
-  [ "$#" -eq 3 ] && [ "${confirm_flag}" = --confirm ] && [ "${confirm_token}" = set-release-channel ] || {
+  if [ "$#" -ne 3 ] || [ "${confirm_flag}" != --confirm ] || [ "${confirm_token}" != set-release-channel ]; then
     echo "usage: obosctl set-release-channel <stable|prerelease> --confirm set-release-channel" >&2
     return 2
-  }
+  fi
   case "${channel}" in
     stable|prerelease) ;;
     *) echo "release channel must be stable or prerelease" >&2; return 2 ;;
