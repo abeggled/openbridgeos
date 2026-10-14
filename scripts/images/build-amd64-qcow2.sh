@@ -9,6 +9,7 @@ REPO_NAME="$(basename -- "${REPO_ROOT}")"
 IMAGE_REPO_DIR="/opt/openbridgeos/${REPO_NAME}"
 BASE_IMAGE="${OBOS_QCOW2_BASE_IMAGE:-}"
 BASE_IMAGE_SHA256="${OBOS_QCOW2_BASE_IMAGE_SHA256:-}"
+BUILD_RESOLVER_IPV4="${OBOS_QCOW2_BUILD_RESOLVER_IPV4:-}"
 RELEASE_BUILD="${OBOS_RELEASE_BUILD:-0}"
 IMAGE_VERSION="${OBOS_IMAGE_VERSION:-}"
 VALIDATE_IMAGE_PROFILES="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
@@ -158,10 +159,12 @@ verify_release_build_inputs
 [ "${OBOS_QCOW2_BUILDER}" = "virt-customize" ] || fail "profile builder must be virt-customize"
 
 require_command basename
+require_command awk
 require_command cp
 require_command curl
 require_command cut
 require_command date
+require_command getent
 require_command mkdir
 require_command qemu-img
 require_command rm
@@ -171,6 +174,13 @@ require_command virt-customize
 require_command virt-sysprep
 
 mkdir -p "${WORK_DIR}" "${OUTPUT_DIR}"
+
+if [ -z "${BUILD_RESOLVER_IPV4}" ]; then
+  BUILD_RESOLVER_IPV4="$(getent ahostsv4 deb.debian.org | awk 'NR == 1 { print $1; exit }')"
+fi
+case "${BUILD_RESOLVER_IPV4}" in
+  ''|*[!0-9.]*) fail "could not resolve a valid IPv4 build address for deb.debian.org" ;;
+esac
 
 if [ -z "${BASE_IMAGE}" ]; then
   BASE_IMAGE="${WORK_DIR}/base-${OBOS_IMAGE_PROFILE}.qcow2"
@@ -208,7 +218,9 @@ tar -C "${REPO_ROOT}" \
 virt-customize -a "${OUTPUT_IMAGE}" \
   --mkdir /opt/openbridgeos \
   --copy-in "${STAGED_REPO_DIR}:/opt/openbridgeos" \
+  --append-line "/etc/hosts:${BUILD_RESOLVER_IPV4} deb.debian.org # obos-build-resolver" \
   --run-command "cd ${IMAGE_REPO_DIR} && OBOS_DISABLE_SSH=1 OBOS_APPLY_RUNTIME_HARDENING=0 OBOS_IMAGE_BUILD=1 OBOS_VERSION=${IMAGE_ID} sh ${OBOS_PROVISION_SCRIPT} ${IMAGE_REPO_DIR}" \
+  --run-command "sed -i '/# obos-build-resolver$/d' /etc/hosts" \
   --run-command "systemctl enable ${OBOS_FIRST_BOOT_SERVICE}" \
   --run-command "rm -f /srv/obos/state/first-boot.done" \
   --run-command "truncate -s 0 /etc/machine-id" \
