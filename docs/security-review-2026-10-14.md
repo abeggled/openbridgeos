@@ -6,7 +6,7 @@ Geprüfter Stand: `e0e405c8e34f4aca0a15bf2a8e9b74f80ecc8eba` (`main`).
 
 - P1: keine bestätigten Befunde
 - P2: vier bestätigte Befunde, alle im Arbeitsstand korrigiert
-- P3: drei Hardening-Empfehlungen ohne unmittelbare P1/P2-Auswirkung
+- P3: vier verbleibende Hardening-Empfehlungen ohne unmittelbare P1/P2-Auswirkung
 
 Die Einstufung folgt dem operativen Risiko für eine Gebäudeautomations-Appliance:
 P1 bedeutet unmittelbar ausnutzbare vollständige Kompromittierung bei realistischer
@@ -94,12 +94,23 @@ Korrektur:
 1. Die Passwortablage verwendet SHA-512 crypt. Der Online-Angriffsweg ist jetzt
    begrenzt; mittelfristig sollte auf Argon2id oder scrypt mit transparenter
    Migration beim Login umgestellt werden.
-2. Die nginx-Antworten setzen keinen Content-Security-Policy-Header. Der aktuelle
-   Browser-Code verwendet keine dynamischen HTML-Sinks; eine restriktive CSP wäre
-   dennoch sinnvoll, sobald Inline-Annahmen und OBS-Kompatibilität getestet sind.
-3. Die Container laufen ohne User-Namespace-Remapping. `no-new-privileges`,
+2. Die Container laufen ohne User-Namespace-Remapping. `no-new-privileges`,
    begrenzte PIDs, lokale Port-Bindings und schmale Volumes reduzieren das Risiko;
    Rootless Docker oder User-Namespaces bleiben eine spätere Härtungsstufe.
+3. OpenBridgeServer speichert Browser-Tokens im `localStorage`. Diese Korrektur
+   gehört in das separate OpenBridgeServer-Upstream-Projekt; OBOS begrenzt das
+   Risiko inzwischen mit einer restriktiven CSP für seine eigenen `/obos`-Seiten.
+4. Ein globaler `Permissions-Policy`-Header bleibt zurückgestellt, bis die
+   benötigten OpenBridgeServer-Browserfunktionen inventarisiert und im Zielsystem
+   getestet sind.
+
+Bereits umgesetzte P3-Härtungen aus dem externen Penetrationstest:
+
+- HSTS für sämtliche HTTPS-Antworten
+- restriktive, auf `/obos` begrenzte Content-Security-Policy ohne Kompatibilitätsrisiko
+  für die separat ausgelieferte OpenBridgeServer-Oberfläche
+- ausschließlich moderne AEAD-Cipher für TLS 1.2; TLS 1.3 bleibt unverändert aktiv
+- privater Unix-Socket zwischen nginx und Agent-Bridge statt eines TCP-Listeners
 
 ## Verifikation
 

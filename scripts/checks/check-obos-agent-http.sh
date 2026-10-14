@@ -121,14 +121,14 @@ fi
 
 grep -q 'User=obos-agent' "${SERVICE}" \
   || fail "HTTP bridge does not run as obos-agent"
-grep -q 'OBOS_AGENT_HTTP_BIND=127.0.0.1' "${SERVICE}" \
-  || fail "HTTP bridge service is not loopback-only"
+grep -q 'OBOS_AGENT_HTTP_SOCKET=/run/obos-agent-http/agent.sock' "${SERVICE}" \
+  || fail "HTTP bridge service does not use its private Unix socket"
 grep -q 'ProtectSystem=strict' "${SERVICE}" \
   || fail "HTTP bridge service lacks strict filesystem protection"
 grep -q 'MemoryDenyWriteExecute=true' "${SERVICE}" \
   || fail "HTTP bridge service lacks memory hardening"
-grep -q 'SupplementaryGroups=www-data' "${SERVICE}" \
-  || fail "HTTP bridge service cannot read the web auth hash"
+grep -q 'Group=www-data' "${SERVICE}" \
+  || fail "HTTP bridge socket is not restricted to the nginx group"
 grep -q '/srv/obos/apps/openbridgeserver' "${SERVICE}" \
   || fail "HTTP bridge service cannot apply explicitly confirmed restores"
 grep -q '/srv/obos/backups' "${SERVICE}" \
@@ -150,8 +150,16 @@ grep -q 'location /obos/api/v1/onboarding/' "${NGINX_CONF}" \
   || fail "nginx does not expose the onboarding API path"
 grep -q 'auth_basic off;' "${NGINX_CONF}" \
   || fail "nginx does not disable auth for the first onboarding path"
-grep -q 'proxy_pass http://127.0.0.1:8091;' "${NGINX_CONF}" \
-  || fail "nginx does not proxy the API path to the loopback bridge"
+grep -q 'proxy_pass http://unix:/run/obos-agent-http/agent.sock:;' "${NGINX_CONF}" \
+  || fail "nginx does not proxy the API path to the private Unix socket"
+grep -q 'Strict-Transport-Security "max-age=31536000" always;' "${NGINX_CONF}" \
+  || fail "nginx does not enable HSTS"
+# shellcheck disable=SC2016
+grep -q 'Content-Security-Policy \$obos_content_security_policy always;' "${NGINX_CONF}" \
+  || fail "nginx does not set the scoped OBOS CSP"
+if grep -q 'AES128-SHA\|AES256-SHA' "${NGINX_CONF}"; then
+  fail "nginx enables legacy TLS 1.2 CBC cipher suites"
+fi
 # shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent-http.py" "${OBOS_LIB_DIR}/obos-agent-http.py' scripts/bootstrap/provision-debian.sh \
   || fail "HTTP bridge is not installed during provisioning"
@@ -489,6 +497,9 @@ RESPONSE
   web-auth-set)
     [ "${2:-}" != "" ] || exit 2
     [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "web-auth-set" ] || exit 2
+    sleep "${OBOS_TEST_WEB_AUTH_SET_DELAY:-0}"
+    : > "${OBOS_WEB_AUTH_FILE:?}"
+    rm -f "${OBOS_ONBOARDING_REQUIRED_FILE:?}"
     cat <<'RESPONSE'
 format=obos-agent-response-v1
 action=web-auth-set
@@ -669,6 +680,8 @@ OBOS_ONBOARDING_BOOT_AGE_SECONDS=60 \
 OBOS_WEB_AUTH_FILE="${onboarding_state_dir}/web.htpasswd" \
 OBOS_SESSION_DIR="${session_state_dir}" \
 OBOS_SESSION_COOKIE_SECURE=false \
+OBOS_LOGIN_LOCKOUT_SECONDS=1 \
+OBOS_TEST_WEB_AUTH_SET_DELAY=1 \
 OBOS_TRUST_CA_FILE="${trust_ca_file}" \
 "${PYTHON_BIN}" "${BRIDGE}" &
 server_pid="$!"
@@ -690,12 +703,27 @@ status_code="$(curl --silent --output "${tmp_dir}/invalid-setup-token.out" --wri
 grep -q 'invalid-setup-token' "${tmp_dir}/invalid-setup-token.out" \
   || fail "invalid onboarding setup token response omitted its error marker"
 
-curl --fail --silent \
+curl --silent --output "${tmp_dir}/concurrent-onboarding-1.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \
   --data '{"password":"correct horse battery staple","setup_token":"fixture-setup-token"}' \
-  http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth |
-  grep -q 'stdout=web auth set: PASS' \
-  || fail "onboarding web auth endpoint did not set the initial password"
+  http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth > "${tmp_dir}/concurrent-onboarding-1.code" &
+onboarding_pid_1="$!"
+curl --silent --output "${tmp_dir}/concurrent-onboarding-2.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"password":"another secure password","setup_token":"fixture-setup-token"}' \
+  http://127.0.0.1:18091/obos/api/v1/onboarding/web-auth > "${tmp_dir}/concurrent-onboarding-2.code" &
+onboarding_pid_2="$!"
+wait "${onboarding_pid_1}"
+wait "${onboarding_pid_2}"
+{
+  cat "${tmp_dir}/concurrent-onboarding-1.code"
+  echo
+  cat "${tmp_dir}/concurrent-onboarding-2.code"
+  echo
+} | sort > "${tmp_dir}/concurrent-onboarding.codes"
+printf '200\n410\n' > "${tmp_dir}/expected-onboarding.codes"
+cmp -s "${tmp_dir}/expected-onboarding.codes" "${tmp_dir}/concurrent-onboarding.codes" \
+  || fail "concurrent onboarding requests were not serialized for one-time consumption"
 
 status_code="$(curl --silent --output "${tmp_dir}/unauth-status.out" --write-out '%{http_code}' http://127.0.0.1:18091/obos/api/v1/actions/status-summary)"
 [ "${status_code}" = 401 ] || fail "agent API allowed unauthenticated status access"
@@ -736,13 +764,15 @@ status_code="$(curl -q --silent --output "${tmp_dir}/locked-correct-login.out" -
   --data '{"username":"admin","password":"correct horse battery staple"}' \
   http://127.0.0.1:18091/obos/api/v1/session/login)"
 [ "${status_code}" = 429 ] || fail "locked client bypassed rate limiting with a correct password"
-curl -q --fail --silent \
+status_code="$(curl -q --silent --output "${tmp_dir}/spoofed-forwarded-login.out" --write-out '%{http_code}' \
   --header 'X-Forwarded-For: 192.0.2.11' \
   --header 'Content-Type: application/json' \
   --data '{"username":"admin","password":"correct horse battery staple"}' \
-  http://127.0.0.1:18091/obos/api/v1/session/login |
-  grep -q 'authenticated=true' \
-  || fail "login rate limit incorrectly blocked a different client"
+  http://127.0.0.1:18091/obos/api/v1/session/login)"
+[ "${status_code}" = 429 ] \
+  || fail "direct TCP client bypassed rate limiting with a spoofed proxy header"
+
+sleep 2
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

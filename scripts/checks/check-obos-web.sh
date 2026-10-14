@@ -668,7 +668,7 @@ grep -q 'return 404;' packaging/nginx/openbridgeserver.conf \
 grep -q 'auth_request /_obos_obs_access;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx does not gate OBS access on completed onboarding"
 
-grep -q 'proxy_pass http://127.0.0.1:8091/obos/api/v1/onboarding/access;' packaging/nginx/openbridgeserver.conf \
+grep -q 'proxy_pass http://unix:/run/obos-agent-http/agent.sock:/obos/api/v1/onboarding/access;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx onboarding access gate is not backed by the local agent"
 
 grep -q 'error_page 401 403 = @obos_onboarding_required;' packaging/nginx/openbridgeserver.conf \

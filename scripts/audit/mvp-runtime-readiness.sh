@@ -9,7 +9,8 @@ FAILURE_MESSAGES=
 OBOSCTL="${OBOSCTL:-/usr/bin/obosctl}"
 OBOS_AGENT="${OBOS_AGENT:-/usr/bin/obos-agent}"
 SECURITY_BASELINE_SCRIPT="${OBOS_SECURITY_BASELINE_SCRIPT:-/usr/lib/obos/security-baseline.sh}"
-AGENT_HTTP_URL="${OBOS_AGENT_HTTP_URL:-http://127.0.0.1:8091/obos/api/v1/actions/status-summary}"
+AGENT_HTTP_URL="${OBOS_AGENT_HTTP_URL:-http://localhost/obos/api/v1/actions/status-summary}"
+AGENT_HTTP_SOCKET="${OBOS_AGENT_HTTP_SOCKET-/run/obos-agent-http/agent.sock}"
 
 pass() {
   PASS_COUNT=$((PASS_COUNT + 1))
@@ -133,7 +134,11 @@ check_summary_format() {
 
 check_http_agent_auth() {
   if command -v curl >/dev/null 2>&1; then
-    status="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null)"
+    if [ -n "${AGENT_HTTP_SOCKET}" ]; then
+      status="$(curl --unix-socket "${AGENT_HTTP_SOCKET}" --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null)"
+    else
+      status="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "${AGENT_HTTP_URL}" 2>/dev/null)"
+    fi
     exit_code=$?
   else
     status=

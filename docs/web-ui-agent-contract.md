@@ -433,6 +433,7 @@ encryption. Import staging decrypts only into private staging and still does not
 apply restores to the live appliance.
 
 The bridge is installed as `obos-agent-http.service`. It binds to
-`127.0.0.1:8091`, is proxied by nginx below `/obos/api/`, exposes the documented
+the private `/run/obos-agent-http/agent.sock` Unix socket, is proxied by nginx
+below `/obos/api/`, exposes the documented
 read-only endpoint set, and allows only documented confirmed mutations. Unknown
 or structurally invalid requests return `obos-agent-http-error-v1`.

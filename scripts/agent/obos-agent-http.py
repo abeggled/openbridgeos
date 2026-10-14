@@ -9,12 +9,14 @@ import json
 import os
 import re
 import secrets
+import stat
 import subprocess
 import sys
 import tempfile
 import threading
 import time
 from http.cookies import SimpleCookie
+from socketserver import ThreadingMixIn, UnixStreamServer
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 
@@ -57,6 +59,7 @@ PORTABLE_EXPORT_FILENAME_RE = re.compile(r"^obos-portable-[A-Za-z0-9T._-]+\.tar$
 PORTABLE_UPLOAD_FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.tar$")
 LOGIN_FAILURES = {}
 LOGIN_FAILURES_LOCK = threading.Lock()
+ONBOARDING_LOCK = threading.Lock()
 
 if min(
     LOGIN_FAILURE_LIMIT,
@@ -135,7 +138,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
     server_version = "obos-agent-http/0.1"
 
     def log_message(self, fmt, *args):
-        sys.stderr.write("%s - - [%s] %s\n" % (self.client_address[0], self.log_date_time_string(), fmt % args))
+        peer = self.client_address[0] if isinstance(self.client_address, tuple) else "local-unix"
+        sys.stderr.write("%s - - [%s] %s\n" % (peer, self.log_date_time_string(), fmt % args))
 
     def send_text(self, status, body, headers=None):
         encoded = body.encode("utf-8")
@@ -317,9 +321,9 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
 
     def login_client_key(self):
         """Return the nginx-supplied client IP, falling back to the TCP peer."""
-        peer = self.client_address[0]
+        peer = self.client_address[0] if isinstance(self.client_address, tuple) else "local-unix"
         forwarded = self.headers.get("X-Forwarded-For", "")
-        if peer in {"127.0.0.1", "::1"} and forwarded:
+        if getattr(self.server, "trusted_proxy_headers", False) and forwarded:
             candidate = forwarded.split(",", 1)[0].strip()
             try:
                 return str(ipaddress.ip_address(candidate))
@@ -780,6 +784,10 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         if parsed.query:
             self.send_text(400, error_envelope("query-not-allowed", "query strings are not accepted"))
             return
+        with ONBOARDING_LOCK:
+            self.handle_onboarding_web_auth_locked()
+
+    def handle_onboarding_web_auth_locked(self):
         if not self.onboarding_required():
             self.send_text(410, error_envelope("onboarding-closed", "initial web onboarding is not active"))
             return
@@ -990,10 +998,32 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         self.send_text(405, error_envelope("method-not-allowed", "CORS preflight is not enabled"))
 
 
+class ThreadingUnixHTTPServer(ThreadingMixIn, UnixStreamServer):
+    daemon_threads = True
+
+
 def main():
-    if BIND_HOST != "127.0.0.1":
-        raise SystemExit("OBOS_AGENT_HTTP_BIND must be 127.0.0.1")
-    server = ThreadingHTTPServer((BIND_HOST, BIND_PORT), AgentBridgeHandler)
+    socket_path = os.environ.get("OBOS_AGENT_HTTP_SOCKET", "")
+    if socket_path:
+        if not os.path.isabs(socket_path):
+            raise SystemExit("OBOS_AGENT_HTTP_SOCKET must be an absolute path")
+        socket_dir = os.path.dirname(socket_path)
+        os.makedirs(socket_dir, mode=0o750, exist_ok=True)
+        try:
+            current = os.lstat(socket_path)
+            if not stat.S_ISSOCK(current.st_mode):
+                raise SystemExit("OBOS_AGENT_HTTP_SOCKET exists and is not a socket")
+            os.unlink(socket_path)
+        except FileNotFoundError:
+            pass
+        server = ThreadingUnixHTTPServer(socket_path, AgentBridgeHandler)
+        server.trusted_proxy_headers = True
+        os.chmod(socket_path, 0o660)
+    else:
+        if BIND_HOST != "127.0.0.1":
+            raise SystemExit("OBOS_AGENT_HTTP_BIND must be 127.0.0.1")
+        server = ThreadingHTTPServer((BIND_HOST, BIND_PORT), AgentBridgeHandler)
+        server.trusted_proxy_headers = False
     server.serve_forever()
 
 

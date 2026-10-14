@@ -91,8 +91,9 @@ by the unauthenticated HTTP status endpoint, and is deleted from appliance state
 as soon as the first password is installed.
 
 Normal console login applies a per-client failed-attempt window and temporary
-lockout. nginx overwrites the forwarded client address before proxying to the
-loopback-only agent, so remote clients cannot select another rate-limit bucket.
+lockout. nginx overwrites the forwarded client address before proxying through a
+private Unix socket. Direct TCP fallback does not trust forwarding headers, so
+untrusted local callers cannot select another rate-limit bucket.
 
 MQTT remains bound to localhost by default:
 

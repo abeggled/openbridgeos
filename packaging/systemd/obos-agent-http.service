@@ -5,10 +5,11 @@ After=network.target obos-first-boot.service
 [Service]
 Type=simple
 User=obos-agent
-Group=obos-agent
-SupplementaryGroups=www-data
-Environment=OBOS_AGENT_HTTP_BIND=127.0.0.1
-Environment=OBOS_AGENT_HTTP_PORT=8091
+Group=www-data
+SupplementaryGroups=obos-agent
+Environment=OBOS_AGENT_HTTP_SOCKET=/run/obos-agent-http/agent.sock
+RuntimeDirectory=obos-agent-http
+RuntimeDirectoryMode=0750
 ExecStart=/usr/bin/python3 /usr/lib/obos/obos-agent-http.py
 Restart=on-failure
 RestartSec=5s

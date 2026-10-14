@@ -34,21 +34,50 @@ uuid() {
 
 refresh_onboarding_window() {
   install -d -m 0700 -o obos-agent -g obos-agent "${OBOS_STATE_DIR}/onboarding"
-  {
-    echo "format=obos-onboarding-required-v1"
-    echo "created_at=$(date -u +%Y%m%dT%H%M%SZ)"
-    echo "window_seconds=300"
-    echo "window_basis=agent_start_per_boot_id"
-  } > "${ONBOARDING_REQUIRED_FILE}"
-  chown obos-agent:obos-agent "${ONBOARDING_REQUIRED_FILE}" 2>/dev/null || true
-  chmod 0600 "${ONBOARDING_REQUIRED_FILE}"
-  if [ ! -s "${ONBOARDING_TOKEN_FILE}" ]; then
-    token_tmp="${ONBOARDING_TOKEN_FILE}.$$"
-    secret > "${token_tmp}"
-    chown obos-agent:obos-agent "${token_tmp}" 2>/dev/null || true
-    chmod 0600 "${token_tmp}"
-    mv -f "${token_tmp}" "${ONBOARDING_TOKEN_FILE}"
-  fi
+  python3 - "${ONBOARDING_REQUIRED_FILE}" "${ONBOARDING_TOKEN_FILE}" <<'PY'
+from datetime import datetime, timezone
+import grp
+import os
+import pwd
+import secrets
+import sys
+
+owner_uid = pwd.getpwnam("obos-agent").pw_uid
+owner_gid = grp.getgrnam("obos-agent").gr_gid
+
+
+def replace_private_file(target, content):
+    parent, name = os.path.split(target)
+    directory = os.open(parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        try:
+            os.unlink(name, dir_fd=directory)
+        except FileNotFoundError:
+            pass
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+        descriptor = os.open(name, flags, 0o600, dir_fd=directory)
+        try:
+            os.write(descriptor, content)
+            os.fchmod(descriptor, 0o600)
+            os.fchown(descriptor, owner_uid, owner_gid)
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    finally:
+        os.close(directory)
+
+
+created_at = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+required = (
+    "format=obos-onboarding-required-v1\n"
+    f"created_at={created_at}\n"
+    "window_seconds=300\n"
+    "window_basis=agent_start_per_boot_id\n"
+).encode("ascii")
+token = f"{secrets.token_urlsafe(48)}\n".encode("ascii")
+replace_private_file(sys.argv[1], required)
+replace_private_file(sys.argv[2], token)
+PY
 }
 
 if [ -f "${FIRST_BOOT_MARKER}" ]; then

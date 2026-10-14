@@ -34,6 +34,12 @@ grep -q 'refresh_onboarding_window' scripts/bootstrap/first-boot.sh \
 grep -q 'ONBOARDING_TOKEN_FILE' scripts/bootstrap/first-boot.sh \
   || fail "first boot does not generate a one-time onboarding token"
 
+grep -q 'os.O_NOFOLLOW' scripts/bootstrap/first-boot.sh \
+  || fail "first boot onboarding token creation does not reject symlinks"
+
+grep -q -- '-/boot -/boot/efi -/boot/firmware' packaging/systemd/obos-first-boot.service \
+  || fail "first boot sandbox does not permit writing the physical onboarding file"
+
 grep -q 'setup_token' scripts/agent/obos-agent-http.py \
   || fail "onboarding endpoint does not verify a one-time setup token"
 
@@ -122,7 +128,7 @@ grep -q 'clear_other_sessions' scripts/agent/obos-agent-http.py \
 grep -q 'require_session' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not protect API calls with a session"
 
-grep -q 'SupplementaryGroups=www-data' packaging/systemd/obos-agent-http.service \
+grep -q 'Group=www-data' packaging/systemd/obos-agent-http.service \
   || fail "HTTP bridge cannot read nginx htpasswd group file"
 
 grep -q '/srv/obos/apps/openbridgeserver' packaging/systemd/obos-agent-http.service \
@@ -1215,8 +1221,8 @@ grep -q 'location \^~ /obos/' packaging/nginx/openbridgeserver.conf \
 grep -q 'location /obos/api/' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not expose obos agent API path"
 
-grep -q 'proxy_pass http://127.0.0.1:8091;' packaging/nginx/openbridgeserver.conf \
-  || fail "nginx reverse proxy does not target localhost obos agent HTTP bridge"
+grep -q 'proxy_pass http://unix:/run/obos-agent-http/agent.sock:;' packaging/nginx/openbridgeserver.conf \
+  || fail "nginx reverse proxy does not target the private obos agent Unix socket"
 
 grep -q 'root /srv/obos/web;' packaging/nginx/openbridgeserver.conf \
   || fail "nginx reverse proxy does not serve obos-web assets"
