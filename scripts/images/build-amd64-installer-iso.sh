@@ -78,9 +78,9 @@ mkdir -p "${BUILD_DIR}"
     --mode debian \
     --distribution "${OBOS_DEBIAN_RELEASE}" \
     --architectures amd64 \
-    --archive-areas "main non-free-firmware" \
+    --archive-areas "$(printf '%s' "${OBOS_DEBIAN_COMPONENTS}" | tr ',' ' ')" \
     --binary-image iso-hybrid \
-    --bootloaders "grub-pc,grub-efi" \
+    --bootloaders "${OBOS_ISO_BOOTLOADERS}" \
     --debian-installer live \
     --debian-installer-gui true \
     --uefi-secure-boot auto \
