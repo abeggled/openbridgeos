@@ -54,9 +54,12 @@ health endpoint and restricted to a short, display-safe version token. It is
 `unknown` when OBS is stopped, unreachable, or returns an invalid value.
 
 `obos-release-update-v1` includes the installed version, latest signed version,
-availability state, and bounded `release_note_NNN` lines. Notes are returned
-only after Minisign verification of the manifest and SHA-256 verification of
-the notes asset. The browser renders them as text, never HTML.
+availability state, version boundaries, and bounded `release_note_NNN` lines.
+Only Markdown release sections newer than the installed version and no newer
+than the available version are returned. Notes are exposed only after Minisign
+verification of the manifest and SHA-256 verification of the notes asset. The
+browser renders a small allowlisted Markdown subset by creating DOM text nodes;
+raw HTML is never interpreted.
 
 `obos-backup-summary-v1` includes latest-backup inspection status and whether the
 latest backup manifest records secrets, logs, and TLS private key material.

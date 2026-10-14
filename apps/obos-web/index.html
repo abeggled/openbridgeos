@@ -104,9 +104,17 @@
             <span>OBOS release <button class="help-button" type="button" aria-label="Help for OBOS release update" data-help-title="OBOS release update" data-help="Checks the latest GitHub release for a signed in-place update bundle. The appliance installs it only after its Minisign signature and archive checksum pass.">?</button></span>
             <strong data-agent-field="update-summary:last_update_obos_release_status">pending</strong>
           </article>
-          <article>
-            <span>Release channel</span>
+          <article class="release-channel-card">
+            <span>Release channel <button class="help-button" type="button" aria-label="Help for release channel" data-help-title="Release channel" data-help="Stable follows normal signed releases. Prerelease follows the newest signed GitHub prerelease. Every update must pass the same Minisign and checksum verification.">?</button></span>
             <strong data-agent-field="release-channel-summary:release_channel">pending</strong>
+            <div class="control-group channel-controls">
+              <select id="release-channel" aria-label="Update channel">
+                <option value="stable">Stable</option>
+                <option value="prerelease">Prerelease</option>
+              </select>
+              <button type="button" data-mutation-action="set-release-channel" data-confirm="set-release-channel" data-mutation-status-target="release-channel">Apply</button>
+            </div>
+            <small data-mutation-status="release-channel">ready</small>
           </article>
           <article>
             <span>Installed OBOS</span>
@@ -138,93 +146,17 @@
           </article>
         </div>
         <section class="release-preview" aria-labelledby="release-preview-title">
-          <div class="panel-heading">
-            <h3 id="release-preview-title">Release notes <button class="help-button" type="button" aria-label="Help for release notes" data-help-title="Signed release notes" data-help="These notes are downloaded from the selected GitHub release channel and accepted only when their checksum is covered by the valid Minisign-signed update manifest. They are shown before update confirmation.">?</button></h3>
-            <div class="control-group">
-              <label for="release-channel">Update channel</label>
-              <select id="release-channel" aria-label="Update channel">
-                <option value="stable">Stable</option>
-                <option value="prerelease">Prerelease</option>
-              </select>
-              <button type="button" data-mutation-action="set-release-channel" data-confirm="set-release-channel" data-mutation-status-target="release-channel">Apply Channel</button>
-              <strong data-mutation-status="release-channel">ready</strong>
-            </div>
-          </div>
-          <pre data-release-notes>No signed release notes are available.</pre>
+          <h3 id="release-preview-title">Changes available for this appliance <button class="help-button" type="button" aria-label="Help for release notes" data-help-title="Signed release notes" data-help="Shows only signed release-note sections newer than the installed OBOS version and no newer than the selected available release. Markup is rendered without executable HTML.">?</button></h3>
+          <div class="release-notes markup-content" data-release-notes>No signed release notes are available.</div>
         </section>
       </section>
 
       <section class="grid" aria-label="Operational panels">
-        <article class="panel">
+        <article class="panel panel-host">
           <div class="panel-heading">
-            <h2>Backups <button class="help-button" type="button" aria-label="Help for backups" data-help-title="Backups" data-help="Creates appliance-local backups containing OBS data, MQTT state, configuration, appliance identity, and TLS private material. Portable exports add passphrase-based encryption for transfer.">?</button></h2>
+            <h2>Host Settings <button class="help-button" type="button" aria-label="Help for host settings" data-help-title="Host Settings" data-help="Set a short hostname and optional domain to form the system FQDN. Host identity changes do not silently replace certificates; use Renew Leaf afterward to issue a certificate containing the new DNS name.">?</button></h2>
             <div class="button-row">
-              <button type="button" data-mutation-action="backup" data-confirm="backup" data-mutation-status-target="backup">Create Backup</button>
-              <div class="control-group">
-                <input id="portable-passphrase" type="password" autocomplete="new-password" placeholder="export passphrase" aria-label="Portable export passphrase">
-                <button type="button" data-mutation-action="portable-export" data-confirm="portable-export" data-mutation-status-target="portable-export" data-mutation-backup-from="backup-summary:latest_backup">Portable Export</button>
-                <a class="download-link" href="#" data-portable-download hidden>Download</a>
-              </div>
-            </div>
-          </div>
-          <dl>
-            <div><dt>Latest backup</dt><dd data-agent-field="backup-summary:latest_backup_present">pending</dd></div>
-            <div><dt>Backup count</dt><dd data-agent-field="backup-list:backup_count">pending</dd></div>
-            <div><dt>Inspection</dt><dd data-agent-field="backup-summary:latest_backup_inspection">pending</dd></div>
-            <div><dt>Retention candidates</dt><dd data-agent-field="backup-prune-plan:delete_candidate_count">pending</dd></div>
-            <div><dt>Backup action</dt><dd data-mutation-status="backup">ready</dd></div>
-            <div><dt>Portable export</dt><dd data-mutation-status="portable-export">ready</dd></div>
-          </dl>
-        </article>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <h2>Restore <button class="help-button" type="button" aria-label="Help for restore" data-help-title="Restore" data-help="Restore is staged first and never applied directly from this web console. Inspect the staged result and use an explicitly confirmed CLI apply step.">?</button></h2>
-            <div class="button-row">
-              <button type="button" data-mutation-action="restore-stage" data-confirm="restore-stage" data-mutation-status-target="restore-stage" data-mutation-backup-from="backup-summary:latest_backup">Stage Latest</button>
-              <div class="control-group">
-                <input id="portable-import-file" type="file" accept=".tar,application/x-tar" aria-label="Portable backup file">
-                <button type="button" data-upload-portable>Upload Portable</button>
-              </div>
-              <div class="control-group">
-                <input id="portable-import-passphrase" type="password" autocomplete="new-password" placeholder="import passphrase" aria-label="Portable import passphrase">
-                <button type="button" data-mutation-action="portable-import-stage" data-confirm="portable-import-stage" data-mutation-status-target="portable-import" data-mutation-portable-from="portable-import-upload:portable_backup">Stage Portable</button>
-              </div>
-            </div>
-          </div>
-          <dl>
-            <div><dt>Stage directory</dt><dd data-agent-field="restore-stage-summary:stage_dir_present">pending</dd></div>
-            <div><dt>Staged restores</dt><dd data-agent-field="restore-stage-summary:stage_count">pending</dd></div>
-            <div><dt>Apply plan</dt><dd data-agent-field="restore-apply-plan:format">not selected</dd></div>
-            <div><dt>Restore action</dt><dd data-mutation-status="restore-stage">ready</dd></div>
-            <div><dt>Portable import</dt><dd data-mutation-status="portable-import">ready</dd></div>
-          </dl>
-        </article>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <h2>MQTT Exposure <button class="help-button" type="button" aria-label="Help for MQTT exposure" data-help-title="MQTT Exposure" data-help="MQTT is localhost-only by default. Enable LAN only when external clients require it, and restrict the source CIDR whenever possible.">?</button></h2>
-            <div class="button-row">
-              <div class="control-group">
-                <input id="mqtt-source-cidr" type="text" inputmode="text" autocomplete="off" placeholder="source CIDR" aria-label="MQTT source CIDR">
-                <button type="button" data-mutation-action="mqtt-enable-lan" data-confirm="mqtt-enable-lan" data-mutation-status-target="mqtt">Enable LAN</button>
-              </div>
-              <button type="button" data-mutation-action="mqtt-disable-lan" data-confirm="mqtt-disable-lan" data-mutation-status-target="mqtt">Disable LAN</button>
-            </div>
-          </div>
-          <dl>
-            <div><dt>Plain listener</dt><dd data-agent-field="mqtt-summary:mqtt_host_port">pending</dd></div>
-            <div><dt>WebSocket listener</dt><dd data-agent-field="mqtt-summary:mqtt_ws_host_port">pending</dd></div>
-            <div><dt>Firewall source</dt><dd data-agent-field="mqtt-summary:firewall_source">pending</dd></div>
-            <div><dt>MQTT action</dt><dd data-mutation-status="mqtt">ready</dd></div>
-          </dl>
-        </article>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <h2>Host Basics <button class="help-button" type="button" aria-label="Help for host basics" data-help-title="Host Basics" data-help="Set a short hostname and optional domain to form the system FQDN. Host identity changes do not silently replace certificates; use Renew Leaf afterward to issue a certificate containing the new DNS name.">?</button></h2>
-            <div class="button-row">
-              <div class="control-group">
+              <div class="control-group stack-mobile">
                 <input id="host-name" type="text" inputmode="text" autocomplete="off" placeholder="hostname" aria-label="Hostname">
                 <input id="host-domain" type="text" inputmode="text" autocomplete="off" placeholder="domain (optional)" aria-label="Domain">
                 <button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Set Host Identity</button>
@@ -247,7 +179,7 @@
           </dl>
         </article>
 
-        <article class="panel">
+        <article class="panel panel-tls">
           <div class="panel-heading">
             <h2>TLS Trust <button class="help-button" type="button" aria-label="Help for TLS trust" data-help-title="TLS Trust" data-help="TLS material and the public Root CA download are prepared automatically during first boot and after certificate renewal. Renew Leaf preserves the Root CA while immediately issuing a new server certificate for the current host identity and primary network addresses.">?</button></h2>
             <div class="button-row">
@@ -272,6 +204,71 @@
           </dl>
         </article>
 
+        <article class="panel panel-service">
+          <div class="panel-heading">
+            <h2>MQTT Service <button class="help-button" type="button" aria-label="Help for MQTT service" data-help-title="MQTT Service" data-help="MQTT is localhost-only by default. Enable LAN only when external clients require it, and restrict the source CIDR whenever possible.">?</button></h2>
+            <div class="button-row">
+              <div class="control-group">
+                <input id="mqtt-source-cidr" type="text" inputmode="text" autocomplete="off" placeholder="source CIDR" aria-label="MQTT source CIDR">
+                <button type="button" data-mutation-action="mqtt-enable-lan" data-confirm="mqtt-enable-lan" data-mutation-status-target="mqtt">Enable LAN</button>
+              </div>
+              <button type="button" data-mutation-action="mqtt-disable-lan" data-confirm="mqtt-disable-lan" data-mutation-status-target="mqtt">Disable LAN</button>
+            </div>
+          </div>
+          <dl>
+            <div><dt>Plain listener</dt><dd data-agent-field="mqtt-summary:mqtt_host_port">pending</dd></div>
+            <div><dt>WebSocket listener</dt><dd data-agent-field="mqtt-summary:mqtt_ws_host_port">pending</dd></div>
+            <div><dt>Firewall source</dt><dd data-agent-field="mqtt-summary:firewall_source">pending</dd></div>
+            <div><dt>MQTT action</dt><dd data-mutation-status="mqtt">ready</dd></div>
+          </dl>
+        </article>
+
+        <article class="panel panel-backup">
+          <div class="panel-heading">
+            <h2>Backups <button class="help-button" type="button" aria-label="Help for backups" data-help-title="Backups" data-help="Creates appliance-local backups containing OBS data, MQTT state, configuration, appliance identity, and TLS private material. Portable exports add passphrase-based encryption for transfer.">?</button></h2>
+            <div class="button-row">
+              <button type="button" data-mutation-action="backup" data-confirm="backup" data-mutation-status-target="backup">Create Backup</button>
+              <div class="control-group">
+                <input id="portable-passphrase" type="password" autocomplete="new-password" placeholder="export passphrase" aria-label="Portable export passphrase">
+                <button type="button" data-mutation-action="portable-export" data-confirm="portable-export" data-mutation-status-target="portable-export" data-mutation-backup-from="backup-summary:latest_backup">Portable Export</button>
+                <a class="download-link" href="#" data-portable-download hidden>Download</a>
+              </div>
+            </div>
+          </div>
+          <dl>
+            <div><dt>Latest backup</dt><dd data-agent-field="backup-summary:latest_backup_present">pending</dd></div>
+            <div><dt>Backup count</dt><dd data-agent-field="backup-list:backup_count">pending</dd></div>
+            <div><dt>Inspection</dt><dd data-agent-field="backup-summary:latest_backup_inspection">pending</dd></div>
+            <div><dt>Retention candidates</dt><dd data-agent-field="backup-prune-plan:delete_candidate_count">pending</dd></div>
+            <div><dt>Backup action</dt><dd data-mutation-status="backup">ready</dd></div>
+            <div><dt>Portable export</dt><dd data-mutation-status="portable-export">ready</dd></div>
+          </dl>
+        </article>
+
+        <article class="panel panel-restore">
+          <div class="panel-heading">
+            <h2>Restore <button class="help-button" type="button" aria-label="Help for restore" data-help-title="Restore" data-help="Restore is staged first and never applied directly from this web console. Inspect the staged result and use an explicitly confirmed CLI apply step.">?</button></h2>
+            <div class="button-row">
+              <button type="button" data-mutation-action="restore-stage" data-confirm="restore-stage" data-mutation-status-target="restore-stage" data-mutation-backup-from="backup-summary:latest_backup">Stage Latest</button>
+              <div class="control-group stack-mobile">
+                <input id="portable-import-file" type="file" accept=".tar,application/x-tar" aria-label="Portable backup file">
+                <button type="button" data-upload-portable>Upload Portable</button>
+              </div>
+              <div class="control-group">
+                <input id="portable-import-passphrase" type="password" autocomplete="new-password" placeholder="import passphrase" aria-label="Portable import passphrase">
+                <button type="button" data-mutation-action="portable-import-stage" data-confirm="portable-import-stage" data-mutation-status-target="portable-import" data-mutation-portable-from="portable-import-upload:portable_backup">Stage Portable</button>
+              </div>
+            </div>
+          </div>
+          <dl>
+            <div><dt>Stage directory</dt><dd data-agent-field="restore-stage-summary:stage_dir_present">pending</dd></div>
+            <div><dt>Staged restores</dt><dd data-agent-field="restore-stage-summary:stage_count">pending</dd></div>
+            <div><dt>Apply plan</dt><dd data-agent-field="restore-apply-plan:format">not selected</dd></div>
+            <div><dt>Restore action</dt><dd data-mutation-status="restore-stage">ready</dd></div>
+            <div><dt>Portable import</dt><dd data-mutation-status="portable-import">ready</dd></div>
+          </dl>
+        </article>
+
       </section>
     </main>
     <dialog class="help-dialog" data-help-dialog aria-labelledby="help-dialog-title">
@@ -289,7 +286,7 @@
           <h2 id="confirmation-dialog-title" data-confirm-dialog-title>Continue?</h2>
         </div>
       </div>
-      <p id="confirmation-dialog-body" data-confirm-dialog-body></p>
+      <div id="confirmation-dialog-body" class="confirmation-dialog-body markup-content" data-confirm-dialog-body></div>
       <form method="dialog" class="confirmation-actions">
         <button type="submit" value="cancel" autofocus>Cancel</button>
         <button class="primary-action" type="submit" value="confirm" data-confirm-dialog-accept>Continue</button>

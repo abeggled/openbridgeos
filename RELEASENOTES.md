@@ -1,4 +1,16 @@
 # Changes
+## 2026.10.3
+### New features ✨
+* Render signed release notes as safe, structured markup in both the overview and update confirmation dialog.
+* Show only release-note sections newer than the installed version through the selected available release.
+### Fixes 🐞
+* Move update-channel controls into the Release Channel status card.
+* Reorder operational panels as Host Settings, TLS Trust, MQTT Service, Backups, and Restore.
+* Keep help controls beside their headings and make panel actions wrap within the viewport across desktop and mobile breakpoints.
+* Improve select, release-note, dialog, and control-group styling for a more consistent administration console.
+### Security fixes 🔒
+* Render release-note markup with DOM text nodes and an allowlisted parser; raw HTML is never interpreted.
+
 ## 2026.10.2
 ### Breaking changes 🚨
 * none
