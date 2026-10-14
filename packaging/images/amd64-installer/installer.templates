@@ -24,5 +24,8 @@ Description: Installation complete - save the recovery password
  .
  Its individual password is: ${OBOS_PASSWORD}
  .
+ Current IPv4 address: ${IP_ADDRESS}
+ Web console: ${WEB_URL}
+ .
  Save this password before rebooting. After browser onboarding, both the root and obos recovery passwords can be revealed or rotated under System Diagnostics. They are separate from the web user admin.
 

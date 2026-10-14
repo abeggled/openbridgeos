@@ -61,4 +61,6 @@ db_get obos-installer/confirm-single-disk
 [ "${RET}" = true ] || exit 1
 
 db_set partman-auto/disk "${target_disk}"
+db_set grub-installer/bootdev "${target_disk}"
+db_fset grub-installer/bootdev seen true
 

@@ -75,9 +75,13 @@ Für einen Mini-PC oder ein anderes dediziertes amd64-System wird
    GRUB für BIOS oder UEFI automatisch. Bei mehreren geeigneten Platten wählt
    der Installer niemals selbst: die übrigen Platten trennen oder über
    **Advanced install options** die Zielplatte ausdrücklich auswählen.
-4. Das auf dem Abschlussbildschirm angezeigte individuelle Recovery-Passwort
-   des Benutzers `obos` speichern. Den USB-Stick entfernen und von der
-   installierten Platte neu starten.
+4. Nach dieser Bestätigung sind keine Eingaben für Debian-Benutzer, Passwort,
+   NTP, Partitionierung oder GRUB-Ziel erforderlich. Der Installer
+   synchronisiert die Zeit über `pool.ntp.org`.
+5. Das individuelle Recovery-Passwort des Benutzers `obos` sowie die auf dem
+   Abschlussbildschirm angezeigte DHCP-IPv4-Adresse und Web-Console-URL
+   notieren. Den USB-Stick entfernen und von der installierten Platte neu
+   starten.
 
 Jede Installation erzeugt unterschiedliche Passwörter für die Linux-Benutzer
 `root` und `obos`. Diese sind vom OBOS-Webbenutzer `admin` getrennt. Nach dem
