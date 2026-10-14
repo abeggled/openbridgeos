@@ -47,7 +47,6 @@ install -m 0644 "${RELEASE_ROOT}/packaging/docker/daemon.json" /etc/docker/daemo
 install -m 0644 "${RELEASE_ROOT}/packaging/logrotate/obos-agent" /etc/logrotate.d/obos-agent
 install -m 0644 "${RELEASE_ROOT}/packaging/nftables/obos.nft" /etc/nftables.conf
 install -m 0644 "${RELEASE_ROOT}/packaging/network/20-obos-dhcp.network" /etc/systemd/network/20-obos-dhcp.network
-install -m 0644 "${RELEASE_ROOT}/packaging/nginx/openbridgeserver.conf" "${PENDING_NGINX_CONFIG}"
 install -m 0440 "${RELEASE_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent
 install -m 0644 "${RELEASE_ROOT}/packaging/sysctl/99-obos-hardening.conf" /etc/sysctl.d/99-obos-hardening.conf
 
@@ -87,6 +86,7 @@ for unit in \
 done
 
 "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh" "${APP_SOURCE}"
+install -m 0644 "${RELEASE_ROOT}/packaging/nginx/openbridgeserver.conf" "${PENDING_NGINX_CONFIG}"
 systemctl daemon-reload
 validation_config="$(mktemp /run/obos-nginx-validation.XXXXXX)"
 trap 'rm -f "${validation_config}"' EXIT HUP INT TERM

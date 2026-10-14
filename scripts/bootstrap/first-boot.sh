@@ -51,14 +51,18 @@ finalize_pending_nginx_config() {
     else
       rm -f "${ACTIVE_NGINX_CONFIG}"
     fi
-    compat_tmp="$(mktemp "${AGENT_HTTP_COMPAT_ENV}.XXXXXX")"
-    cat > "${compat_tmp}" <<'EOF'
+    if [ "${had_previous}" = true ] && grep -Fq 'proxy_pass http://127.0.0.1:8091' "${ACTIVE_NGINX_CONFIG}"; then
+      compat_tmp="$(mktemp "${AGENT_HTTP_COMPAT_ENV}.XXXXXX")"
+      cat > "${compat_tmp}" <<'EOF'
 OBOS_AGENT_HTTP_SOCKET=
 OBOS_AGENT_HTTP_BIND=127.0.0.1
 OBOS_AGENT_HTTP_PORT=8091
 EOF
-    chmod 0600 "${compat_tmp}"
-    mv "${compat_tmp}" "${AGENT_HTTP_COMPAT_ENV}"
+      chmod 0600 "${compat_tmp}"
+      mv "${compat_tmp}" "${AGENT_HTTP_COMPAT_ENV}"
+    else
+      rm -f "${AGENT_HTTP_COMPAT_ENV}"
+    fi
     echo "first boot: pending nginx configuration failed validation" >&2
     return 1
   fi
