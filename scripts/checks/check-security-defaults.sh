@@ -354,7 +354,7 @@ grep -q 'only encrypted portable export artifacts are downloadable' scripts/agen
 grep -q 'download-forbidden' scripts/agent/obos-agent-http.py \
   || fail "HTTP bridge does not reject forbidden portable download paths"
 
-grep -q 'gnupg' scripts/bootstrap/provision-debian.sh \
+grep -qx 'gnupg' packaging/images/obos-runtime-packages.list.chroot \
   || fail "provisioning does not install GnuPG for portable exports"
 
 grep -q 'portable-import-plan)' scripts/obosctl \
@@ -655,10 +655,10 @@ grep -q 'sudo visudo -cf packaging/sudoers/obos-agent' .github/workflows/ci.yml 
 grep -q 'sudo logrotate --debug packaging/logrotate/obos-agent' .github/workflows/ci.yml \
   || fail "CI does not validate obos-agent logrotate syntax"
 
-grep -q 'sudo' scripts/bootstrap/provision-debian.sh \
+grep -qx 'sudo' packaging/images/obos-runtime-packages.list.chroot \
   || fail "provisioning does not install sudo for the agent privilege boundary"
 
-grep -q 'logrotate' scripts/bootstrap/provision-debian.sh \
+grep -qx 'logrotate' packaging/images/obos-runtime-packages.list.chroot \
   || fail "provisioning does not install logrotate for agent audit logs"
 
 grep -q 'useradd .*obos-agent' scripts/bootstrap/provision-debian.sh \
@@ -1000,19 +1000,19 @@ grep -q 'TLS_GENERATE_SCRIPT=' scripts/bootstrap/first-boot.sh \
 grep -q 'BOOT_TRUST_SCRIPT=' scripts/bootstrap/first-boot.sh \
   || fail "boot-accessible TLS trust summary is not exported on first boot"
 
-grep -q 'nginx-light' scripts/bootstrap/provision-debian.sh \
+grep -qx 'nginx-light' packaging/images/obos-runtime-packages.list.chroot \
   || fail "nginx reverse proxy package is not installed during provisioning"
 
-grep -q 'docker-cli' scripts/bootstrap/provision-debian.sh \
+grep -qx 'docker-cli' packaging/images/obos-runtime-packages.list.chroot \
   || fail "Docker CLI package is not installed during provisioning"
 
-grep -q 'docker.io' scripts/bootstrap/provision-debian.sh \
+grep -qx 'docker.io' packaging/images/obos-runtime-packages.list.chroot \
   || fail "Docker daemon package is not installed during provisioning"
 
-grep -q 'unattended-upgrades' scripts/bootstrap/provision-debian.sh \
+grep -qx 'unattended-upgrades' packaging/images/obos-runtime-packages.list.chroot \
   || fail "unattended security upgrade package is not installed during provisioning"
 
-grep -q 'minisign' scripts/bootstrap/provision-debian.sh \
+grep -qx 'minisign' packaging/images/obos-runtime-packages.list.chroot \
   || fail "release signature verifier is not installed during provisioning"
 
 grep -q 'scripts/update/update-host.sh' scripts/bootstrap/provision-debian.sh \

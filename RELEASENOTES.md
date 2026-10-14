@@ -1,4 +1,9 @@
 # Changes
+## 2026.10.6-rc.2
+### Fixes 🐞
+* Keep all OBOS runtime packages in amd64 ISO installations instead of allowing the Debian live installer to remove packages installed by the provisioning hook.
+* Validate during every ISO build that Python, nginx, and the complete shared runtime package set remain in the installed-system package manifest.
+
 ## 2026.10.6-rc.1
 ### New features ✨
 * Publish a bootable amd64 installer ISO, an amd64 qcow2 VM disk, and a compressed Raspberry Pi 4+ arm64 SD/USB/NVMe image with every release.

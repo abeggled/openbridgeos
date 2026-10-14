@@ -11,6 +11,8 @@ IMAGE_VERSION="${OBOS_IMAGE_VERSION:-}"
 VALIDATOR="${REPO_ROOT}/scripts/images/validate-image-profiles.sh"
 PREFLIGHT="${REPO_ROOT}/scripts/images/check-amd64-iso-build-host.sh"
 MANIFEST_CHECK="${REPO_ROOT}/scripts/images/check-amd64-iso-manifest.sh"
+RUNTIME_CHECK="${REPO_ROOT}/scripts/images/check-amd64-iso-runtime.sh"
+RUNTIME_PACKAGES="${REPO_ROOT}/packaging/images/obos-runtime-packages.list.chroot"
 
 fail() { echo "amd64 installer ISO build failed: $1" >&2; exit 1; }
 
@@ -28,6 +30,8 @@ repo_dirty() {
 
 [ "$(id -u)" -eq 0 ] || fail "image build must run as root"
 [ -f "${PROFILE_FILE}" ] || fail "missing image profile: ${PROFILE_FILE}"
+[ -x "${RUNTIME_CHECK}" ] || fail "missing ISO runtime checker: ${RUNTIME_CHECK}"
+[ -s "${RUNTIME_PACKAGES}" ] || fail "missing runtime package list: ${RUNTIME_PACKAGES}"
 (cd "${REPO_ROOT}" && OBOS_IMAGE_PROFILE_FILE="${PROFILE_FILE}" sh "${PREFLIGHT}")
 sh "${VALIDATOR}" "${PROFILE_FILE}" >/dev/null
 case "${RELEASE_BUILD}" in 0|1) ;; *) fail "OBOS_RELEASE_BUILD must be 0 or 1" ;; esac
@@ -98,11 +102,9 @@ cat > "${BUILD_DIR}/config/package-lists/obos.list.chroot" <<'EOF'
 live-boot
 live-config
 systemd-sysv
-ca-certificates
-curl
-gnupg
 openssh-client
 EOF
+cp "${RUNTIME_PACKAGES}" "${BUILD_DIR}/config/package-lists/obos-runtime.list.chroot"
 cat > "${HOOK_FILE}" <<EOF
 #!/bin/sh
 set -eu
@@ -116,6 +118,7 @@ EOF
 chmod 0755 "${HOOK_FILE}"
 
 (cd "${BUILD_DIR}" && lb build)
+sh "${RUNTIME_CHECK}" "${BUILD_DIR}" "${RUNTIME_PACKAGES}"
 [ -s "${BUILD_DIR}/live-image-amd64.hybrid.iso" ] || fail "live-build ISO output missing"
 mv "${BUILD_DIR}/live-image-amd64.hybrid.iso" "${OUTPUT_IMAGE}"
 sha256sum "${OUTPUT_IMAGE}" > "${CHECKSUM_FILE}"

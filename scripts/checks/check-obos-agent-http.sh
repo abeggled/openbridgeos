@@ -165,7 +165,7 @@ fi
 # shellcheck disable=SC2016
 grep -q 'install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent-http.py" "${OBOS_LIB_DIR}/obos-agent-http.py' scripts/bootstrap/provision-debian.sh \
   || fail "HTTP bridge is not installed during provisioning"
-grep -q 'python3-minimal' scripts/bootstrap/provision-debian.sh \
+grep -qx 'python3-minimal' packaging/images/obos-runtime-packages.list.chroot \
   || fail "provisioning does not install Python runtime for HTTP bridge"
 grep -q 'obos-agent-http.service' scripts/bootstrap/provision-debian.sh \
   || fail "HTTP bridge service is not provisioned"

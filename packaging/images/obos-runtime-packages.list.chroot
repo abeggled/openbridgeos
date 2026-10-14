@@ -1,0 +1,14 @@
+ca-certificates
+curl
+docker-cli
+docker-compose
+docker.io
+gnupg
+logrotate
+minisign
+nftables
+nginx-light
+openssl
+python3-minimal
+sudo
+unattended-upgrades
