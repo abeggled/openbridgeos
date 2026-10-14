@@ -1,4 +1,8 @@
 # Changes
+## 2026.10.5
+### Fixes 🐞
+* Publish the final Host Settings layout on a forward-only version so appliances running `2026.10.4-rc.1` can return to the stable channel without manual intervention.
+
 ## 2026.10.4
 ### Fixes 🐞
 * Separate Host Identity and Timezone controls into two full-width rows for clearer administration.
