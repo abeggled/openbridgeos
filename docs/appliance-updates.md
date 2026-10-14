@@ -18,6 +18,12 @@ The OBS backup supports application-data recovery. It does not roll back Debian
 packages or installed OBOS system files. A future A/B system design would be
 required for atomic whole-system rollback.
 
+Release changes that must become active together at boot, such as a coordinated
+agent-listener and nginx-upstream migration, are validated and staged below
+`/etc/obos/update/`. `obos-first-boot.service` activates the pending nginx
+configuration before nginx starts. The currently running proxy configuration is
+left untouched throughout download, package upgrades, and health checks.
+
 ## GitHub Release Assets
 
 An updatable GitHub release publishes these assets with fixed names:

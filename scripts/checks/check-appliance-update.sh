@@ -47,27 +47,18 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT HUP INT TERM
 mock_bin="${tmp_dir}/bin"
 modules_dir="${tmp_dir}/modules"
+current_modules_dir="${tmp_dir}/modules-current"
 apt_log="${tmp_dir}/apt.log"
-policy_log="${tmp_dir}/policy.log"
-policy_rc_d="${tmp_dir}/policy-rc.d"
-restart_inhibit_file="${tmp_dir}/run/inhibit-service-restarts"
-mkdir -p "${mock_bin}" "${modules_dir}/6.12.0-obos"
+pending_nginx_config="${tmp_dir}/openbridgeserver.conf.pending"
+mkdir -p "${mock_bin}" "${modules_dir}/6.12.0-obos" "${current_modules_dir}/6.12.0-obos"
 
 cat > "${mock_bin}/id" <<'EOF'
 #!/bin/sh
 [ "${1:-}" = "-u" ] && printf '0\n'
 EOF
 
-cat > "${policy_rc_d}" <<EOF
-#!/bin/sh
-printf 'original-policy-called\\n' >> "${policy_log}"
-exit 0
-EOF
-
 cat > "${mock_bin}/apt-get" <<EOF
 #!/bin/sh
-"${policy_rc_d}" nginx upgrade
-[ "\$?" -eq 101 ] || exit 3
 printf '%s\n' "\$*" >> "${apt_log}"
 EOF
 
@@ -76,7 +67,7 @@ cat > "${mock_bin}/uname" <<'EOF'
 [ "${1:-}" = "-r" ] && printf '6.12.0-obos\n'
 EOF
 
-chmod +x "${policy_rc_d}" "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname"
+chmod +x "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname"
 
 output="$(
   PATH="${mock_bin}:${PATH}" \
@@ -85,8 +76,7 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
-  OBOS_POLICY_RC_D="${policy_rc_d}" \
-  OBOS_SERVICE_RESTART_INHIBIT_FILE="${restart_inhibit_file}" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
   sh "${UPDATE_HOST}"
 )"
 
@@ -100,11 +90,6 @@ grep -q 'DPkg::Lock::Timeout=300 update' "${apt_log}" \
   || fail "APT metadata refresh is missing lock timeout"
 grep -q -- '--no-remove full-upgrade' "${apt_log}" \
   || fail "APT full upgrade is not protected against package removals"
-if [ ! -x "${policy_rc_d}" ] || ! grep -q 'original-policy-called' "${policy_rc_d}"; then
-  fail "existing service restart policy was not restored after APT"
-fi
-[ ! -e "${restart_inhibit_file}" ] \
-  || fail "service restart inhibition marker remained after APT"
 
 touch "${tmp_dir}/reboot-required"
 output="$(
@@ -114,8 +99,7 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
-  OBOS_POLICY_RC_D="${policy_rc_d}" \
-  OBOS_SERVICE_RESTART_INHIBIT_FILE="${restart_inhibit_file}" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_required=true$' \
@@ -132,12 +116,27 @@ output="$(
   OBOS_MODULES_DIR="${modules_dir}" \
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
-  OBOS_POLICY_RC_D="${policy_rc_d}" \
-  OBOS_SERVICE_RESTART_INHIBIT_FILE="${restart_inhibit_file}" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_reason=kernel-changed$' \
   || fail "newly installed kernel does not require reboot"
+
+printf 'staged nginx configuration\n' > "${pending_nginx_config}"
+output="$(
+  PATH="${mock_bin}:${PATH}" \
+  OBOS_APT_GET=apt-get \
+  OBOS_UNAME=uname \
+  OBOS_MODULES_DIR="${current_modules_dir}" \
+  OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
+  OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
+  OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  sh "${UPDATE_HOST}"
+)"
+printf '%s\n' "${output}" | grep -q '^reboot_required=true$' \
+  || fail "staged nginx configuration does not require reboot"
+printf '%s\n' "${output}" | grep -q '^reboot_reason=obos-release-pending$' \
+  || fail "staged nginx configuration reboot reason is missing"
 
 release_output="$(
   PATH="${mock_bin}:${PATH}" \
@@ -175,6 +174,15 @@ grep -q 'release archive contains unsafe paths' "${UPDATE_RELEASE}" \
   || fail "release updater does not reject unsafe archive paths"
 grep -q '/etc/obos/version' "${INSTALL_BUNDLE}" \
   || fail "update bundle installer does not record the installed OBOS version"
+grep -q 'PENDING_NGINX_CONFIG="/etc/obos/update/openbridgeserver.conf.pending"' "${INSTALL_BUNDLE}" \
+  || fail "update bundle installer does not stage reboot-dependent nginx configuration"
+# shellcheck disable=SC2016
+grep -Fq 'include ${PENDING_NGINX_CONFIG};' "${INSTALL_BUNDLE}" \
+  || fail "update bundle installer does not validate the staged nginx configuration"
+grep -q 'finalize_pending_nginx_config' scripts/bootstrap/first-boot.sh \
+  || fail "first boot does not activate staged nginx configuration"
+grep -q '/etc/nginx/sites-available' packaging/systemd/obos-first-boot.service \
+  || fail "first boot sandbox cannot activate staged nginx configuration"
 if grep -q 'systemctl reload nginx.service' "${INSTALL_BUNDLE}"; then
   fail "update bundle installer activates reboot-dependent nginx changes before reboot"
 fi

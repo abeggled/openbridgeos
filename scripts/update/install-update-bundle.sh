@@ -11,6 +11,7 @@ OBOS_SHARE_DIR="/usr/share/obos"
 OBOS_WEB_DIR="/srv/obos/web"
 OBOS_ONBOARDING_DIR="/srv/obos/onboarding"
 APP_SOURCE="${OBOS_SHARE_DIR}/apps/openbridgeserver"
+PENDING_NGINX_CONFIG="/etc/obos/update/openbridgeserver.conf.pending"
 
 for required in \
   apps/openbridgeserver/compose.yaml \
@@ -46,7 +47,7 @@ install -m 0644 "${RELEASE_ROOT}/packaging/docker/daemon.json" /etc/docker/daemo
 install -m 0644 "${RELEASE_ROOT}/packaging/logrotate/obos-agent" /etc/logrotate.d/obos-agent
 install -m 0644 "${RELEASE_ROOT}/packaging/nftables/obos.nft" /etc/nftables.conf
 install -m 0644 "${RELEASE_ROOT}/packaging/network/20-obos-dhcp.network" /etc/systemd/network/20-obos-dhcp.network
-install -m 0644 "${RELEASE_ROOT}/packaging/nginx/openbridgeserver.conf" /etc/nginx/sites-available/obos-openbridgeserver.conf
+install -m 0644 "${RELEASE_ROOT}/packaging/nginx/openbridgeserver.conf" "${PENDING_NGINX_CONFIG}"
 install -m 0440 "${RELEASE_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent
 install -m 0644 "${RELEASE_ROOT}/packaging/sysctl/99-obos-hardening.conf" /etc/sysctl.d/99-obos-hardening.conf
 
@@ -89,7 +90,19 @@ done
 printf '%s\n' "${VERSION}" > /etc/obos/version
 chmod 0644 /etc/obos/version
 systemctl daemon-reload
-nginx -t
+validation_config="$(mktemp /run/obos-nginx-validation.XXXXXX)"
+trap 'rm -f "${validation_config}"' EXIT HUP INT TERM
+cat > "${validation_config}" <<EOF
+pid /run/obos-nginx-validation.pid;
+events {}
+http {
+  include /etc/nginx/mime.types;
+  include ${PENDING_NGINX_CONFIG};
+}
+EOF
+nginx -t -c "${validation_config}"
+rm -f "${validation_config}"
+trap - EXIT HUP INT TERM
 
 echo "format=obos-update-bundle-install-v1"
 echo "version=${VERSION}"
