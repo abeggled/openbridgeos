@@ -1,4 +1,14 @@
 # Changes
+## 2026.10.6-rc.5
+### Fixes 🐞
+* Run host package updates against an isolated, signed HTTPS Debian source list so stale installer `cdrom:` entries can no longer block an in-place update.
+* Recognize Deb822 installer-media fields with indentation or variant capitalization when cleaning the persistent APT configuration.
+* Start each appliance-update log with the current attempt instead of repeating failures from earlier attempts in the Action card.
+### Security fixes 🔒
+* Disable all supplemental APT source parts during the privileged host upgrade, preventing unrecognized install-media or third-party source files from influencing that transaction.
+### Operational notes 🔔
+* Appliances on RC.3 or a partially installed RC.4 can install RC.5 directly from the prerelease channel by selecting **Update Appliance** again; no console repair is required.
+
 ## 2026.10.6-rc.4
 ### New features ✨
 * Start the amd64 appliance installer automatically after a five-second BIOS or UEFI countdown while retaining explicit advanced and rescue options.

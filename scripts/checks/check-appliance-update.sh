@@ -59,16 +59,18 @@ current_modules_dir="${tmp_dir}/modules-current"
 apt_log="${tmp_dir}/apt.log"
 pending_nginx_config="${tmp_dir}/openbridgeserver.conf.pending"
 apt_etc_dir="${tmp_dir}/apt"
+runtime_source_file="${tmp_dir}/run/obos-debian.sources"
 mkdir -p "${mock_bin}" "${modules_dir}/6.12.0-obos" "${current_modules_dir}/6.12.0-obos"
 mkdir -p "${apt_etc_dir}/sources.list.d"
+printf '%s\n' 'VERSION_CODENAME=trixie' > "${tmp_dir}/os-release"
 
 cat > "${apt_etc_dir}/sources.list" <<'EOF'
-deb cdrom:[Debian GNU/Linux 13 _Trixie_]/ trixie main
+deb cdrom://[Debian GNU/Linux 13 _Trixie_ - Snapshot amd64 LIVE/INSTALL Binary 20261014-11:35] trixie main
 deb https://deb.debian.org/debian trixie main
 EOF
 cat > "${apt_etc_dir}/sources.list.d/mixed.sources" <<'EOF'
 Types: deb
-URIs: cdrom:[Debian GNU/Linux 13 _Trixie_]
+  URIs: cdrom:[Debian GNU/Linux 13 _Trixie_]
 Suites: trixie
 Components: main
 
@@ -110,6 +112,8 @@ output="$(
   OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
   OBOS_DISABLE_INSTALL_MEDIA_SOURCES="${UPDATE_HOST%/update-host.sh}/disable-install-media-sources.sh" \
   OBOS_APT_ETC_DIR="${apt_etc_dir}" \
+  OBOS_APT_RUNTIME_SOURCE_FILE="${runtime_source_file}" \
+  OBOS_OS_RELEASE_FILE="${tmp_dir}/os-release" \
   sh "${UPDATE_HOST}"
 )"
 
@@ -119,11 +123,15 @@ printf '%s\n' "${output}" | grep -q '^os_packages_updated=true$' \
   || fail "host package success missing"
 printf '%s\n' "${output}" | grep -q '^reboot_required=false$' \
   || fail "unchanged kernel unexpectedly requires reboot"
-grep -q 'DPkg::Lock::Timeout=300 update' "${apt_log}" \
+grep -Eq 'DPkg::Lock::Timeout=300 .* update$' "${apt_log}" \
   || fail "APT metadata refresh is missing lock timeout"
 grep -q -- '--no-remove full-upgrade' "${apt_log}" \
   || fail "APT full upgrade is not protected against package removals"
-if grep -R -Eq '^[[:space:]]*deb(-src)?[[:space:]].*cdrom:|^URIs:.*cdrom:' "${apt_etc_dir}"; then
+grep -Fq "Dir::Etc::sourcelist=${runtime_source_file}" "${apt_log}" \
+  || fail "APT does not use the isolated runtime source list"
+grep -Fq 'Dir::Etc::sourceparts=-' "${apt_log}" \
+  || fail "APT still reads additional source files"
+if grep -R -Eiq '^[[:space:]]*deb(-src)?[[:space:]].*cdrom:|^[[:space:]]*URIs[[:space:]]*:.*cdrom:' "${apt_etc_dir}"; then
   fail "installer CD-ROM APT source was not disabled before update"
 fi
 grep -Fq 'https://deb.debian.org/debian' "${apt_etc_dir}/sources.list" \
@@ -134,14 +142,16 @@ grep -Fq 'https://security.debian.org/debian-security' "${apt_etc_dir}/sources.l
 fallback_apt_etc_dir="${tmp_dir}/fallback-apt"
 mkdir -p "${fallback_apt_etc_dir}/sources.list.d"
 printf '%s\n' 'deb cdrom:[Debian GNU/Linux 13 _Trixie_]/ trixie main' > "${fallback_apt_etc_dir}/sources.list"
-printf '%s\n' 'VERSION_CODENAME=trixie' > "${tmp_dir}/os-release"
 OBOS_APT_ETC_DIR="${fallback_apt_etc_dir}" \
 OBOS_OS_RELEASE_FILE="${tmp_dir}/os-release" \
+OBOS_APT_RUNTIME_SOURCE_FILE="${tmp_dir}/fallback-run/obos-debian.sources" \
 sh scripts/update/disable-install-media-sources.sh >/dev/null
 grep -Fq 'URIs: https://deb.debian.org/debian' "${fallback_apt_etc_dir}/sources.list.d/obos-debian.sources" \
   || fail "network Debian source was not created when the installer source was the only source"
 grep -Fq 'Suites: trixie-security' "${fallback_apt_etc_dir}/sources.list.d/obos-debian.sources" \
   || fail "network Debian security source was not created"
+grep -Fq 'URIs: https://deb.debian.org/debian' "${tmp_dir}/fallback-run/obos-debian.sources" \
+  || fail "isolated runtime source was not created"
 
 touch "${tmp_dir}/reboot-required"
 output="$(
@@ -152,6 +162,10 @@ output="$(
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
   OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_DISABLE_INSTALL_MEDIA_SOURCES="${UPDATE_HOST%/update-host.sh}/disable-install-media-sources.sh" \
+  OBOS_APT_ETC_DIR="${apt_etc_dir}" \
+  OBOS_APT_RUNTIME_SOURCE_FILE="${runtime_source_file}" \
+  OBOS_OS_RELEASE_FILE="${tmp_dir}/os-release" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_required=true$' \
@@ -169,6 +183,10 @@ output="$(
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
   OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_DISABLE_INSTALL_MEDIA_SOURCES="${UPDATE_HOST%/update-host.sh}/disable-install-media-sources.sh" \
+  OBOS_APT_ETC_DIR="${apt_etc_dir}" \
+  OBOS_APT_RUNTIME_SOURCE_FILE="${runtime_source_file}" \
+  OBOS_OS_RELEASE_FILE="${tmp_dir}/os-release" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_reason=kernel-changed$' \
@@ -183,6 +201,10 @@ output="$(
   OBOS_REBOOT_REQUIRED_FILE="${tmp_dir}/reboot-required" \
   OBOS_UPDATE_LOG_FILE="${tmp_dir}/update.log" \
   OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
+  OBOS_DISABLE_INSTALL_MEDIA_SOURCES="${UPDATE_HOST%/update-host.sh}/disable-install-media-sources.sh" \
+  OBOS_APT_ETC_DIR="${apt_etc_dir}" \
+  OBOS_APT_RUNTIME_SOURCE_FILE="${runtime_source_file}" \
+  OBOS_OS_RELEASE_FILE="${tmp_dir}/os-release" \
   sh "${UPDATE_HOST}"
 )"
 printf '%s\n' "${output}" | grep -q '^reboot_required=true$' \

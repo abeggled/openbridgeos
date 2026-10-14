@@ -8,6 +8,7 @@ UNAME="${OBOS_UNAME:-uname}"
 UPDATE_LOG_FILE="${OBOS_UPDATE_LOG_FILE:-/var/log/obos-update.log}"
 PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-/etc/obos/update/openbridgeserver.conf.pending}"
 DISABLE_INSTALL_MEDIA_SOURCES="${OBOS_DISABLE_INSTALL_MEDIA_SOURCES:-/usr/lib/obos/disable-install-media-sources.sh}"
+APT_RUNTIME_SOURCE_FILE="${OBOS_APT_RUNTIME_SOURCE_FILE:-/run/obos-update/obos-debian.sources}"
 
 fail() {
   echo "host update failed: $1" >&2
@@ -20,20 +21,30 @@ command -v "${UNAME}" >/dev/null 2>&1 || fail "uname is unavailable"
 
 export DEBIAN_FRONTEND=noninteractive
 install -d -m 0755 "$(dirname -- "${UPDATE_LOG_FILE}")"
-touch "${UPDATE_LOG_FILE}"
+: > "${UPDATE_LOG_FILE}"
 chmod 0600 "${UPDATE_LOG_FILE}"
 
-if [ -x "${DISABLE_INSTALL_MEDIA_SOURCES}" ]; then
+[ -x "${DISABLE_INSTALL_MEDIA_SOURCES}" ] \
+  || fail "APT source preparation helper is unavailable"
+OBOS_APT_RUNTIME_SOURCE_FILE="${APT_RUNTIME_SOURCE_FILE}" \
   "${DISABLE_INSTALL_MEDIA_SOURCES}" >> "${UPDATE_LOG_FILE}" 2>&1
-fi
+[ -s "${APT_RUNTIME_SOURCE_FILE}" ] \
+  || fail "isolated APT network source was not created"
 
-if ! "${APT_GET}" -q -o DPkg::Lock::Timeout=300 update >> "${UPDATE_LOG_FILE}" 2>&1; then
+if ! "${APT_GET}" \
+  -q \
+  -o DPkg::Lock::Timeout=300 \
+  -o "Dir::Etc::sourcelist=${APT_RUNTIME_SOURCE_FILE}" \
+  -o Dir::Etc::sourceparts=- \
+  update >> "${UPDATE_LOG_FILE}" 2>&1; then
   tail -n 50 "${UPDATE_LOG_FILE}" >&2
   fail "APT metadata refresh failed; see ${UPDATE_LOG_FILE}"
 fi
 if ! "${APT_GET}" \
   -q \
   -o DPkg::Lock::Timeout=300 \
+  -o "Dir::Etc::sourcelist=${APT_RUNTIME_SOURCE_FILE}" \
+  -o Dir::Etc::sourceparts=- \
   -o Dpkg::Options::=--force-confold \
   --yes \
   --no-remove \
