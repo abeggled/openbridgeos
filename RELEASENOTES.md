@@ -1,4 +1,13 @@
 # Changes
+## 2026.10.6-rc.6
+### Fixes 🐞
+* Suppress Debian Installer account and password questions while retaining per-device recovery credentials generated on the target system.
+* Configure `pool.ntp.org` automatically during installation.
+* Install GRUB on the automatically selected whole disk without asking for a disk or partition again.
+* Show the current DHCP IPv4 address and direct web-console URL alongside the `obos` recovery password before reboot.
+### Operational notes 🔔
+* Automatic installation still stops safely when zero or multiple eligible internal disks are present; only the single-disk path is fully unattended after its destructive confirmation.
+
 ## 2026.10.6-rc.5
 ### Fixes 🐞
 * Run host package updates against an isolated, signed HTTPS Debian source list so stale installer `cdrom:` entries can no longer block an in-place update.

@@ -71,8 +71,12 @@ amd64 machine:
    BIOS or UEFI automatically. The installer never selects between multiple
    eligible disks: disconnect the other disks or restart into **Advanced
    install options** and select the intended target explicitly.
-4. Save the individual `obos` recovery password shown on the final installer
-   screen. Remove the USB stick and reboot from the installed disk.
+4. No Debian user, password, NTP, partition, or GRUB destination input is
+   required after that confirmation. The installer synchronizes against
+   `pool.ntp.org`.
+5. Save the individual `obos` recovery password and note the DHCP IPv4 address
+   and web-console URL shown on the final installer screen. Remove the USB
+   stick and reboot from the installed disk.
 
 Each installation generates different passwords for the Linux users `root`
 and `obos`. They are separate from the OBOS web user `admin`. After web

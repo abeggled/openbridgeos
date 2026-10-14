@@ -46,11 +46,12 @@ grep -Fq 'config/preseed/obos.cfg' "${BUILDER}" \
 mkdir -p "${TMP_DIR}/bin" "${TMP_DIR}/sys/sda/device" "${TMP_DIR}/sys/sdb/device"
 cat > "${TMP_DIR}/confmodule" <<'EOF'
 db_subst() { printf 'subst:%s:%s:%s\n' "$1" "$2" "$3" >> "${OBOS_TEST_DB_LOG}"; }
-db_fset() { :; }
+db_fset() { printf 'fset:%s:%s:%s\n' "$1" "$2" "$3" >> "${OBOS_TEST_DB_LOG}"; }
 db_input() { printf 'input:%s:%s\n' "$1" "$2" >> "${OBOS_TEST_DB_LOG}"; }
 db_go() { :; }
 db_get() { RET="${OBOS_TEST_CONFIRM:-true}"; }
 db_set() { printf 'set:%s:%s\n' "$1" "$2" >> "${OBOS_TEST_DB_LOG}"; }
+db_unregister() { :; }
 EOF
 cat > "${TMP_DIR}/bin/debconf-loadtemplate" <<'EOF'
 #!/bin/sh
@@ -82,6 +83,10 @@ sh "${INSTALLER_DIR}/select-target-disk.sh"
 
 grep -Fq 'set:partman-auto/disk:/dev/sda' "${TMP_DIR}/db.log" \
   || fail "single eligible disk was not selected"
+grep -Fq 'set:grub-installer/bootdev:/dev/sda' "${TMP_DIR}/db.log" \
+  || fail "GRUB was not assigned to the selected whole disk"
+grep -Fq 'fset:grub-installer/bootdev:seen:true' "${TMP_DIR}/db.log" \
+  || fail "GRUB whole-disk answer was not marked as already handled"
 grep -Fq 'input:critical:obos-installer/confirm-single-disk' "${TMP_DIR}/db.log" \
   || fail "single-disk destructive warning was not shown"
 
@@ -104,6 +109,40 @@ grep -Fq 'set:partman-auto/disk:/dev/obos-no-safe-target' "${TMP_DIR}/db.log" \
   || fail "multiple-disk path did not retain the fail-closed disk guard"
 grep -Fq 'input:critical:obos-installer/no-safe-target' "${TMP_DIR}/db.log" \
   || fail "multiple-disk stop message was not shown"
+
+grep -Fq 'passwd/root-password-crypted password !' "${INSTALLER_DIR}/preseed.cfg" \
+  || fail "root password questions are not suppressed securely"
+grep -Fq 'passwd/user-password-crypted password !' "${INSTALLER_DIR}/preseed.cfg" \
+  || fail "regular-user password questions are not suppressed securely"
+grep -Fq 'clock-setup/ntp-server string pool.ntp.org' "${INSTALLER_DIR}/preseed.cfg" \
+  || fail "installer NTP server is not preconfigured"
+grep -Fq 'grub-installer/bootdev string default' "${INSTALLER_DIR}/preseed.cfg" \
+  || fail "GRUB has no preseeded fallback boot disk"
+
+mkdir -p "${TMP_DIR}/target/etc/obos"
+printf '%s\n' 'obos_password=FixtureRecoveryPassword_123' > "${TMP_DIR}/target/etc/obos/system-credentials"
+cat > "${TMP_DIR}/bin/in-target" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+cat > "${TMP_DIR}/bin/ip" <<'EOF'
+#!/bin/sh
+printf '%s\n' '2: ens18    inet 10.38.114.103/24 brd 10.38.114.255 scope global dynamic ens18'
+EOF
+chmod 0755 "${TMP_DIR}/bin/in-target" "${TMP_DIR}/bin/ip"
+: > "${TMP_DIR}/db.log"
+PATH="${TMP_DIR}/bin:${PATH}" \
+OBOS_INSTALLER_DEBCONF_MODULE="${TMP_DIR}/confmodule" \
+OBOS_INSTALLER_TEMPLATES="${INSTALLER_DIR}/installer.templates" \
+OBOS_INSTALLER_TARGET_ROOT="${TMP_DIR}/target" \
+OBOS_INSTALLER_IN_TARGET="${TMP_DIR}/bin/in-target" \
+OBOS_INSTALLER_IP_COMMAND="${TMP_DIR}/bin/ip" \
+OBOS_TEST_DB_LOG="${TMP_DIR}/db.log" \
+sh "${INSTALLER_DIR}/finalize.sh"
+grep -Fq 'subst:obos-installer/recovery-password:IP_ADDRESS:10.38.114.103' "${TMP_DIR}/db.log" \
+  || fail "completion screen does not include the DHCP IPv4 address"
+grep -Fq 'subst:obos-installer/recovery-password:WEB_URL:https://10.38.114.103/obos/' "${TMP_DIR}/db.log" \
+  || fail "completion screen does not include the web-console URL"
 
 echo "appliance installer check: PASS"
 
