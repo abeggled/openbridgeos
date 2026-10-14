@@ -87,8 +87,6 @@ for unit in \
 done
 
 "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh" "${APP_SOURCE}"
-printf '%s\n' "${VERSION}" > /etc/obos/version
-chmod 0644 /etc/obos/version
 systemctl daemon-reload
 validation_config="$(mktemp /run/obos-nginx-validation.XXXXXX)"
 trap 'rm -f "${validation_config}"' EXIT HUP INT TERM
@@ -103,6 +101,8 @@ EOF
 nginx -t -c "${validation_config}"
 rm -f "${validation_config}"
 trap - EXIT HUP INT TERM
+printf '%s\n' "${VERSION}" > /etc/obos/version
+chmod 0644 /etc/obos/version
 
 echo "format=obos-update-bundle-install-v1"
 echo "version=${VERSION}"

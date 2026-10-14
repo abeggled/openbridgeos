@@ -16,6 +16,7 @@ WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-${OBOS_ETC_DIR}/web.htpasswd}"
 PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbridgeserver.conf.pending}"
 ACTIVE_NGINX_CONFIG="${OBOS_ACTIVE_NGINX_CONFIG:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
 PREVIOUS_NGINX_CONFIG="${OBOS_PREVIOUS_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbridgeserver.conf.previous}"
+AGENT_HTTP_COMPAT_ENV="${OBOS_AGENT_HTTP_COMPAT_ENV:-${OBOS_ETC_DIR}/update/agent-http-compat.env}"
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -50,10 +51,18 @@ finalize_pending_nginx_config() {
     else
       rm -f "${ACTIVE_NGINX_CONFIG}"
     fi
+    compat_tmp="$(mktemp "${AGENT_HTTP_COMPAT_ENV}.XXXXXX")"
+    cat > "${compat_tmp}" <<'EOF'
+OBOS_AGENT_HTTP_SOCKET=
+OBOS_AGENT_HTTP_BIND=127.0.0.1
+OBOS_AGENT_HTTP_PORT=8091
+EOF
+    chmod 0600 "${compat_tmp}"
+    mv "${compat_tmp}" "${AGENT_HTTP_COMPAT_ENV}"
     echo "first boot: pending nginx configuration failed validation" >&2
     return 1
   fi
-  rm -f "${PENDING_NGINX_CONFIG}" "${PREVIOUS_NGINX_CONFIG}"
+  rm -f "${PENDING_NGINX_CONFIG}" "${PREVIOUS_NGINX_CONFIG}" "${AGENT_HTTP_COMPAT_ENV}"
 }
 
 refresh_onboarding_window() {

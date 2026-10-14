@@ -188,6 +188,8 @@ grep -Fq 'include ${PENDING_NGINX_CONFIG};' "${INSTALL_BUNDLE}" \
   || fail "update bundle installer does not validate the staged nginx configuration"
 grep -q 'finalize_pending_nginx_config' scripts/bootstrap/first-boot.sh \
   || fail "first boot does not activate staged nginx configuration"
+grep -q 'EnvironmentFile=-/etc/obos/update/agent-http-compat.env' packaging/systemd/obos-agent-http.service \
+  || fail "agent service cannot enter the nginx rollback compatibility mode"
 grep -q '/etc/nginx/sites-available' packaging/systemd/obos-first-boot.service \
   || fail "first boot sandbox cannot activate staged nginx configuration"
 if grep -q 'systemctl reload nginx.service' "${INSTALL_BUNDLE}"; then
@@ -199,11 +201,13 @@ first_boot_state="${tmp_dir}/first-boot-state"
 active_nginx_config="${tmp_dir}/nginx/active.conf"
 pending_nginx_config="${first_boot_etc}/update/openbridgeserver.conf.pending"
 previous_nginx_config="${first_boot_etc}/update/openbridgeserver.conf.previous"
+agent_http_compat_env="${first_boot_etc}/update/agent-http-compat.env"
 mkdir -p "${first_boot_etc}/update" "${first_boot_state}" "$(dirname -- "${active_nginx_config}")"
 printf 'configured web auth\n' > "${first_boot_etc}/web.htpasswd"
 printf 'first boot complete\n' > "${first_boot_state}/first-boot.done"
 printf 'old nginx config\n' > "${active_nginx_config}"
 printf 'new nginx config\n' > "${pending_nginx_config}"
+printf 'stale compatibility mode\n' > "${agent_http_compat_env}"
 PATH="${mock_bin}:${PATH}" \
 OBOS_ETC_DIR="${first_boot_etc}" \
 OBOS_STATE_DIR="${first_boot_state}" \
@@ -211,11 +215,14 @@ OBOS_APP_DIR="${tmp_dir}/app" \
 OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
 OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
 OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+OBOS_AGENT_HTTP_COMPAT_ENV="${agent_http_compat_env}" \
 sh "${FIRST_BOOT}"
 grep -q '^new nginx config$' "${active_nginx_config}" \
   || fail "first boot did not activate the staged nginx configuration"
 [ ! -e "${pending_nginx_config}" ] \
   || fail "first boot retained an activated nginx configuration"
+[ ! -e "${agent_http_compat_env}" ] \
+  || fail "first boot retained agent compatibility mode after successful activation"
 
 printf 'old nginx config\n' > "${active_nginx_config}"
 printf 'invalid nginx config\n' > "${pending_nginx_config}"
@@ -227,6 +234,7 @@ if PATH="${mock_bin}:${PATH}" \
   OBOS_ACTIVE_NGINX_CONFIG="${active_nginx_config}" \
   OBOS_PENDING_NGINX_CONFIG="${pending_nginx_config}" \
   OBOS_PREVIOUS_NGINX_CONFIG="${previous_nginx_config}" \
+  OBOS_AGENT_HTTP_COMPAT_ENV="${agent_http_compat_env}" \
   sh "${FIRST_BOOT}" >/dev/null 2>&1; then
   fail "first boot accepted an invalid staged nginx configuration"
 fi
@@ -234,5 +242,7 @@ grep -q '^old nginx config$' "${active_nginx_config}" \
   || fail "first boot did not restore nginx configuration after validation failure"
 [ -s "${pending_nginx_config}" ] \
   || fail "first boot discarded a failed staged nginx configuration"
+grep -q '^OBOS_AGENT_HTTP_SOCKET=$' "${agent_http_compat_env}" \
+  || fail "first boot did not enable TCP agent compatibility after nginx rollback"
 
 echo "appliance update fixture: PASS"

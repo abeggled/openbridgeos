@@ -8,6 +8,7 @@ User=obos-agent
 Group=www-data
 SupplementaryGroups=obos-agent
 Environment=OBOS_AGENT_HTTP_SOCKET=/run/obos-agent-http/agent.sock
+EnvironmentFile=-/etc/obos/update/agent-http-compat.env
 RuntimeDirectory=obos-agent-http
 RuntimeDirectoryMode=0750
 ExecStart=/usr/bin/python3 /usr/lib/obos/obos-agent-http.py
