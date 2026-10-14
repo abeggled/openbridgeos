@@ -79,6 +79,9 @@ jobs:
       - name: Appliance update
         run: sh scripts/checks/check-appliance-update.sh
 
+      - name: GitHub release notes extraction
+        run: sh scripts/checks/check-release-notes.sh
+
       - name: MVP readiness
         run: sh scripts/checks/check-mvp-readiness.sh
 

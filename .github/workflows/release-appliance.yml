@@ -182,6 +182,9 @@ jobs:
           printf '%s\n' "${OBOS_RELEASE_MINISIGN_SECRET_KEY}" > "${key_file}"
           sh scripts/update/create-update-bundle.sh \
             "${RELEASE_VERSION}" "${release_dir}" RELEASENOTES.md
+          sh scripts/update/extract-release-notes.sh \
+            "${RELEASE_VERSION}" RELEASENOTES.md \
+            "${release_dir}/github-release-notes.md"
           minisign -Sm "${release_dir}/obos-update.manifest" \
             -s "${key_file}" \
             -W -t "OBOS appliance release ${RELEASE_VERSION}"
@@ -219,7 +222,7 @@ jobs:
             dist/images/*
             --target "${GITHUB_SHA}"
             --title "open bridge operating system ${RELEASE_VERSION}"
-            --notes-file RELEASENOTES.md
+            --notes-file "${RELEASE_DIR}/github-release-notes.md"
           )
           if [[ "${RELEASE_PRERELEASE}" == true ]]; then
             release_args+=(--prerelease)
