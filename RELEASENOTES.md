@@ -1,4 +1,14 @@
 # Changes
+## 2026.10.6-rc.7
+### Fixes 🐞
+* Allow first-boot provisioning to write explicitly below `/etc/obos` while retaining the read-only system configuration sandbox everywhere else.
+* Initialize per-device Linux recovery credentials in a dedicated ordered one-shot service before TLS and web onboarding provisioning begins.
+* Prevent the missing first-boot TLS material that caused nginx startup to fail with `BIO_new_file()` after an ISO installation.
+### Security fixes 🔒
+* Replace the ineffective broad `/etc` sandbox exception with the narrow `/etc/obos` exception in the long-lived first-boot policy; only the short credential initializer can update passwd and shadow files.
+### Operational notes 🔔
+* RC.6 installations affected by the first-boot failure should be reinstalled with the RC.7 ISO; no console repair is required.
+
 ## 2026.10.6-rc.6
 ### Fixes 🐞
 * Suppress Debian Installer account and password questions while retaining per-device recovery credentials generated on the target system.

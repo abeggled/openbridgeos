@@ -1,7 +1,8 @@
 [Unit]
 Description=open bridge operating system first boot provisioning
 Wants=network-online.target
-After=local-fs.target network-online.target
+Requires=obos-system-credentials.service
+After=local-fs.target obos-system-credentials.service network-online.target
 Before=docker.service nginx.service
 
 [Service]
@@ -13,7 +14,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=full
-ReadWritePaths=/etc /etc/nginx/sites-available /srv/obos -/boot -/boot/efi -/boot/firmware
+ReadWritePaths=/etc/obos /etc/nginx/sites-available /srv/obos -/boot -/boot/efi -/boot/firmware
 LockPersonality=true
 MemoryDenyWriteExecute=true
 RestrictRealtime=true

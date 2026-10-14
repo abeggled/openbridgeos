@@ -112,6 +112,7 @@ install -m 0755 "${REPO_ROOT}/scripts/obosctl" /usr/bin/obosctl
 install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent.sh" /usr/bin/obos-agent
 install -m 0755 "${REPO_ROOT}/scripts/agent/obos-agent-http.py" "${OBOS_LIB_DIR}/obos-agent-http.py"
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-first-boot.service" /etc/systemd/system/obos-first-boot.service
+install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-system-credentials.service" /etc/systemd/system/obos-system-credentials.service
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-agent-http.service" /etc/systemd/system/obos-agent-http.service
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-openbridgeserver.service" /etc/systemd/system/obos-openbridgeserver.service
 install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-tls-leaf-renewal.service" /etc/systemd/system/obos-tls-leaf-renewal.service
@@ -127,6 +128,7 @@ systemctl enable systemd-networkd.service
 systemctl enable docker.service
 systemctl enable nginx.service
 systemctl enable obos-agent-http.service
+systemctl enable obos-system-credentials.service
 systemctl enable obos-first-boot.service
 systemctl enable obos-openbridgeserver.service
 systemctl enable obos-tls-leaf-renewal.timer

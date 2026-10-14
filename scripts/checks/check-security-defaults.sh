@@ -1179,10 +1179,19 @@ grep -q 'systemctl restart nftables.service' scripts/hardening/apply-host-harden
 grep -q 'NoNewPrivileges=true' packaging/systemd/obos-first-boot.service \
   || fail "first boot systemd unit is missing NoNewPrivileges"
 
+grep -q 'NoNewPrivileges=true' packaging/systemd/obos-system-credentials.service \
+  || fail "system credentials unit is missing NoNewPrivileges"
+
+grep -q 'ProtectSystem=true' packaging/systemd/obos-system-credentials.service \
+  || fail "system credentials unit does not protect vendor paths"
+
+grep -q 'systemctl enable obos-system-credentials.service' scripts/bootstrap/provision-debian.sh \
+  || fail "system credentials initialization unit is not enabled"
+
 grep -q 'Wants=network-online.target' packaging/systemd/obos-first-boot.service \
   || fail "first boot systemd unit does not wait for network-online"
 
-grep -q 'After=local-fs.target network-online.target' packaging/systemd/obos-first-boot.service \
+grep -q 'After=local-fs.target obos-system-credentials.service network-online.target' packaging/systemd/obos-first-boot.service \
   || fail "first boot systemd unit ordering does not include network-online"
 
 grep -q 'ProtectSystem=full' packaging/systemd/obos-first-boot.service \

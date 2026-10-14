@@ -48,6 +48,8 @@ grep -q 'scripts/update/disable-install-media-sources.sh' "${INSTALL_BUNDLE}" \
   || fail "in-place updates do not install the CD-ROM source repair helper"
 grep -q 'scripts/auth/manage-system-credentials.sh' "${INSTALL_BUNDLE}" \
   || fail "in-place updates do not install system credential management"
+grep -q 'obos-system-credentials.service' "${INSTALL_BUNDLE}" \
+  || fail "in-place updates do not install the credential initialization unit"
 grep -q 'manage-system-credentials.sh.*ensure' "${INSTALL_BUNDLE}" \
   || fail "in-place updates do not initialize per-device recovery credentials"
 

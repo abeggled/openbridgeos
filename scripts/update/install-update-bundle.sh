@@ -100,6 +100,7 @@ done
 "${OBOS_LIB_DIR}/manage-system-credentials.sh" ensure >/dev/null
 
 for unit in \
+  obos-system-credentials.service \
   obos-first-boot.service \
   obos-agent-http.service \
   obos-openbridgeserver.service \

@@ -17,7 +17,6 @@ PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbr
 ACTIVE_NGINX_CONFIG="${OBOS_ACTIVE_NGINX_CONFIG:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
 PREVIOUS_NGINX_CONFIG="${OBOS_PREVIOUS_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbridgeserver.conf.previous}"
 AGENT_HTTP_COMPAT_ENV="${OBOS_AGENT_HTTP_COMPAT_ENV:-${OBOS_ETC_DIR}/update/agent-http-compat.env}"
-SYSTEM_CREDENTIALS_SCRIPT="${OBOS_SYSTEM_CREDENTIALS_SCRIPT:-/usr/lib/obos/manage-system-credentials.sh}"
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -125,10 +124,6 @@ if [ ! -d "${OBOS_ETC_DIR}" ]; then
 else
   chmod 0750 "${OBOS_ETC_DIR}"
 fi
-if [ -x "${SYSTEM_CREDENTIALS_SCRIPT}" ]; then
-  "${SYSTEM_CREDENTIALS_SCRIPT}" ensure >/dev/null
-fi
-
 if [ -f "${FIRST_BOOT_MARKER}" ]; then
   if [ ! -f "${WEB_AUTH_FILE}" ]; then
     refresh_onboarding_window
