@@ -76,9 +76,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ca-certificates curl libguestfs-tools qemu-utils
+          # The hosted runner's preinstalled passt cannot start inside the
+          # libguestfs appliance. Removing the optional helper makes the
+          # direct backend use QEMU user networking for this isolated build.
+          sudo apt-get remove -y passt
+          ! command -v passt
       - name: Build and validate qcow2 image
         run: |
-          sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
+          sudo env LIBGUESTFS_BACKEND=direct \
+            OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
             sh scripts/images/build-amd64-qcow2.sh
           sudo chown -R "$(id -u):$(id -g)" dist/images
           sh scripts/images/check-release-asset-size.sh \
