@@ -67,7 +67,9 @@ jobs:
   amd64-vm:
     name: Build amd64 qcow2 image
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-24.04
+    # Ubuntu 24.04's hosted-runner kernel and libguestfs appliance currently
+    # fail to configure a route. Ubuntu 22.04 uses the stable QEMU SLIRP path.
+    runs-on: ubuntu-22.04
     timeout-minutes: 180
     steps:
       - name: Checkout exact release commit
@@ -75,17 +77,10 @@ jobs:
       - name: Install qcow2 builder
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ca-certificates curl libguestfs-tools passt qemu-utils
-          # GitHub's hosted runner has no usable IPv6 route. Keep passt for
-          # working DNS, but force this isolated build appliance to IPv4.
-          sudo install -D -m 0755 /usr/bin/passt /usr/local/libexec/obos-passt
-          sudo install -m 0755 scripts/images/passt-ipv4-wrapper.sh /usr/bin/passt
-          test -x /usr/local/libexec/obos-passt
-          grep -Fq 'exec /usr/local/libexec/obos-passt --ipv4-only "$@"' /usr/bin/passt
+          sudo apt-get install -y --no-install-recommends ca-certificates curl libguestfs-tools qemu-utils
       - name: Build and validate qcow2 image
         run: |
-          sudo env LIBGUESTFS_BACKEND=direct \
-            OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
+          sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
             sh scripts/images/build-amd64-qcow2.sh
           sudo chown -R "$(id -u):$(id -g)" dist/images
           sh scripts/images/check-release-asset-size.sh \
