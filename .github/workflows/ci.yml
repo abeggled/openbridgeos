@@ -94,6 +94,9 @@ jobs:
       - name: amd64 installer ISO manifest fixture
         run: sh scripts/checks/check-amd64-iso-manifest.sh
 
+      - name: amd64 installer ISO runtime fixture
+        run: sh scripts/checks/check-amd64-iso-runtime.sh
+
       - name: Release asset size fixture
         run: sh scripts/checks/check-release-asset-size.sh
 

@@ -14,6 +14,7 @@ OBOS_WEB_DIR="/srv/obos/web"
 OBOS_ONBOARDING_DIR="/srv/obos/onboarding"
 OBOS_VERSION="${OBOS_VERSION:-0.0.0}"
 OBOS_IMAGE_BUILD="${OBOS_IMAGE_BUILD:-0}"
+RUNTIME_PACKAGES_FILE="${REPO_ROOT}/packaging/images/obos-runtime-packages.list.chroot"
 
 case "${OBOS_IMAGE_BUILD}" in
   0|1) ;;
@@ -26,21 +27,11 @@ esac
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get install -y --no-install-recommends \
-  ca-certificates \
-  curl \
-  docker-cli \
-  docker-compose \
-  docker.io \
-  gnupg \
-  logrotate \
-  minisign \
-  nftables \
-  nginx-light \
-  openssl \
-  python3-minimal \
-  sudo \
-  unattended-upgrades
+[ -s "${RUNTIME_PACKAGES_FILE}" ] || {
+  echo "OBOS runtime package list is missing: ${RUNTIME_PACKAGES_FILE}" >&2
+  exit 1
+}
+xargs apt-get install -y --no-install-recommends < "${RUNTIME_PACKAGES_FILE}"
 
 if ! getent passwd obos-agent >/dev/null 2>&1; then
   useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin --user-group obos-agent
