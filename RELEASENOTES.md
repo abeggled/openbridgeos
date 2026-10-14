@@ -1,4 +1,22 @@
 # Changes
+## 2026.10.6
+### New features ✨
+* Publish a bootable amd64 installer ISO, an amd64 qcow2 VM disk, and a compressed Raspberry Pi 4+ arm64 image with every release.
+* Run the amd64 installer automatically on single-disk systems, including partitioning and GRUB installation after one explicit destructive confirmation.
+* Generate unique per-device passwords for the Linux `root` and `obos` recovery users, show the `obos` password and appliance IP address before reboot, and allow authenticated reveal or rotation in System Diagnostics.
+### Security fixes 🔒
+* Sign the aggregate image manifest and publish checksums and provenance manifests for every installation image.
+* Keep first-boot provisioning sandboxed while granting only its `/etc/obos` state directory explicit write access; Linux password initialization runs in a separate ordered one-shot service.
+* Remove recovery credentials from normal status, logs, release bundles, and backups while auditing reveal and rotation operations without recording secrets.
+### Fixes 🐞
+* Complete browser-only first login without requiring a console setup token.
+* Preserve Python, nginx, and the complete shared runtime package set in installed ISO systems.
+* Configure `pool.ntp.org`, suppress installer account questions, and install GRUB on the automatically selected whole disk.
+* Prevent stale installer `cdrom:` sources from blocking in-place updates and isolate privileged host updates to signed Debian HTTPS sources.
+* Fix first-boot TLS provisioning and the resulting nginx `BIO_new_file()` failure after ISO installation.
+### Operational notes 🔔
+* This stable release supersedes all `2026.10.6-rc.*` builds. Systems installed with RC.6 or earlier should be reinstalled with the stable ISO; no console repair is required.
+
 ## 2026.10.6-rc.7
 ### Fixes 🐞
 * Allow first-boot provisioning to write explicitly below `/etc/obos` while retaining the read-only system configuration sandbox everywhere else.
