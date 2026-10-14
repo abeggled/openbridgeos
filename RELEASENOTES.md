@@ -1,4 +1,8 @@
 # Changes
+## 2026.10.4-rc.1
+### Fixes 🐞
+* Separate Host Identity and Timezone controls into two full-width rows for clearer administration.
+
 ## 2026.10.3
 ### New features ✨
 * Render signed release notes as safe, structured markup in both the overview and update confirmation dialog.
