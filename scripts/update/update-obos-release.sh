@@ -24,6 +24,14 @@ manifest_value() {
     || fail "manifest key missing: ${key}"
 }
 
+comparison_version() {
+  printf '%s\n' "$1" | sed 's/^\([0-9][0-9.]*\)-\([A-Za-z0-9.][A-Za-z0-9.]*\)$/\1~\2/'
+}
+
+version_compare() {
+  dpkg --compare-versions "$(comparison_version "$1")" "$2" "$(comparison_version "$3")"
+}
+
 [ "${MODE}" = apply ] || [ "${MODE}" = check ] || fail "usage: update-obos-release.sh [check|apply]"
 [ "${MODE}" = check ] || [ "$(id -u)" -eq 0 ] || fail "must run as root"
 
@@ -51,6 +59,9 @@ elif [ -z "${OBOS_RELEASE_BASE_URL:-}" ] && [ -s "${RELEASE_CHANNEL_FILE}" ]; th
 fi
 
 installed_version="$(cat "${INSTALLED_VERSION_FILE}" 2>/dev/null || printf '0.0.0')"
+if ! printf '%s\n' "${installed_version}" | grep -Eq '^[0-9]+([.][0-9]+){1,3}([+~-][A-Za-z0-9.]+)?$'; then
+  installed_version=0.0.0
+fi
 
 if [ ! -s "${PUBLIC_KEY_FILE}" ]; then
   echo "format=obos-release-update-v1"
@@ -164,8 +175,8 @@ while IFS= read -r note_line || [ -n "${note_line}" ]; do
     '## '*)
       note_version="${note_line#\#\# }"
       if printf '%s\n' "${note_version}" | grep -Eq '^[0-9]+([.][0-9]+){1,3}([+~-][A-Za-z0-9.]+)?$' \
-        && dpkg --compare-versions "${note_version}" gt "${installed_version}" \
-        && dpkg --compare-versions "${note_version}" le "${version}"; then
+        && version_compare "${note_version}" gt "${installed_version}" \
+        && version_compare "${note_version}" le "${version}"; then
         include_release=true
       else
         include_release=false
@@ -179,7 +190,7 @@ done < "${notes}"
 
 update_available=true
 release_status=available
-if dpkg --compare-versions "${version}" le "${installed_version}"; then
+if version_compare "${version}" le "${installed_version}"; then
   update_available=false
   release_status=current
 fi
