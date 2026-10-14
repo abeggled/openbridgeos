@@ -78,12 +78,13 @@ jobs:
           sudo apt-get install -y --no-install-recommends ca-certificates curl libguestfs-tools passt qemu-utils
           # GitHub's hosted runner has no usable IPv6 route. Keep passt for
           # working DNS, but force this isolated build appliance to IPv4.
-          sudo install -m 0755 scripts/images/passt-ipv4-wrapper.sh /usr/local/bin/passt
-          test "$(PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin command -v passt)" = /usr/local/bin/passt
+          sudo install -D -m 0755 /usr/bin/passt /usr/local/libexec/obos-passt
+          sudo install -m 0755 scripts/images/passt-ipv4-wrapper.sh /usr/bin/passt
+          test -x /usr/local/libexec/obos-passt
+          grep -Fq 'exec /usr/local/libexec/obos-passt --ipv4-only "$@"' /usr/bin/passt
       - name: Build and validate qcow2 image
         run: |
-          sudo env PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-            LIBGUESTFS_BACKEND=direct \
+          sudo env LIBGUESTFS_BACKEND=direct \
             OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
             sh scripts/images/build-amd64-qcow2.sh
           sudo chown -R "$(id -u):$(id -g)" dist/images
