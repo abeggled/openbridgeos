@@ -7,7 +7,7 @@ TARGET_ROOT="${OBOS_INSTALLER_TARGET_ROOT:-/target}"
 IN_TARGET="${OBOS_INSTALLER_IN_TARGET:-in-target}"
 IP_COMMAND="${OBOS_INSTALLER_IP_COMMAND:-ip}"
 
-# shellcheck disable=SC1091
+# shellcheck disable=SC1090
 . "${DEBCONF_MODULE}"
 debconf-loadtemplate obos-installer "${INSTALLER_TEMPLATES}"
 
