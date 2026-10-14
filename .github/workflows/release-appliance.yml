@@ -75,15 +75,15 @@ jobs:
       - name: Install qcow2 builder
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ca-certificates curl libguestfs-tools qemu-utils
-          # The hosted runner's preinstalled passt cannot start inside the
-          # libguestfs appliance. Removing the optional helper makes the
-          # direct backend use QEMU user networking for this isolated build.
-          sudo apt-get remove -y passt
-          ! command -v passt
+          sudo apt-get install -y --no-install-recommends ca-certificates curl libguestfs-tools passt qemu-utils
+          # GitHub's hosted runner has no usable IPv6 route. Keep passt for
+          # working DNS, but force this isolated build appliance to IPv4.
+          sudo install -m 0755 scripts/images/passt-ipv4-wrapper.sh /usr/local/bin/passt
+          test "$(PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin command -v passt)" = /usr/local/bin/passt
       - name: Build and validate qcow2 image
         run: |
-          sudo env LIBGUESTFS_BACKEND=direct \
+          sudo env PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+            LIBGUESTFS_BACKEND=direct \
             OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \
             sh scripts/images/build-amd64-qcow2.sh
           sudo chown -R "$(id -u):$(id -g)" dist/images
