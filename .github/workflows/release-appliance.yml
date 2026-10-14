@@ -97,7 +97,7 @@ jobs:
   rpi4-arm64:
     name: Build Raspberry Pi 4+ arm64 image
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 240
     steps:
       - name: Checkout exact release commit
@@ -108,7 +108,6 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             binfmt-support debootstrap dosfstools e2fsprogs fdisk mount parted \
             qemu-user-static tar util-linux xz-utils
-          sudo update-binfmts --enable qemu-aarch64
       - name: Build and validate Raspberry Pi image
         run: |
           sudo env OBOS_RELEASE_BUILD=1 OBOS_IMAGE_VERSION="${RELEASE_VERSION}" \

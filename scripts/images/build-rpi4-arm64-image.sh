@@ -249,6 +249,7 @@ require_command sfdisk
 require_command tar
 require_command truncate
 require_command umount
+require_command uname
 require_command xz
 
 mkdir -p "${WORK_DIR}" "${OUTPUT_DIR}"
@@ -287,9 +288,18 @@ mkdir -p "${ROOT_MOUNT}/boot"
 mount "${LOOP_DEVICE}p1" "${BOOT_MOUNT}"
 
 include_packages="${OBOS_BASE_PACKAGES},${OBOS_RPI_BOOT_PACKAGES}"
-debootstrap --arch=arm64 --foreign --components="${OBOS_DEBIAN_COMPONENTS}" --include="${include_packages}" "${OBOS_DEBIAN_RELEASE}" "${BUILD_ROOT}"
-cp "$(command -v qemu-aarch64-static)" "${BUILD_ROOT}/usr/bin/qemu-aarch64-static"
-chroot "${BUILD_ROOT}" /debootstrap/debootstrap --second-stage
+case "$(uname -m)" in
+  aarch64|arm64)
+    debootstrap --arch=arm64 --components="${OBOS_DEBIAN_COMPONENTS}" \
+      --include="${include_packages}" "${OBOS_DEBIAN_RELEASE}" "${BUILD_ROOT}"
+    ;;
+  *)
+    debootstrap --arch=arm64 --foreign --components="${OBOS_DEBIAN_COMPONENTS}" \
+      --include="${include_packages}" "${OBOS_DEBIAN_RELEASE}" "${BUILD_ROOT}"
+    cp "$(command -v qemu-aarch64-static)" "${BUILD_ROOT}/usr/bin/qemu-aarch64-static"
+    chroot "${BUILD_ROOT}" /debootstrap/debootstrap --second-stage
+    ;;
+esac
 
 copy_repo_into_root "${BUILD_ROOT}"
 mount --bind /dev "${BUILD_ROOT}/dev"

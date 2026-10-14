@@ -131,6 +131,10 @@ checksums and provenance manifests, plus one signed aggregate image manifest.
 Each release asset is kept below GitHub's 2 GiB per-file limit. A failed image
 job leaves no partial GitHub release behind.
 
+The Raspberry Pi image runs on GitHub's native `ubuntu-24.04-arm` runner. Local
+x64 build hosts remain supported through the qemu-user-static fallback, but
+native arm64 avoids the substantial emulation cost in routine releases.
+
 ## Build Contract
 
 Every image builder must follow the same contract:
