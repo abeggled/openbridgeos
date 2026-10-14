@@ -21,6 +21,10 @@
   const webAuthPassword = document.querySelector("[data-web-auth-password]");
   const webAuthSecret = document.querySelector("[data-web-auth-secret]");
   const clearWebAuthPasswordButton = document.querySelector("[data-clear-web-auth-password]");
+  const systemCredentialsSecret = document.querySelector("[data-system-credentials-secret]");
+  const systemRootPassword = document.querySelector("[data-system-root-password]");
+  const systemObosPassword = document.querySelector("[data-system-obos-password]");
+  const clearSystemCredentialsButton = document.querySelector("[data-clear-system-credentials]");
   const mutationButtons = Array.from(document.querySelectorAll("[data-mutation-action]"));
   const timezoneOptions = document.querySelector("#timezone-options");
   const helpButtons = Array.from(document.querySelectorAll("[data-help]"));
@@ -130,9 +134,22 @@
       label: "Rotate Password",
       tone: "danger",
     },
+    "system-credentials-reveal": {
+      title: "Reveal Linux recovery credentials?",
+      body: "Shows the per-device root and obos passwords for 60 seconds. The reveal is audited without recording either password.",
+      label: "Reveal Credentials",
+      tone: "warning",
+    },
+    "system-credentials-rotate": {
+      title: "Rotate Linux recovery credentials?",
+      body: "Immediately replaces both the root and obos passwords and shows the new values for 60 seconds. Existing recovery passwords stop working.",
+      label: "Rotate Credentials",
+      tone: "danger",
+    },
   };
   const latestValues = new Map();
   let webAuthPasswordTimer;
+  let systemCredentialsTimer;
 
   function populateTimezones() {
     if (!timezoneOptions) {
@@ -161,6 +178,22 @@
     }
   }
 
+  function clearSystemCredentials() {
+    if (systemCredentialsTimer) {
+      window.clearTimeout(systemCredentialsTimer);
+      systemCredentialsTimer = undefined;
+    }
+    for (const field of [systemRootPassword, systemObosPassword]) {
+      if (field) {
+        field.textContent = "";
+        delete field.dataset.state;
+      }
+    }
+    if (systemCredentialsSecret) {
+      systemCredentialsSecret.hidden = true;
+    }
+  }
+
   function setAuthStatus(message, state = "") {
     if (!authStatus) {
       return;
@@ -175,6 +208,7 @@
 
   function showLogin(message = "Login required.", state = "") {
     clearWebAuthPassword();
+    clearSystemCredentials();
     if (authScreen) {
       authScreen.hidden = false;
     }
@@ -763,7 +797,21 @@
     webAuthPasswordTimer = window.setTimeout(clearWebAuthPassword, 60000);
   }
 
+  function setSystemCredentials(values) {
+    clearSystemCredentials();
+    if (!systemCredentialsSecret || !systemRootPassword || !systemObosPassword || !values.root_password || !values.obos_password) {
+      return;
+    }
+    systemRootPassword.textContent = values.root_password;
+    systemObosPassword.textContent = values.obos_password;
+    systemRootPassword.dataset.state = "ok";
+    systemObosPassword.dataset.state = "ok";
+    systemCredentialsSecret.hidden = false;
+    systemCredentialsTimer = window.setTimeout(clearSystemCredentials, 60000);
+  }
+
   clearWebAuthPasswordButton?.addEventListener("click", clearWebAuthPassword);
+  clearSystemCredentialsButton?.addEventListener("click", clearSystemCredentials);
 
   function confirmMutation(action) {
     if (!confirmationDialog || !confirmationDialogTitle || !confirmationDialogBody || !confirmationDialogAccept) {
@@ -879,6 +927,15 @@
       }
       body.passphrase = passphrase;
     }
+    if (["system-credentials-reveal", "system-credentials-rotate"].includes(action)) {
+      const adminPasswordInput = document.querySelector("#system-credentials-admin-password");
+      const adminPassword = adminPasswordInput?.value;
+      if (!adminPassword) {
+        setMutationStatus(statusTarget, "current admin password required", "error");
+        return;
+      }
+      body.admin_password = adminPassword;
+    }
 
     if (!await confirmMutation(action)) {
       return;
@@ -907,6 +964,9 @@
       if (action === "web-auth-rotate") {
         setWebAuthPassword(responseValues);
       }
+      if (["system-credentials-reveal", "system-credentials-rotate"].includes(action)) {
+        setSystemCredentials(responseValues);
+      }
       if (action === "set-hostname" && hostIdentityTlsNotice) {
         hostIdentityTlsNotice.hidden = false;
       }
@@ -922,6 +982,12 @@
     } catch (error) {
       setMutationStatus(statusTarget, error.message || "failed", "error");
     } finally {
+      if (["system-credentials-reveal", "system-credentials-rotate"].includes(action)) {
+        const adminPasswordInput = document.querySelector("#system-credentials-admin-password");
+        if (adminPasswordInput) {
+          adminPasswordInput.value = "";
+        }
+      }
       button.disabled = false;
     }
   }

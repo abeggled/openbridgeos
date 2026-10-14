@@ -122,6 +122,8 @@ MUTATING_ACTIONS = {
     "tls-renew-leaf": "tls-renew-leaf",
     "update": "update",
     "set-release-channel": "set-release-channel",
+    "system-credentials-reveal": "system-credentials-reveal",
+    "system-credentials-rotate": "system-credentials-rotate",
     "web-auth-set": "web-auth-set",
     "web-auth-rotate": "web-auth-rotate",
 }
@@ -497,6 +499,8 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             expected_fields.add("timezone")
         if action == "set-release-channel":
             expected_fields.add("release_channel")
+        if action in {"system-credentials-reveal", "system-credentials-rotate"}:
+            expected_fields.add("admin_password")
         payload, error = self.read_json_body(expected_fields)
         if error:
             return None, error
@@ -536,6 +540,18 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             release_channel = payload.get("release_channel")
             if release_channel not in {"stable", "prerelease"}:
                 return None, (400, error_envelope("invalid-release-channel", "release_channel must be stable or prerelease"))
+        if action in {"system-credentials-reveal", "system-credentials-rotate"}:
+            admin_password = payload.get("admin_password")
+            if not isinstance(admin_password, str) or not admin_password:
+                return None, (400, error_envelope("invalid-admin-password", "current administrator password is required"))
+            client_key = self.login_client_key()
+            retry_after = self.login_retry_after(client_key)
+            if retry_after:
+                return None, (429, error_envelope("reauth-rate-limited", "too many failed re-authentication attempts"))
+            if not self.verify_web_password("admin", admin_password):
+                self.record_login_failure(client_key)
+                return None, (401, error_envelope("reauth-failed", "current administrator password is invalid"))
+            self.clear_login_failures(client_key)
         return payload, None
 
     def portable_download_error(self, status, error, detail):

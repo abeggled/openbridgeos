@@ -17,6 +17,7 @@ PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbr
 ACTIVE_NGINX_CONFIG="${OBOS_ACTIVE_NGINX_CONFIG:-/etc/nginx/sites-available/obos-openbridgeserver.conf}"
 PREVIOUS_NGINX_CONFIG="${OBOS_PREVIOUS_NGINX_CONFIG:-${OBOS_ETC_DIR}/update/openbridgeserver.conf.previous}"
 AGENT_HTTP_COMPAT_ENV="${OBOS_AGENT_HTTP_COMPAT_ENV:-${OBOS_ETC_DIR}/update/agent-http-compat.env}"
+SYSTEM_CREDENTIALS_SCRIPT="${OBOS_SYSTEM_CREDENTIALS_SCRIPT:-/usr/lib/obos/manage-system-credentials.sh}"
 
 secret() {
   if command -v openssl >/dev/null 2>&1; then
@@ -119,6 +120,15 @@ PY
 
 finalize_pending_nginx_config
 
+if [ ! -d "${OBOS_ETC_DIR}" ]; then
+  install -d -m 0750 -o root -g www-data "${OBOS_ETC_DIR}"
+else
+  chmod 0750 "${OBOS_ETC_DIR}"
+fi
+if [ -x "${SYSTEM_CREDENTIALS_SCRIPT}" ]; then
+  "${SYSTEM_CREDENTIALS_SCRIPT}" ensure >/dev/null
+fi
+
 if [ -f "${FIRST_BOOT_MARKER}" ]; then
   if [ ! -f "${WEB_AUTH_FILE}" ]; then
     refresh_onboarding_window
@@ -129,7 +139,6 @@ if [ -f "${FIRST_BOOT_MARKER}" ]; then
   exit 0
 fi
 
-install -d -m 0750 -o root -g www-data "${OBOS_ETC_DIR}"
 install -d -m 0750 "${OBOS_ETC_DIR}/apps" "${OBOS_STATE_DIR}"
 install -d -m 0750 "${OBOS_APP_DIR}" "${OBOS_APP_DIR}/data" "${OBOS_APP_DIR}/mqtt"
 install -d -m 0770 "${OBOS_APP_DIR}/mqtt/passwd" "${OBOS_APP_DIR}/mqtt/data" "${OBOS_APP_DIR}/mqtt/log"

@@ -26,7 +26,7 @@ jobs:
 
       - name: Shell syntax
         run: |
-          shellcheck scripts/obosctl scripts/agent/*.sh scripts/audit/*.sh scripts/auth/*.sh scripts/bootstrap/*.sh scripts/checks/*.sh scripts/hardening/*.sh scripts/images/*.sh scripts/tls/*.sh scripts/update/*.sh
+          shellcheck scripts/obosctl scripts/agent/*.sh scripts/audit/*.sh scripts/auth/*.sh scripts/bootstrap/*.sh scripts/checks/*.sh scripts/hardening/*.sh scripts/images/*.sh scripts/tls/*.sh scripts/update/*.sh packaging/images/amd64-installer/*.sh
 
       - name: sudoers syntax
         run: sudo visudo -cf packaging/sudoers/obos-agent
@@ -99,6 +99,12 @@ jobs:
 
       - name: amd64 installer ISO runtime fixture
         run: sh scripts/checks/check-amd64-iso-runtime.sh
+
+      - name: Appliance installer safety fixture
+        run: sh scripts/checks/check-appliance-installer.sh
+
+      - name: Per-device system credentials fixture
+        run: sh scripts/checks/check-system-credentials.sh
 
       - name: Release asset size fixture
         run: sh scripts/checks/check-release-asset-size.sh

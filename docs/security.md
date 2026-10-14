@@ -44,6 +44,7 @@ Target permissions:
 /etc/obos/apps/*.env        root:root 0600
 /etc/obos/web.htpasswd      root:www-data 0640
 /etc/obos/web-admin.env     root:root 0600 (non-secret account metadata)
+/etc/obos/system-credentials root:root 0600 (recoverable Linux credentials)
 /etc/obos/tls/              root:root 0700
 /srv/obos/                  root:root 0750
 /srv/obos/state/            root:root 0750
@@ -89,6 +90,14 @@ requires no console login or setup token so non-technical administrators can
 complete setup entirely in the browser. The resulting first-client-wins risk is
 bounded by the five-minute per-boot window and the requirement to keep an
 uninitialized appliance on a trusted local setup network.
+
+The Linux `root` and `obos` recovery accounts are separate from the web user
+`admin`. Their random per-device passwords are generated only on the target
+system and stored in `/etc/obos/system-credentials` with mode `0600`. They are
+excluded from ordinary status responses, logs, release artifacts, and appliance
+backup archives. The authenticated diagnostics UI requires the current
+web-admin password again for each explicit reveal or rotation. Both operations
+use exact agent and sudo allowlist entries and write metadata-only audit records.
 
 Normal console login applies a per-client failed-attempt window and temporary
 lockout. nginx overwrites the forwarded client address before proxying through a

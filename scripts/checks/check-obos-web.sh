@@ -343,6 +343,17 @@ grep -q 'data-confirm-dialog' "${INDEX}" \
 grep -q 'data-confirm-dialog' "${DIAGNOSTICS}" \
   || fail "diagnostics does not define the branded mutation confirmation dialog"
 
+grep -q 'data-mutation-action="system-credentials-reveal"' "${DIAGNOSTICS}" \
+  || fail "diagnostics does not expose explicit system credential reveal"
+grep -q 'data-mutation-action="system-credentials-rotate"' "${DIAGNOSTICS}" \
+  || fail "diagnostics does not expose explicit system credential rotation"
+grep -q 'id="system-credentials-admin-password"' "${DIAGNOSTICS}" \
+  || fail "system credential actions do not require current admin password input"
+grep -q 'body.admin_password = adminPassword' "${JS}" \
+  || fail "system credential actions do not send re-authentication material"
+grep -q 'window.setTimeout(clearSystemCredentials, 60000)' "${JS}" \
+  || fail "revealed system credentials are not cleared after 60 seconds"
+
 grep -q '>Update Appliance</button>' "${INDEX}" \
   || fail "complete appliance update control is ambiguously labelled"
 

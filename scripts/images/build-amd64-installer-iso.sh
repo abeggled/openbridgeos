@@ -13,6 +13,7 @@ PREFLIGHT="${REPO_ROOT}/scripts/images/check-amd64-iso-build-host.sh"
 MANIFEST_CHECK="${REPO_ROOT}/scripts/images/check-amd64-iso-manifest.sh"
 RUNTIME_CHECK="${REPO_ROOT}/scripts/images/check-amd64-iso-runtime.sh"
 RUNTIME_PACKAGES="${REPO_ROOT}/packaging/images/obos-runtime-packages.list.chroot"
+INSTALLER_CONFIG="${REPO_ROOT}/packaging/images/amd64-installer"
 
 fail() { echo "amd64 installer ISO build failed: $1" >&2; exit 1; }
 
@@ -32,6 +33,7 @@ repo_dirty() {
 [ -f "${PROFILE_FILE}" ] || fail "missing image profile: ${PROFILE_FILE}"
 [ -x "${RUNTIME_CHECK}" ] || fail "missing ISO runtime checker: ${RUNTIME_CHECK}"
 [ -s "${RUNTIME_PACKAGES}" ] || fail "missing runtime package list: ${RUNTIME_PACKAGES}"
+[ -s "${INSTALLER_CONFIG}/preseed.cfg" ] || fail "missing appliance installer preseed"
 (cd "${REPO_ROOT}" && OBOS_IMAGE_PROFILE_FILE="${PROFILE_FILE}" sh "${PREFLIGHT}")
 sh "${VALIDATOR}" "${PROFILE_FILE}" >/dev/null
 case "${RELEASE_BUILD}" in 0|1) ;; *) fail "OBOS_RELEASE_BUILD must be 0 or 1" ;; esac
@@ -96,6 +98,22 @@ mkdir -p "${BUILD_DIR}"
 )
 
 mkdir -p "${INCLUDE_REPO}" "$(dirname -- "${HOOK_FILE}")" "${BUILD_DIR}/config/package-lists"
+mkdir -p "${BUILD_DIR}/config/preseed" \
+  "${BUILD_DIR}/config/includes.installer/usr/lib/obos-installer" \
+  "${BUILD_DIR}/config/includes.installer/usr/share/obos-installer" \
+  "${BUILD_DIR}/config/bootloaders"
+cp "${INSTALLER_CONFIG}/preseed.cfg" "${BUILD_DIR}/config/preseed/obos.cfg"
+cp "${INSTALLER_CONFIG}/select-target-disk.sh" \
+  "${BUILD_DIR}/config/includes.installer/usr/lib/obos-installer/select-target-disk.sh"
+cp "${INSTALLER_CONFIG}/finalize.sh" \
+  "${BUILD_DIR}/config/includes.installer/usr/lib/obos-installer/finalize.sh"
+cp "${INSTALLER_CONFIG}/installer.templates" \
+  "${BUILD_DIR}/config/includes.installer/usr/share/obos-installer/installer.templates"
+chmod 0755 \
+  "${BUILD_DIR}/config/includes.installer/usr/lib/obos-installer/select-target-disk.sh" \
+  "${BUILD_DIR}/config/includes.installer/usr/lib/obos-installer/finalize.sh"
+cp -a /usr/share/live/build/bootloaders/. "${BUILD_DIR}/config/bootloaders/"
+cp -a "${INSTALLER_CONFIG}/bootloaders/." "${BUILD_DIR}/config/bootloaders/"
 tar -C "${REPO_ROOT}" --exclude ./.git --exclude ./build --exclude ./dist -cf - . \
   | tar -C "${INCLUDE_REPO}" -xf -
 cat > "${BUILD_DIR}/config/package-lists/obos.list.chroot" <<'EOF'

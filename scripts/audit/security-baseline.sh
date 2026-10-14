@@ -15,6 +15,7 @@ TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 WEB_AUTH_FILE="${OBOS_WEB_AUTH_FILE:-/etc/obos/web.htpasswd}"
 WEB_AUTH_INFO_FILE="${OBOS_WEB_AUTH_INFO_FILE:-/etc/obos/web-admin.env}"
+SYSTEM_CREDENTIALS_FILE="${OBOS_SYSTEM_CREDENTIALS_FILE:-/etc/obos/system-credentials}"
 HEALTH_URL="${OBOS_HEALTH_URL:-http://127.0.0.1:8080/api/v1/system/health}"
 DEFAULT_PROXY_HEALTH_HOST="$(hostname -f 2>/dev/null || hostname 2>/dev/null || printf 'localhost')"
 PROXY_HEALTH_HOST="${OBOS_PROXY_HEALTH_HOST:-${DEFAULT_PROXY_HEALTH_HOST}}"
@@ -79,6 +80,17 @@ check_optional_file_mode() {
     check_file_mode "${path}" "${expected}"
   else
     pass "${path} absent"
+  fi
+}
+
+check_file_owner() {
+  path="$1"
+  expected="$2"
+  actual="$(stat -c '%U:%G' "${path}" 2>/dev/null || true)"
+  if [ "${actual}" = "${expected}" ]; then
+    pass "${path} owner ${expected}"
+  else
+    fail "${path} owner expected ${expected}, got ${actual:-missing}"
   fi
 }
 
@@ -286,6 +298,7 @@ check_command openssl
 check_command python3
 
 check_user obos-agent
+check_user obos
 
 check_file_mode /etc/obos 750
 check_file_mode "${ENV_FILE}" 600
@@ -294,6 +307,11 @@ check_uuid_file "${APPLIANCE_ID_FILE}" 'appliance identifier'
 check_first_boot_marker
 check_file_mode "${WEB_AUTH_FILE}" 640
 check_file_mode "${WEB_AUTH_INFO_FILE}" 600
+check_file_mode "${SYSTEM_CREDENTIALS_FILE}" 600
+check_file_owner "${SYSTEM_CREDENTIALS_FILE}" root:root
+check_grep '^format=obos-system-credentials-v1$' "${SYSTEM_CREDENTIALS_FILE}" 'system credential record format'
+check_grep '^root_password=[A-Za-z0-9_-]\{20,\}$' "${SYSTEM_CREDENTIALS_FILE}" 'root recovery password initialized'
+check_grep '^obos_password=[A-Za-z0-9_-]\{20,\}$' "${SYSTEM_CREDENTIALS_FILE}" 'obos recovery password initialized'
 check_grep '^format=obos-web-auth-info-v2$' "${WEB_AUTH_INFO_FILE}" 'web console auth metadata format'
 check_grep '^password_storage=hash-only$' "${WEB_AUTH_INFO_FILE}" 'web console password storage is hash-only'
 if grep -q '^OBOS_WEB_ADMIN_PASSWORD=' "${WEB_AUTH_INFO_FILE}" 2>/dev/null; then
@@ -319,6 +337,8 @@ check_optional_file_mode "${AGENT_AUDIT_DIR}" 750
 check_optional_file_mode "${AGENT_AUDIT_LOG}" 640
 check_grep 'obos-agent ALL=(root) NOPASSWD:' "${AGENT_SUDOERS}" 'obos-agent sudoers allowlisted root boundary'
 check_grep '/usr/bin/obosctl agent-audit-summary' "${AGENT_SUDOERS}" 'obos-agent sudoers audit summary command'
+check_grep '/usr/bin/obosctl system-credentials-reveal --confirm system-credentials-reveal' "${AGENT_SUDOERS}" 'obos-agent sudoers credential reveal command'
+check_grep '/usr/bin/obosctl system-credentials-rotate --confirm system-credentials-rotate' "${AGENT_SUDOERS}" 'obos-agent sudoers credential rotation command'
 check_grep 'create 0640 obos-agent obos-agent' "${AGENT_LOGROTATE}" 'obos-agent audit logrotate permissions'
 
 check_systemd_active docker.service

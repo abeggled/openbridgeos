@@ -40,6 +40,8 @@ Cmnd_Alias OBOS_AGENT_MUTATIONS = \
   /usr/bin/obosctl tls-export, \
   /usr/bin/obosctl web-auth-set *, \
   /usr/bin/obosctl web-auth-rotate, \
+  /usr/bin/obosctl system-credentials-reveal --confirm system-credentials-reveal, \
+  /usr/bin/obosctl system-credentials-rotate --confirm system-credentials-rotate, \
   /usr/bin/obosctl mqtt-enable-lan, \
   /usr/bin/obosctl mqtt-enable-lan *, \
   /usr/bin/obosctl mqtt-disable-lan, \

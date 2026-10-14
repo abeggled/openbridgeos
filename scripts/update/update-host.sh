@@ -7,6 +7,7 @@ MODULES_DIR="${OBOS_MODULES_DIR:-/lib/modules}"
 UNAME="${OBOS_UNAME:-uname}"
 UPDATE_LOG_FILE="${OBOS_UPDATE_LOG_FILE:-/var/log/obos-update.log}"
 PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-/etc/obos/update/openbridgeserver.conf.pending}"
+DISABLE_INSTALL_MEDIA_SOURCES="${OBOS_DISABLE_INSTALL_MEDIA_SOURCES:-/usr/lib/obos/disable-install-media-sources.sh}"
 
 fail() {
   echo "host update failed: $1" >&2
@@ -21,6 +22,10 @@ export DEBIAN_FRONTEND=noninteractive
 install -d -m 0755 "$(dirname -- "${UPDATE_LOG_FILE}")"
 touch "${UPDATE_LOG_FILE}"
 chmod 0600 "${UPDATE_LOG_FILE}"
+
+if [ -x "${DISABLE_INSTALL_MEDIA_SOURCES}" ]; then
+  "${DISABLE_INSTALL_MEDIA_SOURCES}" >> "${UPDATE_LOG_FILE}" 2>&1
+fi
 
 if ! "${APT_GET}" -q -o DPkg::Lock::Timeout=300 update >> "${UPDATE_LOG_FILE}" 2>&1; then
   tail -n 50 "${UPDATE_LOG_FILE}" >&2

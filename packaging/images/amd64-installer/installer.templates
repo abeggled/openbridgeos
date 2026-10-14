@@ -1,0 +1,28 @@
+Template: obos-installer/confirm-single-disk
+Type: boolean
+Default: false
+Description: Erase ${DISK} and install open bridge operating system?
+ The installer found exactly one eligible internal disk.
+ .
+ Target: ${DISK}
+ Model: ${MODEL}
+ Size: ${SIZE}
+ .
+ Continuing permanently erases this entire disk, automatically partitions it, and installs the BIOS or UEFI bootloader. Select No to stop without changing the disk.
+
+Template: obos-installer/no-safe-target
+Type: error
+Description: Automatic installation stopped
+ OBOS found ${COUNT} eligible internal disks. No disk has been selected and no partition changes have been made.
+ .
+ Shut down the machine and leave exactly one intended installation disk connected, or restart and choose Advanced install options to select a target disk explicitly.
+
+Template: obos-installer/recovery-password
+Type: note
+Description: Installation complete - save the recovery password
+ The Linux recovery user is: obos
+ .
+ Its individual password is: ${OBOS_PASSWORD}
+ .
+ Save this password before rebooting. After browser onboarding, both the root and obos recovery passwords can be revealed or rotated under System Diagnostics. They are separate from the web user admin.
+

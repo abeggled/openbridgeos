@@ -36,6 +36,12 @@ xargs apt-get install -y --no-install-recommends < "${RUNTIME_PACKAGES_FILE}"
 if ! getent passwd obos-agent >/dev/null 2>&1; then
   useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin --user-group obos-agent
 fi
+if ! getent passwd obos >/dev/null 2>&1; then
+  useradd --create-home --shell /bin/bash obos
+fi
+if getent group sudo >/dev/null 2>&1; then
+  usermod --append --groups sudo obos
+fi
 
 install -d -m 0755 "${OBOS_SHARE_DIR}/apps/openbridgeserver"
 install -d -m 0755 "${OBOS_LIB_DIR}"
@@ -76,12 +82,14 @@ install -m 0644 "${REPO_ROOT}/packaging/sysctl/99-obos-hardening.conf" /etc/sysc
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/first-boot.sh" "${OBOS_LIB_DIR}/first-boot.sh"
 install -m 0755 "${REPO_ROOT}/scripts/bootstrap/install-openbridgeserver-app.sh" "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh"
 install -m 0755 "${REPO_ROOT}/scripts/auth/generate-web-auth.sh" "${OBOS_LIB_DIR}/generate-web-auth.sh"
+install -m 0755 "${REPO_ROOT}/scripts/auth/manage-system-credentials.sh" "${OBOS_LIB_DIR}/manage-system-credentials.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/apply-host-hardening.sh" "${OBOS_LIB_DIR}/apply-host-hardening.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/enable-ssh.sh" "${OBOS_LIB_DIR}/enable-ssh.sh"
 install -m 0755 "${REPO_ROOT}/scripts/hardening/set-mqtt-lan-access.sh" "${OBOS_LIB_DIR}/set-mqtt-lan-access.sh"
 install -m 0755 "${REPO_ROOT}/scripts/update/update-host.sh" "${OBOS_LIB_DIR}/update-host.sh"
 install -m 0755 "${REPO_ROOT}/scripts/update/update-obos-release.sh" "${OBOS_LIB_DIR}/update-obos-release.sh"
 install -m 0755 "${REPO_ROOT}/scripts/update/install-update-bundle.sh" "${OBOS_LIB_DIR}/install-update-bundle.sh"
+install -m 0755 "${REPO_ROOT}/scripts/update/disable-install-media-sources.sh" "${OBOS_LIB_DIR}/disable-install-media-sources.sh"
 if [ -n "${OBOS_RELEASE_MINISIGN_PUBLIC_KEY:-}" ]; then
   printf '%s\n' "${OBOS_RELEASE_MINISIGN_PUBLIC_KEY}" > /etc/obos/update/minisign.pub
   chmod 0644 /etc/obos/update/minisign.pub

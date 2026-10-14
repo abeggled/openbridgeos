@@ -27,6 +27,7 @@ TLS_LEAF_RENEWAL_SCRIPT="${OBOS_TLS_LEAF_RENEWAL_SCRIPT:-/usr/lib/obos/renew-lea
 TLS_INFO_SCRIPT="${OBOS_TLS_INFO_SCRIPT:-/usr/lib/obos/print-trust-info.sh}"
 TLS_EXPORT_SCRIPT="${OBOS_TLS_EXPORT_SCRIPT:-/usr/lib/obos/export-trust-bundle.sh}"
 BOOT_TRUST_SCRIPT="${OBOS_BOOT_TRUST_SCRIPT:-/usr/lib/obos/export-boot-trust-summary.sh}"
+SYSTEM_CREDENTIALS_SCRIPT="${OBOS_SYSTEM_CREDENTIALS_SCRIPT:-/usr/lib/obos/manage-system-credentials.sh}"
 TLS_STATUS_SCRIPT="${OBOS_TLS_STATUS_SCRIPT:-/usr/lib/obos/check-tls-status.sh}"
 MQTT_LAN_SCRIPT="${OBOS_MQTT_LAN_SCRIPT:-/usr/lib/obos/set-mqtt-lan-access.sh}"
 SECURITY_BASELINE_SCRIPT="${OBOS_SECURITY_BASELINE_SCRIPT:-/usr/lib/obos/security-baseline.sh}"
@@ -57,6 +58,10 @@ Commands:
                     Print machine-readable technical MVP runtime readiness
   web-auth-set     Set the initial web console login password from a file
   web-auth-rotate  Rotate generated web console login credentials
+  system-credentials-reveal
+                    Reveal root and obos recovery credentials after confirmation
+  system-credentials-rotate
+                    Rotate root and obos recovery credentials after confirmation
   agent-audit-summary
                     Print machine-readable agent mutation audit status
   start             Start open bridge server
@@ -1960,6 +1965,24 @@ case "${1:-}" in
     rm -f "${password_file}"
     systemctl start --no-block "${SERVICE_NAME}"
     echo "open bridge server start scheduled: PASS"
+    ;;
+  system-credentials-reveal)
+    require_root system-credentials-reveal
+    shift
+    if [ "${1:-}" != "--confirm" ] || [ "${2:-}" != "system-credentials-reveal" ]; then
+      echo "usage: obosctl system-credentials-reveal --confirm system-credentials-reveal" >&2
+      exit 2
+    fi
+    run_helper "${SYSTEM_CREDENTIALS_SCRIPT}" show
+    ;;
+  system-credentials-rotate)
+    require_root system-credentials-rotate
+    shift
+    if [ "${1:-}" != "--confirm" ] || [ "${2:-}" != "system-credentials-rotate" ]; then
+      echo "usage: obosctl system-credentials-rotate --confirm system-credentials-rotate" >&2
+      exit 2
+    fi
+    run_helper "${SYSTEM_CREDENTIALS_SCRIPT}" rotate
     ;;
   agent-audit-summary)
     shift

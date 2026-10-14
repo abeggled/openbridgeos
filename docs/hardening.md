@@ -85,6 +85,13 @@ but it must not contain a password or another secret. Initial onboarding is a
 browser-only, first-client-wins flow by product decision. Keep an uninitialized
 appliance on a trusted local network until the administrator password is set.
 
+Per-device Linux recovery passwords are generated on the appliance for `root`
+and the local `obos` user. The root-only credential record is not part of normal
+status output, logs, release artifacts, or appliance backups. System Diagnostics
+requires an authenticated session, a fresh check of the current web-admin
+password, and an explicit reveal or rotation. The agent audit records the action
+and result but never either password value.
+
 The default proxy config is installed from:
 
 ```text
@@ -113,8 +120,12 @@ with first boot and Docker Compose orchestration:
 - `RestrictRealtime=true`
 - `SystemCallArchitectures=native`
 
-The first boot unit also declares explicit write access to `/etc/obos` and
-`/srv/obos`, because it creates secrets, TLS material, and state markers there.
+The first boot unit also declares explicit write access to `/etc` and
+`/srv/obos`: account password initialization updates the system shadow files,
+while appliance secrets, TLS material, and state markers live below those
+trees. `ProtectHome=true` remains enforced because the `obos` home directory is
+created while the immutable image is provisioned, before per-device passwords
+exist.
 
 The security baseline audit verifies the enabled state and the shared sandboxing
 properties for both obos-managed units on provisioned systems.
