@@ -120,12 +120,15 @@ with first boot and Docker Compose orchestration:
 - `RestrictRealtime=true`
 - `SystemCallArchitectures=native`
 
-The first boot unit also declares explicit write access to `/etc` and
-`/srv/obos`: account password initialization updates the system shadow files,
-while appliance secrets, TLS material, and state markers live below those
-trees. `ProtectHome=true` remains enforced because the `obos` home directory is
-created while the immutable image is provisioned, before per-device passwords
-exist.
+Per-device Linux passwords are initialized first by the short-lived
+`obos-system-credentials.service`. It uses `ProtectSystem=true`, which keeps
+vendor binaries and boot content read-only while permitting the required
+passwd/shadow update in the host-specific `/etc` hierarchy. The subsequently
+started first-boot service retains `ProtectSystem=full` and receives explicit,
+nested writable exceptions for `/etc/obos`, the staged nginx configuration,
+and `/srv/obos`. A same-level `ReadWritePaths=/etc` exception is intentionally
+not used because it does not override the read-only `/etc` mount reliably.
+`ProtectHome=true` remains enforced for both services.
 
 The security baseline audit verifies the enabled state and the shared sandboxing
 properties for both obos-managed units on provisioned systems.

@@ -2,6 +2,8 @@
 set -eu
 
 HELPER="scripts/auth/manage-system-credentials.sh"
+CREDENTIALS_UNIT="packaging/systemd/obos-system-credentials.service"
+FIRST_BOOT_UNIT="packaging/systemd/obos-first-boot.service"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT HUP INT TERM
 
@@ -9,6 +11,19 @@ fail() {
   echo "system credentials check failed: $1" >&2
   exit 1
 }
+
+[ -s "${CREDENTIALS_UNIT}" ] || fail "system credential initialization unit is missing"
+grep -Fq 'ConditionPathExists=!/etc/obos/system-credentials' "${CREDENTIALS_UNIT}" \
+  || fail "credential initialization is not limited to uninitialized appliances"
+grep -Fq 'ProtectSystem=true' "${CREDENTIALS_UNIT}" \
+  || fail "credential initialization does not keep vendor paths read-only"
+grep -Fq 'Requires=obos-system-credentials.service' "${FIRST_BOOT_UNIT}" \
+  || fail "first boot does not require credential initialization"
+grep -Fq 'ReadWritePaths=/etc/obos ' "${FIRST_BOOT_UNIT}" \
+  || fail "first boot cannot write its explicit /etc/obos subtree"
+if grep -Eq '^ReadWritePaths=/etc([[:space:]]|$)' "${FIRST_BOOT_UNIT}"; then
+  fail "first boot uses an ineffective same-level /etc exception"
+fi
 
 mkdir -p "${TMP_DIR}/bin" "${TMP_DIR}/etc"
 cat > "${TMP_DIR}/bin/getent" <<EOF
