@@ -375,6 +375,10 @@ if grep -q 'innerHTML' "${JS}"; then
 fi
 grep -q 'class="release-notes markup-content"' "${INDEX}" \
   || fail "release notes do not use the markup presentation"
+grep -q 'class="button-row host-settings-actions"' "${INDEX}" \
+  || fail "host identity and timezone controls are not separated into rows"
+grep -q '^\.host-settings-actions > \.control-group {' "${CSS}" \
+  || fail "host settings rows do not have a dedicated layout rule"
 
 host_line="$(grep -n '<h2>Host Settings ' "${INDEX}" | cut -d: -f1)"
 tls_line="$(grep -n '<h2>TLS Trust ' "${INDEX}" | cut -d: -f1)"

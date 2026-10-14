@@ -637,6 +637,10 @@ dd,
   flex: 1 1 260px;
 }
 
+.host-settings-actions > .control-group {
+  flex-basis: 100%;
+}
+
 .control-group > input {
   min-width: 0;
   flex: 1 1 150px;
