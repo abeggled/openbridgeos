@@ -43,6 +43,8 @@ grep -q '"set-hostname": "set-hostname"' "${BRIDGE}" \
   || fail "set-hostname mutation is not exposed with a matching confirmation token"
 grep -q '"set-timezone": "set-timezone"' "${BRIDGE}" \
   || fail "set-timezone mutation is not exposed with a matching confirmation token"
+grep -q '"set-release-channel": "set-release-channel"' "${BRIDGE}" \
+  || fail "set-release-channel mutation is not exposed with a matching confirmation token"
 grep -q '"tls-generate": "tls-generate"' "${BRIDGE}" \
   || fail "tls-generate mutation is not exposed with a matching confirmation token"
 grep -q '"tls-export": "tls-export"' "${BRIDGE}" \
@@ -242,6 +244,21 @@ stdout=update_available=true
 stdout=release_notes_present=true
 stdout=release_note_001=Complete appliance update support
 stdout=release_note_count=1
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  release-channel-summary)
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=release-channel-summary
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-release-channel-v1
+stdout=release_channel=stable
+stdout=release_channel_source=default
 stdout_end
 stderr_begin
 stderr_end
@@ -546,6 +563,22 @@ stderr_begin
 stderr_end
 RESPONSE
     ;;
+  set-release-channel)
+    [ "${2:-}" = "stable" ] || exit 2
+    [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "set-release-channel" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=set-release-channel
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-release-channel-v1
+stdout=release_channel=stable
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
   *)
     echo "unexpected action: ${1:-missing}" >&2
     exit 2
@@ -819,7 +852,7 @@ curl --fail --silent http://127.0.0.1:18091/obos/api/v1/actions/system-summary |
   grep -q 'stdout=hostname=obos-test' \
   || fail "HTTP bridge did not expose system summary"
 
-for gui_action in update-summary update-release-summary backup-summary backup-list backup-prune-plan restore-stage-summary mqtt-summary tls-summary security-summary mvp-readiness-summary agent-audit-summary logs-summary; do
+for gui_action in update-summary update-release-summary release-channel-summary backup-summary backup-list backup-prune-plan restore-stage-summary mqtt-summary tls-summary security-summary mvp-readiness-summary agent-audit-summary logs-summary; do
   curl --fail --silent "http://127.0.0.1:18091/obos/api/v1/actions/${gui_action}" >/dev/null \
     || fail "HTTP bridge did not expose GUI action ${gui_action}"
 done
@@ -975,6 +1008,22 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/set-timezone |
   grep -q 'stdout=timezone=Europe/Zurich' \
   || fail "HTTP bridge did not run confirmed timezone mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"set-release-channel","release_channel":"stable"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/set-release-channel |
+  grep -q 'stdout=release_channel=stable' \
+  || fail "HTTP bridge did not run confirmed release channel mutation"
+
+curl --silent --output "${tmp_dir}/invalid-release-channel.out" --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"set-release-channel","release_channel":"stable;id"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/set-release-channel |
+  grep -q '^400$' \
+  || fail "HTTP bridge accepted an invalid release channel"
+grep -q 'invalid-release-channel' "${tmp_dir}/invalid-release-channel.out" \
+  || fail "invalid release channel rejection omitted its marker"
 
 curl --silent --output "${tmp_dir}/hostname-extra-field.out" --write-out '%{http_code}' \
   --header 'Content-Type: application/json' \

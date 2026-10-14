@@ -21,6 +21,7 @@ Read-only actions:
   system-summary
   update-summary
   update-release-summary
+  release-channel-summary
   update-rollback-plan
   backup-summary
   backup-list
@@ -43,6 +44,7 @@ Mutating actions:
   stop --confirm stop
   restart --confirm restart
   update --confirm update
+  set-release-channel <stable|prerelease> --confirm set-release-channel
   backup --confirm backup
   backup-prune --confirm backup-prune
   portable-export <backup.tar.gz> <passphrase-file> --confirm portable-export
@@ -303,6 +305,18 @@ require_set_timezone_args() {
   validate_timezone "${TIMEZONE_VALUE}"
 }
 
+require_set_release_channel_args() {
+  action="$1"
+  [ "$#" -eq 4 ] || fail "${action} requires: <stable|prerelease> --confirm ${action}"
+  [ "${3:-}" = "--confirm" ] || fail "${action} requires: <stable|prerelease> --confirm ${action}"
+  [ "${4:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
+  RELEASE_CHANNEL_VALUE="${2:-}"
+  case "${RELEASE_CHANNEL_VALUE}" in
+    stable|prerelease) ;;
+    *) fail "${action} channel must be stable or prerelease" ;;
+  esac
+}
+
 require_web_auth_set_args() {
   action="$1"
   [ "$#" -eq 4 ] || fail "${action} requires: <password-file> --confirm ${action}"
@@ -328,6 +342,7 @@ action=status-summary|mutating=false
 action=system-summary|mutating=false
 action=update-summary|mutating=false
 action=update-release-summary|mutating=false
+action=release-channel-summary|mutating=false
 action=update-rollback-plan|mutating=false
 action=backup-summary|mutating=false
 action=backup-list|mutating=false
@@ -349,6 +364,7 @@ action=start|mutating=true|confirm=start
 action=stop|mutating=true|confirm=stop
 action=restart|mutating=true|confirm=restart
 action=update|mutating=true|confirm=update
+action=set-release-channel|mutating=true|confirm=set-release-channel|required_arg=release-channel
 action=backup|mutating=true|confirm=backup
 action=portable-export|mutating=true|confirm=portable-export|required_arg=backup-path|required_arg=passphrase-file
 action=portable-import-stage|mutating=true|confirm=portable-import-stage|required_arg=portable-backup|required_arg=passphrase-file
@@ -458,6 +474,10 @@ case "${1:-}" in
     require_no_extra_args "$@"
     run_obosctl update-release-summary "${TIMEOUT_SECONDS}" false update-release-summary
     ;;
+  release-channel-summary)
+    require_no_extra_args "$@"
+    run_obosctl release-channel-summary "${TIMEOUT_SECONDS}" false release-channel-summary
+    ;;
   update-rollback-plan)
     require_no_extra_args "$@"
     run_obosctl update-rollback-plan "${TIMEOUT_SECONDS}" false update-rollback-plan
@@ -541,6 +561,10 @@ case "${1:-}" in
   update)
     require_confirm_args "$@"
     run_obosctl update "${UPDATE_TIMEOUT_SECONDS}" true update
+    ;;
+  set-release-channel)
+    require_set_release_channel_args "$@"
+    run_obosctl set-release-channel "${MUTATION_TIMEOUT_SECONDS}" true set-release-channel "${RELEASE_CHANNEL_VALUE}" --confirm set-release-channel
     ;;
   backup)
     require_confirm_args "$@"

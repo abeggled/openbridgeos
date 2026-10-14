@@ -166,6 +166,65 @@ printf '%s\n' "${release_check_output}" | grep -q '^installed_version=0.0.0$' \
 printf '%s\n' "${release_check_output}" | grep -q '^release_notes_present=false$' \
   || fail "release preview claims unsigned release notes"
 
+channel_file="${tmp_dir}/update/release-channel"
+legacy_base_url_file="${tmp_dir}/update/release-base-url"
+mkdir -p "$(dirname -- "${channel_file}")"
+printf '%s\n' 'https://github.com/abeggled/openbridgeos/releases/download/legacy-test' > "${legacy_base_url_file}"
+channel_output="$(
+  PATH="${mock_bin}:${PATH}" \
+  OBOS_RELEASE_CHANNEL_FILE="${channel_file}" \
+  OBOS_RELEASE_BASE_URL_FILE="${legacy_base_url_file}" \
+  sh scripts/obosctl set-release-channel prerelease --confirm set-release-channel
+)"
+printf '%s\n' "${channel_output}" | grep -q '^release_channel=prerelease$' \
+  || fail "release channel mutation did not report prerelease"
+[ "$(cat "${channel_file}")" = prerelease ] \
+  || fail "release channel mutation did not persist prerelease"
+[ ! -e "${legacy_base_url_file}" ] \
+  || fail "release channel mutation did not remove the legacy URL override"
+if PATH="${mock_bin}:${PATH}" \
+  OBOS_RELEASE_CHANNEL_FILE="${channel_file}" \
+  OBOS_RELEASE_BASE_URL_FILE="${legacy_base_url_file}" \
+  sh scripts/obosctl set-release-channel 'prerelease;id' --confirm set-release-channel >/dev/null 2>&1; then
+  fail "release channel mutation accepted an invalid channel"
+fi
+channel_summary="$(
+  OBOS_RELEASE_CHANNEL_FILE="${channel_file}" \
+  OBOS_RELEASE_BASE_URL_FILE="${legacy_base_url_file}" \
+  sh scripts/obosctl release-channel-summary
+)"
+printf '%s\n' "${channel_summary}" | grep -q '^release_channel=prerelease$' \
+  || fail "release channel summary did not report the configured channel"
+
+prerelease_curl="${mock_bin}/prerelease-curl"
+cat > "${prerelease_curl}" <<'EOF'
+#!/bin/sh
+output=
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = -o ]; then
+    shift
+    output="${1:-}"
+  fi
+  shift
+done
+[ -n "${output}" ] || exit 2
+printf '%s\n' '[]' > "${output}"
+EOF
+chmod +x "${prerelease_curl}"
+printf '%s\n' 'fixture public key' > "${tmp_dir}/fixture-public-key"
+release_prerelease_output="$(
+  OBOS_CURL="${prerelease_curl}" \
+  OBOS_MINISIGN=true \
+  OBOS_RELEASE_CHANNEL_FILE="${channel_file}" \
+  OBOS_RELEASE_BASE_URL_FILE="${legacy_base_url_file}" \
+  OBOS_RELEASE_PUBLIC_KEY_FILE="${tmp_dir}/fixture-public-key" \
+  sh "${UPDATE_RELEASE}" check
+)"
+printf '%s\n' "${release_prerelease_output}" | grep -q '^release_channel=prerelease$' \
+  || fail "release updater did not resolve the prerelease channel"
+printf '%s\n' "${release_prerelease_output}" | grep -q '^release_status=no-prerelease$' \
+  || fail "release updater did not report an empty prerelease channel safely"
+
 # shellcheck disable=SC2016
 grep -q '\-Vm "${manifest}"' "${UPDATE_RELEASE}" \
   || fail "release updater does not verify the signed manifest"

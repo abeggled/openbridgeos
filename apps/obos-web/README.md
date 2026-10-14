@@ -51,7 +51,7 @@ operation.
 The diagnostics logs panel starts with metadata only. Raw log viewing remains disabled
 because service logs can contain sensitive operational data.
 
-Start, stop, restart, update, backup creation, restore staging, hostname and
+Start, stop, restart, update, signed-release channel selection, backup creation, restore staging, hostname and
 timezone changes, MQTT LAN opt-in/opt-out, TLS generation/export, encrypted
 portable backup export/import staging, and web console password rotation are
 confirmed mutations exposed through the HTTP bridge. They use the same

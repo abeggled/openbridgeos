@@ -3,6 +3,8 @@ set -eu
 
 RELEASE_BASE_URL="${OBOS_RELEASE_BASE_URL:-https://github.com/abeggled/openbridgeos/releases/latest/download}"
 RELEASE_BASE_URL_FILE="${OBOS_RELEASE_BASE_URL_FILE:-/etc/obos/update/release-base-url}"
+RELEASE_CHANNEL_FILE="${OBOS_RELEASE_CHANNEL_FILE:-/etc/obos/update/release-channel}"
+GITHUB_RELEASES_API="${OBOS_GITHUB_RELEASES_API:-https://api.github.com/repos/abeggled/openbridgeos/releases?per_page=100}"
 PUBLIC_KEY_FILE="${OBOS_RELEASE_PUBLIC_KEY_FILE:-/etc/obos/update/minisign.pub}"
 INSTALLED_VERSION_FILE="${OBOS_VERSION_FILE:-/etc/obos/version}"
 INSTALLER="${OBOS_UPDATE_BUNDLE_INSTALLER:-/usr/lib/obos/install-update-bundle.sh}"
@@ -25,7 +27,10 @@ manifest_value() {
 [ "${MODE}" = apply ] || [ "${MODE}" = check ] || fail "usage: update-obos-release.sh [check|apply]"
 [ "${MODE}" = check ] || [ "$(id -u)" -eq 0 ] || fail "must run as root"
 
+release_channel=stable
+resolve_prerelease=false
 if [ -z "${OBOS_RELEASE_BASE_URL:-}" ] && [ -s "${RELEASE_BASE_URL_FILE}" ]; then
+  release_channel=pinned
   RELEASE_BASE_URL="$(sed -n '1p' "${RELEASE_BASE_URL_FILE}")"
   case "${RELEASE_BASE_URL}" in
     https://github.com/abeggled/openbridgeos/releases/latest/download) ;;
@@ -36,12 +41,20 @@ if [ -z "${OBOS_RELEASE_BASE_URL:-}" ] && [ -s "${RELEASE_BASE_URL_FILE}" ]; the
       ;;
     *) fail "configured release base URL is not an allowed openbridgeos GitHub release URL" ;;
   esac
+elif [ -z "${OBOS_RELEASE_BASE_URL:-}" ] && [ -s "${RELEASE_CHANNEL_FILE}" ]; then
+  release_channel="$(sed -n '1p' "${RELEASE_CHANNEL_FILE}")"
+  case "${release_channel}" in
+    stable) ;;
+    prerelease) resolve_prerelease=true ;;
+    *) fail "configured release channel must be stable or prerelease" ;;
+  esac
 fi
 
 installed_version="$(cat "${INSTALLED_VERSION_FILE}" 2>/dev/null || printf '0.0.0')"
 
 if [ ! -s "${PUBLIC_KEY_FILE}" ]; then
   echo "format=obos-release-update-v1"
+  echo "release_channel=${release_channel}"
   echo "release_status=not-configured"
   echo "installed_version=${installed_version}"
   echo "available_version=unknown"
@@ -56,6 +69,45 @@ command -v "${CURL}" >/dev/null 2>&1 || fail "curl is unavailable"
 command -v "${MINISIGN}" >/dev/null 2>&1 || fail "minisign is unavailable"
 [ "${MODE}" = check ] || [ -x "${INSTALLER}" ] || fail "update bundle installer is unavailable"
 
+if [ "${resolve_prerelease}" = true ]; then
+  command -v python3 >/dev/null 2>&1 || fail "python3 is unavailable for prerelease discovery"
+  releases_json="$(mktemp)"
+  trap 'rm -f "${releases_json}"' EXIT HUP INT TERM
+  "${CURL}" -fsSL -o "${releases_json}" "${GITHUB_RELEASES_API}" \
+    || fail "cannot query GitHub prereleases"
+  release_tag="$(python3 - "${releases_json}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    releases = json.load(handle)
+if not isinstance(releases, list):
+    raise SystemExit("GitHub releases response is not a list")
+for release in releases:
+    if isinstance(release, dict) and release.get("prerelease") is True and release.get("draft") is False:
+        print(release.get("tag_name", ""))
+        break
+PY
+)" || fail "cannot parse GitHub prereleases"
+  if [ -z "${release_tag}" ]; then
+    echo "format=obos-release-update-v1"
+    echo "release_channel=prerelease"
+    echo "release_status=no-prerelease"
+    echo "installed_version=${installed_version}"
+    echo "available_version=unknown"
+    echo "update_available=false"
+    echo "release_notes_present=false"
+    echo "release_updated=false"
+    echo "release_reboot_required=false"
+    exit 0
+  fi
+  printf '%s\n' "${release_tag}" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._+-]*$' \
+    || fail "GitHub returned an invalid prerelease tag"
+  RELEASE_BASE_URL="https://github.com/abeggled/openbridgeos/releases/download/${release_tag}"
+  rm -f "${releases_json}"
+  trap - EXIT HUP INT TERM
+fi
+
 work_dir="$(mktemp -d)"
 trap 'rm -rf "${work_dir}"' EXIT HUP INT TERM
 manifest="${work_dir}/obos-update.manifest"
@@ -67,6 +119,7 @@ http_code="$("${CURL}" -sS -L -o "${manifest}" -w '%{http_code}' "${RELEASE_BASE
   || fail "cannot query the latest GitHub release"
 if [ "${http_code}" = 404 ]; then
   echo "format=obos-release-update-v1"
+  echo "release_channel=${release_channel}"
   echo "release_status=no-update-bundle"
   echo "installed_version=${installed_version}"
   echo "available_version=unknown"
@@ -112,6 +165,7 @@ fi
 
 emit_release_summary() {
   echo "format=obos-release-update-v1"
+  echo "release_channel=${release_channel}"
   echo "release_status=${release_status}"
   echo "installed_version=${installed_version}"
   echo "available_version=${version}"
@@ -136,6 +190,7 @@ fi
 
 if [ "${update_available}" = false ]; then
   echo "format=obos-release-update-v1"
+  echo "release_channel=${release_channel}"
   echo "release_status=current"
   echo "release_version=${installed_version}"
   echo "release_updated=false"
@@ -160,6 +215,7 @@ tar -xzf "${archive}" --no-same-owner --no-same-permissions -C "${work_dir}"
 "${INSTALLER}" "${work_dir}/${root_dir}" "${version}" >/dev/null
 
 echo "format=obos-release-update-v1"
+echo "release_channel=${release_channel}"
 echo "release_status=updated"
 echo "release_version=${version}"
 echo "release_updated=true"

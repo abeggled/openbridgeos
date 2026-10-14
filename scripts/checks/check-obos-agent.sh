@@ -58,6 +58,14 @@ grep -q 'update-release-summary)' "${AGENT}" \
   || fail "update-release-summary action missing"
 grep -q 'action=update-release-summary|mutating=false' "${AGENT}" \
   || fail "update-release-summary action is not listed as read-only"
+grep -q 'action=release-channel-summary|mutating=false' "${AGENT}" \
+  || fail "release-channel-summary action is not listed as read-only"
+grep -q 'action=set-release-channel|mutating=true|confirm=set-release-channel|required_arg=release-channel' "${AGENT}" \
+  || fail "set-release-channel action is not tightly described"
+grep -q '/usr/bin/obosctl set-release-channel stable --confirm set-release-channel' packaging/sudoers/obos-agent \
+  || fail "stable release channel sudo rule missing"
+grep -q '/usr/bin/obosctl set-release-channel prerelease --confirm set-release-channel' packaging/sudoers/obos-agent \
+  || fail "prerelease channel sudo rule missing"
 grep -q 'update-rollback-plan)' "${AGENT}" \
   || fail "update-rollback-plan action missing"
 grep -q 'action=update-rollback-plan|mutating=false' "${AGENT}" \
@@ -313,6 +321,10 @@ case "$1" in
     echo "timezone-set:${2:-missing}"
     exit 0
     ;;
+  set-release-channel)
+    echo "release-channel-set:${2:-missing}"
+    exit 0
+    ;;
   tls-renew-leaf)
     [ "${2:-}" = "--confirm" ] && [ "${3:-}" = "tls-renew-leaf" ] || exit 2
     echo "leaf-renewed"
@@ -519,6 +531,14 @@ fi
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-timezone Europe/Zurich --confirm set-timezone |
   grep -q 'stdout=timezone-set:Europe/Zurich' \
   || fail "agent did not forward checked timezone"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-release-channel prerelease --confirm set-release-channel |
+  grep -q 'stdout=release-channel-set:prerelease' \
+  || fail "agent did not forward the checked release channel"
+
+if OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-release-channel 'prerelease;id' --confirm set-release-channel >/dev/null 2>&1; then
+  fail "agent accepted an invalid release channel"
+fi
 
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" tls-renew-leaf --confirm tls-renew-leaf |
   grep -q 'stdout=leaf-renewed' \

@@ -1,4 +1,18 @@
 # Changes
+## 2026.10.2
+### Breaking changes 🚨
+* none
+### New features ✨
+* Select the signed `stable` or `prerelease` appliance update channel from the authenticated web console.
+* Show the configured update channel separately from release availability.
+### Security fixes 🔒
+* Restrict channel changes end to end to two allowlisted values and exact passwordless-sudo command lines.
+* Continue requiring Minisign verification and signed checksums for releases discovered through either channel.
+### Fixes 🐞
+* Replace legacy manual prerelease URL configuration with an atomic, audited channel setting while preserving existing pinned installations for compatibility.
+### Operational notes 🔔
+* Existing appliances first update normally to `2026.10.1`; channel selection becomes available after that update and the subsequent `2026.10.2` installation.
+
 ## 2026.10.1
 ### Breaking changes 🚨
 * Production OpenBridgeServer and Mosquitto images are now pinned to reviewed immutable digests. The legacy `OBS_IMAGE_TAG` environment override is no longer applied; installations that intentionally used a custom OBS image must review the pinned image before updating.

@@ -64,6 +64,12 @@
       label: "Update Appliance",
       tone: "warning",
     },
+    "set-release-channel": {
+      title: "Change the update channel?",
+      body: "Stable follows normal signed releases. Prerelease follows the newest signed GitHub prerelease and may contain less-tested changes.",
+      label: "Apply Channel",
+      tone: "warning",
+    },
     backup: {
       title: "Create appliance backup?",
       body: "Creates a new local backup of OBS data, MQTT state, configuration, identity, and TLS material.",
@@ -424,6 +430,12 @@
       if (action === "update-release-summary") {
         renderReleaseNotes(values);
       }
+      if (action === "release-channel-summary") {
+        const releaseChannelSelect = document.querySelector("#release-channel");
+        if (releaseChannelSelect && ["stable", "prerelease"].includes(values.release_channel)) {
+          releaseChannelSelect.value = values.release_channel;
+        }
+      }
       if (action === "tls-summary" && caDownloadLink) {
         caDownloadLink.hidden = values.trust_export_present !== "true";
       }
@@ -766,6 +778,14 @@
       }
       body.timezone = timezone;
     }
+    if (action === "set-release-channel") {
+      const releaseChannel = document.querySelector("#release-channel")?.value;
+      if (!["stable", "prerelease"].includes(releaseChannel)) {
+        setMutationStatus(statusTarget, "invalid channel", "error");
+        return;
+      }
+      body.release_channel = releaseChannel;
+    }
     if (action === "portable-export") {
       const passphrase = document.querySelector("#portable-passphrase")?.value;
       if (!passphrase) {
@@ -812,6 +832,9 @@
       }
       if (action === "set-hostname" && hostIdentityTlsNotice) {
         hostIdentityTlsNotice.hidden = false;
+      }
+      if (action === "set-release-channel") {
+        latestValues.delete("update-release-summary");
       }
       let completedMessage = action === "set-hostname" ? "completed; renew leaf to apply FQDN" : "completed";
       if (action === "update" && responseValues["reboot-scheduled"] === "true") {

@@ -172,9 +172,24 @@ includes the update state file path, whether a successful update record is
 present, and the last update record fields when present.
 
 `update-release-summary` performs a read-only check of the latest GitHub
-release. It verifies the pinned Minisign signature and signed checksums, then
+release in the selected `stable` or `prerelease` channel. It verifies the pinned Minisign signature and signed checksums, then
 prints the installed and available versions plus bounded release-note lines for
 display before update confirmation.
+
+`release-channel-summary` reports the configured channel. The default is
+`stable`. Change it locally or through the authenticated web console with:
+
+```sh
+obosctl release-channel-summary
+sudo obosctl set-release-channel prerelease --confirm set-release-channel
+sudo obosctl set-release-channel stable --confirm set-release-channel
+```
+
+Only these two channel names are accepted. Selecting a channel atomically writes
+`/etc/obos/update/release-channel` and removes the legacy exact-release URL
+override. The prerelease discovery response selects only a non-draft GitHub
+prerelease with a strictly validated tag; the downloaded manifest must still
+pass the pinned Minisign verification before its contents are used.
 
 `update-rollback-plan` is read-only and non-destructive. It reads the last
 successful update record, verifies that the recorded backup still exists and
