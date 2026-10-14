@@ -366,6 +366,27 @@ grep -q 'data-release-notes' "${INDEX}" \
 
 grep -q 'function renderReleaseNotes' "${JS}" \
   || fail "web UI does not safely render signed release notes"
+grep -q 'function renderMarkup' "${JS}" \
+  || fail "web UI does not render release-note markup"
+grep -q 'document.createTextNode' "${JS}" \
+  || fail "web UI markup renderer does not use safe text nodes"
+if grep -q 'innerHTML' "${JS}"; then
+  fail "web UI markup renderer permits raw HTML injection"
+fi
+grep -q 'class="release-notes markup-content"' "${INDEX}" \
+  || fail "release notes do not use the markup presentation"
+
+host_line="$(grep -n '<h2>Host Settings ' "${INDEX}" | cut -d: -f1)"
+tls_line="$(grep -n '<h2>TLS Trust ' "${INDEX}" | cut -d: -f1)"
+mqtt_line="$(grep -n '<h2>MQTT Service ' "${INDEX}" | cut -d: -f1)"
+backup_line="$(grep -n '<h2>Backups ' "${INDEX}" | cut -d: -f1)"
+restore_line="$(grep -n '<h2>Restore ' "${INDEX}" | cut -d: -f1)"
+if ! { [ "${host_line}" -lt "${tls_line}" ] \
+  && [ "${tls_line}" -lt "${mqtt_line}" ] \
+  && [ "${mqtt_line}" -lt "${backup_line}" ] \
+  && [ "${backup_line}" -lt "${restore_line}" ]; }; then
+  fail "operational panels are not ordered host, TLS, services, backup, restore"
+fi
 
 grep -q 'Available signed OBOS release' "${JS}" \
   || fail "update confirmation does not include the signed release preview"
@@ -573,8 +594,10 @@ if grep -q 'action === "tls-export"' "${JS}"; then
   fail "web UI retains unreachable manual TLS export handling"
 fi
 
-grep -q '^input {' "${CSS}" \
+grep -q '^input,$' "${CSS}" \
   || fail "web UI CSS does not style input controls"
+grep -q '^select {' "${CSS}" \
+  || fail "web UI CSS does not style select controls"
 
 grep -q '.log-viewer' "${CSS}" \
   || fail "web UI CSS does not define bounded log viewer"

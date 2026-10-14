@@ -391,12 +391,89 @@
       .trim();
   }
 
+  function appendInlineMarkup(parent, text) {
+    const tokenPattern = /(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
+    let offset = 0;
+    for (const match of text.matchAll(tokenPattern)) {
+      if (match.index > offset) {
+        parent.append(document.createTextNode(text.slice(offset, match.index)));
+      }
+      const token = match[0];
+      if (token.startsWith("`")) {
+        const code = document.createElement("code");
+        code.textContent = token.slice(1, -1);
+        parent.append(code);
+      } else if (token.startsWith("**")) {
+        const strong = document.createElement("strong");
+        strong.textContent = token.slice(2, -2);
+        parent.append(strong);
+      } else {
+        const separator = token.lastIndexOf("](");
+        const link = document.createElement("a");
+        link.textContent = token.slice(1, separator);
+        link.href = token.slice(separator + 2, -1);
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        parent.append(link);
+      }
+      offset = match.index + token.length;
+    }
+    if (offset < text.length) {
+      parent.append(document.createTextNode(text.slice(offset)));
+    }
+  }
+
+  function renderMarkup(container, text, fallback = "") {
+    if (!container) {
+      return;
+    }
+    container.replaceChildren();
+    const source = String(text || "").trim();
+    if (!source) {
+      container.textContent = fallback;
+      return;
+    }
+
+    let list;
+    for (const rawLine of source.split(/\r?\n/)) {
+      const line = rawLine.trimEnd();
+      if (!line.trim()) {
+        list = undefined;
+        continue;
+      }
+      const heading = line.match(/^(#{2,6})\s+(.+)$/);
+      if (heading) {
+        list = undefined;
+        const level = Math.min(6, Number(heading[1].length) + 2);
+        const element = document.createElement(`h${level}`);
+        appendInlineMarkup(element, heading[2]);
+        container.append(element);
+        continue;
+      }
+      const item = line.match(/^[-*]\s+(.+)$/);
+      if (item) {
+        if (!list) {
+          list = document.createElement("ul");
+          container.append(list);
+        }
+        const element = document.createElement("li");
+        appendInlineMarkup(element, item[1]);
+        list.append(element);
+        continue;
+      }
+      list = undefined;
+      const paragraph = document.createElement("p");
+      appendInlineMarkup(paragraph, line);
+      container.append(paragraph);
+    }
+  }
+
   function renderReleaseNotes(values) {
     if (!releaseNotes) {
       return;
     }
     const notes = releaseNoteText(values);
-    releaseNotes.textContent = notes || "No signed release notes are available.";
+    renderMarkup(releaseNotes, notes, "No signed changes are available for the installed version.");
     releaseNotes.dataset.state = notes ? "ok" : "neutral";
   }
 
@@ -714,7 +791,7 @@
         body += "\n\nOBOS release updates are not configured because no trusted release signing key is installed.";
       }
     }
-    confirmationDialogBody.textContent = body;
+    renderMarkup(confirmationDialogBody, body);
     confirmationDialogAccept.textContent = confirmation.label;
     confirmationDialog.dataset.tone = confirmation.tone;
     confirmationDialog.returnValue = "cancel";

@@ -114,6 +114,7 @@ manifest="${work_dir}/obos-update.manifest"
 signature="${manifest}.minisig"
 archive="${work_dir}/obos-update.tar.gz"
 notes="${work_dir}/obos-update-notes.txt"
+display_notes="${work_dir}/obos-update-notes-display.txt"
 
 http_code="$("${CURL}" -sS -L -o "${manifest}" -w '%{http_code}' "${RELEASE_BASE_URL}/obos-update.manifest")" \
   || fail "cannot query the latest GitHub release"
@@ -156,6 +157,26 @@ printf '%s\n' "${notes_sha256}" | grep -Eq '^[a-f0-9]{64}$' \
 actual_notes_sha256="$(sha256sum "${notes}" | awk '{print $1}')"
 [ "${actual_notes_sha256}" = "${notes_sha256}" ] || fail "release notes checksum mismatch"
 
+: > "${display_notes}"
+include_release=false
+while IFS= read -r note_line || [ -n "${note_line}" ]; do
+  case "${note_line}" in
+    '## '*)
+      note_version="${note_line#\#\# }"
+      if printf '%s\n' "${note_version}" | grep -Eq '^[0-9]+([.][0-9]+){1,3}([+~-][A-Za-z0-9.]+)?$' \
+        && dpkg --compare-versions "${note_version}" gt "${installed_version}" \
+        && dpkg --compare-versions "${note_version}" le "${version}"; then
+        include_release=true
+      else
+        include_release=false
+      fi
+      ;;
+  esac
+  if [ "${include_release}" = true ]; then
+    printf '%s\n' "${note_line}" >> "${display_notes}"
+  fi
+done < "${notes}"
+
 update_available=true
 release_status=available
 if dpkg --compare-versions "${version}" le "${installed_version}"; then
@@ -164,21 +185,27 @@ if dpkg --compare-versions "${version}" le "${installed_version}"; then
 fi
 
 emit_release_summary() {
+  release_notes_present=false
+  if [ -s "${display_notes}" ]; then
+    release_notes_present=true
+  fi
   echo "format=obos-release-update-v1"
   echo "release_channel=${release_channel}"
   echo "release_status=${release_status}"
   echo "installed_version=${installed_version}"
   echo "available_version=${version}"
   echo "update_available=${update_available}"
-  echo "release_notes_present=true"
+  echo "release_notes_present=${release_notes_present}"
+  echo "release_notes_from_version=${installed_version}"
+  echo "release_notes_to_version=${version}"
   awk '
-    NR <= 80 {
+    NR <= 200 {
       gsub(/[^[:print:]\t]/, "")
       printf "release_note_%03d=%s\n", NR, substr($0, 1, 240)
       count=NR
     }
     END { printf "release_note_count=%d\n", count + 0 }
-  ' "${notes}"
+  ' "${display_notes}"
 }
 
 if [ "${MODE}" = check ]; then

@@ -70,4 +70,6 @@ action-specific description instead of the browser's native confirmation
 prompt. The appliance update dialog explains that the workflow updates signed
 OBOS release files, Debian packages, and OBS container images and schedules a
 reboot when required. The overview verifies and shows the latest signed version
-and release notes before update confirmation.
+and only the release notes between the installed and available versions before
+update confirmation. The notes use a small safe markup renderer shared with the
+confirmation dialog; it never inserts release content as raw HTML.

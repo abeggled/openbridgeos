@@ -56,6 +56,7 @@ button:active:not(:disabled) {
 
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
 .download-link:focus-visible,
 .app-nav a:focus-visible {
   outline: 3px solid rgb(15 118 110 / 20%);
@@ -165,11 +166,10 @@ button:disabled {
   color: var(--danger);
 }
 
-.confirmation-dialog > p {
+.confirmation-dialog-body {
   margin: 18px 0 0;
   color: var(--muted);
   line-height: 1.55;
-  white-space: pre-line;
 }
 
 .confirmation-actions {
@@ -221,7 +221,8 @@ button:disabled {
   line-height: 1;
 }
 
-input {
+input,
+select {
   min-height: 36px;
   min-width: 150px;
   border: 1px solid var(--line);
@@ -230,6 +231,15 @@ input {
   color: var(--text);
   font: inherit;
   padding: 0 10px;
+}
+
+select {
+  appearance: none;
+  padding-right: 30px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 15px, calc(100% - 10px) 15px;
+  background-repeat: no-repeat;
+  background-size: 5px 5px, 5px 5px;
 }
 
 .auth-shell {
@@ -442,15 +452,62 @@ dd,
   font-size: 15px;
 }
 
-.release-preview pre {
+.release-notes {
   max-height: 240px;
   margin: 10px 0 0;
   overflow: auto;
   color: var(--text);
-  font: inherit;
   line-height: 1.5;
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
+}
+
+.markup-content > :first-child {
+  margin-top: 0;
+}
+
+.markup-content > :last-child {
+  margin-bottom: 0;
+}
+
+.markup-content h4,
+.markup-content h5,
+.markup-content h6 {
+  margin: 16px 0 6px;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.markup-content h5,
+.markup-content h6 {
+  color: var(--accent-strong);
+  font-size: 13px;
+  text-transform: none;
+}
+
+.markup-content p,
+.markup-content ul {
+  margin: 7px 0;
+}
+
+.markup-content ul {
+  padding-left: 22px;
+}
+
+.markup-content li + li {
+  margin-top: 5px;
+}
+
+.markup-content code {
+  border-radius: 4px;
+  background: rgb(15 118 110 / 9%);
+  color: var(--accent-strong);
+  font: 0.92em Consolas, "Liberation Mono", monospace;
+  padding: 1px 4px;
+}
+
+.markup-content a {
+  color: var(--accent-strong);
 }
 
 .log-viewer[data-state="loading"] {
@@ -484,6 +541,7 @@ dd,
 }
 
 .panel {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -525,14 +583,42 @@ dd,
 
 .panel-heading {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
 }
 
+.panel-heading h2,
+.release-preview h3 {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel-heading h2 .help-button,
+.release-preview h3 .help-button {
+  flex: 0 0 18px;
+  margin-left: 0;
+}
+
+.grid .panel-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.grid .panel-heading .button-row {
+  width: 100%;
+  justify-content: flex-start;
+}
+
 .button-row {
   display: flex;
+  min-width: 0;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
@@ -541,14 +627,25 @@ dd,
 
 .control-group {
   display: inline-flex;
+  min-width: 0;
   max-width: 100%;
   align-items: stretch;
   flex-wrap: nowrap;
 }
 
+.button-row > .control-group {
+  flex: 1 1 260px;
+}
+
 .control-group > input {
   min-width: 0;
   flex: 1 1 150px;
+  border-radius: 0;
+}
+
+.control-group > select {
+  min-width: 0;
+  flex: 1 1 110px;
   border-radius: 0;
 }
 
@@ -593,8 +690,26 @@ dd,
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.release-channel-card {
+  display: grid;
+  gap: 7px;
+}
+
+.release-channel-card strong,
+.release-channel-card small {
+  margin: 0;
+}
+
+.channel-controls {
+  width: 100%;
+}
+
 .grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel-service {
+  grid-column: 1 / -1;
 }
 
 .diagnostics-grid {
@@ -660,6 +775,24 @@ dd,
 
   .control-group {
     width: 100%;
+  }
+
+  .stack-mobile {
+    flex-direction: column;
+  }
+
+  .stack-mobile > * {
+    width: 100%;
+    border-radius: var(--radius);
+  }
+
+  .stack-mobile > * + * {
+    margin-top: -1px;
+    margin-left: 0;
+  }
+
+  .button-row > button {
+    flex: 1 1 auto;
   }
 }
 

@@ -225,6 +225,78 @@ printf '%s\n' "${release_prerelease_output}" | grep -q '^release_channel=prerele
 printf '%s\n' "${release_prerelease_output}" | grep -q '^release_status=no-prerelease$' \
   || fail "release updater did not report an empty prerelease channel safely"
 
+release_fixture="${tmp_dir}/release-fixture"
+mkdir -p "${release_fixture}"
+cat > "${release_fixture}/obos-update-notes.txt" <<'EOF'
+# Changes
+## 2026.10.3
+### New features ✨
+* newest change with `code`
+## 2026.10.2
+### Fixes 🐞
+* intermediate change
+## 2026.10.1
+### Security fixes 🔒
+* first update after the installed version
+## 2026.10.0
+### New features ✨
+* already installed and must not be shown
+EOF
+notes_fixture_sha="$(sha256sum "${release_fixture}/obos-update-notes.txt" | awk '{print $1}')"
+cat > "${release_fixture}/obos-update.manifest" <<EOF
+format=obos-update-release-v1
+version=2026.10.3
+revision=0123456789abcdef0123456789abcdef01234567
+archive=obos-update.tar.gz
+archive_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+root_dir=openbridgeos
+notes=obos-update-notes.txt
+notes_sha256=${notes_fixture_sha}
+EOF
+: > "${release_fixture}/obos-update.manifest.minisig"
+printf '%s\n' '2026.10.0' > "${tmp_dir}/installed-version"
+release_fixture_curl="${mock_bin}/release-fixture-curl"
+cat > "${release_fixture_curl}" <<'EOF'
+#!/bin/sh
+output=
+write_status=false
+url=
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -o) shift; output="${1:-}" ;;
+    -w) shift; write_status=true ;;
+    http*) url="$1" ;;
+  esac
+  shift
+done
+[ -n "${output}" ] && [ -n "${url}" ] || exit 2
+cp "${OBOS_TEST_RELEASE_FIXTURE:?}/${url##*/}" "${output}"
+if [ "${write_status}" = true ]; then
+  printf '200'
+fi
+EOF
+chmod +x "${release_fixture_curl}"
+filtered_release_output="$(
+  OBOS_CURL="${release_fixture_curl}" \
+  OBOS_MINISIGN=true \
+  OBOS_TEST_RELEASE_FIXTURE="${release_fixture}" \
+  OBOS_RELEASE_BASE_URL=https://github.com/abeggled/openbridgeos/releases/download/2026.10.3 \
+  OBOS_RELEASE_PUBLIC_KEY_FILE="${tmp_dir}/fixture-public-key" \
+  OBOS_VERSION_FILE="${tmp_dir}/installed-version" \
+  sh "${UPDATE_RELEASE}" check
+)"
+printf '%s\n' "${filtered_release_output}" | grep -q '^release_notes_from_version=2026.10.0$' \
+  || fail "release preview omitted its installed-version boundary"
+printf '%s\n' "${filtered_release_output}" | grep -q '^release_notes_to_version=2026.10.3$' \
+  || fail "release preview omitted its available-version boundary"
+printf '%s\n' "${filtered_release_output}" | grep -q 'release_note_001=## 2026.10.3' \
+  || fail "release preview did not start at the available release"
+printf '%s\n' "${filtered_release_output}" | grep -q 'first update after the installed version' \
+  || fail "release preview omitted an intermediate release"
+if printf '%s\n' "${filtered_release_output}" | grep -q 'already installed and must not be shown'; then
+  fail "release preview included notes for the installed release"
+fi
+
 # shellcheck disable=SC2016
 grep -q '\-Vm "${manifest}"' "${UPDATE_RELEASE}" \
   || fail "release updater does not verify the signed manifest"
