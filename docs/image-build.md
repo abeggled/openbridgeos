@@ -97,10 +97,11 @@ already running as root.
 
 ## amd64 Installer ISO
 
-The installer profile builds a Debian Trixie hybrid ISO with `live-build`. It
+The installer profile builds a Debian Trixie hybrid ISO with Debian 13's
+`live-build`. It
 boots through GRUB on BIOS and UEFI systems and uses Debian's live installer to
-copy the provisioned OBOS filesystem to the target disk. Build it on Debian or
-Ubuntu with:
+copy the provisioned OBOS filesystem to the target disk. Build it on Debian 13
+with:
 
 ```sh
 sudo apt-get install --no-install-recommends live-build xorriso
