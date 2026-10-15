@@ -70,6 +70,8 @@ grep -Fxq 'Address=10.38.114.132/24' "${network_file}" || fail "static address m
 grep -Fxq 'Gateway=10.38.114.1' "${network_file}" || fail "gateway missing"
 [ "$(grep -Fc 'DNS=' "${network_file}")" -eq 2 ] || fail "DNS servers missing"
 grep -Fq -- '--on-active=3s' "${tmp_dir}/commands.log" || fail "network apply was not safely delayed"
+# The assertion intentionally checks the literal positional parameter in the scheduled shell command.
+# shellcheck disable=SC2016
 grep -Fq 'networkctl down "$1"' "${tmp_dir}/commands.log" || fail "network apply does not clear the previous address"
 grep -Fq 'tls-renew-leaf --confirm tls-renew-leaf' "${tmp_dir}/commands.log" || fail "network apply does not renew the leaf certificate"
 
