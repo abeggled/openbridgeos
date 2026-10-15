@@ -18,12 +18,20 @@ case "${1:-}" in
   *) exit 2 ;;
 esac
 EOF
-for command in systemctl systemd-run hostnamectl setupcon; do
+for command in systemctl hostnamectl setupcon; do
   cat > "${tmp_dir}/bin/${command}" <<'EOF'
 #!/bin/sh
 printf '%s:%s\n' "$(basename "$0")" "$*" >> "${OBOS_TEST_COMMAND_LOG}"
 EOF
 done
+cat > "${tmp_dir}/bin/systemd-run" <<'EOF'
+#!/bin/sh
+printf '%s:%s\n' "$(basename "$0")" "$*" >> "${OBOS_TEST_COMMAND_LOG}"
+execute=false
+for argument in "$@"; do [ "${argument}" = --wait ] && execute=true; done
+while [ "$#" -gt 0 ] && [ "$1" != /bin/sh ]; do shift; done
+if [ "${execute}" = true ] && [ "${1:-}" = /bin/sh ]; then exec "$@"; fi
+EOF
 chmod 0755 "${tmp_dir}/bin/"*
 : > "${tmp_dir}/commands.log"
 cat > "${tmp_dir}/base.lst" <<'EOF'
@@ -44,6 +52,7 @@ run_obosctl() {
     OBOS_SYS_CLASS_NET="${tmp_dir}/sys/class/net" \
     OBOS_HOSTS_FILE="${tmp_dir}/etc/hosts" \
     OBOS_XKB_RULES_LIST="${tmp_dir}/base.lst" \
+    OBOS_STATE_DIR="${tmp_dir}/state" \
     OBOS_SYSTEMD_RUN=systemd-run \
     OBOS_SETUPCON=setupcon \
     OBOS_TEST_COMMAND_LOG="${tmp_dir}/commands.log" \
@@ -59,6 +68,8 @@ printf '%s\n' "${summary}" | grep -Fq 'keyboard_layout_catalog=ch:Swiss;de:Germa
 printf '127.0.0.1\tlocalhost\n127.0.1.1\told-host\n' > "${tmp_dir}/etc/hosts"
 run_obosctl set-hostname obos-test.a38.ch >/dev/null
 grep -Fxq '127.0.1.1	obos-test.a38.ch obos-test' "${tmp_dir}/etc/hosts" || fail "hostname was not synchronized to hosts file"
+grep -Fq 'systemd-run:--quiet --pipe --wait --collect' "${tmp_dir}/commands.log" \
+  || fail "host settings are not applied outside the read-only agent namespace"
 
 run_obosctl set-keyboard-layout ch >/dev/null
 grep -Fxq 'XKBLAYOUT="ch"' "${tmp_dir}/etc/default/keyboard" || fail "keyboard layout was not persisted"

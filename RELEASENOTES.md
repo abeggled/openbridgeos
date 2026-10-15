@@ -1,4 +1,11 @@
 # Changes
+## 2026.10.7-rc.4
+### Fixes 🐞
+* Apply hostname, console-keyboard, and NTP configuration through narrowly scoped synchronous transient units, so the hardened web agent no longer needs to create temporary files in read-only `/etc` parent directories.
+* Report a host-setting change as complete only after its managed configuration file has been written successfully; a failed hostname action can no longer appear to complete during a later timezone refresh.
+### Operational notes 🔔
+* Debian 13 continues to use its supported 6.12 kernel series. OBOS installs Debian security and stable updates for that series instead of opting appliances into the non-default backports kernel line.
+
 ## 2026.10.7-rc.3
 ### Fixes 🐞
 * Prepare the managed `systemd-networkd` and `systemd-timesyncd` directories before the hardened web agent starts, so NTP changes no longer fail on a missing read-only path.
