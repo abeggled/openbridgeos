@@ -531,6 +531,18 @@
     releaseNotes.dataset.state = notes ? "ok" : "neutral";
   }
 
+  const networkModeSelect = document.querySelector("#host-network-mode");
+  const staticNetworkFields = document.querySelector("[data-static-network-fields]");
+
+  function updateNetworkFields() {
+    if (networkModeSelect && staticNetworkFields) {
+      staticNetworkFields.hidden = networkModeSelect.value !== "static";
+    }
+  }
+
+  networkModeSelect?.addEventListener("change", updateNetworkFields);
+  updateNetworkFields();
+
   async function loadAction(action, targets) {
     for (const target of targets) {
       setField(target.element, "loading", "loading");
@@ -570,7 +582,8 @@
       if (action === "system-summary") {
         const defaults = {
           "host-network-interface": values.primary_interface,
-          "host-ip-address": values.ip_addresses,
+          "host-ip-address": values.ip_address,
+          "host-subnet-mask": values.subnet_mask,
           "host-gateway": values.gateway,
           "host-dns": values.dns_servers,
           "host-ntp": values.ntp_servers,
@@ -582,6 +595,7 @@
         }
         const mode = document.querySelector("#host-network-mode");
         if (mode && ["dhcp", "static"].includes(values.network_mode)) mode.value = values.network_mode;
+        updateNetworkFields();
       }
       if (action === "tls-summary" && caDownloadLink) {
         caDownloadLink.hidden = values.trust_export_present !== "true";
@@ -967,12 +981,18 @@
     if (action === "set-network") {
       const interfaceName = document.querySelector("#host-network-interface")?.value.trim();
       const mode = document.querySelector("#host-network-mode")?.value;
-      const address = document.querySelector("#host-ip-address")?.value.trim();
+      const ipAddress = document.querySelector("#host-ip-address")?.value.trim();
+      const subnetMask = document.querySelector("#host-subnet-mask")?.value.trim();
       const gateway = document.querySelector("#host-gateway")?.value.trim();
       const dns = document.querySelector("#host-dns")?.value.trim().replace(/\s+/g, "");
       if (!interfaceName || !["dhcp", "static"].includes(mode)) { setMutationStatus(statusTarget, "invalid network settings", "error"); return; }
-      if (mode === "static" && (!address || !gateway)) { setMutationStatus(statusTarget, "static IP/CIDR and gateway required", "error"); return; }
-      body.interface = interfaceName; body.mode = mode; body.address = mode === "static" ? address : "-"; body.gateway = mode === "static" ? gateway : "-"; body.dns_servers = dns || "-";
+      if (mode === "static" && (!ipAddress || !subnetMask || !gateway || !dns)) { setMutationStatus(statusTarget, "static IP, subnet mask, gateway, and DNS required", "error"); return; }
+      body.interface = interfaceName;
+      body.mode = mode;
+      body.ip_address = mode === "static" ? ipAddress : "-";
+      body.subnet_mask = mode === "static" ? subnetMask : "-";
+      body.gateway = mode === "static" ? gateway : "-";
+      body.dns_servers = mode === "static" ? dns : "-";
     }
     if (action === "set-ntp") {
       const servers = document.querySelector("#host-ntp")?.value.trim().replace(/\s+/g, ",");

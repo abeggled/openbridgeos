@@ -85,7 +85,8 @@ primary interface.
 
 `set-hostname`, `set-timezone`, `set-keyboard-layout`, `set-network`, and
 `set-ntp` update appliance host settings after validating their input. Static
-addresses use CIDR notation. Network application is delayed by three seconds so
+addresses use separate IPv4 address and dotted subnet-mask values. The gateway
+must belong to the same subnet and at least one DNS server is required. Network application is delayed by three seconds so
 the caller receives the response before an address change disconnects it.
 
 `security-summary` runs the security baseline audit in machine-readable mode. It

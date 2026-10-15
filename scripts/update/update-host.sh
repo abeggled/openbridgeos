@@ -9,6 +9,9 @@ UPDATE_LOG_FILE="${OBOS_UPDATE_LOG_FILE:-/var/log/obos-update.log}"
 PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-/etc/obos/update/openbridgeserver.conf.pending}"
 DISABLE_INSTALL_MEDIA_SOURCES="${OBOS_DISABLE_INSTALL_MEDIA_SOURCES:-/usr/lib/obos/disable-install-media-sources.sh}"
 APT_RUNTIME_SOURCE_FILE="${OBOS_APT_RUNTIME_SOURCE_FILE:-/run/obos-update/obos-debian.sources}"
+SYSTEMCTL="${OBOS_SYSTEMCTL:-systemctl}"
+RESOLV_CONF="${OBOS_RESOLV_CONF:-/etc/resolv.conf}"
+RESOLVED_STUB="${OBOS_RESOLVED_STUB:-/run/systemd/resolve/stub-resolv.conf}"
 
 fail() {
   echo "host update failed: $1" >&2
@@ -47,10 +50,15 @@ if ! "${APT_GET}" \
   -o Dir::Etc::sourceparts=- \
   --yes \
   --no-remove \
-  install keyboard-configuration console-setup systemd-timesyncd >> "${UPDATE_LOG_FILE}" 2>&1; then
+  install keyboard-configuration console-setup systemd-timesyncd systemd-resolved >> "${UPDATE_LOG_FILE}" 2>&1; then
   tail -n 50 "${UPDATE_LOG_FILE}" >&2
   fail "required host settings package installation failed; see ${UPDATE_LOG_FILE}"
 fi
+if ! "${SYSTEMCTL}" enable --now systemd-resolved.service >> "${UPDATE_LOG_FILE}" 2>&1; then
+  tail -n 50 "${UPDATE_LOG_FILE}" >&2
+  fail "systemd-resolved activation failed; see ${UPDATE_LOG_FILE}"
+fi
+ln -snf "${RESOLVED_STUB}" "${RESOLV_CONF}"
 if ! "${APT_GET}" \
   -q \
   -o DPkg::Lock::Timeout=300 \

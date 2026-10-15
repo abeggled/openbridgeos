@@ -504,7 +504,7 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         if action == "set-keyboard-layout":
             expected_fields.add("keyboard_layout")
         if action == "set-network":
-            expected_fields.update({"interface", "mode", "address", "gateway", "dns_servers"})
+            expected_fields.update({"interface", "mode", "ip_address", "subnet_mask", "gateway", "dns_servers"})
         if action == "set-ntp":
             expected_fields.add("ntp_servers")
         if action == "set-release-channel":
@@ -553,7 +553,7 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         if action == "set-network":
             interface = payload.get("interface")
             mode = payload.get("mode")
-            values = (payload.get("address"), payload.get("gateway"), payload.get("dns_servers"))
+            values = (payload.get("ip_address"), payload.get("subnet_mask"), payload.get("gateway"), payload.get("dns_servers"))
             if not isinstance(interface, str) or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,15}", interface):
                 return None, (400, error_envelope("invalid-interface", "interface is invalid"))
             if mode not in {"dhcp", "static"} or any(not isinstance(value, str) for value in values):
@@ -1011,7 +1011,7 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
         if action == "set-keyboard-layout":
             args = [action, payload["keyboard_layout"], "--confirm", payload["confirm"]]
         if action == "set-network":
-            args = [action, payload["interface"], payload["mode"], payload["address"], payload["gateway"], payload["dns_servers"], "--confirm", payload["confirm"]]
+            args = [action, payload["interface"], payload["mode"], payload["ip_address"], payload["subnet_mask"], payload["gateway"], payload["dns_servers"], "--confirm", payload["confirm"]]
         if action == "set-ntp":
             args = [action, payload["ntp_servers"], "--confirm", payload["confirm"]]
         if action == "set-release-channel":

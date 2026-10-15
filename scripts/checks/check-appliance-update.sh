@@ -102,7 +102,15 @@ cat > "${mock_bin}/nginx" <<'EOF'
 [ "${OBOS_TEST_NGINX_FAIL:-false}" != true ]
 EOF
 
-chmod +x "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname" "${mock_bin}/nginx"
+cat > "${mock_bin}/systemctl" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >> "${OBOS_TEST_SYSTEMCTL_LOG}"
+EOF
+
+chmod +x "${mock_bin}/id" "${mock_bin}/apt-get" "${mock_bin}/uname" "${mock_bin}/nginx" "${mock_bin}/systemctl"
+export OBOS_RESOLV_CONF="${tmp_dir}/resolv.conf"
+export OBOS_RESOLVED_STUB="/run/systemd/resolve/stub-resolv.conf"
+export OBOS_TEST_SYSTEMCTL_LOG="${tmp_dir}/systemctl.log"
 
 output="$(
   PATH="${mock_bin}:${PATH}" \
@@ -129,8 +137,12 @@ grep -Eq 'DPkg::Lock::Timeout=300 .* update$' "${apt_log}" \
   || fail "APT metadata refresh is missing lock timeout"
 grep -q -- '--no-remove full-upgrade' "${apt_log}" \
   || fail "APT full upgrade is not protected against package removals"
-grep -q -- '--no-remove install keyboard-configuration console-setup systemd-timesyncd' "${apt_log}" \
+grep -q -- '--no-remove install keyboard-configuration console-setup systemd-timesyncd systemd-resolved' "${apt_log}" \
   || fail "host settings runtime packages are not installed during updates"
+grep -Fxq 'enable --now systemd-resolved.service' "${OBOS_TEST_SYSTEMCTL_LOG}" \
+  || fail "systemd-resolved is not activated during updates"
+[ "$(readlink "${OBOS_RESOLV_CONF}")" = "${OBOS_RESOLVED_STUB}" ] \
+  || fail "resolv.conf is not connected to systemd-resolved"
 grep -Fq "Dir::Etc::sourcelist=${runtime_source_file}" "${apt_log}" \
   || fail "APT does not use the isolated runtime source list"
 grep -Fq 'Dir::Etc::sourceparts=-' "${apt_log}" \

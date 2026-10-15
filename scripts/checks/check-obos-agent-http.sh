@@ -137,6 +137,12 @@ grep -q 'OBOS_AGENT_HTTP_SOCKET=/run/obos-agent-http/agent.sock' "${SERVICE}" \
   || fail "HTTP bridge service does not use its private Unix socket"
 grep -q 'ProtectSystem=strict' "${SERVICE}" \
   || fail "HTTP bridge service lacks strict filesystem protection"
+grep -q 'ReadWritePaths=.*\/etc\/hosts' "${SERVICE}" \
+  || fail "HTTP bridge cannot keep host identity resolution synchronized"
+grep -q 'ReadWritePaths=.*\/etc\/systemd\/network' "${SERVICE}" \
+  || fail "HTTP bridge cannot persist managed network settings"
+grep -q 'ReadWritePaths=.*\/etc\/systemd\/timesyncd.conf.d' "${SERVICE}" \
+  || fail "HTTP bridge cannot persist managed NTP settings"
 grep -q 'MemoryDenyWriteExecute=true' "${SERVICE}" \
   || fail "HTTP bridge service lacks memory hardening"
 grep -q 'Group=www-data' "${SERVICE}" \
@@ -584,6 +590,27 @@ timed_out=false
 stdout_begin
 stdout=format=obos-set-timezone-v1
 stdout=timezone=Europe/Zurich
+stdout_end
+stderr_begin
+stderr_end
+RESPONSE
+    ;;
+  set-network)
+    [ "${2:-}" = "eth0" ] || exit 2
+    [ "${3:-}" = "static" ] || exit 2
+    [ "${4:-}" = "10.38.114.132" ] || exit 2
+    [ "${5:-}" = "255.255.255.0" ] || exit 2
+    [ "${6:-}" = "10.38.114.1" ] || exit 2
+    [ "${7:-}" = "10.38.114.2,1.1.1.1" ] || exit 2
+    [ "${8:-}" = "--confirm" ] && [ "${9:-}" = "set-network" ] || exit 2
+    cat <<'RESPONSE'
+format=obos-agent-response-v1
+action=set-network
+exit_code=0
+timed_out=false
+stdout_begin
+stdout=format=obos-set-network-v1
+stdout=network_mode=static
 stdout_end
 stderr_begin
 stderr_end
@@ -1060,6 +1087,13 @@ curl --fail --silent \
   http://127.0.0.1:18091/obos/api/v1/actions/set-timezone |
   grep -q 'stdout=timezone=Europe/Zurich' \
   || fail "HTTP bridge did not run confirmed timezone mutation"
+
+curl --fail --silent \
+  --header 'Content-Type: application/json' \
+  --data '{"confirm":"set-network","interface":"eth0","mode":"static","ip_address":"10.38.114.132","subnet_mask":"255.255.255.0","gateway":"10.38.114.1","dns_servers":"10.38.114.2,1.1.1.1"}' \
+  http://127.0.0.1:18091/obos/api/v1/actions/set-network |
+  grep -q 'stdout=network_mode=static' \
+  || fail "HTTP bridge did not forward the separated static network fields"
 
 curl --fail --silent \
   --header 'Content-Type: application/json' \

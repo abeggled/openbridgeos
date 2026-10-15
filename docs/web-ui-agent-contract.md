@@ -425,8 +425,9 @@ POST /obos/api/v1/actions/set-timezone
 ```
 
 The same confirmed boundary exposes `set-keyboard-layout`, `set-network`, and
-`set-ntp`. Network payloads select `dhcp` or `static`; static mode requires an
-address with CIDR prefix and a gateway. DNS and NTP server lists are validated
+`set-ntp`. Network payloads select `dhcp` or `static`; the interface is read-only
+and static mode alone shows separate IPv4 address, subnet mask, gateway, and DNS
+fields. The gateway must be inside the configured subnet. DNS and NTP server lists are validated
 before the privileged command runs. Network activation is scheduled after a
 three-second delay because applying a new static address can disconnect the
 requesting browser.

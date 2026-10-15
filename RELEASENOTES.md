@@ -1,4 +1,15 @@
 # Changes
+## 2026.10.7-rc.2
+### Fixes 🐞
+* Separate DHCP and static addressing in **Host Settings**. The detected interface is read-only; IP address, subnet mask, gateway, and DNS are shown only for static mode.
+* Apply network settings successfully from the hardened web agent by granting narrowly scoped write access to the managed network and time configuration paths.
+* Keep `/etc/hosts` synchronized when the appliance hostname changes, preventing `sudo: unable to resolve host` warnings.
+* Install and activate `systemd-resolved`, connect `/etc/resolv.conf` to its local stub, and apply validated static DNS settings to the running system.
+### Security fixes 🔒
+* Validate the IPv4 address and dotted subnet mask together, reject network or broadcast addresses, require a gateway inside the selected subnet, and require at least one valid DNS server for static mode.
+### Operational notes 🔔
+* Applying a network change is delayed by three seconds and can disconnect the browser. Reopen the appliance at its newly configured address.
+
 ## 2026.10.7-rc.1
 ### New features ✨
 * Configure console keyboard layout, DHCP or static IP addressing, gateway, DNS, and NTP directly in **Host Settings**.
