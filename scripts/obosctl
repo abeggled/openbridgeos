@@ -570,6 +570,7 @@ set_network() {
     if [ "${mode}" = dhcp ] && [ "${dns_csv}" != - ]; then echo; echo '[DHCPv4]'; echo 'UseDNS=no'; echo; echo '[DHCPv6]'; echo 'UseDNS=no'; fi
   } > "${config_tmp}"
   chmod 0644 "${config_tmp}"; mv -f "${config_tmp}" "${NETWORK_CONFIG_FILE}"
+  # shellcheck disable=SC2016
   "${SYSTEMD_RUN}" --quiet --collect --unit="obos-network-apply-$(date -u +%Y%m%d%H%M%S)" --on-active=3s /bin/sh -c 'networkctl reload && networkctl reconfigure "$1"' sh "${interface}"
   echo "format=obos-set-network-v1"
   echo "network_interface=${interface}"
@@ -1902,9 +1903,11 @@ update_app() {
   cat "${update_output}"
   cat "${update_output}" >> "${APPLIANCE_UPDATE_LOG_FILE}"
   if [ -f "${HOST_UPDATE_LOG_FILE}" ]; then
-    echo >> "${APPLIANCE_UPDATE_LOG_FILE}"
-    echo "section=debian-packages" >> "${APPLIANCE_UPDATE_LOG_FILE}"
-    cat "${HOST_UPDATE_LOG_FILE}" >> "${APPLIANCE_UPDATE_LOG_FILE}"
+    {
+      echo
+      echo "section=debian-packages"
+      cat "${HOST_UPDATE_LOG_FILE}"
+    } >> "${APPLIANCE_UPDATE_LOG_FILE}"
   fi
   echo "completed_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> "${APPLIANCE_UPDATE_LOG_FILE}"
   rm -f "${update_output}"

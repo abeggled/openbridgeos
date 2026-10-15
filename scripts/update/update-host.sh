@@ -9,7 +9,6 @@ UPDATE_LOG_FILE="${OBOS_UPDATE_LOG_FILE:-/var/log/obos-update.log}"
 PENDING_NGINX_CONFIG="${OBOS_PENDING_NGINX_CONFIG:-/etc/obos/update/openbridgeserver.conf.pending}"
 DISABLE_INSTALL_MEDIA_SOURCES="${OBOS_DISABLE_INSTALL_MEDIA_SOURCES:-/usr/lib/obos/disable-install-media-sources.sh}"
 APT_RUNTIME_SOURCE_FILE="${OBOS_APT_RUNTIME_SOURCE_FILE:-/run/obos-update/obos-debian.sources}"
-HOST_SETTINGS_PACKAGES="${OBOS_HOST_SETTINGS_PACKAGES:-keyboard-configuration console-setup systemd-timesyncd}"
 
 fail() {
   echo "host update failed: $1" >&2
@@ -41,7 +40,6 @@ if ! "${APT_GET}" \
   tail -n 50 "${UPDATE_LOG_FILE}" >&2
   fail "APT metadata refresh failed; see ${UPDATE_LOG_FILE}"
 fi
-# shellcheck disable=SC2086 -- trusted, root-owned package allowlist
 if ! "${APT_GET}" \
   -q \
   -o DPkg::Lock::Timeout=300 \
@@ -49,7 +47,7 @@ if ! "${APT_GET}" \
   -o Dir::Etc::sourceparts=- \
   --yes \
   --no-remove \
-  install ${HOST_SETTINGS_PACKAGES} >> "${UPDATE_LOG_FILE}" 2>&1; then
+  install keyboard-configuration console-setup systemd-timesyncd >> "${UPDATE_LOG_FILE}" 2>&1; then
   tail -n 50 "${UPDATE_LOG_FILE}" >&2
   fail "required host settings package installation failed; see ${UPDATE_LOG_FILE}"
 fi

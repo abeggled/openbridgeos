@@ -314,7 +314,7 @@ require_set_timezone_args() {
 require_single_value_mutation() {
   action="$1"
   [ "$#" -eq 4 ] || fail "${action} requires one value and confirmation"
-  [ "${3:-}" = "--confirm" ] && [ "${4:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
+  if [ "${3:-}" != "--confirm" ] || [ "${4:-}" != "${action}" ]; then fail "${action} confirmation token mismatch"; fi
   SINGLE_VALUE="${2:-}"
   case "${SINGLE_VALUE}" in ""|-*) fail "${action} value is invalid" ;; esac
   printf '%s\n' "${SINGLE_VALUE}" | grep -Eq '^[A-Za-z0-9._:+,-]+$' || fail "${action} value contains unsupported characters"
@@ -323,7 +323,7 @@ require_single_value_mutation() {
 require_set_network_args() {
   action="$1"
   [ "$#" -eq 8 ] || fail "${action} requires interface, mode, address, gateway, DNS, and confirmation"
-  [ "${7:-}" = "--confirm" ] && [ "${8:-}" = "${action}" ] || fail "${action} confirmation token mismatch"
+  if [ "${7:-}" != "--confirm" ] || [ "${8:-}" != "${action}" ]; then fail "${action} confirmation token mismatch"; fi
   NETWORK_INTERFACE="${2:-}"; NETWORK_MODE="${3:-}"; NETWORK_ADDRESS="${4:--}"; NETWORK_GATEWAY="${5:--}"; NETWORK_DNS="${6:--}"
   printf '%s\n' "${NETWORK_INTERFACE}" | grep -Eq '^[A-Za-z0-9_.:-]{1,15}$' || fail "${action} interface is invalid"
   case "${NETWORK_MODE}" in dhcp|static) ;; *) fail "${action} mode is invalid" ;; esac
