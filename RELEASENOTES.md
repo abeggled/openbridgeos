@@ -1,13 +1,4 @@
 # Changes
-## 2026.10.7-rc.1
-### Fixes 🐞
-* Erase stale filesystem signatures and both GPT headers from the explicitly confirmed automatic-install target before Debian partitions it.
-* Resume a partially completed base-system installation without stopping at the hidden `unclean target` confirmation dialog.
-### Security fixes 🔒
-* Keep destructive disk cleanup fail-closed and scoped to the single eligible internal disk shown in the existing confirmation screen.
-### Operational notes 🔔
-* Systems that stop at **Install the system** with the `2026.10.6` ISO can select that step again, confirm **Yes** for the unclean target, and complete installation; use the RC.1 ISO for unattended retesting.
-
 ## 2026.10.6
 ### New features ✨
 * Publish a bootable amd64 installer ISO, an amd64 qcow2 VM disk, and a compressed Raspberry Pi 4+ arm64 image with every release.

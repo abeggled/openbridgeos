@@ -60,8 +60,6 @@ grep -Fq 'auto=true priority=critical file=/cdrom/install/preseed.cfg' "${GRUB_I
   || fail "automatic installer entry does not load the appliance preseed"
 grep -Fq 'd-i partman/early_command string /usr/lib/obos-installer/select-target-disk.sh' "${INSTALLER_PRESEED}" \
   || fail "installer preseed does not invoke safe disk selection"
-grep -Fq 'd-i base-installer/use_unclean_target boolean true' "${INSTALLER_PRESEED}" \
-  || fail "installer preseed can stop on a partially populated target"
 grep -Fq 'd-i preseed/late_command string /usr/lib/obos-installer/finalize.sh' "${INSTALLER_PRESEED}" \
   || fail "installer preseed does not invoke appliance finalization"
 
