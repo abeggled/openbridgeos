@@ -14,12 +14,11 @@ EOF
 cat > "${tmp_dir}/bin/localectl" <<'EOF'
 #!/bin/sh
 case "${1:-}" in
-  list-keymaps) printf 'ch\nde\nus\n' ;;
-  set-keymap) printf '%s\n' "$*" >> "${OBOS_TEST_COMMAND_LOG}" ;;
+  list-x11-keymap-layouts) printf 'ch\nde\nus\ngb\n' ;;
   *) exit 2 ;;
 esac
 EOF
-for command in systemctl systemd-run hostnamectl; do
+for command in systemctl systemd-run hostnamectl setupcon; do
   cat > "${tmp_dir}/bin/${command}" <<'EOF'
 #!/bin/sh
 printf '%s:%s\n' "$(basename "$0")" "$*" >> "${OBOS_TEST_COMMAND_LOG}"
@@ -27,6 +26,15 @@ EOF
 done
 chmod 0755 "${tmp_dir}/bin/"*
 : > "${tmp_dir}/commands.log"
+cat > "${tmp_dir}/base.lst" <<'EOF'
+! model
+  pc105 Generic 105-key PC
+! layout
+  ch Swiss
+  de German
+  us English (US)
+! variant
+EOF
 
 run_obosctl() {
   env PATH="${tmp_dir}/bin:${PATH}" \
@@ -35,17 +43,26 @@ run_obosctl() {
     OBOS_TIMESYNCD_CONFIG_FILE="${tmp_dir}/etc/systemd/timesyncd.conf.d/20-obos.conf" \
     OBOS_SYS_CLASS_NET="${tmp_dir}/sys/class/net" \
     OBOS_HOSTS_FILE="${tmp_dir}/etc/hosts" \
+    OBOS_XKB_RULES_LIST="${tmp_dir}/base.lst" \
     OBOS_SYSTEMD_RUN=systemd-run \
+    OBOS_SETUPCON=setupcon \
     OBOS_TEST_COMMAND_LOG="${tmp_dir}/commands.log" \
     sh scripts/obosctl "$@"
 }
+
+summary="$(run_obosctl system-summary)"
+printf '%s\n' "${summary}" | grep -Fq 'keyboard_layout_options=ch,de,us,gb' \
+  || fail "installed keyboard layouts are not exposed"
+printf '%s\n' "${summary}" | grep -Fq 'keyboard_layout_catalog=ch:Swiss;de:German;us:English (US)' \
+  || fail "Debian keyboard layout descriptions are not exposed"
 
 printf '127.0.0.1\tlocalhost\n127.0.1.1\told-host\n' > "${tmp_dir}/etc/hosts"
 run_obosctl set-hostname obos-test.a38.ch >/dev/null
 grep -Fxq '127.0.1.1	obos-test.a38.ch obos-test' "${tmp_dir}/etc/hosts" || fail "hostname was not synchronized to hosts file"
 
 run_obosctl set-keyboard-layout ch >/dev/null
-grep -Fq 'set-keymap ch' "${tmp_dir}/commands.log" || fail "keyboard layout was not applied"
+grep -Fxq 'XKBLAYOUT="ch"' "${tmp_dir}/etc/default/keyboard" || fail "keyboard layout was not persisted"
+grep -Fq 'setupcon --force' "${tmp_dir}/commands.log" || fail "keyboard layout was not scheduled for the console"
 
 run_obosctl set-network eth0 static 10.38.114.132 255.255.255.0 10.38.114.1 10.38.114.2,1.1.1.1 >/dev/null
 network_file="${tmp_dir}/etc/systemd/network/10-obos-managed.network"
@@ -53,6 +70,10 @@ grep -Fxq 'Address=10.38.114.132/24' "${network_file}" || fail "static address m
 grep -Fxq 'Gateway=10.38.114.1' "${network_file}" || fail "gateway missing"
 [ "$(grep -Fc 'DNS=' "${network_file}")" -eq 2 ] || fail "DNS servers missing"
 grep -Fq -- '--on-active=3s' "${tmp_dir}/commands.log" || fail "network apply was not safely delayed"
+# The assertion intentionally checks the literal positional parameter in the scheduled shell command.
+# shellcheck disable=SC2016
+grep -Fq 'networkctl down "$1"' "${tmp_dir}/commands.log" || fail "network apply does not clear the previous address"
+grep -Fq 'tls-renew-leaf --confirm tls-renew-leaf' "${tmp_dir}/commands.log" || fail "network apply does not renew the leaf certificate"
 
 if run_obosctl set-network eth0 static invalid 255.255.255.0 10.38.114.1 1.1.1.1 >/dev/null 2>&1; then
   fail "invalid static address was accepted"
@@ -74,5 +95,11 @@ grep -Fq 'systemctl:restart systemd-timesyncd.service' "${tmp_dir}/commands.log"
 printf 'apt-get update\napt-get full-upgrade\n' > "${tmp_dir}/update.log"
 output="$(OBOS_APPLIANCE_UPDATE_LOG_FILE="${tmp_dir}/update.log" sh scripts/obosctl update-log)"
 printf '%s\n' "${output}" | grep -Fq 'log=apt-get full-upgrade' || fail "complete update log is not exposed"
+
+mkdir -p "${tmp_dir}/state/updates"
+printf 'state-backed update log\n' > "${tmp_dir}/state/updates/obos-appliance-update.log"
+output="$(OBOS_STATE_DIR="${tmp_dir}/state" sh scripts/obosctl update-log)"
+printf '%s\n' "${output}" | grep -Fq 'log=state-backed update log' \
+  || fail "appliance update log is not stored below the writable state directory"
 
 echo "host settings fixture: PASS"

@@ -121,6 +121,7 @@ install -m 0644 "${REPO_ROOT}/packaging/systemd/obos-tls-leaf-renewal.timer" /et
 rm -f /etc/nginx/sites-enabled/default
 ln -sf /etc/nginx/sites-available/obos-openbridgeserver.conf /etc/nginx/sites-enabled/obos-openbridgeserver.conf
 ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+install -d -m 0755 /etc/systemd/network /etc/systemd/timesyncd.conf.d
 
 "${OBOS_LIB_DIR}/install-openbridgeserver-app.sh" "${OBOS_APP_SOURCE}"
 "${OBOS_LIB_DIR}/apply-host-hardening.sh"

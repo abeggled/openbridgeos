@@ -16,3 +16,4 @@ sudo
 systemd-resolved
 systemd-timesyncd
 unattended-upgrades
+xkb-data

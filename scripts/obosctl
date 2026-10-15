@@ -35,7 +35,7 @@ MVP_READINESS_SCRIPT="${OBOS_MVP_READINESS_SCRIPT:-/usr/lib/obos/mvp-runtime-rea
 WEB_AUTH_SCRIPT="${OBOS_WEB_AUTH_SCRIPT:-/usr/lib/obos/generate-web-auth.sh}"
 HOST_UPDATE_SCRIPT="${OBOS_HOST_UPDATE_SCRIPT:-/usr/lib/obos/update-host.sh}"
 HOST_UPDATE_LOG_FILE="${OBOS_HOST_UPDATE_LOG_FILE:-/var/log/obos-update.log}"
-APPLIANCE_UPDATE_LOG_FILE="${OBOS_APPLIANCE_UPDATE_LOG_FILE:-/var/log/obos-appliance-update.log}"
+APPLIANCE_UPDATE_LOG_FILE="${OBOS_APPLIANCE_UPDATE_LOG_FILE:-${STATE_DIR}/updates/obos-appliance-update.log}"
 OBOS_RELEASE_UPDATE_SCRIPT="${OBOS_RELEASE_UPDATE_SCRIPT:-/usr/lib/obos/update-obos-release.sh}"
 RELEASE_CHANNEL_FILE="${OBOS_RELEASE_CHANNEL_FILE:-/etc/obos/update/release-channel}"
 RELEASE_BASE_URL_FILE="${OBOS_RELEASE_BASE_URL_FILE:-/etc/obos/update/release-base-url}"
@@ -49,6 +49,7 @@ NETWORK_CONFIG_FILE="${OBOS_NETWORK_CONFIG_FILE:-/etc/systemd/network/10-obos-ma
 TIMESYNCD_CONFIG_FILE="${OBOS_TIMESYNCD_CONFIG_FILE:-/etc/systemd/timesyncd.conf.d/20-obos.conf}"
 SYS_CLASS_NET="${OBOS_SYS_CLASS_NET:-/sys/class/net}"
 HOSTS_FILE="${OBOS_HOSTS_FILE:-/etc/hosts}"
+XKB_RULES_LIST="${OBOS_XKB_RULES_LIST:-/usr/share/X11/xkb/rules/base.lst}"
 
 usage() {
   cat <<'EOF'
@@ -376,6 +377,8 @@ system_summary() {
   timezone_value=
   primary_interface=
   keyboard_layout=unknown
+  keyboard_layout_options=ch,de,us,gb,fr,it
+  keyboard_layout_catalog=
   network_mode=dhcp
   ip_addresses=unknown
   ip_address=unknown
@@ -426,6 +429,25 @@ PY
   if [ -r "${KEYBOARD_CONFIG_FILE}" ]; then
     keyboard_layout="$(sed -n 's/^XKBLAYOUT="\{0,1\}\([^"[:space:]]*\)"\{0,1\}$/\1/p' "${KEYBOARD_CONFIG_FILE}" | head -n 1)"
   fi
+  if command -v localectl >/dev/null 2>&1; then
+    installed_keyboard_layouts="$(localectl list-x11-keymap-layouts 2>/dev/null |
+      awk '/^[A-Za-z0-9_-]+$/ && !seen[$0]++' | paste -sd, -)"
+    [ -z "${installed_keyboard_layouts}" ] || keyboard_layout_options="${installed_keyboard_layouts}"
+  fi
+  if [ -r "${XKB_RULES_LIST}" ]; then
+    keyboard_layout_catalog="$(awk '
+      /^![[:space:]]+layout/ { in_layouts=1; next }
+      /^!/ { if (in_layouts) exit }
+      in_layouts && $1 ~ /^[A-Za-z0-9_-]+$/ {
+        code=$1
+        $1=""
+        sub(/^[[:space:]]+/, "")
+        gsub(/[;=]/, "", $0)
+        printf "%s%s:%s", separator, code, $0
+        separator=";"
+      }
+    ' "${XKB_RULES_LIST}")"
+  fi
   if [ -r "${NETWORK_CONFIG_FILE}" ]; then
     if grep -Eq '^DHCP=(yes|ipv4|ipv6)$' "${NETWORK_CONFIG_FILE}"; then network_mode=dhcp; else network_mode=static; fi
     configured_dns="$(sed -n 's/^DNS=//p' "${NETWORK_CONFIG_FILE}" | paste -sd, -)"
@@ -443,6 +465,8 @@ PY
   echo "hostname=${hostname_value:-unknown}"
   echo "timezone=${timezone_value:-unknown}"
   echo "keyboard_layout=${keyboard_layout:-unknown}"
+  echo "keyboard_layout_options=${keyboard_layout_options}"
+  echo "keyboard_layout_catalog=${keyboard_layout_catalog:-unknown}"
   echo "network_mode=${network_mode}"
   echo "ip_addresses=${ip_addresses:-unknown}"
   echo "ip_address=${ip_address:-unknown}"
@@ -555,8 +579,23 @@ set_keyboard_layout() {
   layout="${1:-}"
   validate_simple_list "${layout}" "keyboard layout"
   command -v localectl >/dev/null 2>&1 || { echo "localectl is unavailable" >&2; return 1; }
-  localectl list-keymaps 2>/dev/null | grep -Fxq "${layout}" || { echo "keyboard layout is not installed: ${layout}" >&2; return 2; }
-  localectl set-keymap "${layout}"
+  setupcon_command="${OBOS_SETUPCON:-/usr/bin/setupcon}"
+  command -v "${setupcon_command}" >/dev/null 2>&1 || { echo "setupcon is unavailable" >&2; return 1; }
+  localectl list-x11-keymap-layouts 2>/dev/null | grep -Fxq "${layout}" \
+    || { echo "keyboard layout is not installed: ${layout}" >&2; return 2; }
+  config_dir="$(dirname -- "${KEYBOARD_CONFIG_FILE}")"
+  install -d -m 0755 "${config_dir}"
+  config_tmp="$(mktemp "${config_dir}/.obos-keyboard.XXXXXX")"
+  {
+    echo 'XKBMODEL="pc105"'
+    echo "XKBLAYOUT=\"${layout}\""
+    echo 'XKBVARIANT=""'
+    echo 'XKBOPTIONS=""'
+    echo 'BACKSPACE="guess"'
+  } > "${config_tmp}"
+  chmod 0644 "${config_tmp}"
+  mv -f "${config_tmp}" "${KEYBOARD_CONFIG_FILE}"
+  "${SYSTEMD_RUN}" --quiet --collect --unit="obos-keyboard-apply-$(date -u +%Y%m%d%H%M%S)-$$" "${setupcon_command}" --force
   echo "format=obos-set-keyboard-layout-v1"
   echo "keyboard_layout=${layout}"
 }
@@ -641,7 +680,7 @@ set_network() {
   } > "${config_tmp}"
   chmod 0644 "${config_tmp}"; mv -f "${config_tmp}" "${NETWORK_CONFIG_FILE}"
   # shellcheck disable=SC2016
-  "${SYSTEMD_RUN}" --quiet --collect --unit="obos-network-apply-$(date -u +%Y%m%d%H%M%S)-$$" --on-active=3s /bin/sh -c 'networkctl reload && networkctl reconfigure "$1" && systemctl try-restart systemd-resolved.service' sh "${interface}"
+  "${SYSTEMD_RUN}" --quiet --collect --unit="obos-network-apply-$(date -u +%Y%m%d%H%M%S)-$$" --on-active=3s /bin/sh -c 'networkctl reload && { networkctl down "$1" || true; } && networkctl up "$1" && { systemctl try-restart systemd-resolved.service || true; } && /usr/bin/obosctl tls-renew-leaf --confirm tls-renew-leaf' sh "${interface}"
   echo "format=obos-set-network-v1"
   echo "network_interface=${interface}"
   echo "network_mode=${mode}"
@@ -649,6 +688,7 @@ set_network() {
   echo "subnet_mask=${subnet_mask_value}"
   echo "apply_scheduled=true"
   echo "apply_delay_seconds=3"
+  echo "tls_renewal_scheduled=true"
 }
 
 set_ntp() {

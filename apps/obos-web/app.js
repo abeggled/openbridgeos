@@ -533,6 +533,13 @@
 
   const networkModeSelect = document.querySelector("#host-network-mode");
   const staticNetworkFields = document.querySelector("[data-static-network-fields]");
+  const keyboardLayoutSelect = document.querySelector("#host-keyboard");
+  const keyboardLayoutLabels = {
+    ch: "Swiss", de: "German", us: "English (US)", gb: "English (UK)",
+    fr: "French", it: "Italian", es: "Spanish", pt: "Portuguese",
+    nl: "Dutch", be: "Belgian", dk: "Danish", no: "Norwegian",
+    se: "Swedish", fi: "Finnish", pl: "Polish", cz: "Czech",
+  };
 
   function updateNetworkFields() {
     if (networkModeSelect && staticNetworkFields) {
@@ -542,6 +549,27 @@
 
   networkModeSelect?.addEventListener("change", updateNetworkFields);
   updateNetworkFields();
+
+  function populateKeyboardLayouts(values) {
+    if (!keyboardLayoutSelect) return;
+    const current = values.keyboard_layout;
+    const layouts = (values.keyboard_layout_options || "ch,de,us,gb,fr,it")
+      .split(",")
+      .filter((layout) => /^[A-Za-z0-9_-]+$/.test(layout));
+    const catalog = Object.fromEntries((values.keyboard_layout_catalog || "")
+      .split(";")
+      .map((entry) => entry.split(":"))
+      .filter(([layout, label]) => /^[A-Za-z0-9_-]+$/.test(layout || "") && label));
+    if (current && current !== "unknown" && !layouts.includes(current)) layouts.unshift(current);
+    keyboardLayoutSelect.replaceChildren(...layouts.map((layout) => {
+      const option = document.createElement("option");
+      option.value = layout;
+      const label = catalog[layout] || keyboardLayoutLabels[layout];
+      option.textContent = label ? `${label} (${layout})` : layout;
+      return option;
+    }));
+    if (current && current !== "unknown") keyboardLayoutSelect.value = current;
+  }
 
   async function loadAction(action, targets) {
     for (const target of targets) {
@@ -580,6 +608,7 @@
         }
       }
       if (action === "system-summary") {
+        populateKeyboardLayouts(values);
         const defaults = {
           "host-network-interface": values.primary_interface,
           "host-ip-address": values.ip_address,

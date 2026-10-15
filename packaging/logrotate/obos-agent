@@ -8,7 +8,7 @@
   create 0640 obos-agent obos-agent
 }
 
-/var/log/obos-update.log /var/log/obos-appliance-update.log {
+/var/log/obos-update.log /srv/obos/state/updates/obos-appliance-update.log {
   weekly
   rotate 4
   missingok

@@ -50,7 +50,7 @@ if ! "${APT_GET}" \
   -o Dir::Etc::sourceparts=- \
   --yes \
   --no-remove \
-  install keyboard-configuration console-setup systemd-timesyncd systemd-resolved >> "${UPDATE_LOG_FILE}" 2>&1; then
+  install keyboard-configuration console-setup systemd-timesyncd systemd-resolved xkb-data >> "${UPDATE_LOG_FILE}" 2>&1; then
   tail -n 50 "${UPDATE_LOG_FILE}" >&2
   fail "required host settings package installation failed; see ${UPDATE_LOG_FILE}"
 fi

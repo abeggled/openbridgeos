@@ -14,6 +14,7 @@ RELOAD_NGINX="${OBOS_TLS_RELOAD_NGINX:-1}"
 ALLOW_NON_ROOT="${OBOS_ALLOW_NON_ROOT_TLS_RENEWAL:-0}"
 SUBJECT="${OBOS_TLS_LEAF_SUBJECT:-}"
 LOCK_FILE="${OBOS_TLS_RENEW_LOCK_FILE:-${TLS_DIR}/.leaf-renew.lock}"
+NETWORK_CONFIG_FILE="${OBOS_NETWORK_CONFIG_FILE:-/etc/systemd/network/10-obos-managed.network}"
 
 fail() {
   echo "tls leaf renewal failed: $1" >&2
@@ -107,7 +108,10 @@ fi
 openssl genrsa -out "${new_key}" 4096 >/dev/null 2>&1
 chmod 0600 "${new_key}"
 : > "${ip_list}"
-if command -v ip >/dev/null 2>&1; then
+if [ -r "${NETWORK_CONFIG_FILE}" ] && ! grep -Eq '^DHCP=(yes|ipv4|ipv6)$' "${NETWORK_CONFIG_FILE}"; then
+  sed -n 's/^Address=//p' "${NETWORK_CONFIG_FILE}" |
+    awk '{ value=$1; sub(/\/.*/, "", value); if (value != "" && !seen[value]++) print value }' > "${ip_list}"
+elif command -v ip >/dev/null 2>&1; then
   {
     ip -o route show default 2>/dev/null || true
     ip -o -6 route show default 2>/dev/null || true

@@ -558,6 +558,10 @@ grep -q 'body.timezone = timezone' "${JS}" \
   || fail "web UI does not send timezone mutation payload"
 grep -q 'body.keyboard_layout = layout' "${JS}" \
   || fail "web UI does not send keyboard layout"
+grep -q '<select id="host-keyboard"' "${INDEX}" \
+  || fail "keyboard layout is not presented as a dropdown"
+grep -q 'keyboard_layout_options' "${JS}" \
+  || fail "keyboard dropdown is not populated from installed layouts"
 grep -q 'body.dns_servers = mode === "static" ? dns : "-"' "${JS}" \
   || fail "web UI does not send network and DNS settings"
 grep -q 'id="host-network-interface".*readonly' "${INDEX}" \

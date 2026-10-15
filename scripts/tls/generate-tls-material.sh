@@ -12,6 +12,7 @@ IP_LIST="${TLS_DIR}/obos.local.ips"
 DNS_LIST="${TLS_DIR}/obos.local.dns"
 DAYS_CA="${OBOS_TLS_CA_DAYS:-3650}"
 DAYS_LEAF="${OBOS_TLS_LEAF_DAYS:-90}"
+NETWORK_CONFIG_FILE="${OBOS_NETWORK_CONFIG_FILE:-/etc/systemd/network/10-obos-managed.network}"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "generate-tls-material.sh must run as root" >&2
@@ -47,7 +48,10 @@ fi
 openssl genrsa -out "${LEAF_KEY}" 4096
 chmod 0600 "${LEAF_KEY}"
 : > "${IP_LIST}"
-if command -v ip >/dev/null 2>&1; then
+if [ -r "${NETWORK_CONFIG_FILE}" ] && ! grep -Eq '^DHCP=(yes|ipv4|ipv6)$' "${NETWORK_CONFIG_FILE}"; then
+  sed -n 's/^Address=//p' "${NETWORK_CONFIG_FILE}" |
+    awk '{ value=$1; sub(/\/.*/, "", value); if (value != "" && !seen[value]++) print value }' > "${IP_LIST}"
+elif command -v ip >/dev/null 2>&1; then
   {
     ip -o route show default 2>/dev/null || true
     ip -o -6 route show default 2>/dev/null || true

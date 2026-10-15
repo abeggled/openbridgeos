@@ -61,6 +61,7 @@ install -m 0644 "${RELEASE_ROOT}/packaging/apt/50unattended-upgrades" /etc/apt/a
 install -m 0644 "${RELEASE_ROOT}/packaging/docker/daemon.json" /etc/docker/daemon.json
 install -m 0644 "${RELEASE_ROOT}/packaging/logrotate/obos-agent" /etc/logrotate.d/obos-agent
 install -m 0644 "${RELEASE_ROOT}/packaging/nftables/obos.nft" /etc/nftables.conf
+install -d -m 0755 /etc/systemd/network /etc/systemd/timesyncd.conf.d
 install -m 0644 "${RELEASE_ROOT}/packaging/network/20-obos-dhcp.network" /etc/systemd/network/20-obos-dhcp.network
 install -m 0440 "${RELEASE_ROOT}/packaging/sudoers/obos-agent" /etc/sudoers.d/obos-agent
 install -m 0644 "${RELEASE_ROOT}/packaging/sysctl/99-obos-hardening.conf" /etc/sysctl.d/99-obos-hardening.conf

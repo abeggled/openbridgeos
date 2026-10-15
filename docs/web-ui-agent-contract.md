@@ -430,11 +430,14 @@ and static mode alone shows separate IPv4 address, subnet mask, gateway, and DNS
 fields. The gateway must be inside the configured subnet. DNS and NTP server lists are validated
 before the privileged command runs. Network activation is scheduled after a
 three-second delay because applying a new static address can disconnect the
-requesting browser.
+requesting browser. The keyboard control is a dropdown populated from the
+installed Debian XKB catalog. Applying a network change removes stale addresses
+and schedules a leaf-certificate renewal for the managed address.
 
 Authenticated diagnostics can read `update-log`. It contains the complete most
 recent appliance-update attempt and the corresponding Debian APT output; the
-file is root-owned, replaced at the start of each attempt, and log-rotated.
+file is root-owned below `/srv/obos/state/updates`, replaced at the start of
+each attempt, and log-rotated.
 
 Backup download support uses an encrypted portable export, not the raw appliance
 backup archive. The format is `obos-portable-backup-v1`. Import support uploads
