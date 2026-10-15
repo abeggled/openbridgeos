@@ -53,4 +53,10 @@ grep -Fxq '2.0.0-rc.1' "${tmp_dir}/deleted.log" || fail "old prerelease was not 
 grep -Fxq '1.0.0' "${tmp_dir}/deleted.log" || fail "fourth stable release was not deleted"
 grep -Fxq '0.9.0-rc.1' "${tmp_dir}/deleted.log" || fail "older prerelease was not deleted"
 
+: > "${tmp_dir}/deleted.log"
+PATH="${tmp_dir}/bin:${PATH}" GITHUB_REPOSITORY=example/actions-obos \
+  OBOS_TEST_DELETE_LOG="${tmp_dir}/deleted.log" \
+  sh scripts/update/prune-github-releases.sh --dry-run >/dev/null
+[ ! -s "${tmp_dir}/deleted.log" ] || fail "GitHub Actions repository fallback was not a dry run"
+
 echo "release retention fixture: PASS"
