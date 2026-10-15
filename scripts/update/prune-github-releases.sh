@@ -3,7 +3,7 @@ set -eu
 
 KEEP_PRERELEASES="${OBOS_RELEASE_KEEP_PRERELEASES:-1}"
 KEEP_STABLES="${OBOS_RELEASE_KEEP_STABLES:-3}"
-REPOSITORY="${GH_REPO:-}"
+REPOSITORY="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
 MODE="${1:-}"
 
 for retention_count in "${KEEP_PRERELEASES}" "${KEEP_STABLES}"; do
@@ -15,7 +15,7 @@ for retention_count in "${KEEP_PRERELEASES}" "${KEEP_STABLES}"; do
   esac
 done
 [ -n "${REPOSITORY}" ] || {
-  echo "GH_REPO must identify the GitHub repository" >&2
+  echo "GH_REPO or GITHUB_REPOSITORY must identify the GitHub repository" >&2
   exit 2
 }
 case "${MODE}" in
