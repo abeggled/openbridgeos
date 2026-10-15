@@ -749,6 +749,48 @@ dd,
   flex: 1 1 150px;
 }
 
+.network-settings {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.network-settings > button {
+  justify-self: end;
+}
+
+.static-network-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+
+.static-network-fields[hidden] {
+  display: none;
+}
+
+.static-network-fields label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.static-network-fields input {
+  width: 100%;
+}
+
+input[readonly] {
+  background: var(--surface-muted);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -830,6 +872,14 @@ dd,
     flex: 1 1 100%;
     width: 100%;
     border-radius: var(--radius);
+  }
+
+  .static-network-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .network-settings > button {
+    width: 100%;
   }
 
   .stack-mobile {

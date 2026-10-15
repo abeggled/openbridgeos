@@ -48,6 +48,7 @@ KEYBOARD_CONFIG_FILE="${OBOS_KEYBOARD_CONFIG_FILE:-/etc/default/keyboard}"
 NETWORK_CONFIG_FILE="${OBOS_NETWORK_CONFIG_FILE:-/etc/systemd/network/10-obos-managed.network}"
 TIMESYNCD_CONFIG_FILE="${OBOS_TIMESYNCD_CONFIG_FILE:-/etc/systemd/timesyncd.conf.d/20-obos.conf}"
 SYS_CLASS_NET="${OBOS_SYS_CLASS_NET:-/sys/class/net}"
+HOSTS_FILE="${OBOS_HOSTS_FILE:-/etc/hosts}"
 
 usage() {
   cat <<'EOF'
@@ -377,6 +378,8 @@ system_summary() {
   keyboard_layout=unknown
   network_mode=dhcp
   ip_addresses=unknown
+  ip_address=unknown
+  subnet_mask=unknown
   gateway=unknown
   dns_servers=unknown
   ntp_servers=pool.ntp.org
@@ -401,6 +404,22 @@ system_summary() {
     ')"
     if [ -n "${primary_interface}" ]; then
       ip_addresses="$(ip -o addr show dev "${primary_interface}" scope global 2>/dev/null | awk '{print $4}' | paste -sd, -)"
+      primary_ipv4="$(ip -o -4 addr show dev "${primary_interface}" scope global 2>/dev/null | awk 'NR == 1 { print $4 }')"
+      if [ -n "${primary_ipv4}" ]; then
+        ip_address="${primary_ipv4%/*}"
+        prefix_length="${primary_ipv4#*/}"
+        subnet_mask="$(python3 - "${prefix_length}" <<'PY'
+import ipaddress
+import sys
+
+try:
+    print(ipaddress.IPv4Network(f"0.0.0.0/{sys.argv[1]}").netmask)
+except ValueError:
+    pass
+PY
+)"
+        [ -n "${subnet_mask}" ] || subnet_mask=unknown
+      fi
       gateway="$(ip route show default dev "${primary_interface}" 2>/dev/null | awk 'NR == 1 { print $3 }')"
     fi
   fi
@@ -426,6 +445,8 @@ system_summary() {
   echo "keyboard_layout=${keyboard_layout:-unknown}"
   echo "network_mode=${network_mode}"
   echo "ip_addresses=${ip_addresses:-unknown}"
+  echo "ip_address=${ip_address:-unknown}"
+  echo "subnet_mask=${subnet_mask:-unknown}"
   echo "gateway=${gateway:-unknown}"
   echo "dns_servers=${dns_servers:-unknown}"
   echo "ntp_servers=${ntp_servers:-unknown}"
@@ -467,6 +488,20 @@ set_hostname() {
     printf '%s\n' "${hostname_value}" > /etc/hostname
     hostname "${hostname_value}" 2>/dev/null || true
   fi
+  short_hostname="${hostname_value%%.*}"
+  hosts_dir="$(dirname -- "${HOSTS_FILE}")"
+  install -d -m 0755 "${hosts_dir}"
+  hosts_tmp="$(mktemp "${hosts_dir}/.obos-hosts.XXXXXX")"
+  if [ -r "${HOSTS_FILE}" ]; then
+    awk '$1 != "127.0.1.1" { print }' "${HOSTS_FILE}" > "${hosts_tmp}"
+  fi
+  if [ "${short_hostname}" = "${hostname_value}" ]; then
+    printf '127.0.1.1\t%s\n' "${hostname_value}" >> "${hosts_tmp}"
+  else
+    printf '127.0.1.1\t%s %s\n' "${hostname_value}" "${short_hostname}" >> "${hosts_tmp}"
+  fi
+  chmod 0644 "${hosts_tmp}"
+  mv -f "${hosts_tmp}" "${HOSTS_FILE}"
   echo "format=obos-set-hostname-v1"
   echo "hostname=${hostname_value}"
   echo "set_hostname=ok"
@@ -539,19 +574,47 @@ except ValueError:
 PY
 }
 
+normalize_static_ipv4() {
+  python3 - "$1" "$2" "$3" <<'PY'
+import ipaddress
+import sys
+
+try:
+    address = ipaddress.IPv4Address(sys.argv[1])
+    network = ipaddress.IPv4Network(f"{address}/{sys.argv[2]}", strict=False)
+    gateway = ipaddress.IPv4Address(sys.argv[3])
+except ValueError:
+    raise SystemExit(1)
+
+if address in {network.network_address, network.broadcast_address}:
+    raise SystemExit(1)
+if gateway not in network or gateway in {network.network_address, network.broadcast_address}:
+    raise SystemExit(1)
+print(f"{address}/{network.prefixlen}")
+PY
+}
+
 set_network() {
   require_root set-network
   interface="${1:-}"
   mode="${2:-}"
-  address="${3:--}"
-  gateway_value="${4:--}"
-  dns_csv="${5:--}"
+  ip_address_value="${3:--}"
+  subnet_mask_value="${4:--}"
+  gateway_value="${5:--}"
+  dns_csv="${6:--}"
   printf '%s\n' "${interface}" | grep -Eq '^[A-Za-z0-9_.:-]{1,15}$' || { echo "network interface is invalid" >&2; return 2; }
   [ -e "${SYS_CLASS_NET}/${interface}" ] || { echo "network interface does not exist: ${interface}" >&2; return 2; }
   case "${mode}" in dhcp|static) ;; *) echo "network mode must be dhcp or static" >&2; return 2 ;; esac
   if [ "${mode}" = static ]; then
-    validate_ip_value "${address}" interface || { echo "static address must include a valid CIDR prefix" >&2; return 2; }
-    validate_ip_value "${gateway_value}" address || { echo "gateway is invalid" >&2; return 2; }
+    address_cidr="$(normalize_static_ipv4 "${ip_address_value}" "${subnet_mask_value}" "${gateway_value}")" \
+      || { echo "static IP, subnet mask, or gateway is invalid" >&2; return 2; }
+    [ "${dns_csv}" != - ] || { echo "at least one DNS server is required for static addressing" >&2; return 2; }
+  else
+    address_cidr=-
+    ip_address_value=-
+    subnet_mask_value=-
+    gateway_value=-
+    dns_csv=-
   fi
   if [ "${dns_csv}" != - ]; then
     validate_simple_list "${dns_csv}" "DNS servers"
@@ -565,16 +628,25 @@ set_network() {
   config_tmp="$(mktemp "${config_dir}/.obos-network.XXXXXX")"
   {
     echo '[Match]'; echo "Name=${interface}"; echo; echo '[Network]'
-    if [ "${mode}" = dhcp ]; then echo 'DHCP=yes'; echo 'IPv6AcceptRA=yes'; else echo "Address=${address}"; echo "Gateway=${gateway_value}"; fi
+    if [ "${mode}" = dhcp ]; then
+      echo 'DHCP=yes'
+      echo 'IPv6AcceptRA=yes'
+    else
+      echo "Address=${address_cidr}"
+      echo "Gateway=${gateway_value}"
+      echo 'IPv6AcceptRA=no'
+      echo 'DNSDefaultRoute=yes'
+    fi
     if [ "${dns_csv}" != - ]; then printf '%s\n' "${dns_csv}" | tr ',' '\n' | sed 's/^/DNS=/'; fi
-    if [ "${mode}" = dhcp ] && [ "${dns_csv}" != - ]; then echo; echo '[DHCPv4]'; echo 'UseDNS=no'; echo; echo '[DHCPv6]'; echo 'UseDNS=no'; fi
   } > "${config_tmp}"
   chmod 0644 "${config_tmp}"; mv -f "${config_tmp}" "${NETWORK_CONFIG_FILE}"
   # shellcheck disable=SC2016
-  "${SYSTEMD_RUN}" --quiet --collect --unit="obos-network-apply-$(date -u +%Y%m%d%H%M%S)" --on-active=3s /bin/sh -c 'networkctl reload && networkctl reconfigure "$1"' sh "${interface}"
+  "${SYSTEMD_RUN}" --quiet --collect --unit="obos-network-apply-$(date -u +%Y%m%d%H%M%S)-$$" --on-active=3s /bin/sh -c 'networkctl reload && networkctl reconfigure "$1" && systemctl try-restart systemd-resolved.service' sh "${interface}"
   echo "format=obos-set-network-v1"
   echo "network_interface=${interface}"
   echo "network_mode=${mode}"
+  echo "ip_address=${ip_address_value}"
+  echo "subnet_mask=${subnet_mask_value}"
   echo "apply_scheduled=true"
   echo "apply_delay_seconds=3"
 }
@@ -2112,7 +2184,7 @@ case "${1:-}" in
     ;;
   set-network)
     shift
-    set_network "${1:-}" "${2:-}" "${3:--}" "${4:--}" "${5:--}"
+    set_network "${1:-}" "${2:-}" "${3:--}" "${4:--}" "${5:--}" "${6:--}"
     ;;
   set-ntp)
     shift

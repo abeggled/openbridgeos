@@ -63,7 +63,7 @@ Mutating actions:
   set-hostname <hostname> --confirm set-hostname
   set-timezone <timezone> --confirm set-timezone
   set-keyboard-layout <layout> --confirm set-keyboard-layout
-  set-network <interface> <dhcp|static> <address|-> <gateway|-> <dns-csv|-> --confirm set-network
+  set-network <interface> <dhcp|static> <ip|-> <mask|-> <gateway|-> <dns-csv|-> --confirm set-network
   set-ntp <servers-csv> --confirm set-ntp
 EOF
 }
@@ -322,12 +322,17 @@ require_single_value_mutation() {
 
 require_set_network_args() {
   action="$1"
-  [ "$#" -eq 8 ] || fail "${action} requires interface, mode, address, gateway, DNS, and confirmation"
-  if [ "${7:-}" != "--confirm" ] || [ "${8:-}" != "${action}" ]; then fail "${action} confirmation token mismatch"; fi
-  NETWORK_INTERFACE="${2:-}"; NETWORK_MODE="${3:-}"; NETWORK_ADDRESS="${4:--}"; NETWORK_GATEWAY="${5:--}"; NETWORK_DNS="${6:--}"
+  [ "$#" -eq 9 ] || fail "${action} requires interface, mode, IP, subnet mask, gateway, DNS, and confirmation"
+  if [ "${8:-}" != "--confirm" ] || [ "${9:-}" != "${action}" ]; then fail "${action} confirmation token mismatch"; fi
+  NETWORK_INTERFACE="${2:-}"
+  NETWORK_MODE="${3:-}"
+  NETWORK_IP_ADDRESS="${4:--}"
+  NETWORK_SUBNET_MASK="${5:--}"
+  NETWORK_GATEWAY="${6:--}"
+  NETWORK_DNS="${7:--}"
   printf '%s\n' "${NETWORK_INTERFACE}" | grep -Eq '^[A-Za-z0-9_.:-]{1,15}$' || fail "${action} interface is invalid"
   case "${NETWORK_MODE}" in dhcp|static) ;; *) fail "${action} mode is invalid" ;; esac
-  for value in "${NETWORK_ADDRESS}" "${NETWORK_GATEWAY}" "${NETWORK_DNS}"; do
+  for value in "${NETWORK_IP_ADDRESS}" "${NETWORK_SUBNET_MASK}" "${NETWORK_GATEWAY}" "${NETWORK_DNS}"; do
     printf '%s\n' "${value}" | grep -Eq '^[-A-Fa-f0-9.,:/]+$' || fail "${action} network value is invalid"
   done
 }
@@ -673,7 +678,7 @@ case "${1:-}" in
     ;;
   set-network)
     require_set_network_args "$@"
-    run_obosctl set-network "${MUTATION_TIMEOUT_SECONDS}" true set-network "${NETWORK_INTERFACE}" "${NETWORK_MODE}" "${NETWORK_ADDRESS}" "${NETWORK_GATEWAY}" "${NETWORK_DNS}"
+    run_obosctl set-network "${MUTATION_TIMEOUT_SECONDS}" true set-network "${NETWORK_INTERFACE}" "${NETWORK_MODE}" "${NETWORK_IP_ADDRESS}" "${NETWORK_SUBNET_MASK}" "${NETWORK_GATEWAY}" "${NETWORK_DNS}"
     ;;
   set-ntp)
     require_single_value_mutation "$@"

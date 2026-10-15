@@ -329,6 +329,10 @@ case "$1" in
     echo "timezone-set:${2:-missing}"
     exit 0
     ;;
+  set-network)
+    printf 'network-set:%s\n' "$*"
+    exit 0
+    ;;
   set-release-channel)
     echo "release-channel-set:${2:-missing}"
     exit 0
@@ -547,6 +551,10 @@ fi
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-timezone Europe/Zurich --confirm set-timezone |
   grep -q 'stdout=timezone-set:Europe/Zurich' \
   || fail "agent did not forward checked timezone"
+
+OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-network eth0 static 10.38.114.132 255.255.255.0 10.38.114.1 10.38.114.2,1.1.1.1 --confirm set-network |
+  grep -q 'stdout=network-set:set-network eth0 static 10.38.114.132 255.255.255.0 10.38.114.1 10.38.114.2,1.1.1.1' \
+  || fail "agent did not forward the separated static network fields"
 
 OBOS_AGENT_AUDIT_LOG="${tmp_dir}/agent-audit.log" OBOS_AGENT_OBOSCTL="${tmp_dir}/obosctl" sh "${AGENT}" set-release-channel prerelease --confirm set-release-channel |
   grep -q 'stdout=release-channel-set:prerelease' \

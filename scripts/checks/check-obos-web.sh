@@ -558,8 +558,16 @@ grep -q 'body.timezone = timezone' "${JS}" \
   || fail "web UI does not send timezone mutation payload"
 grep -q 'body.keyboard_layout = layout' "${JS}" \
   || fail "web UI does not send keyboard layout"
-grep -q 'body.dns_servers = dns' "${JS}" \
+grep -q 'body.dns_servers = mode === "static" ? dns : "-"' "${JS}" \
   || fail "web UI does not send network and DNS settings"
+grep -q 'id="host-network-interface".*readonly' "${INDEX}" \
+  || fail "network interface is editable"
+grep -q 'data-static-network-fields hidden' "${INDEX}" \
+  || fail "static network fields are not hidden by default"
+grep -q 'id="host-subnet-mask"' "${INDEX}" \
+  || fail "static subnet mask field is missing"
+grep -q 'staticNetworkFields.hidden = networkModeSelect.value !== "static"' "${JS}" \
+  || fail "static fields are not controlled by the address mode"
 grep -q 'body.ntp_servers = servers' "${JS}" \
   || fail "web UI does not send NTP settings"
 grep -q 'function loadUpdateLog' "${JS}" \

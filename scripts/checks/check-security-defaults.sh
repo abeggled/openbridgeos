@@ -1041,6 +1041,10 @@ grep -q '20-obos-dhcp.network' scripts/bootstrap/provision-debian.sh \
 
 grep -q 'systemctl enable systemd-networkd.service' scripts/bootstrap/provision-debian.sh \
   || fail "systemd-networkd is not enabled during provisioning"
+grep -q 'systemctl enable systemd-resolved.service' scripts/bootstrap/provision-debian.sh \
+  || fail "systemd-resolved is not enabled during provisioning"
+grep -q 'stub-resolv.conf /etc/resolv.conf' scripts/bootstrap/provision-debian.sh \
+  || fail "resolv.conf is not connected to systemd-resolved during provisioning"
 
 grep -q 'DHCP=yes' packaging/network/20-obos-dhcp.network \
   || fail "VM network profile does not enable DHCP"

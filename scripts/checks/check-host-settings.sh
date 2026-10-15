@@ -19,7 +19,7 @@ case "${1:-}" in
   *) exit 2 ;;
 esac
 EOF
-for command in systemctl systemd-run; do
+for command in systemctl systemd-run hostnamectl; do
   cat > "${tmp_dir}/bin/${command}" <<'EOF'
 #!/bin/sh
 printf '%s:%s\n' "$(basename "$0")" "$*" >> "${OBOS_TEST_COMMAND_LOG}"
@@ -34,23 +34,37 @@ run_obosctl() {
     OBOS_NETWORK_CONFIG_FILE="${tmp_dir}/etc/systemd/network/10-obos-managed.network" \
     OBOS_TIMESYNCD_CONFIG_FILE="${tmp_dir}/etc/systemd/timesyncd.conf.d/20-obos.conf" \
     OBOS_SYS_CLASS_NET="${tmp_dir}/sys/class/net" \
+    OBOS_HOSTS_FILE="${tmp_dir}/etc/hosts" \
     OBOS_SYSTEMD_RUN=systemd-run \
     OBOS_TEST_COMMAND_LOG="${tmp_dir}/commands.log" \
     sh scripts/obosctl "$@"
 }
 
+printf '127.0.0.1\tlocalhost\n127.0.1.1\told-host\n' > "${tmp_dir}/etc/hosts"
+run_obosctl set-hostname obos-test.a38.ch >/dev/null
+grep -Fxq '127.0.1.1	obos-test.a38.ch obos-test' "${tmp_dir}/etc/hosts" || fail "hostname was not synchronized to hosts file"
+
 run_obosctl set-keyboard-layout ch >/dev/null
 grep -Fq 'set-keymap ch' "${tmp_dir}/commands.log" || fail "keyboard layout was not applied"
 
-run_obosctl set-network eth0 static 10.38.114.132/24 10.38.114.1 10.38.114.2,1.1.1.1 >/dev/null
+run_obosctl set-network eth0 static 10.38.114.132 255.255.255.0 10.38.114.1 10.38.114.2,1.1.1.1 >/dev/null
 network_file="${tmp_dir}/etc/systemd/network/10-obos-managed.network"
 grep -Fxq 'Address=10.38.114.132/24' "${network_file}" || fail "static address missing"
 grep -Fxq 'Gateway=10.38.114.1' "${network_file}" || fail "gateway missing"
 [ "$(grep -Fc 'DNS=' "${network_file}")" -eq 2 ] || fail "DNS servers missing"
 grep -Fq -- '--on-active=3s' "${tmp_dir}/commands.log" || fail "network apply was not safely delayed"
 
-if run_obosctl set-network eth0 static invalid 10.38.114.1 1.1.1.1 >/dev/null 2>&1; then
+if run_obosctl set-network eth0 static invalid 255.255.255.0 10.38.114.1 1.1.1.1 >/dev/null 2>&1; then
   fail "invalid static address was accepted"
+fi
+if run_obosctl set-network eth0 static 10.38.114.132 255.255.255.0 10.38.115.1 1.1.1.1 >/dev/null 2>&1; then
+  fail "gateway outside the configured subnet was accepted"
+fi
+
+run_obosctl set-network eth0 dhcp - - - - >/dev/null
+grep -Fxq 'DHCP=yes' "${network_file}" || fail "DHCP mode missing"
+if grep -Eq '^(Address|Gateway|DNS)=' "${network_file}"; then
+  fail "DHCP mode retained static network values"
 fi
 
 run_obosctl set-ntp pool.ntp.org,time.cloudflare.com >/dev/null

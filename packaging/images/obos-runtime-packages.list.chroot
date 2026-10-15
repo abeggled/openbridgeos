@@ -13,5 +13,6 @@ nginx-light
 openssl
 python3-minimal
 sudo
+systemd-resolved
 systemd-timesyncd
 unattended-upgrades

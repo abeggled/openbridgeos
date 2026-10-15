@@ -160,7 +160,22 @@
             <div class="settings-row"><label for="host-name">Host identity</label><div class="control-group"><input id="host-name" type="text" autocomplete="off" placeholder="hostname"><input id="host-domain" type="text" autocomplete="off" placeholder="domain (optional)"><button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Apply</button></div></div>
             <div class="settings-row"><label for="host-timezone">Timezone</label><div class="control-group"><input id="host-timezone" type="text" autocomplete="off" placeholder="Europe/Zurich" list="timezone-options"><button type="button" data-mutation-action="set-timezone" data-confirm="set-timezone" data-mutation-status-target="host">Apply</button></div><datalist id="timezone-options"></datalist></div>
             <div class="settings-row"><label for="host-keyboard">Keyboard</label><div class="control-group"><input id="host-keyboard" type="text" autocomplete="off" placeholder="ch" list="keyboard-options"><button type="button" data-mutation-action="set-keyboard-layout" data-confirm="set-keyboard-layout" data-mutation-status-target="host">Apply</button></div><datalist id="keyboard-options"><option value="ch"></option><option value="de"></option><option value="us"></option><option value="uk"></option><option value="fr"></option><option value="it"></option></datalist></div>
-            <div class="settings-row"><label for="host-network-mode">Network</label><div class="control-group network-controls"><input id="host-network-interface" type="text" autocomplete="off" placeholder="interface"><select id="host-network-mode" aria-label="Address mode"><option value="dhcp">DHCP</option><option value="static">Static</option></select><input id="host-ip-address" type="text" autocomplete="off" placeholder="IP/CIDR (e.g. 10.0.0.10/24)"><input id="host-gateway" type="text" autocomplete="off" placeholder="gateway"><input id="host-dns" type="text" autocomplete="off" placeholder="DNS, comma separated"><button type="button" data-mutation-action="set-network" data-confirm="set-network" data-mutation-status-target="host">Apply</button></div></div>
+            <div class="settings-row network-settings-row">
+              <label for="host-network-mode">Network</label>
+              <div class="network-settings">
+                <div class="control-group">
+                  <input id="host-network-interface" type="text" placeholder="interface" aria-label="Network interface" readonly>
+                  <select id="host-network-mode" aria-label="Address mode"><option value="dhcp">DHCP</option><option value="static">Static</option></select>
+                </div>
+                <div class="static-network-fields" data-static-network-fields hidden>
+                  <label>IP address<input id="host-ip-address" type="text" inputmode="decimal" autocomplete="off" placeholder="10.38.114.132"></label>
+                  <label>Subnet mask<input id="host-subnet-mask" type="text" inputmode="decimal" autocomplete="off" placeholder="255.255.255.0"></label>
+                  <label>Gateway<input id="host-gateway" type="text" inputmode="decimal" autocomplete="off" placeholder="10.38.114.1"></label>
+                  <label>DNS servers<input id="host-dns" type="text" inputmode="decimal" autocomplete="off" placeholder="10.38.114.2, 1.1.1.1"></label>
+                </div>
+                <button type="button" data-mutation-action="set-network" data-confirm="set-network" data-mutation-status-target="host">Apply Network</button>
+              </div>
+            </div>
             <div class="settings-row"><label for="host-ntp">NTP</label><div class="control-group"><input id="host-ntp" type="text" autocomplete="off" placeholder="pool.ntp.org"><button type="button" data-mutation-action="set-ntp" data-confirm="set-ntp" data-mutation-status-target="host">Apply</button></div></div>
           </div>
           <p class="inline-notice" data-host-identity-tls-notice hidden>
