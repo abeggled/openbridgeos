@@ -16,6 +16,16 @@ fail() {
 }
 
 mkdir -p "${TLS_DIR}" "${TRUST_DIR}" "${FIXTURE_BIN}"
+NETWORK_CONFIG_FILE="${TMP_DIR}/10-obos-managed.network"
+cat > "${NETWORK_CONFIG_FILE}" <<'EOF'
+[Match]
+Name=ens18
+
+[Network]
+Address=10.38.114.114/24
+Gateway=10.38.114.1
+EOF
+export OBOS_NETWORK_CONFIG_FILE="${NETWORK_CONFIG_FILE}"
 
 cat > "${FIXTURE_BIN}/hostname" <<'EOF'
 #!/usr/bin/env sh
@@ -30,7 +40,7 @@ cat > "${FIXTURE_BIN}/ip" <<'EOF'
 case "$*" in
   "-o route show default") echo "default via 10.38.114.1 dev ens18" ;;
   "-o -6 route show default") : ;;
-  "-o addr show dev ens18 scope global") echo "2: ens18 inet 10.38.114.132/24 brd 10.38.114.255 scope global ens18" ;;
+  "-o addr show dev ens18 scope global") printf '%s\n' "2: ens18 inet 10.38.114.114/24 brd 10.38.114.255 scope global ens18" "2: ens18 inet 10.38.114.101/24 brd 10.38.114.255 scope global secondary ens18" ;;
   *) exit 1 ;;
 esac
 EOF
@@ -112,8 +122,11 @@ grep -q '^DNS.1=obos-unit.example.test$' "${TLS_DIR}/obos.local.ext" \
 if grep -q 'obs.local' "${TLS_DIR}/obos.local.ext"; then
   fail "legacy obs.local alias remained in renewed leaf SANs"
 fi
-grep -q '^IP.1=10.38.114.132$' "${TLS_DIR}/obos.local.ext" \
-  || fail "primary host address is missing from leaf SANs"
+grep -q '^IP.1=10.38.114.114$' "${TLS_DIR}/obos.local.ext" \
+  || fail "managed static host address is missing from leaf SANs"
+if grep -q '10.38.114.101' "${TLS_DIR}/obos.local.ext"; then
+  fail "stale DHCP address remained in renewed leaf SANs"
+fi
 if grep -Eq '172\.17\.|172\.18\.|172\.19\.' "${TLS_DIR}/obos.local.ext"; then
   fail "container bridge address leaked into renewed leaf SANs"
 fi

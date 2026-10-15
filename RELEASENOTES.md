@@ -1,4 +1,14 @@
 # Changes
+## 2026.10.7-rc.3
+### Fixes 🐞
+* Prepare the managed `systemd-networkd` and `systemd-timesyncd` directories before the hardened web agent starts, so NTP changes no longer fail on a missing read-only path.
+* Replace free-text keyboard entry with a dropdown populated from the installed Debian XKB layouts. Persist the selected XKB layout and apply it to the Linux console through `setupcon`.
+* Store the complete appliance-update log below the writable OBOS state directory instead of `/var/log`, preventing update startup from failing inside the hardened agent service.
+* Fully deconfigure and reactivate the managed interface when switching from DHCP to static addressing, removing the previous DHCP address instead of retaining it as a secondary address.
+* Renew the HTTPS leaf certificate automatically after a network change and, for static mode, include only addresses declared in the managed network configuration.
+### Operational notes 🔔
+* RC.2 installations affected by the update-log write restriction require a one-time repair of the currently running service before the GUI can install RC.3. Fresh RC.3 installations and later in-place updates do not require this workaround.
+
 ## 2026.10.7-rc.2
 ### Fixes 🐞
 * Separate DHCP and static addressing in **Host Settings**. The detected interface is read-only; IP address, subnet mask, gateway, and DNS are shown only for static mode.

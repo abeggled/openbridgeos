@@ -1045,6 +1045,10 @@ grep -q 'systemctl enable systemd-resolved.service' scripts/bootstrap/provision-
   || fail "systemd-resolved is not enabled during provisioning"
 grep -q 'stub-resolv.conf /etc/resolv.conf' scripts/bootstrap/provision-debian.sh \
   || fail "resolv.conf is not connected to systemd-resolved during provisioning"
+grep -q 'install -d -m 0755 /etc/systemd/network /etc/systemd/timesyncd.conf.d' scripts/bootstrap/provision-debian.sh \
+  || fail "managed network and NTP directories are not prepared before the hardened agent starts"
+grep -q 'install -d -m 0755 /etc/systemd/network /etc/systemd/timesyncd.conf.d' scripts/update/install-update-bundle.sh \
+  || fail "in-place updates do not prepare managed network and NTP directories"
 
 grep -q 'DHCP=yes' packaging/network/20-obos-dhcp.network \
   || fail "VM network profile does not enable DHCP"

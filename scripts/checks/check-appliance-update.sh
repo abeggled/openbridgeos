@@ -137,7 +137,7 @@ grep -Eq 'DPkg::Lock::Timeout=300 .* update$' "${apt_log}" \
   || fail "APT metadata refresh is missing lock timeout"
 grep -q -- '--no-remove full-upgrade' "${apt_log}" \
   || fail "APT full upgrade is not protected against package removals"
-grep -q -- '--no-remove install keyboard-configuration console-setup systemd-timesyncd systemd-resolved' "${apt_log}" \
+grep -q -- '--no-remove install keyboard-configuration console-setup systemd-timesyncd systemd-resolved xkb-data' "${apt_log}" \
   || fail "host settings runtime packages are not installed during updates"
 grep -Fxq 'enable --now systemd-resolved.service' "${OBOS_TEST_SYSTEMCTL_LOG}" \
   || fail "systemd-resolved is not activated during updates"

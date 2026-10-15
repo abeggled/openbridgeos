@@ -87,7 +87,14 @@ primary interface.
 `set-ntp` update appliance host settings after validating their input. Static
 addresses use separate IPv4 address and dotted subnet-mask values. The gateway
 must belong to the same subnet and at least one DNS server is required. Network application is delayed by three seconds so
-the caller receives the response before an address change disconnects it.
+the caller receives the response before an address change disconnects it. The
+interface is deconfigured before the selected mode is activated so an old DHCP
+address cannot remain as a secondary address. A network change also renews the
+HTTPS leaf certificate for the managed address.
+
+Keyboard layouts are selected from Debian's installed XKB layout catalog. The
+selection is persisted in `/etc/default/keyboard` and applied to the console
+with `setupcon`; XKB layout codes such as `ch` are not console-keymap names.
 
 `security-summary` runs the security baseline audit in machine-readable mode. It
 prints the summary format, PASS/FAIL result, pass count, and fail count for
