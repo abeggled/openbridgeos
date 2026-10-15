@@ -13,6 +13,7 @@ RESTORE_STAGE_DIR="${OBOS_RESTORE_STAGE_DIR:-${STATE_DIR}/restore-staging}"
 PORTABLE_EXPORT_DIR="${OBOS_PORTABLE_EXPORT_DIR:-${STATE_DIR}/portable-backups}"
 PORTABLE_IMPORT_DIR="${OBOS_PORTABLE_IMPORT_DIR:-${STATE_DIR}/portable-imports}"
 ONBOARDING_STATE_DIR="${OBOS_ONBOARDING_STATE_DIR:-${STATE_DIR}/onboarding}"
+HOST_SETTINGS_STAGE_DIR="${OBOS_HOST_SETTINGS_STAGE_DIR:-${STATE_DIR}/host-settings-staging}"
 TLS_DIR="${OBOS_TLS_DIR:-/etc/obos/tls}"
 APPLIANCE_ID_FILE="${OBOS_APPLIANCE_ID_FILE:-/etc/obos/appliance-id}"
 SERVICE_NAME="obos-openbridgeserver.service"
@@ -502,20 +503,47 @@ validate_hostname() {
     }
 }
 
+stage_host_settings_file() {
+  label="$1"
+  install -d -m 0700 "${HOST_SETTINGS_STAGE_DIR}"
+  mktemp "${HOST_SETTINGS_STAGE_DIR}/${label}.XXXXXXXX"
+}
+
+apply_host_settings_file() {
+  source_file="$1"
+  target_file="$2"
+  target_dir_mode="${3:-0755}"
+  target_file_mode="${4:-0644}"
+  apply_label="$5"
+  target_dir="$(dirname -- "${target_file}")"
+  apply_unit="obos-host-settings-${apply_label}-$(date -u +%Y%m%d%H%M%S)-$$"
+
+  # The web agent deliberately has a read-only system view. A short-lived,
+  # fixed transient unit applies only the staged file to the explicit target.
+  # No user-controlled value is evaluated as shell input.
+  # shellcheck disable=SC2016
+  if "${SYSTEMD_RUN}" --quiet --pipe --wait --collect --unit="${apply_unit}" \
+    /bin/sh -c 'set -eu
+      install -d -m "$1" -- "$2"
+      cat -- "$3" > "$4"
+      chmod "$5" -- "$4"
+      sync -f "$4" 2>/dev/null || true
+    ' sh "${target_dir_mode}" "${target_dir}" "${source_file}" "${target_file}" "${target_file_mode}"
+  then
+    rm -f -- "${source_file}"
+  else
+    apply_status=$?
+    rm -f -- "${source_file}"
+    return "${apply_status}"
+  fi
+}
+
 set_hostname() {
   require_root set-hostname
   hostname_value="${1:-}"
   validate_hostname "${hostname_value}"
-  if command -v hostnamectl >/dev/null 2>&1; then
-    hostnamectl set-hostname "${hostname_value}"
-  else
-    printf '%s\n' "${hostname_value}" > /etc/hostname
-    hostname "${hostname_value}" 2>/dev/null || true
-  fi
   short_hostname="${hostname_value%%.*}"
-  hosts_dir="$(dirname -- "${HOSTS_FILE}")"
-  install -d -m 0755 "${hosts_dir}"
-  hosts_tmp="$(mktemp "${hosts_dir}/.obos-hosts.XXXXXX")"
+  hosts_tmp="$(stage_host_settings_file hosts)"
   if [ -r "${HOSTS_FILE}" ]; then
     awk '$1 != "127.0.1.1" { print }' "${HOSTS_FILE}" > "${hosts_tmp}"
   fi
@@ -524,8 +552,13 @@ set_hostname() {
   else
     printf '127.0.1.1\t%s %s\n' "${hostname_value}" "${short_hostname}" >> "${hosts_tmp}"
   fi
-  chmod 0644 "${hosts_tmp}"
-  mv -f "${hosts_tmp}" "${HOSTS_FILE}"
+  apply_host_settings_file "${hosts_tmp}" "${HOSTS_FILE}" 0755 0644 hosts
+  if command -v hostnamectl >/dev/null 2>&1; then
+    hostnamectl set-hostname "${hostname_value}"
+  else
+    printf '%s\n' "${hostname_value}" > /etc/hostname
+    hostname "${hostname_value}" 2>/dev/null || true
+  fi
   echo "format=obos-set-hostname-v1"
   echo "hostname=${hostname_value}"
   echo "set_hostname=ok"
@@ -583,9 +616,7 @@ set_keyboard_layout() {
   command -v "${setupcon_command}" >/dev/null 2>&1 || { echo "setupcon is unavailable" >&2; return 1; }
   localectl list-x11-keymap-layouts 2>/dev/null | grep -Fxq "${layout}" \
     || { echo "keyboard layout is not installed: ${layout}" >&2; return 2; }
-  config_dir="$(dirname -- "${KEYBOARD_CONFIG_FILE}")"
-  install -d -m 0755 "${config_dir}"
-  config_tmp="$(mktemp "${config_dir}/.obos-keyboard.XXXXXX")"
+  config_tmp="$(stage_host_settings_file keyboard)"
   {
     echo 'XKBMODEL="pc105"'
     echo "XKBLAYOUT=\"${layout}\""
@@ -593,8 +624,7 @@ set_keyboard_layout() {
     echo 'XKBOPTIONS=""'
     echo 'BACKSPACE="guess"'
   } > "${config_tmp}"
-  chmod 0644 "${config_tmp}"
-  mv -f "${config_tmp}" "${KEYBOARD_CONFIG_FILE}"
+  apply_host_settings_file "${config_tmp}" "${KEYBOARD_CONFIG_FILE}" 0755 0644 keyboard
   "${SYSTEMD_RUN}" --quiet --collect --unit="obos-keyboard-apply-$(date -u +%Y%m%d%H%M%S)-$$" "${setupcon_command}" --force
   echo "format=obos-set-keyboard-layout-v1"
   echo "keyboard_layout=${layout}"
@@ -697,11 +727,9 @@ set_ntp() {
   validate_simple_list "${servers_csv}" "NTP servers"
   case "${servers_csv}" in ,*|*,|*,,*) echo "NTP server list is invalid" >&2; return 2 ;; esac
   servers="$(printf '%s\n' "${servers_csv}" | tr ',' ' ')"
-  config_dir="$(dirname -- "${TIMESYNCD_CONFIG_FILE}")"
-  install -d -m 0755 "${config_dir}"
-  config_tmp="$(mktemp "${config_dir}/.obos-timesyncd.XXXXXX")"
+  config_tmp="$(stage_host_settings_file timesyncd)"
   printf '[Time]\nNTP=%s\n' "${servers}" > "${config_tmp}"
-  chmod 0644 "${config_tmp}"; mv -f "${config_tmp}" "${TIMESYNCD_CONFIG_FILE}"
+  apply_host_settings_file "${config_tmp}" "${TIMESYNCD_CONFIG_FILE}" 0755 0644 timesyncd
   systemctl restart systemd-timesyncd.service
   echo "format=obos-set-ntp-v1"
   echo "ntp_servers=${servers_csv}"
