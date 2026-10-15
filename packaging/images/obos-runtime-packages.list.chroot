@@ -1,9 +1,11 @@
 ca-certificates
+console-setup
 curl
 docker-cli
 docker-compose
 docker.io
 gnupg
+keyboard-configuration
 logrotate
 minisign
 nftables
@@ -11,4 +13,5 @@ nginx-light
 openssl
 python3-minimal
 sudo
+systemd-timesyncd
 unattended-upgrades

@@ -34,6 +34,8 @@ SECURITY_BASELINE_SCRIPT="${OBOS_SECURITY_BASELINE_SCRIPT:-/usr/lib/obos/securit
 MVP_READINESS_SCRIPT="${OBOS_MVP_READINESS_SCRIPT:-/usr/lib/obos/mvp-runtime-readiness.sh}"
 WEB_AUTH_SCRIPT="${OBOS_WEB_AUTH_SCRIPT:-/usr/lib/obos/generate-web-auth.sh}"
 HOST_UPDATE_SCRIPT="${OBOS_HOST_UPDATE_SCRIPT:-/usr/lib/obos/update-host.sh}"
+HOST_UPDATE_LOG_FILE="${OBOS_HOST_UPDATE_LOG_FILE:-/var/log/obos-update.log}"
+APPLIANCE_UPDATE_LOG_FILE="${OBOS_APPLIANCE_UPDATE_LOG_FILE:-/var/log/obos-appliance-update.log}"
 OBOS_RELEASE_UPDATE_SCRIPT="${OBOS_RELEASE_UPDATE_SCRIPT:-/usr/lib/obos/update-obos-release.sh}"
 RELEASE_CHANNEL_FILE="${OBOS_RELEASE_CHANNEL_FILE:-/etc/obos/update/release-channel}"
 RELEASE_BASE_URL_FILE="${OBOS_RELEASE_BASE_URL_FILE:-/etc/obos/update/release-base-url}"
@@ -42,6 +44,10 @@ REBOOT_DELAY_SECONDS="${OBOS_REBOOT_DELAY_SECONDS:-60}"
 BOOT_ID_FILE="${OBOS_BOOT_ID_FILE:-/proc/sys/kernel/random/boot_id}"
 ARCHIVE_MAX_MEMBERS="${OBOS_ARCHIVE_MAX_MEMBERS:-100000}"
 RESTORE_MAX_UNPACKED_BYTES="${OBOS_RESTORE_MAX_UNPACKED_BYTES:-10737418240}"
+KEYBOARD_CONFIG_FILE="${OBOS_KEYBOARD_CONFIG_FILE:-/etc/default/keyboard}"
+NETWORK_CONFIG_FILE="${OBOS_NETWORK_CONFIG_FILE:-/etc/systemd/network/10-obos-managed.network}"
+TIMESYNCD_CONFIG_FILE="${OBOS_TIMESYNCD_CONFIG_FILE:-/etc/systemd/timesyncd.conf.d/20-obos.conf}"
+SYS_CLASS_NET="${OBOS_SYS_CLASS_NET:-/sys/class/net}"
 
 usage() {
   cat <<'EOF'
@@ -53,6 +59,10 @@ Commands:
   system-summary    Print machine-readable host and network basics
   set-hostname      Set appliance hostname after validation
   set-timezone      Set appliance timezone after validation
+  set-keyboard-layout
+                    Set the Linux console keyboard layout
+  set-network       Set DHCP or static addressing, gateway, and DNS
+  set-ntp           Set one or more NTP servers
   security-summary  Print machine-readable security baseline status
   mvp-readiness-summary
                     Print machine-readable technical MVP runtime readiness
@@ -82,6 +92,7 @@ Commands:
   logs              Follow open bridge server stack logs
   logs-summary      Print metadata-only log availability status
   logs-tail         Print bounded recent service and container logs
+  update-log        Print the complete most recent appliance-update log
   backup            Create a timestamped appliance backup
   backup-summary    Print machine-readable latest backup status
   backup-list       Print machine-readable appliance backup inventory
@@ -316,6 +327,18 @@ logs_tail() {
   fi
 }
 
+update_log() {
+  echo "format=obos-update-log-v1"
+  echo "log_file=${APPLIANCE_UPDATE_LOG_FILE}"
+  if [ ! -f "${APPLIANCE_UPDATE_LOG_FILE}" ]; then
+    echo "log_present=false"
+    return 0
+  fi
+  echo "log_present=true"
+  echo "section=appliance-update"
+  sed 's/^/log=/' "${APPLIANCE_UPDATE_LOG_FILE}"
+}
+
 health() {
   if command -v curl >/dev/null 2>&1; then
     curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null
@@ -351,6 +374,12 @@ system_summary() {
   hostname_value="$(hostname 2>/dev/null || true)"
   timezone_value=
   primary_interface=
+  keyboard_layout=unknown
+  network_mode=dhcp
+  ip_addresses=unknown
+  gateway=unknown
+  dns_servers=unknown
+  ntp_servers=pool.ntp.org
 
   if command -v timedatectl >/dev/null 2>&1; then
     timezone_value="$(timedatectl show -p Timezone --value 2>/dev/null || true)"
@@ -370,11 +399,36 @@ system_summary() {
         }
       }
     ')"
+    if [ -n "${primary_interface}" ]; then
+      ip_addresses="$(ip -o addr show dev "${primary_interface}" scope global 2>/dev/null | awk '{print $4}' | paste -sd, -)"
+      gateway="$(ip route show default dev "${primary_interface}" 2>/dev/null | awk 'NR == 1 { print $3 }')"
+    fi
+  fi
+  if [ -r "${KEYBOARD_CONFIG_FILE}" ]; then
+    keyboard_layout="$(sed -n 's/^XKBLAYOUT="\{0,1\}\([^"[:space:]]*\)"\{0,1\}$/\1/p' "${KEYBOARD_CONFIG_FILE}" | head -n 1)"
+  fi
+  if [ -r "${NETWORK_CONFIG_FILE}" ]; then
+    if grep -Eq '^DHCP=(yes|ipv4|ipv6)$' "${NETWORK_CONFIG_FILE}"; then network_mode=dhcp; else network_mode=static; fi
+    configured_dns="$(sed -n 's/^DNS=//p' "${NETWORK_CONFIG_FILE}" | paste -sd, -)"
+    [ -z "${configured_dns}" ] || dns_servers="${configured_dns}"
+  elif command -v resolvectl >/dev/null 2>&1 && [ -n "${primary_interface}" ]; then
+    resolved_dns="$(resolvectl dns "${primary_interface}" 2>/dev/null | sed 's/^[^:]*:[[:space:]]*//' | tr ' ' ',')"
+    [ -z "${resolved_dns}" ] || dns_servers="${resolved_dns}"
+  fi
+  if [ -r "${TIMESYNCD_CONFIG_FILE}" ]; then
+    configured_ntp="$(sed -n 's/^NTP=//p' "${TIMESYNCD_CONFIG_FILE}" | tr ' ' ',')"
+    [ -z "${configured_ntp}" ] || ntp_servers="${configured_ntp}"
   fi
 
   echo "format=obos-system-summary-v1"
   echo "hostname=${hostname_value:-unknown}"
   echo "timezone=${timezone_value:-unknown}"
+  echo "keyboard_layout=${keyboard_layout:-unknown}"
+  echo "network_mode=${network_mode}"
+  echo "ip_addresses=${ip_addresses:-unknown}"
+  echo "gateway=${gateway:-unknown}"
+  echo "dns_servers=${dns_servers:-unknown}"
+  echo "ntp_servers=${ntp_servers:-unknown}"
   if [ -n "${primary_interface}" ]; then
     echo "default_route_present=true"
     echo "primary_interface=${primary_interface}"
@@ -450,6 +504,94 @@ set_timezone() {
   echo "format=obos-set-timezone-v1"
   echo "timezone=${timezone_value}"
   echo "set_timezone=ok"
+}
+
+validate_simple_list() {
+  value="$1"
+  label="$2"
+  printf '%s\n' "${value}" | grep -Eq '^[A-Za-z0-9._:+,-]+$' || {
+    echo "${label} contains unsupported characters" >&2
+    return 2
+  }
+}
+
+set_keyboard_layout() {
+  require_root set-keyboard-layout
+  layout="${1:-}"
+  validate_simple_list "${layout}" "keyboard layout"
+  command -v localectl >/dev/null 2>&1 || { echo "localectl is unavailable" >&2; return 1; }
+  localectl list-keymaps 2>/dev/null | grep -Fxq "${layout}" || { echo "keyboard layout is not installed: ${layout}" >&2; return 2; }
+  localectl set-keymap "${layout}"
+  echo "format=obos-set-keyboard-layout-v1"
+  echo "keyboard_layout=${layout}"
+}
+
+validate_ip_value() {
+  value="$1"
+  kind="$2"
+  python3 - "${value}" "${kind}" <<'PY'
+import ipaddress, sys
+value, kind = sys.argv[1:]
+try:
+    ipaddress.ip_interface(value) if kind == "interface" else ipaddress.ip_address(value)
+except ValueError:
+    raise SystemExit(1)
+PY
+}
+
+set_network() {
+  require_root set-network
+  interface="${1:-}"
+  mode="${2:-}"
+  address="${3:--}"
+  gateway_value="${4:--}"
+  dns_csv="${5:--}"
+  printf '%s\n' "${interface}" | grep -Eq '^[A-Za-z0-9_.:-]{1,15}$' || { echo "network interface is invalid" >&2; return 2; }
+  [ -e "${SYS_CLASS_NET}/${interface}" ] || { echo "network interface does not exist: ${interface}" >&2; return 2; }
+  case "${mode}" in dhcp|static) ;; *) echo "network mode must be dhcp or static" >&2; return 2 ;; esac
+  if [ "${mode}" = static ]; then
+    validate_ip_value "${address}" interface || { echo "static address must include a valid CIDR prefix" >&2; return 2; }
+    validate_ip_value "${gateway_value}" address || { echo "gateway is invalid" >&2; return 2; }
+  fi
+  if [ "${dns_csv}" != - ]; then
+    validate_simple_list "${dns_csv}" "DNS servers"
+    case "${dns_csv}" in ,*|*,|*,,*) echo "DNS server list is invalid" >&2; return 2 ;; esac
+    old_ifs="${IFS}"; IFS=,
+    for dns in ${dns_csv}; do validate_ip_value "${dns}" address || { IFS="${old_ifs}"; echo "DNS server is invalid: ${dns}" >&2; return 2; }; done
+    IFS="${old_ifs}"
+  fi
+  config_dir="$(dirname -- "${NETWORK_CONFIG_FILE}")"
+  install -d -m 0755 "${config_dir}"
+  config_tmp="$(mktemp "${config_dir}/.obos-network.XXXXXX")"
+  {
+    echo '[Match]'; echo "Name=${interface}"; echo; echo '[Network]'
+    if [ "${mode}" = dhcp ]; then echo 'DHCP=yes'; echo 'IPv6AcceptRA=yes'; else echo "Address=${address}"; echo "Gateway=${gateway_value}"; fi
+    if [ "${dns_csv}" != - ]; then printf '%s\n' "${dns_csv}" | tr ',' '\n' | sed 's/^/DNS=/'; fi
+    if [ "${mode}" = dhcp ] && [ "${dns_csv}" != - ]; then echo; echo '[DHCPv4]'; echo 'UseDNS=no'; echo; echo '[DHCPv6]'; echo 'UseDNS=no'; fi
+  } > "${config_tmp}"
+  chmod 0644 "${config_tmp}"; mv -f "${config_tmp}" "${NETWORK_CONFIG_FILE}"
+  "${SYSTEMD_RUN}" --quiet --collect --unit="obos-network-apply-$(date -u +%Y%m%d%H%M%S)" --on-active=3s /bin/sh -c 'networkctl reload && networkctl reconfigure "$1"' sh "${interface}"
+  echo "format=obos-set-network-v1"
+  echo "network_interface=${interface}"
+  echo "network_mode=${mode}"
+  echo "apply_scheduled=true"
+  echo "apply_delay_seconds=3"
+}
+
+set_ntp() {
+  require_root set-ntp
+  servers_csv="${1:-}"
+  validate_simple_list "${servers_csv}" "NTP servers"
+  case "${servers_csv}" in ,*|*,|*,,*) echo "NTP server list is invalid" >&2; return 2 ;; esac
+  servers="$(printf '%s\n' "${servers_csv}" | tr ',' ' ')"
+  config_dir="$(dirname -- "${TIMESYNCD_CONFIG_FILE}")"
+  install -d -m 0755 "${config_dir}"
+  config_tmp="$(mktemp "${config_dir}/.obos-timesyncd.XXXXXX")"
+  printf '[Time]\nNTP=%s\n' "${servers}" > "${config_tmp}"
+  chmod 0644 "${config_tmp}"; mv -f "${config_tmp}" "${TIMESYNCD_CONFIG_FILE}"
+  systemctl restart systemd-timesyncd.service
+  echo "format=obos-set-ntp-v1"
+  echo "ntp_servers=${servers_csv}"
 }
 
 proxy_health() {
@@ -1737,7 +1879,17 @@ update_app() {
     echo "update: systemd-run is unavailable" >&2
     return 1
   }
+  log_dir="$(dirname -- "${APPLIANCE_UPDATE_LOG_FILE}")"
+  install -d -m 0755 "${log_dir}"
+  update_output="$(mktemp)"
+  trap 'rm -f "${update_output}"' EXIT HUP INT TERM
+  {
+    echo "format=obos-appliance-update-log-v1"
+    echo "started_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+  } > "${APPLIANCE_UPDATE_LOG_FILE}"
+  chmod 0600 "${APPLIANCE_UPDATE_LOG_FILE}"
   update_unit="obos-appliance-update-$(date -u +%Y%m%d%H%M%S)-$$"
+  update_result=0
   "${SYSTEMD_RUN}" \
     --quiet \
     --pipe \
@@ -1746,7 +1898,18 @@ update_app() {
     --service-type=exec \
     --unit="${update_unit}" \
     --setenv=OBOS_UPDATE_WORKER_ACTIVE=1 \
-    /usr/bin/flock -n /run/lock/obos-appliance-update.lock /usr/bin/obosctl update-worker
+    /usr/bin/flock -n /run/lock/obos-appliance-update.lock /usr/bin/obosctl update-worker > "${update_output}" 2>&1 || update_result=$?
+  cat "${update_output}"
+  cat "${update_output}" >> "${APPLIANCE_UPDATE_LOG_FILE}"
+  if [ -f "${HOST_UPDATE_LOG_FILE}" ]; then
+    echo >> "${APPLIANCE_UPDATE_LOG_FILE}"
+    echo "section=debian-packages" >> "${APPLIANCE_UPDATE_LOG_FILE}"
+    cat "${HOST_UPDATE_LOG_FILE}" >> "${APPLIANCE_UPDATE_LOG_FILE}"
+  fi
+  echo "completed_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> "${APPLIANCE_UPDATE_LOG_FILE}"
+  rm -f "${update_output}"
+  trap - EXIT HUP INT TERM
+  return "${update_result}"
 }
 
 update_summary() {
@@ -1940,6 +2103,18 @@ case "${1:-}" in
     shift
     set_timezone "${1:-}"
     ;;
+  set-keyboard-layout)
+    shift
+    set_keyboard_layout "${1:-}"
+    ;;
+  set-network)
+    shift
+    set_network "${1:-}" "${2:-}" "${3:--}" "${4:--}" "${5:--}"
+    ;;
+  set-ntp)
+    shift
+    set_ntp "${1:-}"
+    ;;
   security-summary)
     require_root security-summary
     run_helper "${SECURITY_BASELINE_SCRIPT}" summary
@@ -2037,6 +2212,9 @@ case "${1:-}" in
     ;;
   logs-tail)
     logs_tail
+    ;;
+  update-log)
+    update_log
     ;;
   backup)
     backup

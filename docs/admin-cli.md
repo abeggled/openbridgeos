@@ -79,12 +79,14 @@ includes a format version, app name, service name, systemd active state,
 localhost health, HTTPS proxy health, and whether a last update record exists.
 
 `system-summary` prints the stable `obos-system-summary-v1` format for agents
-and the web UI. It includes hostname, timezone, whether a default route is
-present, and the primary interface name. It does not print IP addresses.
+and the web UI. It includes hostname, timezone, keyboard layout, addressing
+mode, IP addresses, gateway, DNS and NTP servers, default-route state, and the
+primary interface.
 
-`set-hostname` and `set-timezone` update appliance host basics after validating
-their input. The web UI uses the same commands through confirmed `obos-agent`
-mutations.
+`set-hostname`, `set-timezone`, `set-keyboard-layout`, `set-network`, and
+`set-ntp` update appliance host settings after validating their input. Static
+addresses use CIDR notation. Network application is delayed by three seconds so
+the caller receives the response before an address change disconnects it.
 
 `security-summary` runs the security baseline audit in machine-readable mode. It
 prints the summary format, PASS/FAIL result, pass count, and fail count for

@@ -154,19 +154,14 @@
       <section class="grid" aria-label="Operational panels">
         <article class="panel panel-host">
           <div class="panel-heading">
-            <h2>Host Settings <button class="help-button" type="button" aria-label="Help for host settings" data-help-title="Host Settings" data-help="Set a short hostname and optional domain to form the system FQDN. Host identity changes do not silently replace certificates; use Renew Leaf afterward to issue a certificate containing the new DNS name.">?</button></h2>
-            <div class="button-row host-settings-actions">
-              <div class="control-group stack-mobile">
-                <input id="host-name" type="text" inputmode="text" autocomplete="off" placeholder="hostname" aria-label="Hostname">
-                <input id="host-domain" type="text" inputmode="text" autocomplete="off" placeholder="domain (optional)" aria-label="Domain">
-                <button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Set Host Identity</button>
-              </div>
-              <div class="control-group">
-                <input id="host-timezone" type="text" inputmode="text" autocomplete="off" placeholder="Search timezone" list="timezone-options" aria-label="Timezone">
-                <button type="button" data-mutation-action="set-timezone" data-confirm="set-timezone" data-mutation-status-target="host">Set Timezone</button>
-              </div>
-              <datalist id="timezone-options"></datalist>
-            </div>
+            <h2>Host Settings <button class="help-button" type="button" aria-label="Help for host settings" data-help-title="Host Settings" data-help="Configure host identity, regional settings, network addressing, DNS, and time synchronization. Static network changes apply after a short delay and can move the console to a new address.">?</button></h2>
+          </div>
+          <div class="settings-rows">
+            <div class="settings-row"><label for="host-name">Host identity</label><div class="control-group"><input id="host-name" type="text" autocomplete="off" placeholder="hostname"><input id="host-domain" type="text" autocomplete="off" placeholder="domain (optional)"><button type="button" data-mutation-action="set-hostname" data-confirm="set-hostname" data-mutation-status-target="host">Apply</button></div></div>
+            <div class="settings-row"><label for="host-timezone">Timezone</label><div class="control-group"><input id="host-timezone" type="text" autocomplete="off" placeholder="Europe/Zurich" list="timezone-options"><button type="button" data-mutation-action="set-timezone" data-confirm="set-timezone" data-mutation-status-target="host">Apply</button></div><datalist id="timezone-options"></datalist></div>
+            <div class="settings-row"><label for="host-keyboard">Keyboard</label><div class="control-group"><input id="host-keyboard" type="text" autocomplete="off" placeholder="ch" list="keyboard-options"><button type="button" data-mutation-action="set-keyboard-layout" data-confirm="set-keyboard-layout" data-mutation-status-target="host">Apply</button></div><datalist id="keyboard-options"><option value="ch"></option><option value="de"></option><option value="us"></option><option value="uk"></option><option value="fr"></option><option value="it"></option></datalist></div>
+            <div class="settings-row"><label for="host-network-mode">Network</label><div class="control-group network-controls"><input id="host-network-interface" type="text" autocomplete="off" placeholder="interface"><select id="host-network-mode" aria-label="Address mode"><option value="dhcp">DHCP</option><option value="static">Static</option></select><input id="host-ip-address" type="text" autocomplete="off" placeholder="IP/CIDR (e.g. 10.0.0.10/24)"><input id="host-gateway" type="text" autocomplete="off" placeholder="gateway"><input id="host-dns" type="text" autocomplete="off" placeholder="DNS, comma separated"><button type="button" data-mutation-action="set-network" data-confirm="set-network" data-mutation-status-target="host">Apply</button></div></div>
+            <div class="settings-row"><label for="host-ntp">NTP</label><div class="control-group"><input id="host-ntp" type="text" autocomplete="off" placeholder="pool.ntp.org"><button type="button" data-mutation-action="set-ntp" data-confirm="set-ntp" data-mutation-status-target="host">Apply</button></div></div>
           </div>
           <p class="inline-notice" data-host-identity-tls-notice hidden>
             Host identity is not present in the active leaf certificate. The current certificate remains active until you select <strong>Renew Leaf</strong> in TLS Trust.
@@ -174,7 +169,13 @@
           <dl>
             <div><dt>Hostname</dt><dd data-agent-field="system-summary:hostname">pending</dd></div>
             <div><dt>Timezone</dt><dd data-agent-field="system-summary:timezone">pending</dd></div>
+            <div><dt>Keyboard</dt><dd data-agent-field="system-summary:keyboard_layout">pending</dd></div>
             <div><dt>Primary interface</dt><dd data-agent-field="system-summary:primary_interface">pending</dd></div>
+            <div><dt>Address mode</dt><dd data-agent-field="system-summary:network_mode">pending</dd></div>
+            <div><dt>IP addresses</dt><dd data-agent-field="system-summary:ip_addresses">pending</dd></div>
+            <div><dt>Gateway</dt><dd data-agent-field="system-summary:gateway">pending</dd></div>
+            <div><dt>DNS</dt><dd data-agent-field="system-summary:dns_servers">pending</dd></div>
+            <div><dt>NTP</dt><dd data-agent-field="system-summary:ntp_servers">pending</dd></div>
             <div><dt>Host action</dt><dd data-mutation-status="host">ready</dd></div>
           </dl>
         </article>

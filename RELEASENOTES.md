@@ -1,4 +1,15 @@
 # Changes
+## 2026.10.7-rc.1
+### New features ✨
+* Configure console keyboard layout, DHCP or static IP addressing, gateway, DNS, and NTP directly in **Host Settings**.
+* View the complete most recent appliance-update attempt, including Debian APT output, in authenticated **System Diagnostics**.
+### Fixes 🐞
+* Make Debian package maintenance explicit and observable: every appliance update refreshes signed Debian metadata, installs required host-management packages, and runs a protected full upgrade before container health verification.
+### Security fixes 🔒
+* Validate network, DNS, NTP, interface, and keyboard inputs on both sides of the local agent boundary; apply network changes asynchronously after explicit confirmation to avoid exposing a general shell interface.
+### Operational notes 🔔
+* A static address change can disconnect the current browser session. Continue at the newly configured IP address after the three-second apply delay.
+
 ## 2026.10.6
 ### New features ✨
 * Publish a bootable amd64 installer ISO, an amd64 qcow2 VM disk, and a compressed Raspberry Pi 4+ arm64 image with every release.
