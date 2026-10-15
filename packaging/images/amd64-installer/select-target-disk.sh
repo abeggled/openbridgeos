@@ -6,9 +6,6 @@ INSTALLER_TEMPLATES="${OBOS_INSTALLER_TEMPLATES:-/usr/share/obos-installer/insta
 LIST_DEVICES="${OBOS_INSTALLER_LIST_DEVICES:-list-devices}"
 SYS_BLOCK_DIR="${OBOS_INSTALLER_SYS_BLOCK_DIR:-/sys/class/block}"
 PROC_MOUNTS="${OBOS_INSTALLER_PROC_MOUNTS:-/proc/mounts}"
-DD_COMMAND="${OBOS_INSTALLER_DD_COMMAND:-dd}"
-BLOCKDEV_COMMAND="${OBOS_INSTALLER_BLOCKDEV_COMMAND:-blockdev}"
-UDEVADM_COMMAND="${OBOS_INSTALLER_UDEVADM_COMMAND:-udevadm}"
 
 # shellcheck disable=SC1090
 . "${DEBCONF_MODULE}"
@@ -62,30 +59,6 @@ db_input critical obos-installer/confirm-single-disk || true
 db_go
 db_get obos-installer/confirm-single-disk
 [ "${RET}" = true ] || exit 1
-
-# Remove filesystems and both copies of a GPT partition table only after the
-# operator has confirmed the exact whole disk. This prevents partman/live-
-# installer from reusing an old root filesystem and presenting the hidden
-# base-installer/use_unclean_target question at critical priority.
-for partition in $("${LIST_DEVICES}" partition); do
-  case "${partition}" in
-    "${target_disk}"[0-9]*|"${target_disk}"p[0-9]*)
-      "${DD_COMMAND}" if=/dev/zero of="${partition}" bs=512 count=32768 >/dev/null 2>&1
-      ;;
-  esac
-done
-"${DD_COMMAND}" if=/dev/zero of="${target_disk}" bs=512 count=32768 >/dev/null 2>&1
-if [ "${sectors}" -gt 32768 ]; then
-  "${DD_COMMAND}" if=/dev/zero of="${target_disk}" bs=512 \
-    seek=$((sectors - 32768)) count=32768 >/dev/null 2>&1
-fi
-sync
-if command -v "${BLOCKDEV_COMMAND}" >/dev/null 2>&1; then
-  "${BLOCKDEV_COMMAND}" --rereadpt "${target_disk}" >/dev/null 2>&1 || true
-fi
-if command -v "${UDEVADM_COMMAND}" >/dev/null 2>&1; then
-  "${UDEVADM_COMMAND}" settle >/dev/null 2>&1 || true
-fi
 
 db_set partman-auto/disk "${target_disk}"
 db_set grub-installer/bootdev "${target_disk}"
