@@ -43,6 +43,12 @@ grep -q '"set-hostname": "set-hostname"' "${BRIDGE}" \
   || fail "set-hostname mutation is not exposed with a matching confirmation token"
 grep -q '"set-timezone": "set-timezone"' "${BRIDGE}" \
   || fail "set-timezone mutation is not exposed with a matching confirmation token"
+for action in set-keyboard-layout set-network set-ntp; do
+  grep -q "\"${action}\": \"${action}\"" "${BRIDGE}" \
+    || fail "${action} mutation is not exposed with a matching confirmation token"
+done
+grep -q '"update-log"' "${BRIDGE}" \
+  || fail "complete appliance update log is not exposed read-only"
 grep -q '"set-release-channel": "set-release-channel"' "${BRIDGE}" \
   || fail "set-release-channel mutation is not exposed with a matching confirmation token"
 grep -q '"tls-generate": "tls-generate"' "${BRIDGE}" \

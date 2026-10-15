@@ -424,6 +424,17 @@ POST /obos/api/v1/actions/set-timezone
 {"confirm":"set-timezone","timezone":"Europe/Zurich"}
 ```
 
+The same confirmed boundary exposes `set-keyboard-layout`, `set-network`, and
+`set-ntp`. Network payloads select `dhcp` or `static`; static mode requires an
+address with CIDR prefix and a gateway. DNS and NTP server lists are validated
+before the privileged command runs. Network activation is scheduled after a
+three-second delay because applying a new static address can disconnect the
+requesting browser.
+
+Authenticated diagnostics can read `update-log`. It contains the complete most
+recent appliance-update attempt and the corresponding Debian APT output; the
+file is root-owned, replaced at the start of each attempt, and log-rotated.
+
 Backup download support uses an encrypted portable export, not the raw appliance
 backup archive. The format is `obos-portable-backup-v1`. Import support uploads
 encrypted portable backups into private staging, decrypts after explicit

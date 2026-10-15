@@ -386,10 +386,22 @@ if grep -q 'innerHTML' "${JS}"; then
 fi
 grep -q 'class="release-notes markup-content"' "${INDEX}" \
   || fail "release notes do not use the markup presentation"
-grep -q 'class="button-row host-settings-actions"' "${INDEX}" \
-  || fail "host identity and timezone controls are not separated into rows"
-grep -q '^\.host-settings-actions > \.control-group {' "${CSS}" \
+grep -q 'class="settings-rows"' "${INDEX}" \
+  || fail "host settings do not use the responsive settings layout"
+grep -q '^\.settings-row {' "${CSS}" \
   || fail "host settings rows do not have a dedicated layout rule"
+for action in set-keyboard-layout set-network set-ntp; do
+  grep -q "data-mutation-action=\"${action}\"" "${INDEX}" \
+    || fail "web UI does not expose ${action}"
+done
+for field in keyboard_layout network_mode ip_addresses gateway dns_servers ntp_servers; do
+  grep -q "system-summary:${field}" "${INDEX}" \
+    || fail "web UI does not show ${field}"
+done
+grep -q 'data-load-update-log' "${DIAGNOSTICS}" \
+  || fail "diagnostics does not expose the appliance update log"
+grep -q 'data-update-log-output' "${DIAGNOSTICS}" \
+  || fail "diagnostics has no appliance update log viewer"
 
 host_line="$(grep -n '<h2>Host Settings ' "${INDEX}" | cut -d: -f1)"
 tls_line="$(grep -n '<h2>TLS Trust ' "${INDEX}" | cut -d: -f1)"
@@ -544,6 +556,14 @@ grep -q 'Intl.supportedValuesOf' "${JS}" \
 
 grep -q 'body.timezone = timezone' "${JS}" \
   || fail "web UI does not send timezone mutation payload"
+grep -q 'body.keyboard_layout = layout' "${JS}" \
+  || fail "web UI does not send keyboard layout"
+grep -q 'body.dns_servers = dns' "${JS}" \
+  || fail "web UI does not send network and DNS settings"
+grep -q 'body.ntp_servers = servers' "${JS}" \
+  || fail "web UI does not send NTP settings"
+grep -q 'function loadUpdateLog' "${JS}" \
+  || fail "web UI does not load the appliance update log"
 
 grep -q 'runSecurityAudit' "${JS}" \
   || fail "web UI does not handle security audit refresh"

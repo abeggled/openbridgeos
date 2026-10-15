@@ -12,6 +12,7 @@ Cmnd_Alias OBOS_AGENT_READONLY = \
   /usr/bin/obosctl backup-prune-plan, \
   /usr/bin/obosctl logs-summary, \
   /usr/bin/obosctl logs-tail, \
+  /usr/bin/obosctl update-log, \
   /usr/bin/obosctl portable-export-plan *, \
   /usr/bin/obosctl portable-import-plan *, \
   /usr/bin/obosctl restore-stage-summary, \
@@ -46,6 +47,9 @@ Cmnd_Alias OBOS_AGENT_MUTATIONS = \
   /usr/bin/obosctl mqtt-enable-lan *, \
   /usr/bin/obosctl mqtt-disable-lan, \
   /usr/bin/obosctl set-hostname *, \
-  /usr/bin/obosctl set-timezone *
+  /usr/bin/obosctl set-timezone *, \
+  /usr/bin/obosctl set-keyboard-layout *, \
+  /usr/bin/obosctl set-network *, \
+  /usr/bin/obosctl set-ntp *
 
 obos-agent ALL=(root) NOPASSWD: OBOS_AGENT_READONLY, OBOS_AGENT_MUTATIONS

@@ -98,6 +98,7 @@ READ_ONLY_ACTIONS = {
     "backup-prune-plan",
     "logs-summary",
     "logs-tail",
+    "update-log",
     "restore-stage-summary",
     "mqtt-summary",
     "tls-summary",
@@ -115,6 +116,9 @@ MUTATING_ACTIONS = {
     "restore-stage": "restore-stage",
     "set-hostname": "set-hostname",
     "set-timezone": "set-timezone",
+    "set-keyboard-layout": "set-keyboard-layout",
+    "set-network": "set-network",
+    "set-ntp": "set-ntp",
     "start": "start",
     "stop": "stop",
     "tls-export": "tls-export",
@@ -497,6 +501,12 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             expected_fields.add("hostname")
         if action == "set-timezone":
             expected_fields.add("timezone")
+        if action == "set-keyboard-layout":
+            expected_fields.add("keyboard_layout")
+        if action == "set-network":
+            expected_fields.update({"interface", "mode", "address", "gateway", "dns_servers"})
+        if action == "set-ntp":
+            expected_fields.add("ntp_servers")
         if action == "set-release-channel":
             expected_fields.add("release_channel")
         if action in {"system-credentials-reveal", "system-credentials-rotate"}:
@@ -536,6 +546,22 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             timezone = payload.get("timezone")
             if not isinstance(timezone, str) or not timezone or timezone.startswith("-"):
                 return None, (400, error_envelope("invalid-timezone", "timezone is invalid"))
+        if action == "set-keyboard-layout":
+            layout = payload.get("keyboard_layout")
+            if not isinstance(layout, str) or not re.fullmatch(r"[A-Za-z0-9._+-]{1,64}", layout):
+                return None, (400, error_envelope("invalid-keyboard-layout", "keyboard_layout is invalid"))
+        if action == "set-network":
+            interface = payload.get("interface")
+            mode = payload.get("mode")
+            values = (payload.get("address"), payload.get("gateway"), payload.get("dns_servers"))
+            if not isinstance(interface, str) or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,15}", interface):
+                return None, (400, error_envelope("invalid-interface", "interface is invalid"))
+            if mode not in {"dhcp", "static"} or any(not isinstance(value, str) for value in values):
+                return None, (400, error_envelope("invalid-network", "network configuration is invalid"))
+        if action == "set-ntp":
+            servers = payload.get("ntp_servers")
+            if not isinstance(servers, str) or not re.fullmatch(r"[A-Za-z0-9._:+,-]{1,512}", servers):
+                return None, (400, error_envelope("invalid-ntp", "ntp_servers is invalid"))
         if action == "set-release-channel":
             release_channel = payload.get("release_channel")
             if release_channel not in {"stable", "prerelease"}:
@@ -982,6 +1008,12 @@ class AgentBridgeHandler(BaseHTTPRequestHandler):
             args = [action, payload["hostname"], "--confirm", payload["confirm"]]
         if action == "set-timezone":
             args = [action, payload["timezone"], "--confirm", payload["confirm"]]
+        if action == "set-keyboard-layout":
+            args = [action, payload["keyboard_layout"], "--confirm", payload["confirm"]]
+        if action == "set-network":
+            args = [action, payload["interface"], payload["mode"], payload["address"], payload["gateway"], payload["dns_servers"], "--confirm", payload["confirm"]]
+        if action == "set-ntp":
+            args = [action, payload["ntp_servers"], "--confirm", payload["confirm"]]
         if action == "set-release-channel":
             args = [action, payload["release_channel"], "--confirm", payload["confirm"]]
 

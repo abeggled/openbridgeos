@@ -7,3 +7,13 @@
   delaycompress
   create 0640 obos-agent obos-agent
 }
+
+/var/log/obos-update.log /var/log/obos-appliance-update.log {
+  weekly
+  rotate 4
+  missingok
+  notifempty
+  compress
+  delaycompress
+  create 0600 root root
+}

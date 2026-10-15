@@ -129,6 +129,8 @@ grep -Eq 'DPkg::Lock::Timeout=300 .* update$' "${apt_log}" \
   || fail "APT metadata refresh is missing lock timeout"
 grep -q -- '--no-remove full-upgrade' "${apt_log}" \
   || fail "APT full upgrade is not protected against package removals"
+grep -q -- '--no-remove install keyboard-configuration console-setup systemd-timesyncd' "${apt_log}" \
+  || fail "host settings runtime packages are not installed during updates"
 grep -Fq "Dir::Etc::sourcelist=${runtime_source_file}" "${apt_log}" \
   || fail "APT does not use the isolated runtime source list"
 grep -Fq 'Dir::Etc::sourceparts=-' "${apt_log}" \

@@ -48,11 +48,12 @@ can also run the confirmed web console password rotation and shows the newly
 generated password from the response for the administrator who triggered the
 operation.
 
-The diagnostics logs panel starts with metadata only. Raw log viewing remains disabled
-because service logs can contain sensitive operational data.
+The diagnostics service-log panel starts with metadata only and exposes a
+bounded tail. A separate authenticated panel exposes the complete most recent
+appliance-update attempt, including its Debian APT output.
 
-Start, stop, restart, update, signed-release channel selection, backup creation, restore staging, hostname and
-timezone changes, MQTT LAN opt-in/opt-out, TLS generation/export, encrypted
+Start, stop, restart, update, signed-release channel selection, backup creation, restore staging, hostname,
+timezone, keyboard, network, DNS and NTP changes, MQTT LAN opt-in/opt-out, TLS generation/export, encrypted
 portable backup export/import staging, and web console password rotation are
 confirmed mutations exposed through the HTTP bridge. They use the same
 `obos-agent <action> --confirm <action>` contract and audit rules.

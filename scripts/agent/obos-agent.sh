@@ -28,6 +28,7 @@ Read-only actions:
   backup-prune-plan
   logs-summary
   logs-tail
+  update-log
   portable-export-plan <backup.tar.gz>
   portable-import-plan <portable-backup>
   restore-stage-summary
@@ -61,6 +62,9 @@ Mutating actions:
   mqtt-disable-lan --confirm mqtt-disable-lan
   set-hostname <hostname> --confirm set-hostname
   set-timezone <timezone> --confirm set-timezone
+  set-keyboard-layout <layout> --confirm set-keyboard-layout
+  set-network <interface> <dhcp|static> <address|-> <gateway|-> <dns-csv|-> --confirm set-network
+  set-ntp <servers-csv> --confirm set-ntp
 EOF
 }
 
@@ -307,6 +311,27 @@ require_set_timezone_args() {
   validate_timezone "${TIMEZONE_VALUE}"
 }
 
+require_single_value_mutation() {
+  action="$1"
+  [ "$#" -eq 4 ] || fail "${action} requires one value and confirmation"
+  if [ "${3:-}" != "--confirm" ] || [ "${4:-}" != "${action}" ]; then fail "${action} confirmation token mismatch"; fi
+  SINGLE_VALUE="${2:-}"
+  case "${SINGLE_VALUE}" in ""|-*) fail "${action} value is invalid" ;; esac
+  printf '%s\n' "${SINGLE_VALUE}" | grep -Eq '^[A-Za-z0-9._:+,-]+$' || fail "${action} value contains unsupported characters"
+}
+
+require_set_network_args() {
+  action="$1"
+  [ "$#" -eq 8 ] || fail "${action} requires interface, mode, address, gateway, DNS, and confirmation"
+  if [ "${7:-}" != "--confirm" ] || [ "${8:-}" != "${action}" ]; then fail "${action} confirmation token mismatch"; fi
+  NETWORK_INTERFACE="${2:-}"; NETWORK_MODE="${3:-}"; NETWORK_ADDRESS="${4:--}"; NETWORK_GATEWAY="${5:--}"; NETWORK_DNS="${6:--}"
+  printf '%s\n' "${NETWORK_INTERFACE}" | grep -Eq '^[A-Za-z0-9_.:-]{1,15}$' || fail "${action} interface is invalid"
+  case "${NETWORK_MODE}" in dhcp|static) ;; *) fail "${action} mode is invalid" ;; esac
+  for value in "${NETWORK_ADDRESS}" "${NETWORK_GATEWAY}" "${NETWORK_DNS}"; do
+    printf '%s\n' "${value}" | grep -Eq '^[-A-Fa-f0-9.,:/]+$' || fail "${action} network value is invalid"
+  done
+}
+
 require_set_release_channel_args() {
   action="$1"
   [ "$#" -eq 4 ] || fail "${action} requires: <stable|prerelease> --confirm ${action}"
@@ -351,6 +376,7 @@ action=backup-list|mutating=false
 action=backup-prune-plan|mutating=false
 action=logs-summary|mutating=false
 action=logs-tail|mutating=false
+action=update-log|mutating=false
 action=portable-export-plan|mutating=false|required_arg=backup-path
 action=portable-import-plan|mutating=false|required_arg=portable-backup
 action=restore-stage-summary|mutating=false
@@ -382,6 +408,9 @@ action=mqtt-enable-lan|mutating=true|confirm=mqtt-enable-lan|optional_arg=source
 action=mqtt-disable-lan|mutating=true|confirm=mqtt-disable-lan
 action=set-hostname|mutating=true|confirm=set-hostname|required_arg=hostname
 action=set-timezone|mutating=true|confirm=set-timezone|required_arg=timezone
+action=set-keyboard-layout|mutating=true|confirm=set-keyboard-layout|required_arg=layout
+action=set-network|mutating=true|confirm=set-network|required_arg=interface|required_arg=mode
+action=set-ntp|mutating=true|confirm=set-ntp|required_arg=servers
 EOF
 }
 
@@ -505,6 +534,10 @@ case "${1:-}" in
   logs-tail)
     require_no_extra_args "$@"
     run_obosctl logs-tail "${TIMEOUT_SECONDS}" false logs-tail
+    ;;
+  update-log)
+    require_no_extra_args "$@"
+    run_obosctl update-log "${TIMEOUT_SECONDS}" false update-log
     ;;
   portable-export-plan)
     require_backup_path_arg "$@"
@@ -633,6 +666,18 @@ case "${1:-}" in
   set-timezone)
     require_set_timezone_args "$@"
     run_obosctl set-timezone "${MUTATION_TIMEOUT_SECONDS}" true set-timezone "${TIMEZONE_VALUE}"
+    ;;
+  set-keyboard-layout)
+    require_single_value_mutation "$@"
+    run_obosctl set-keyboard-layout "${MUTATION_TIMEOUT_SECONDS}" true set-keyboard-layout "${SINGLE_VALUE}"
+    ;;
+  set-network)
+    require_set_network_args "$@"
+    run_obosctl set-network "${MUTATION_TIMEOUT_SECONDS}" true set-network "${NETWORK_INTERFACE}" "${NETWORK_MODE}" "${NETWORK_ADDRESS}" "${NETWORK_GATEWAY}" "${NETWORK_DNS}"
+    ;;
+  set-ntp)
+    require_single_value_mutation "$@"
+    run_obosctl set-ntp "${MUTATION_TIMEOUT_SECONDS}" true set-ntp "${SINGLE_VALUE}"
     ;;
   -h|--help|help|"")
     usage

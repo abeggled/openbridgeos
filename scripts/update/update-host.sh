@@ -45,6 +45,17 @@ if ! "${APT_GET}" \
   -o DPkg::Lock::Timeout=300 \
   -o "Dir::Etc::sourcelist=${APT_RUNTIME_SOURCE_FILE}" \
   -o Dir::Etc::sourceparts=- \
+  --yes \
+  --no-remove \
+  install keyboard-configuration console-setup systemd-timesyncd >> "${UPDATE_LOG_FILE}" 2>&1; then
+  tail -n 50 "${UPDATE_LOG_FILE}" >&2
+  fail "required host settings package installation failed; see ${UPDATE_LOG_FILE}"
+fi
+if ! "${APT_GET}" \
+  -q \
+  -o DPkg::Lock::Timeout=300 \
+  -o "Dir::Etc::sourcelist=${APT_RUNTIME_SOURCE_FILE}" \
+  -o Dir::Etc::sourceparts=- \
   -o Dpkg::Options::=--force-confold \
   --yes \
   --no-remove \

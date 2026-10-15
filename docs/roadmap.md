@@ -80,7 +80,7 @@ Current implementation status:
   planning exists in `obosctl` and `obos-agent`.
 - Restore apply exists as a CLI-only confirmed command with pre-restore backup,
   post-restore health checks, and security baseline audit. Web restore apply
-  and network basics beyond hostname/timezone controls are still future UI work.
+  together with keyboard layout, DHCP/static addressing, DNS, and NTP controls.
 - The `scripts/checks/check-mvp-readiness.sh` CI check tracks the technical MVP
   criteria for test devices.
 - Runtime test devices can run `/usr/lib/obos/mvp-runtime-readiness.sh` for a

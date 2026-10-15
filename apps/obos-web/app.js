@@ -13,6 +13,8 @@
   const refreshButton = document.querySelector("[data-refresh-status]");
   const logsButton = document.querySelector("[data-load-logs]");
   const logOutput = document.querySelector("[data-log-output]");
+  const updateLogButton = document.querySelector("[data-load-update-log]");
+  const updateLogOutput = document.querySelector("[data-update-log-output]");
   const securityAuditButton = document.querySelector("[data-run-security-audit]");
   const mvpReadinessButton = document.querySelector("[data-run-mvp-readiness]");
   const portableDownloadLink = document.querySelector("[data-portable-download]");
@@ -120,6 +122,24 @@
       title: "Change the appliance timezone?",
       body: "Applies the selected timezone to the operating system.",
       label: "Set Timezone",
+      tone: "default",
+    },
+    "set-keyboard-layout": {
+      title: "Change the console keyboard layout?",
+      body: "Applies the selected keyboard layout to local Linux console sessions.",
+      label: "Apply Keyboard",
+      tone: "default",
+    },
+    "set-network": {
+      title: "Apply the network configuration?",
+      body: "Changes addressing and DNS after a short delay. A static address may disconnect this browser; continue at the newly configured address. Incorrect settings can make the appliance unreachable locally.",
+      label: "Apply Network",
+      tone: "danger",
+    },
+    "set-ntp": {
+      title: "Change NTP servers?",
+      body: "Reconfigures system time synchronization and restarts systemd-timesyncd.",
+      label: "Apply NTP",
       tone: "default",
     },
     "tls-renew-leaf": {
@@ -303,16 +323,16 @@
     return fallback;
   }
 
-  function renderLogs(lines) {
-    if (!logOutput) {
+  function renderLogs(lines, output = logOutput) {
+    if (!output) {
       return;
     }
     const rendered = lines
       .filter((line) => line.startsWith("log="))
       .map((line) => line.slice("log=".length))
       .join("\n");
-    logOutput.textContent = rendered || "no recent log lines";
-    logOutput.dataset.state = "ok";
+    output.textContent = rendered || "no log lines";
+    output.dataset.state = "ok";
   }
 
   function fieldsByAction() {
@@ -547,6 +567,22 @@
           releaseChannelSelect.value = values.release_channel;
         }
       }
+      if (action === "system-summary") {
+        const defaults = {
+          "host-network-interface": values.primary_interface,
+          "host-ip-address": values.ip_addresses,
+          "host-gateway": values.gateway,
+          "host-dns": values.dns_servers,
+          "host-ntp": values.ntp_servers,
+          "host-keyboard": values.keyboard_layout,
+        };
+        for (const [id, value] of Object.entries(defaults)) {
+          const input = document.querySelector(`#${id}`);
+          if (input && !input.value && value && value !== "unknown") input.value = value;
+        }
+        const mode = document.querySelector("#host-network-mode");
+        if (mode && ["dhcp", "static"].includes(values.network_mode)) mode.value = values.network_mode;
+      }
       if (action === "tls-summary" && caDownloadLink) {
         caDownloadLink.hidden = values.trust_export_present !== "true";
       }
@@ -722,6 +758,26 @@
   if (logsButton) {
     logsButton.addEventListener("click", loadLogs);
   }
+
+  async function loadUpdateLog() {
+    if (!updateLogButton || !updateLogOutput) return;
+    updateLogButton.disabled = true;
+    updateLogOutput.textContent = "loading";
+    try {
+      const response = await fetch(`${apiBase}update-log`, { cache: "no-store", credentials: "same-origin" });
+      const text = await response.text();
+      if (response.status === 401) { showLogin(); return; }
+      if (!response.ok) throw new Error(text || `HTTP ${response.status}`);
+      renderLogs(agentStdoutLines(text), updateLogOutput);
+    } catch (error) {
+      updateLogOutput.textContent = "unavailable";
+      updateLogOutput.dataset.state = "error";
+    } finally {
+      updateLogButton.disabled = false;
+    }
+  }
+
+  updateLogButton?.addEventListener("click", loadUpdateLog);
 
   async function uploadPortableImport() {
     if (!portableUploadButton) {
@@ -902,6 +958,26 @@
         return;
       }
       body.timezone = timezone;
+    }
+    if (action === "set-keyboard-layout") {
+      const layout = document.querySelector("#host-keyboard")?.value.trim();
+      if (!layout) { setMutationStatus(statusTarget, "missing keyboard layout", "error"); return; }
+      body.keyboard_layout = layout;
+    }
+    if (action === "set-network") {
+      const interfaceName = document.querySelector("#host-network-interface")?.value.trim();
+      const mode = document.querySelector("#host-network-mode")?.value;
+      const address = document.querySelector("#host-ip-address")?.value.trim();
+      const gateway = document.querySelector("#host-gateway")?.value.trim();
+      const dns = document.querySelector("#host-dns")?.value.trim().replace(/\s+/g, "");
+      if (!interfaceName || !["dhcp", "static"].includes(mode)) { setMutationStatus(statusTarget, "invalid network settings", "error"); return; }
+      if (mode === "static" && (!address || !gateway)) { setMutationStatus(statusTarget, "static IP/CIDR and gateway required", "error"); return; }
+      body.interface = interfaceName; body.mode = mode; body.address = mode === "static" ? address : "-"; body.gateway = mode === "static" ? gateway : "-"; body.dns_servers = dns || "-";
+    }
+    if (action === "set-ntp") {
+      const servers = document.querySelector("#host-ntp")?.value.trim().replace(/\s+/g, ",");
+      if (!servers) { setMutationStatus(statusTarget, "missing NTP servers", "error"); return; }
+      body.ntp_servers = servers;
     }
     if (action === "set-release-channel") {
       const releaseChannel = document.querySelector("#release-channel")?.value;
